@@ -47,7 +47,8 @@ import PackageDescription
 let package = Package(
     name: "<Your Product Name>",
 	dependencies: [
-		.package(url: "https://github.com/weichsel/ZIPFoundation/", .upToNextMajor(from: "0.9.0"))
+		.package(url: "https://github.com/weichsel/ZIPFoundation/", 
+				 .upToNextMajor(from: "0.9.0"))
 	],
     targets: [
         .target(
@@ -121,7 +122,8 @@ sourceURL.appendPathComponent("archive.zip")
 var destinationURL = URL(fileURLWithPath: currentWorkingPath)
 destinationURL.appendPathComponent("directory")
 do {
-    try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
+    try fileManager.createDirectory(at: destinationURL, 
+									withIntermediateDirectories: true, attributes: nil)
     try fileManager.unzipItem(at: sourceURL, to: destinationURL)
 } catch {
     print("Extraction of ZIP archive failed with error:\(error)")
@@ -186,7 +188,8 @@ guard let archive = Archive(url: archiveURL, accessMode: .update) else  {
 var fileURL = URL(fileURLWithPath: currentWorkingPath)
 fileURL.appendPathComponent("file.txt")
 do {
-    try archive.addEntry(with: fileURL.lastPathComponent, relativeTo: fileURL.deletingLastPathComponent())
+    try archive.addEntry(with: fileURL.lastPathComponent, 
+						 relativeTo: fileURL.deletingLastPathComponent())
 } catch {
     print("Adding entry to ZIP archive failed with error:\(error)")
 }
@@ -222,12 +225,12 @@ The `data` passed into the closure contains chunks of the current entry. You can
 You can also add entries from an in-memory data source. To do this you have to provide a closure of type `Provider` to the `addEntry` method:
 
 ```swift
-try archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: 4, provider: { (position, size) -> Data in
-    guard let data = "abcd".data(using: .utf8) else {
-        throw DataProviderError.invalidEncoding
-    }
-    return data
-})
+try archive.addEntry(with: "fromMemory.txt", type: .file, 
+					 uncompressedSize: 4, provider: { (position, size) -> Data in
+    					 guard let data = "abcd".data(using: .utf8) else {
+							 throw DataProviderError.invalidEncoding
+						 }
+						 return data })
 ```
 The closure is called until enough data has been provided to create an entry of `uncompressedSize`. The closure receives `position` and `size` arguments 
 so that you can manage the state of your data source.
