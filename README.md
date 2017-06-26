@@ -1,4 +1,4 @@
-![ZIP Foundation - Effortless ZIP Handling in Swift](https://user-images.githubusercontent.com/1577319/27564151-1d99e3a0-5ad6-11e7-8ab6-417c5b5a3ff2.png = 489x71)
+<img src="https://user-images.githubusercontent.com/1577319/27564151-1d99e3a0-5ad6-11e7-8ab6-417c5b5a3ff2.png" width="489" height="71"/>
 
 
 ZIP Foundation is a library to create, read and modify ZIP archive files.  
