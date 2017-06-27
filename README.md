@@ -1,5 +1,9 @@
 <img src="https://user-images.githubusercontent.com/1577319/27564151-1d99e3a0-5ad6-11e7-8ab6-417c5b5a3ff2.png" width="489" height="71"/>
 
+[![Swift Package Manager compatible](https://img.shields.io/badge/Swift%20Package%20Manager-compatible-brightgreen.svg)](https://github.com/apple/swift-package-manager)
+[![CocoaPods Compatible](https://img.shields.io/cocoapods/v/ZIPFoundation.svg)](https://img.shields.io/cocoapods/v/ZIPFoundation.svg)
+[![Platform](https://img.shields.io/cocoapods/p/ZIPFoundation.svg?style=flat)](http://cocoadocs.org/docsets/ZIPFoundation)
+[![Twitter](https://img.shields.io/badge/twitter-@weichsel-blue.svg?style=flat)](http://twitter.com/weichsel)
 
 ZIP Foundation is a library to create, read and modify ZIP archive files.  
 It is written in Swift and based on [Apple's libcompression](https://developer.apple.com/documentation/compression/data_compression) for high performance and energy efficiency.
