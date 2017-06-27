@@ -92,7 +92,9 @@ extension Data {
     /// - Returns: The checksum calcualted from the bytes of the receiver and the starting seed.
     @inline(__always)
     public func crc32(checksum: CRC32) -> CRC32 {
-        let mask = UInt32(0xffffffff)
+        // The typecast is necessary on 32-bit platform because of
+        // https://bugs.swift.org/browse/SR-1774
+        let mask = 0xffffffff as UInt32
         let bufferSize = self.count/MemoryLayout<UInt8>.size
         var result = checksum ^ mask
         self.withUnsafeBytes { (bytes: UnsafePointer<UInt8>) in
