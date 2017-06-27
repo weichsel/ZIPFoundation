@@ -239,7 +239,7 @@ public final class Archive: Sequence {
 
 extension Archive.EndOfCentralDirectoryRecord {
     var data: Data {
-        var endOfCenendOfCentralDirectorySignature = self.endOfCentralDirectorySignature
+        var endOfCentralDirectorySignature = self.endOfCentralDirectorySignature
         var numberOfDisk = self.numberOfDisk
         var numberOfDiskStart = self.numberOfDiskStart
         var totalNumberOfEntriesOnDisk = self.totalNumberOfEntriesOnDisk
@@ -247,7 +247,7 @@ extension Archive.EndOfCentralDirectoryRecord {
         var sizeOfCentralDirectory = self.sizeOfCentralDirectory
         var offsetToStartOfCentralDirectory = self.offsetToStartOfCentralDirectory
         var zipFileCommentLength = self.zipFileCommentLength
-        var data = Data(buffer: UnsafeBufferPointer(start: &endOfCenendOfCentralDirectorySignature, count: 1))
+        var data = Data(buffer: UnsafeBufferPointer(start: &endOfCentralDirectorySignature, count: 1))
         data.append(UnsafeBufferPointer(start: &numberOfDisk, count: 1))
         data.append(UnsafeBufferPointer(start: &numberOfDiskStart, count: 1))
         data.append(UnsafeBufferPointer(start: &totalNumberOfEntriesOnDisk, count: 1))
