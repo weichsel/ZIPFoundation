@@ -228,7 +228,6 @@ extension Data {
 import CZlib
 
 extension Data {
-
     @inline(__always)
     static func encode(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
         var stream = z_stream()
