@@ -163,6 +163,7 @@ public final class Archive: Sequence {
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
             fseek(self.archiveFile, 0, SEEK_SET)
         }
+        setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultReadChunkSize))
     }
 
     deinit {
