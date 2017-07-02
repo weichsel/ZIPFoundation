@@ -62,6 +62,7 @@ public struct Entry: Equatable {
     }
 
     struct DataDescriptor: DataSerializable {
+        let data: Data
         let dataDescriptorSignature = UInt32(dataDescriptorStructSignature)
         let crc32: UInt32
         let compressedSize: UInt32
@@ -369,18 +370,6 @@ extension Entry.CentralDirectoryStructure {
 }
 
 extension Entry.DataDescriptor {
-    var data: Data {
-        var dataDescriptorSignature = self.dataDescriptorSignature
-        var crc32 = self.crc32
-        var compressedSize = self.compressedSize
-        var uncompressedSize = self.uncompressedSize
-        var data = Data(buffer: UnsafeBufferPointer(start: &dataDescriptorSignature, count: 1))
-        data.append(UnsafeBufferPointer(start: &crc32, count: 1))
-        data.append(UnsafeBufferPointer(start: &compressedSize, count: 1))
-        data.append(UnsafeBufferPointer(start: &uncompressedSize, count: 1))
-        return data
-    }
-
     init?(data: Data, additionalDataProvider provider: (Int) throws -> Data) {
         guard data.count == Entry.DataDescriptor.size else { return nil }
         let signature: UInt32 = data.scanValue(start: 0)
@@ -393,5 +382,10 @@ extension Entry.DataDescriptor {
         self.crc32 = data.scanValue(start: readOffset + 0)
         self.compressedSize = data.scanValue(start: readOffset + 4)
         self.uncompressedSize = data.scanValue(start: readOffset + 8)
+        // Our add(_ entry:) methods always maintain compressed & uncompressed
+        // sizes and so we don't need a data descriptor for newly added entries.
+        // Data descriptors of already existing entries are manually preserved
+        // when copying those entries to the tempArchive during remove(_ entry:).
+        self.data = Data()
     }
 }
