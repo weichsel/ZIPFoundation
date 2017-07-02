@@ -150,11 +150,12 @@ extension Archive {
             var extraDataLength = Int(localFileHeader.fileNameLength)
             extraDataLength += Int(localFileHeader.extraFieldLength)
             var entrySize = LocalFileHeader.size + extraDataLength
+            let isCompressed = centralDirectoryStructure.compressionMethod != CompressionMethod.none.rawValue
             if let dataDescriptor = dataDescriptor {
-                entrySize += Int(dataDescriptor.compressedSize)
+                entrySize += Int(isCompressed ? dataDescriptor.compressedSize : dataDescriptor.uncompressedSize)
                 entrySize += DataDescriptor.size
             } else {
-                entrySize += Int(localFileHeader.compressedSize)
+                entrySize += Int(isCompressed ? localFileHeader.compressedSize : localFileHeader.uncompressedSize)
             }
             if currentEntry != entry {
                 let entryStart = Int(currentEntry.centralDirectoryStructure.relativeOffsetOfLocalHeader)
@@ -165,9 +166,7 @@ extension Archive {
                 let centralDir = CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
                                                            offset: UInt32(offset))
                 centralDirectoryData.append(centralDir.data)
-            } else {
-                offset = entrySize
-            }
+            } else { offset = entrySize }
         }
         let startOfCentralDirectory = ftell(tempArchive.archiveFile)
         _ = try Data.write(chunk: centralDirectoryData, to: tempArchive.archiveFile)
