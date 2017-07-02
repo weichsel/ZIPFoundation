@@ -11,11 +11,12 @@
 import Foundation
 
 /// The default chunk size when reading entry data from an archive.
-public let defaultReadChunkSize = UInt32(1024*1024)
+public let defaultReadChunkSize = UInt32(16*1024)
 /// The default chunk size when writing entry data to an archive.
 public let defaultWriteChunkSize = defaultReadChunkSize
 /// The default permissions for newly added entries.
 public let defaultPermissions = UInt16(0o755)
+let defaultPOSIXBufferSize = defaultReadChunkSize
 let minDirectoryEndOffset = 22
 let maxDirectoryEndOffset = 66000
 let endOfCentralDirectoryStructSignature = 0x06054b50
@@ -163,6 +164,7 @@ public final class Archive: Sequence {
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
             fseek(self.archiveFile, 0, SEEK_SET)
         }
+        setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
     deinit {
