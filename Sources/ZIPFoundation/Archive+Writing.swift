@@ -147,27 +147,26 @@ extension Archive {
             let localFileHeader = currentEntry.localFileHeader
             let centralDirectoryStructure = currentEntry.centralDirectoryStructure
             let dataDescriptor = currentEntry.dataDescriptor
+            var extraDataLength = Int(localFileHeader.fileNameLength)
+            extraDataLength += Int(localFileHeader.extraFieldLength)
+            var entrySize = LocalFileHeader.size + extraDataLength
+            if let dataDescriptor = dataDescriptor {
+                entrySize += Int(dataDescriptor.compressedSize)
+                entrySize += DataDescriptor.size
+            } else {
+                entrySize += Int(localFileHeader.compressedSize)
+            }
             if currentEntry != entry {
-                _ = try Data.write(chunk: localFileHeader.data, to: tempArchive.archiveFile)
-                _ = try self.extract(currentEntry, bufferSize: bufferSize, skipDecompression: true,
-                                     consumer: { _ = try Data.write(chunk: $0, to: tempArchive.archiveFile) })
-                if let dataDescriptor = dataDescriptor {
-                    _ = try Data.write(chunk: dataDescriptor.data, to: tempArchive.archiveFile)
-                }
+                let entryStart = Int(currentEntry.centralDirectoryStructure.relativeOffsetOfLocalHeader)
+                fseek(self.archiveFile, entryStart, SEEK_SET)
+                let consumer = { _ = try Data.write(chunk: $0, to: tempArchive.archiveFile) }
+                _ = try Data.consumePart(of: self.archiveFile, size: Int(entrySize), chunkSize: Int(bufferSize),
+                                         skipCRC32: true, consumer: consumer)
                 let centralDir = CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
                                                            offset: UInt32(offset))
                 centralDirectoryData.append(centralDir.data)
             } else {
-                var extraDataLength = Int(localFileHeader.fileNameLength)
-                extraDataLength += Int(localFileHeader.extraFieldLength)
-                offset = LocalFileHeader.size
-                offset += extraDataLength
-                if let dataDescriptor = dataDescriptor {
-                    offset += Int(dataDescriptor.compressedSize)
-                    offset += DataDescriptor.size
-                } else {
-                    offset += Int(localFileHeader.compressedSize)
-                }
+                offset = entrySize
             }
         }
         let startOfCentralDirectory = ftell(tempArchive.archiveFile)
