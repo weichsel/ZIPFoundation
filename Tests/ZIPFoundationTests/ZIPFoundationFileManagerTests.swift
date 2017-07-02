@@ -114,7 +114,6 @@ extension ZIPFoundationTests {
         }
         var itemsExist = false
         for entry in archive {
-            print(entry.type)
             let directoryURL = destinationURL.appendingPathComponent(entry.path)
             itemsExist = fileManager.fileExists(atPath: directoryURL.path)
             if !itemsExist {
