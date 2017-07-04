@@ -30,7 +30,7 @@ It is written in Swift and based on [Apple's libcompression](https://developer.a
 - [x] Linux compatibility
 - [x] No 3rd party dependencies (on Apple platforms, zlib on Linux)
 - [x] Comprehensive Unit and Performance Test Coverage
-- [x] [Complete Documentation](http://cocoadocs.org/docsets/ZIPFoundation)
+- [x] Complete Documentation
 
 ## Requirements
 
@@ -91,7 +91,8 @@ $ pod install
 
 ## Usage
 ZIP Foundation provides two high level methods to zip and unzip items. Both are implemented as extension of `FileManager`.  
-The functionality of those methods is modeled after the behavior of the Archive Utility in macOS.
+The functionality of those methods is modeled after the behavior of the Archive Utility in macOS.  
+To learn more about the performance characteristics of the framework, you can read [this blog post](https://thomas.zoechling.me/journal/2017/07/ZIPFoundation.html).
 
 ### Zipping Files and Directories
 To zip a single file you simply pass a file URL representing the item you want to zip and a destination URL to `FileManager.zipItem(at sourceURL: URL, to destinationURL: URL)`:
