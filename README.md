@@ -6,7 +6,8 @@
 [![Twitter](https://img.shields.io/badge/twitter-@weichsel-blue.svg?style=flat)](http://twitter.com/weichsel)
 
 ZIP Foundation is a library to create, read and modify ZIP archive files.  
-It is written in Swift and based on [Apple's libcompression](https://developer.apple.com/documentation/compression/data_compression) for high performance and energy efficiency.
+It is written in Swift and based on [Apple's libcompression](https://developer.apple.com/documentation/compression/data_compression) for high performance and energy efficiency.  
+To learn more about the performance characteristics of the framework, you can read [this blog post](https://thomas.zoechling.me/journal/2017/07/ZIPFoundation.html).
 
 - [Features](#features)
 - [Requirements](#requirements)
@@ -92,7 +93,6 @@ $ pod install
 ## Usage
 ZIP Foundation provides two high level methods to zip and unzip items. Both are implemented as extension of `FileManager`.  
 The functionality of those methods is modeled after the behavior of the Archive Utility in macOS.  
-To learn more about the performance characteristics of the framework, you can read [this blog post](https://thomas.zoechling.me/journal/2017/07/ZIPFoundation.html).
 
 ### Zipping Files and Directories
 To zip a single file you simply pass a file URL representing the item you want to zip and a destination URL to `FileManager.zipItem(at sourceURL: URL, to destinationURL: URL)`:
