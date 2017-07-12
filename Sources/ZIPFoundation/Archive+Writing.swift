@@ -79,7 +79,7 @@ extension Archive {
     ///   - modificationDate: A `Date` describing the file modification date of the `Entry`.
     ///                       Default is the current `Date`.
     ///   - permissions: POSIX file permissions for the `Entry`.
-    ///                  Default is `0`o`755`.
+    ///                  Default is `0`o`644`.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied to `Entry`.
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
