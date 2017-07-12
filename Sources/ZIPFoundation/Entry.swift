@@ -132,6 +132,28 @@ public struct Entry: Equatable {
         }
         return checksum
     }
+    public var compressedSize: UInt32 {
+        var size:UInt32 = 0
+        if self.centralDirectoryStructure.usesDataDescriptor {
+            guard let dataDescriptor = self.dataDescriptor else {
+                return 0
+            }
+            size = dataDescriptor.compressedSize
+        }
+        return size
+    }
+
+    public var  uncompressedSize: UInt32 {
+        var size:UInt32 = 0
+        if self.centralDirectoryStructure.usesDataDescriptor {
+            guard let dataDescriptor = self.dataDescriptor else {
+                return 0
+            }
+            size = dataDescriptor.uncompressedSize
+        }
+        return size
+    }
+
     /// Returns the `EntryType` of the receiver.
     public var type: EntryType {
         //OS Type is stored in the upper byte of versionMadeBy
