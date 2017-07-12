@@ -118,7 +118,7 @@ extension Archive {
         let centralDirectory = try self.writeCentralDirectoryStructure(localFileHeader: localFileHeader,
                                                                        relativeOffset: offset,
                                                                        externalFileAttributes: externalFileAttributes)
-        if startOfCentralDirectory > UINT32_MAX {
+        if startOfCentralDirectory > Int.max {
             throw ArchiveError.invalidStartOfCentralDirectoryOffset
         }
         let start = UInt32(startOfCentralDirectory)
@@ -228,15 +228,15 @@ extension Archive {
 
     private func writeUncompressed(size: UInt32, bufferSize: UInt32,
                                    provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
-        var position = 0
+        var position: UInt32 = 0
         var sizeWritten = 0
         var checksum = CRC32(0)
         while position < size {
-            let readSize = (Int(size) - position) >= bufferSize ? Int(bufferSize) : (Int(size) - position)
+            let readSize = (size - position) >= bufferSize ? bufferSize : (size - position)
             let entryChunk = try provider(Int(position), Int(readSize))
             checksum = entryChunk.crc32(checksum: checksum)
             sizeWritten += try Data.write(chunk: entryChunk, to: self.archiveFile)
-            position += Int(bufferSize)
+            position += bufferSize
         }
         return (UInt32(sizeWritten), checksum)
     }
