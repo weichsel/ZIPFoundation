@@ -15,7 +15,7 @@ public let defaultReadChunkSize = UInt32(16*1024)
 /// The default chunk size when writing entry data to an archive.
 public let defaultWriteChunkSize = defaultReadChunkSize
 /// The default permissions for newly added entries.
-public let defaultPermissions = UInt16(0o755)
+public let defaultPermissions = UInt16(0o644)
 let defaultPOSIXBufferSize = defaultReadChunkSize
 let minDirectoryEndOffset = 22
 let maxDirectoryEndOffset = 66000
