@@ -309,9 +309,7 @@ extension ZIPFoundationTests {
             let fileTimeInterval = fileDate.timeIntervalSinceReferenceDate
             // ZIP uses MSDOS timestamps, which provide very poor accuracy
             // https://blogs.msdn.microsoft.com/oldnewthing/20151030-00/?p=91881
-            XCTAssertEqualWithAccuracy(currentTimeInterval,
-                                       fileTimeInterval,
-                                       accuracy: 2.0)
+            XCTAssertEqual(currentTimeInterval, fileTimeInterval, accuracy: 2.0)
         } catch {
             XCTFail("Failed to test last file modification date")
         }
