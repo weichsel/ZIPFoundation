@@ -111,7 +111,7 @@ extension ZIPFoundationTests {
         do {
             try archive.addEntry(with: nonExistantRelativePath, relativeTo: nonExistantBaseURL)
         } catch let error as CocoaError {
-            XCTAssert(error.code == .fileReadNoPermission)
+            XCTAssert(error.code == .fileReadNoSuchFile)
             didCatchExpectedError = true
         } catch {
             XCTFail("Unexpected error thrown while trying to add non-existant file to an archive.")
