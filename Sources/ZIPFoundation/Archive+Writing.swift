@@ -29,6 +29,10 @@ extension Archive {
                          bufferSize: UInt32 = defaultWriteChunkSize) throws {
         let fileManager = FileManager()
         let entryURL = baseURL.appendingPathComponent(path)
+        guard fileManager.fileExists(atPath: entryURL.path) else {
+            throw NSError(domain: NSCocoaErrorDomain, code: CocoaError.fileReadNoSuchFile.rawValue,
+                          userInfo: [NSFilePathErrorKey: entryURL.path])
+        }
         guard fileManager.isReadableFile(atPath: entryURL.path) else {
             throw NSError(domain: NSCocoaErrorDomain, code: CocoaError.fileReadNoPermission.rawValue,
                           userInfo: [NSFilePathErrorKey: url.path])
