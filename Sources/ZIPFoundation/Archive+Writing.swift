@@ -65,8 +65,7 @@ extension Archive {
                 let linkFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: linkDestination)
                 let linkLength = Int(strlen(linkFileSystemRepresentation))
                 let linkBuffer = UnsafeBufferPointer(start: linkFileSystemRepresentation, count: linkLength)
-                let linkData = Data.init(buffer: linkBuffer)
-                return linkData
+                return Data.init(buffer: linkBuffer)
             }
             try self.addEntry(with: path, type: type, uncompressedSize: uncompressedSize,
                               modificationDate: modDate, permissions: permissions,
