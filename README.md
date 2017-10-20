@@ -48,6 +48,7 @@ The ZIP Foundation package uses the [V4 Package Description API](https://github.
 To add ZIP Foundation as a dependency, you have to add it to the `dependencies` of your `Package.swift` file and refer to that dependency in your `target`.
 
 ```swift
+// swift-tools-version:4.0
 import PackageDescription
 let package = Package(
     name: "<Your Product Name>",
