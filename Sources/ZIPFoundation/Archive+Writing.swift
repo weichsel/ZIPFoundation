@@ -30,12 +30,10 @@ extension Archive {
         let fileManager = FileManager()
         let entryURL = baseURL.appendingPathComponent(path)
         guard fileManager.fileExists(atPath: entryURL.path) else {
-            throw NSError(domain: NSCocoaErrorDomain, code: CocoaError.fileReadNoSuchFile.rawValue,
-                          userInfo: [NSFilePathErrorKey: entryURL.path])
+            throw CocoaError.error(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: entryURL.path], url: nil)
         }
         guard fileManager.isReadableFile(atPath: entryURL.path) else {
-            throw NSError(domain: NSCocoaErrorDomain, code: CocoaError.fileReadNoPermission.rawValue,
-                          userInfo: [NSFilePathErrorKey: url.path])
+            throw CocoaError.error(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: url.path], url: nil)
         }
         let type = try FileManager.typeForItem(at: entryURL)
         let modDate = try FileManager.fileModificationDateTimeForItem(at: entryURL)

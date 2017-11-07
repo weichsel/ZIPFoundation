@@ -25,8 +25,7 @@ extension Archive {
         switch entry.type {
         case .file:
             guard !fileManager.fileExists(atPath: url.path) else {
-                throw NSError(domain: NSCocoaErrorDomain, code: CocoaError.fileWriteFileExists.rawValue,
-                              userInfo: [NSFilePathErrorKey: url.path])
+                throw CocoaError.error(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path], url: nil)
             }
             try fileManager.createParentDirectoryStructure(for: url)
             let destinationFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
@@ -41,8 +40,7 @@ extension Archive {
             checksum = try self.extract(entry, bufferSize: bufferSize, consumer: consumer)
         case .symlink:
             guard !fileManager.fileExists(atPath: url.path) else {
-                throw NSError(domain: NSCocoaErrorDomain, code: CocoaError.fileWriteFileExists.rawValue,
-                              userInfo: [NSFilePathErrorKey: url.path])
+                throw CocoaError.error(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path], url: nil)
             }
             let consumer = { (data: Data) in
                 guard let linkPath = String(data: data, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
