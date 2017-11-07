@@ -87,7 +87,7 @@ After adding ZIPFoundation to the `Cartfile`, you have to fetch the sources by r
 carthage update --no-build
 ```
 
-The fetched project has to be integrated into your workspace by dragging `ZIPFoundation.framework` to Xcode's Project Navigator. (See [official Carhage docs](https://github.com/Carthage/Carthage#adding-frameworks-to-an-application).)
+The fetched project has to be integrated into your workspace by dragging `ZIPFoundation.xcodeproj` to Xcode's Project Navigator. (See [official Carhage docs](https://github.com/Carthage/Carthage#adding-frameworks-to-an-application).)
 
 ### CocoaPods
 
