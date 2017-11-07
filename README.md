@@ -81,6 +81,14 @@ To integrate ZIPFoundation into your Xcode project using Carthage, you have to a
 github "weichsel/ZIPFoundation" ~> 0.9
 ```
 
+After adding ZIPFoundation to the `Cartfile`, you have to fetch the sources by running:
+
+```bash
+carthage update --no-build
+```
+
+The fetched project has to be integrated into your workspace by dragging `ZIPFoundation.framework` to Xcode's Project Navigator. (See [official Carhage docs](https://github.com/Carthage/Carthage#adding-frameworks-to-an-application).)
+
 ### CocoaPods
 
 CocoaPods is a dependency manager for Objective-C and Swift.  
