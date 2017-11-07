@@ -80,12 +80,7 @@ public let crcTable: [UInt32] = [
     0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b,
     0x2d02ef8d]
 
-extension Data {
-    enum CompressionError: Error {
-        case invalidStream
-        case corruptedData
-    }
-
+public extension Data {
     /// Calculates the `CRC32` checksum of the receiver.
     ///
     /// - Parameter checksum: The starting seed.
@@ -113,6 +108,13 @@ extension Data {
             }
         }
         return result ^ mask
+    }
+}
+
+extension Data {
+    enum CompressionError: Error {
+        case invalidStream
+        case corruptedData
     }
 
     static func compress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
