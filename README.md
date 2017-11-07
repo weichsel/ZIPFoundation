@@ -70,6 +70,16 @@ After adding the dependency, you can fetch the library with:
 $ swift package resolve
 ```
 
+### Carthage
+
+[Carthage](https://github.com/Carthage/Carthage) is a decentralized dependency manager.  
+Installation instructions can be found in the project's [README file](https://github.com/Carthage/Carthage#installing-carthage).
+
+To integrate ZIPFoundation into your Xcode project using Carthage, you have to add it to your `Cartfile`:
+
+```ogdl
+github "weichsel/ZIPFoundation" ~> 0.9
+```
 
 ### CocoaPods
 
