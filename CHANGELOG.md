@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.3](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.3)
+
+### Added
+ - Carthage support
+ 
+### Updated
+ - Improved error handling
+ - Made consistent use of Swift's `CocoaError` instead of `NSError`
+
 ## [0.9.2](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.2)
 
 ### Updated
