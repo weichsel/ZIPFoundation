@@ -402,7 +402,7 @@
 		OBJ_45 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 0.9.3;
+				CURRENT_PROJECT_VERSION = 0.9.4;
 				ENABLE_TESTABILITY = YES;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundation_Info.plist;
@@ -426,7 +426,7 @@
 		OBJ_46 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 0.9.3;
+				CURRENT_PROJECT_VERSION = 0.9.4;
 				ENABLE_TESTABILITY = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				HEADER_SEARCH_PATHS = "$(inherited)";
