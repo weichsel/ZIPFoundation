@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.9.4](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.4)
+
+### Updated
+ - Fixed a wrong setting for `FRAMEWORK_SEARCH_PATHS` that interfered with code signing
+ - Added a proper value for `CURRENT_PROJECT_VERSION` to make the framework App Store compliant when using Carthage
+
 ## [0.9.3](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.3)
 
 ### Added
