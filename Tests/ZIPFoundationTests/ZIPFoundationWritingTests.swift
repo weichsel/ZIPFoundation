@@ -114,7 +114,7 @@ extension ZIPFoundationTests {
             XCTAssert(error.code == .fileReadNoSuchFile)
             didCatchExpectedError = true
         } catch {
-            XCTFail("Unexpected error thrown while trying to add non-existant file to an archive.")
+            XCTFail("Unexpected error while trying to add non-existant file to an archive.")
         }
         XCTAssertTrue(didCatchExpectedError)
     }
@@ -129,7 +129,7 @@ extension ZIPFoundationTests {
             XCTAssert(error == .unwritableArchive)
             didCatchExpectedError = true
         } catch {
-            XCTFail("Unexpected error thrown while trying to add an entry to a readonly archive.")
+            XCTFail("Unexpected error while trying to add an entry to a readonly archive.")
         }
         XCTAssertTrue(didCatchExpectedError)
     }
@@ -198,7 +198,7 @@ extension ZIPFoundationTests {
             XCTAssertNotNil(error == .invalidStartOfCentralDirectoryOffset)
             didCatchExpectedError = true
         } catch {
-            XCTFail("Unexpected error thrown while trying to remove entry from unwritable archive.")
+            XCTFail("Unexpected error while trying to remove entry from unwritable archive.")
         }
         XCTAssert(didCatchExpectedError)
     }
@@ -271,7 +271,7 @@ extension ZIPFoundationTests {
             XCTAssertNotNil(error == .unwritableArchive)
             didCatchExpectedError = true
         } catch {
-            XCTFail("Unexpected error thrown while trying to remove entry from unwritable archive.")
+            XCTFail("Unexpected error while trying to remove entry from unwritable archive.")
         }
         setrlimit(fileNoFlag, &storedRlimit)
         XCTAssertTrue(didCatchExpectedError)

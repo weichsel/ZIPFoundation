@@ -53,7 +53,7 @@ extension ZIPFoundationTests {
         measure {
             do {
                 guard let entry = archive[entryName] else {
-                    XCTFail()
+                    XCTFail("Failed to read entry.")
                     return
                 }
                 _ = try archive.extract(entry, consumer: {_ in })
@@ -104,7 +104,7 @@ extension ZIPFoundationTests {
         measure {
             do {
                 guard let entry = archive[entryName] else {
-                    XCTFail()
+                    XCTFail("Failed to read entry.")
                     return
                 }
                 _ = try archive.extract(entry, consumer: {_ in })

@@ -47,7 +47,7 @@ extension ZIPFoundationTests {
         } catch let error as Data.DataError {
             XCTAssert(error == .unreadableFile)
         } catch {
-            XCTFail("Unexpected error thrown while testing to read from a closed file.")
+            XCTFail("Unexpected error while testing to read from a closed file.")
         }
     }
 
@@ -70,7 +70,7 @@ extension ZIPFoundationTests {
         } catch let error as Data.DataError {
             XCTAssert(error == .unwritableFile)
         } catch {
-            XCTFail("Unexpected error thrown while testing to write into a closed file.")
+            XCTFail("Unexpected error while testing to write into a closed file.")
         }
     }
 }

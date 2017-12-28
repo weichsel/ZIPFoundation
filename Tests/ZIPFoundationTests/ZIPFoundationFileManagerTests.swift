@@ -22,7 +22,7 @@ extension ZIPFoundationTests {
             try fileManager.zipItem(at: assetURL, to: fileArchiveURL)
         } catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
         guard let archive = Archive(url: fileArchiveURL, accessMode: .read) else {
-            XCTFail()
+            XCTFail("Failed to read archive.")
             return
         }
         XCTAssertNotNil(archive[assetURL.lastPathComponent])
@@ -49,11 +49,11 @@ extension ZIPFoundationTests {
             try fileManager.zipItem(at: directoryURL, to: parentDirectoryArchiveURL, shouldKeepParent: true)
         } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
         guard let directoryArchive = Archive(url: directoryArchiveURL, accessMode: .read) else {
-            XCTFail(); return
+            XCTFail("Failed to read archive."); return
         }
         XCTAssert(directoryArchive.checkIntegrity())
         guard let parentDirectoryArchive = Archive(url: parentDirectoryArchiveURL, accessMode: .read) else {
-            XCTFail(); return
+            XCTFail("Failed to read archive."); return
         }
         XCTAssert(parentDirectoryArchive.checkIntegrity())
     }
@@ -172,7 +172,7 @@ extension ZIPFoundationTests {
         nestedURL.appendPathComponent(processInfo.globallyUniqueString)
         do {
             try fileManager.createParentDirectoryStructure(for: nestedURL)
-        } catch { XCTFail() }
+        } catch { XCTFail("Failed to create parent directory.") }
     }
 
     func testFileAttributeHelperMethods() {
@@ -190,12 +190,12 @@ extension ZIPFoundationTests {
                                                             XCTAssert(count == pathData.count)
                                                             return pathData
         }) else {
-            XCTFail()
+            XCTFail("Failed to read central directory structure.")
             return
         }
         var attributes = FileManager.attributes(from: cds)
         guard let permissions = attributes[.posixPermissions] as? UInt16 else {
-            XCTFail()
+            XCTFail("Failed to read file attributes.")
             return
         }
         XCTAssert(permissions == defaultPermissions)
@@ -210,7 +210,7 @@ extension ZIPFoundationTests {
         } catch let error as CocoaError {
             XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
         } catch {
-            XCTFail()
+            XCTFail("Unexpected error while testing permissions.")
             return
         }
     }
@@ -224,7 +224,7 @@ extension ZIPFoundationTests {
 
     func testFileModificationDateHelperMethods() {
         guard let nonFileURL = URL(string: "https://www.peakstep.com/") else {
-            XCTFail()
+            XCTFail("Failed to create file URL.")
             return
         }
         let nonExistantURL = URL(fileURLWithPath: "/nonexistant")
@@ -267,7 +267,7 @@ extension ZIPFoundationTests {
             XCTFail("Unexpected error while trying to retrieve file type")
         }
         guard let nonFileURL = URL(string: "https://www.peakstep.com") else {
-            XCTFail()
+            XCTFail("Failed to create test URL.")
             return
         }
         do {

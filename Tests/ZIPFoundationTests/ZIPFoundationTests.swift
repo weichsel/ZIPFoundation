@@ -51,7 +51,7 @@ class ZIPFoundationTests: XCTestCase {
                                                     withIntermediateDirectories: true,
                                                     attributes: nil)
         } catch {
-            XCTFail()
+            XCTFail("Unexpected error while trying to set up test resources.")
         }
     }
 
@@ -60,7 +60,7 @@ class ZIPFoundationTests: XCTestCase {
             let fileManager = FileManager()
             try fileManager.removeItem(at: tempZipDirectoryURL)
         } catch {
-            XCTFail()
+            XCTFail("Unexpected error while trying to clean up test resources.")
         }
         super.tearDown()
     }
@@ -110,7 +110,7 @@ class ZIPFoundationTests: XCTestCase {
         XCTAssert(result == true)
         guard let invalidCentralDirArchive = Archive(url: invalidCentralDirArchiveURL,
                                                      accessMode: .read) else {
-                                                        XCTFail()
+                                                        XCTFail("Failed to read archive.")
                                                         return
         }
         for _ in invalidCentralDirArchive {
@@ -129,14 +129,14 @@ class ZIPFoundationTests: XCTestCase {
             try invalidLocalFHArchiveData.write(to: invalidLocalFHArchiveURL)
             guard let invalidLocalFHArchive = Archive(url: invalidLocalFHArchiveURL,
                                                       accessMode: .read) else {
-                                                        XCTFail()
+                                                        XCTFail("Failed to read local file header.")
                                                         return
             }
             for _ in invalidLocalFHArchive {
                 didFailToMakeIteratorAsExpected = false
             }
         } catch {
-            XCTFail()
+            XCTFail("Unexpected error while testing iterator error conditions.")
         }
         XCTAssertTrue(didFailToMakeIteratorAsExpected)
     }

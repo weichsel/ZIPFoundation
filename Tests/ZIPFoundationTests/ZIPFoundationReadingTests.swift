@@ -99,7 +99,7 @@ extension ZIPFoundationTests {
         } catch let error as CocoaError {
             XCTAssert(error.code == CocoaError.fileWriteFileExists)
         } catch {
-            XCTFail("Unexpected error thrown while trying to extract entry to existing URL.")
+            XCTFail("Unexpected error while trying to extract entry to existing URL.")
             return
         }
         guard let linkEntry = archive["testZipItemLink"] else {
@@ -112,7 +112,7 @@ extension ZIPFoundationTests {
         } catch let error as CocoaError {
             XCTAssert(error.code == CocoaError.fileWriteFileExists)
         } catch {
-            XCTFail("Unexpected error thrown while trying to extract link entry to existing URL.")
+            XCTFail("Unexpected error while trying to extract link entry to existing URL.")
             return
         }
     }
@@ -130,18 +130,18 @@ extension ZIPFoundationTests {
             _ = try Data.write(chunk: Data.init(count: 512*1024), to: destinationFile)
             fclose(destinationFile)
             guard let archive = Archive(url: archiveURL, accessMode: .read) else {
-                XCTFail()
+                XCTFail("Failed to read archive.")
                 return
             }
             guard let entry = archive["data.random"] else {
-                XCTFail()
+                XCTFail("Failed to read entry.")
                 return
             }
             _ = try archive.extract(entry, consumer: { _ in })
         } catch let error as Data.CompressionError {
             XCTAssert(error == Data.CompressionError.corruptedData)
         } catch {
-            XCTFail("Unexpected error thrown while testing an archive with corrupt entry data.")
+            XCTFail("Unexpected error while testing an archive with corrupt entry data.")
         }
     }
 
@@ -155,7 +155,7 @@ extension ZIPFoundationTests {
             } catch let error as Archive.ArchiveError {
                 XCTAssert(error == .invalidEntryPath)
             } catch {
-                XCTFail("Unexpected error thrown while trying to extract entry with invalid symbolic link.")
+                XCTFail("Unexpected error while trying to extract entry with invalid symbolic link.")
             }
         }
     }
@@ -168,7 +168,7 @@ extension ZIPFoundationTests {
             } catch let error as Archive.ArchiveError {
                 XCTAssert(error == .invalidCompressionMethod)
             } catch {
-                XCTFail("Unexpected error thrown while trying to extract entry with invalid compression method link.")
+                XCTFail("Unexpected error while trying to extract entry with invalid compression method link.")
             }
         }
     }
