@@ -135,7 +135,7 @@ public final class Archive: Sequence {
         switch mode {
         case .read:
             guard fileManager.fileExists(atPath: url.path) else { return nil }
-            guard fileManager.isReadableFile(atPath: url.path) else {return nil }
+            guard fileManager.isReadableFile(atPath: url.path) else { return nil }
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             self.archiveFile = fopen(fileSystemRepresentation, "rb")
             guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
@@ -155,7 +155,7 @@ public final class Archive: Sequence {
                                          attributes: nil) else { return nil }
             fallthrough
         case .update:
-            guard fileManager.isWritableFile(atPath: url.path) else {return nil }
+            guard fileManager.isWritableFile(atPath: url.path) else { return nil }
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             self.archiveFile = fopen(fileSystemRepresentation, "rb+")
             guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
