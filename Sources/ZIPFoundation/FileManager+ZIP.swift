@@ -92,9 +92,9 @@ extension FileManager {
         }
     }
 
-    class func attributes(from centralDirectoryStructure: CentralDirectoryStructure) -> [FileAttributeKey : Any] {
+    class func attributes(from centralDirectoryStructure: CentralDirectoryStructure) -> [FileAttributeKey: Any] {
         var attributes = [.posixPermissions: defaultPermissions,
-                          .modificationDate: Date()] as [FileAttributeKey : Any]
+                          .modificationDate: Date()] as [FileAttributeKey: Any]
         let versionMadeBy = centralDirectoryStructure.versionMadeBy
         let fileTime = centralDirectoryStructure.lastModFileTime
         let fileDate = centralDirectoryStructure.lastModFileDate

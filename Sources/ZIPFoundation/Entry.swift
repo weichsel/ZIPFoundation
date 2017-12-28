@@ -111,12 +111,12 @@ public struct Entry: Equatable {
         let codepage437 = String.Encoding(rawValue: dosLatinUSStringEncoding)
         let isUTF8 = ((self.centralDirectoryStructure.generalPurposeBitFlag >> 11) & 1) != 0
         let encoding = isUTF8 ? String.Encoding.utf8 : codepage437
-        return String(data:self.centralDirectoryStructure.fileNameData, encoding: encoding) ?? ""
+        return String(data: self.centralDirectoryStructure.fileNameData, encoding: encoding) ?? ""
     }
     /// Returns the file attributes of the receiver as key/value pairs.
     ///
     /// Contains the modification date and file permissions.
-    public var fileAttributes: [FileAttributeKey : Any] {
+    public var fileAttributes: [FileAttributeKey: Any] {
         return FileManager.attributes(from: self.centralDirectoryStructure)
     }
     /// Returns the `CRC32` checksum of the receiver.
