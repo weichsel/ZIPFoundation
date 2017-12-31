@@ -100,11 +100,11 @@ extension Data {
         self.withUnsafeBytes { (bytes: UnsafePointer<UInt8>) in
             let bins = stride(from: 0, to: bufferSize, by: 256)
             for bin in bins {
-                for i in 0..<256 {
-                    let binIndex = bin+i
-                    guard binIndex < bufferSize else { break }
+                for binIndex in 0..<256 {
+                    let byteIndex = bin + binIndex
+                    guard byteIndex < bufferSize else { break }
 
-                    let byte = bytes[binIndex]
+                    let byte = bytes[byteIndex]
                     let index = Int((result ^ UInt32(byte)) & 0xff)
                     result = (result >> 8) ^ crcTable[index]
                 }
