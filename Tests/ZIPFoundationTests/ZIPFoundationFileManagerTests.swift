@@ -46,7 +46,7 @@ extension ZIPFoundationTests {
             try fileManager.createSymbolicLink(at: directoryURL.appendingPathComponent("link"),
                                                withDestinationURL: newAssetURL)
             try fileManager.zipItem(at: directoryURL, to: directoryArchiveURL)
-            try fileManager.zipItem(at: directoryURL, to: parentDirectoryArchiveURL, shouldKeepParent: true)
+            try fileManager.zipItem(at: directoryURL, to: parentDirectoryArchiveURL, shouldKeepParent: false)
         } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
         guard let directoryArchive = Archive(url: directoryArchiveURL, accessMode: .read) else {
             XCTFail("Failed to read archive."); return
