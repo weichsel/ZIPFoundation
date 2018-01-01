@@ -98,15 +98,13 @@ extension Data {
         let bufferSize = self.count/MemoryLayout<UInt8>.size
         var result = checksum ^ mask
         self.withUnsafeBytes { (bytes: UnsafePointer<UInt8>) in
-            let byteArray = UnsafeBufferPointer(start: bytes, count: bufferSize)
             let bins = stride(from: 0, to: bufferSize, by: 256)
-            let chunks = bins.map { (position) -> RandomAccessSlice<UnsafeBufferPointer<UInt8>> in
-                let end = (position + 256)
-                let range = position..<Swift.min(end, byteArray.count)
-                return byteArray[range]
-            }
-            for chunk in chunks {
-                for byte in chunk {
+            for bin in bins {
+                for binIndex in 0..<256 {
+                    let byteIndex = bin + binIndex
+                    guard byteIndex < bufferSize else { break }
+
+                    let byte = bytes[byteIndex]
                     let index = Int((result ^ UInt32(byte)) & 0xff)
                     result = (result >> 8) ^ crcTable[index]
                 }
