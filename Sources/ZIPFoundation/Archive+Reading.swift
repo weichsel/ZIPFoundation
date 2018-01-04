@@ -88,7 +88,7 @@ extension Archive {
             defer { progress?.completedUnitCount = 1 }
             let localFileHeader = entry.localFileHeader
             let size = Int(localFileHeader.compressedSize)
-            let data = try Data.readChunk(from: self.archiveFile, size: size)
+            let data = try Data.readChunk(of: size, from: self.archiveFile)
             checksum = data.crc32(checksum: 0)
             try consumer(data)
         }
@@ -110,7 +110,7 @@ extension Archive {
         progress?.totalUnitCount = Int64(size)
         defer { progress?.completedUnitCount = Int64(size) }
         return try Data.decompress(size: Int(size), bufferSize: Int(bufferSize), provider: { (_, chunkSize) -> Data in
-            let data = try Data.readChunk(from: self.archiveFile, size: chunkSize)
+            let data = try Data.readChunk(of: chunkSize, from: self.archiveFile)
             progress?.completedUnitCount += Int64(data.count)
             return data
         }, consumer: consumer)

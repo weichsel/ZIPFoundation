@@ -45,7 +45,7 @@ extension Archive {
             let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: entryURL.path)
             let entryFile: UnsafeMutablePointer<FILE> = fopen(entryFileSystemRepresentation, "rb")
             defer { fclose(entryFile) }
-            provider = { _, _ in return try Data.readChunk(from: entryFile, size: Int(bufferSize)) }
+            provider = { _, _ in return try Data.readChunk(of: Int(bufferSize), from: entryFile) }
             try self.addEntry(with: path, type: type, uncompressedSize: uncompressedSize,
                               modificationDate: modDate, permissions: permissions,
                               compressionMethod: compressionMethod, bufferSize: bufferSize, provider: provider)
@@ -95,8 +95,8 @@ extension Archive {
         var startOfCentralDirectory = Int(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
         var existingCentralDirectoryData = Data()
         fseek(self.archiveFile, startOfCentralDirectory, SEEK_SET)
-        existingCentralDirectoryData = try Data.readChunk(from: self.archiveFile,
-                                                          size: Int(endOfCentralDirectoryRecord.sizeOfCentralDirectory))
+        existingCentralDirectoryData = try Data.readChunk(of: Int(endOfCentralDirectoryRecord.sizeOfCentralDirectory),
+                                                          from: self.archiveFile)
         fseek(self.archiveFile, startOfCentralDirectory, SEEK_SET)
         let localFileHeaderStart = ftell(self.archiveFile)
         let modDateTime = modificationDate.fileModificationDateTime
