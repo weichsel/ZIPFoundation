@@ -39,7 +39,7 @@ extension Data {
 
     static func consumePart(of file: UnsafeMutablePointer<FILE>,
                             size: Int, chunkSize: Int, skipCRC32: Bool = false,
-                            progress: Progress? = nil, consumer: Consumer) throws -> CRC32 {
+                            consumer: Consumer) throws -> CRC32 {
         let readInOneChunk = (size < chunkSize)
         var chunkSize = readInOneChunk ? size : chunkSize
         var checksum = CRC32(0)
@@ -53,9 +53,7 @@ extension Data {
                 checksum = data.crc32(checksum: checksum)
             }
             bytesRead += chunkSize
-            progress?.completedUnitCount = Int64(bytesRead)
         }
-        progress?.completedUnitCount = Int64(size)
         return checksum
     }
 
