@@ -26,7 +26,7 @@ extension Archive {
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
     /// - Throws: An error if the source file cannot be read or the receiver is not writable.
     public func addEntry(with path: String, relativeTo baseURL: URL, compressionMethod: CompressionMethod = .none,
-                         bufferSize: UInt32 = defaultWriteChunkSize) throws {
+                         bufferSize: UInt32 = defaultWriteChunkSize, progress: Progress? = nil) throws {
         let fileManager = FileManager()
         let entryURL = baseURL.appendingPathComponent(path)
         guard fileManager.fileExists(atPath: entryURL.path) else {
@@ -48,18 +48,19 @@ extension Archive {
             provider = { _, _ in return try Data.readChunk(of: Int(bufferSize), from: entryFile) }
             try self.addEntry(with: path, type: type, uncompressedSize: uncompressedSize,
                               modificationDate: modDate, permissions: permissions,
-                              compressionMethod: compressionMethod, bufferSize: bufferSize, provider: provider)
+                              compressionMethod: compressionMethod, bufferSize: bufferSize,
+                              progress: progress, provider: provider)
         case .directory:
             provider = { _, _ in return Data() }
             try self.addEntry(with: path.hasSuffix("/") ? path : path + "/",
                               type: type, uncompressedSize: uncompressedSize,
                               modificationDate: modDate, permissions: permissions,
-                              compressionMethod: compressionMethod, bufferSize: bufferSize, provider: provider)
+                              compressionMethod: compressionMethod, bufferSize: bufferSize,
+                              progress: progress, provider: provider)
         case .symlink:
             provider = { _, _ -> Data in
                 let fileManager = FileManager()
-                let path = entryURL.path
-                let linkDestination = try fileManager.destinationOfSymbolicLink(atPath: path)
+                let linkDestination = try fileManager.destinationOfSymbolicLink(atPath: entryURL.path)
                 let linkFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: linkDestination)
                 let linkLength = Int(strlen(linkFileSystemRepresentation))
                 let linkBuffer = UnsafeBufferPointer(start: linkFileSystemRepresentation, count: linkLength)
@@ -67,7 +68,8 @@ extension Archive {
             }
             try self.addEntry(with: path, type: type, uncompressedSize: uncompressedSize,
                               modificationDate: modDate, permissions: permissions,
-                              compressionMethod: compressionMethod, bufferSize: bufferSize, provider: provider)
+                              compressionMethod: compressionMethod, bufferSize: bufferSize,
+                              progress: progress, provider: provider)
         }
     }
 
@@ -89,7 +91,7 @@ extension Archive {
                          modificationDate: Date = Date(),
                          permissions: UInt16 = defaultPermissions,
                          compressionMethod: CompressionMethod = .none, bufferSize: UInt32 = defaultWriteChunkSize,
-                         provider: Provider) throws {
+                         progress: Progress? = nil, provider: Provider) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
         var endOfCentralDirectoryRecord = self.endOfCentralDirectoryRecord
         var startOfCentralDirectory = Int(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
@@ -104,8 +106,8 @@ extension Archive {
                                                             size: (uncompressedSize, 0), checksum: 0,
                                                             modificationDateTime: modDateTime)
         let (sizeWritten, checksum)  = try self.writeEntry(localFileHeader: localFileHeader, type: type,
-                                                           compressionMethod: compressionMethod,
-                                                           bufferSize: bufferSize, provider: provider)
+                                                           compressionMethod: compressionMethod, bufferSize: bufferSize,
+                                                           progress: progress, provider: provider)
         startOfCentralDirectory = ftell(self.archiveFile)
         fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
         // Write the local file header a second time. Now with compressedSize (if applicable) and a valid checksum.
@@ -205,7 +207,7 @@ extension Archive {
     }
 
     private func writeEntry(localFileHeader: LocalFileHeader, type: Entry.EntryType,
-                            compressionMethod: CompressionMethod, bufferSize: UInt32,
+                            compressionMethod: CompressionMethod, bufferSize: UInt32, progress: Progress? = nil,
                             provider: Provider) throws -> (sizeWritten: UInt32, crc32: CRC32) {
         var checksum = CRC32(0)
         var sizeWritten = UInt32(0)
@@ -214,10 +216,12 @@ extension Archive {
             switch compressionMethod {
             case .none:
                 (sizeWritten, checksum) = try self.writeUncompressed(size: localFileHeader.uncompressedSize,
-                                                                     bufferSize: bufferSize, provider: provider)
+                                                                     bufferSize: bufferSize,
+                                                                     progress: progress, provider: provider)
             case .deflate:
                 (sizeWritten, checksum) = try self.writeCompressed(size: localFileHeader.uncompressedSize,
-                                                                   bufferSize: bufferSize, provider: provider)
+                                                                   bufferSize: bufferSize,
+                                                                   progress: progress, provider: provider)
             }
         case .directory: _ = try provider(0, 0)
         case .symlink:
@@ -227,26 +231,34 @@ extension Archive {
         return (sizeWritten, checksum)
     }
 
-    private func writeUncompressed(size: UInt32, bufferSize: UInt32,
+    private func writeUncompressed(size: UInt32, bufferSize: UInt32, progress: Progress? = nil,
                                    provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
         var position = 0
         var sizeWritten = 0
         var checksum = CRC32(0)
+        progress?.totalUnitCount = Int64(size)
+        defer { progress?.completedUnitCount = Int64(size) }
+
         while position < size {
             let readSize = (Int(size) - position) >= bufferSize ? Int(bufferSize) : (Int(size) - position)
             let entryChunk = try provider(Int(position), Int(readSize))
             checksum = entryChunk.crc32(checksum: checksum)
             sizeWritten += try Data.write(chunk: entryChunk, to: self.archiveFile)
             position += Int(bufferSize)
+            progress?.completedUnitCount = Int64(sizeWritten)
         }
         return (UInt32(sizeWritten), checksum)
     }
 
-    private func writeCompressed(size: UInt32, bufferSize: UInt32,
+    private func writeCompressed(size: UInt32, bufferSize: UInt32, progress: Progress? = nil,
                                  provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
         var sizeWritten = 0
+        progress?.totalUnitCount = Int64(size)
+        defer { progress?.completedUnitCount = Int64(size) }
+
         let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize), provider: provider) { data in
             sizeWritten += try Data.write(chunk: data, to: self.archiveFile)
+            progress?.completedUnitCount = Int64(sizeWritten)
         }
         return(UInt32(sizeWritten), checksum)
     }

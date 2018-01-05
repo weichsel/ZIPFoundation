@@ -26,7 +26,8 @@ extension FileManager {
     ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element
     ///                       within the archive. Default is `true`.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
-    public func zipItem(at sourceURL: URL, to destinationURL: URL, shouldKeepParent: Bool = true) throws {
+    public func zipItem(at sourceURL: URL, to destinationURL: URL,
+                        shouldKeepParent: Bool = true, progress: Progress? = nil) throws {
         guard self.fileExists(atPath: sourceURL.path) else {
             throw CocoaError.error(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path], url: nil)
         }
@@ -38,6 +39,9 @@ extension FileManager {
         }
         let isDirectory = try FileManager.typeForItem(at: sourceURL) == .directory
         if isDirectory {
+            progress?.totalUnitCount = try Int64(FileManager.numberOfSubItems(at: sourceURL))
+            defer { progress?.completedUnitCount = progress?.totalUnitCount ?? 0 }
+
             // Use the path based enumerator because it returns String objects containing
             // relative paths instead of absolute URLs
             let dirEnumerator = self.enumerator(atPath: sourceURL.path)
@@ -50,6 +54,9 @@ extension FileManager {
                 try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL)
             }
         } else {
+            progress?.totalUnitCount = 1
+            defer { progress?.completedUnitCount = 1 }
+
             let baseURL = sourceURL.deletingLastPathComponent()
             try archive.addEntry(with: sourceURL.lastPathComponent, relativeTo: baseURL)
         }
@@ -189,6 +196,14 @@ extension FileManager {
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
         return Entry.EntryType(mode: fileStat.st_mode)
+    }
+
+    class func numberOfSubItems(at url: URL) throws -> Int {
+        let fileManager = FileManager()
+        guard fileManager.fileExists(atPath: url.path) else {
+            throw CocoaError.error(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path], url: nil)
+        }
+        return try fileManager.subpathsOfDirectory(atPath: url.path).count
     }
 }
 
