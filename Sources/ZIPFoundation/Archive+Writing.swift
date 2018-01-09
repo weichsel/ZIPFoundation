@@ -138,7 +138,7 @@ extension Archive {
     ///   - entry: The `Entry` to remove.
     ///   - bufferSize: The maximum size for the read and write buffers used during removal.
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
-    public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize) throws {
+    public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
         let uniqueString = ProcessInfo.processInfo.globallyUniqueString
         let tempArchiveURL =  URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(uniqueString)
         guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
@@ -146,30 +146,28 @@ extension Archive {
         }
         var centralDirectoryData = Data()
         var offset = 0
+        let finalSize = self.endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory
+                      + self.endOfCentralDirectoryRecord.sizeOfCentralDirectory
+                      + UInt32(self.endOfCentralDirectoryRecord.data.count)
+                      + UInt32(EndOfCentralDirectoryRecord.size)
+                      - UInt32(entry.fullSize)
+        progress?.totalUnitCount = Int64(finalSize)
+        defer { progress?.completedUnitCount = Int64(finalSize) }
         for currentEntry in self {
-            let localFileHeader = currentEntry.localFileHeader
             let centralDirectoryStructure = currentEntry.centralDirectoryStructure
-            let dataDescriptor = currentEntry.dataDescriptor
-            var extraDataLength = Int(localFileHeader.fileNameLength)
-            extraDataLength += Int(localFileHeader.extraFieldLength)
-            var entrySize = LocalFileHeader.size + extraDataLength
-            let isCompressed = centralDirectoryStructure.compressionMethod != CompressionMethod.none.rawValue
-            if let dataDescriptor = dataDescriptor {
-                entrySize += Int(isCompressed ? dataDescriptor.compressedSize : dataDescriptor.uncompressedSize)
-                entrySize += DataDescriptor.size
-            } else {
-                entrySize += Int(isCompressed ? localFileHeader.compressedSize : localFileHeader.uncompressedSize)
-            }
             if currentEntry != entry {
                 let entryStart = Int(currentEntry.centralDirectoryStructure.relativeOffsetOfLocalHeader)
                 fseek(self.archiveFile, entryStart, SEEK_SET)
-                let consumer = { _ = try Data.write(chunk: $0, to: tempArchive.archiveFile) }
-                _ = try Data.consumePart(of: self.archiveFile, size: Int(entrySize), chunkSize: Int(bufferSize),
-                                         skipCRC32: true, consumer: consumer)
+                let consumer: Consumer = {
+                    _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
+                    progress?.completedUnitCount += Int64($0.count)
+                }
+                _ = try Data.consumePart(of: self.archiveFile, size: Int(currentEntry.fullSize),
+                                         chunkSize: Int(bufferSize), skipCRC32: true, consumer: consumer)
                 let centralDir = CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
                                                            offset: UInt32(offset))
                 centralDirectoryData.append(centralDir.data)
-            } else { offset = entrySize }
+            } else { offset = currentEntry.fullSize }
         }
         let startOfCentralDirectory = ftell(tempArchive.archiveFile)
         _ = try Data.write(chunk: centralDirectoryData, to: tempArchive.archiveFile)

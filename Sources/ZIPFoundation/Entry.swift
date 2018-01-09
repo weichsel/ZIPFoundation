@@ -161,14 +161,7 @@ public struct Entry: Equatable {
     public var uncompressedSize: Int {
         return Int(dataDescriptor?.uncompressedSize ?? localFileHeader.uncompressedSize)
     }
-    var dataOffset: Int {
-        var dataOffset = Int(self.centralDirectoryStructure.relativeOffsetOfLocalHeader)
-        dataOffset += LocalFileHeader.size
-        dataOffset += Int(self.localFileHeader.fileNameLength)
-        dataOffset += Int(self.localFileHeader.extraFieldLength)
-        return dataOffset
-    }
-    var size: Int {
+    var fullSize: Int {
         let centralDirectoryStructure = self.centralDirectoryStructure
         let localFileHeader = self.localFileHeader
         var extraDataLength = Int(localFileHeader.fileNameLength)
@@ -178,6 +171,13 @@ public struct Entry: Equatable {
         size += isCompressed ? self.compressedSize : self.uncompressedSize
         size += centralDirectoryStructure.usesDataDescriptor ? DataDescriptor.size : 0
         return size
+    }
+    var dataOffset: Int {
+        var dataOffset = Int(self.centralDirectoryStructure.relativeOffsetOfLocalHeader)
+        dataOffset += LocalFileHeader.size
+        dataOffset += Int(self.localFileHeader.fileNameLength)
+        dataOffset += Int(self.localFileHeader.extraFieldLength)
+        return dataOffset
     }
     let centralDirectoryStructure: CentralDirectoryStructure
     let localFileHeader: LocalFileHeader
