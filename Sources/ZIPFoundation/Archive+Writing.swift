@@ -149,8 +149,8 @@ extension Archive {
         let finalSize = self.endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory
                       + self.endOfCentralDirectoryRecord.sizeOfCentralDirectory
                       + UInt32(self.endOfCentralDirectoryRecord.data.count)
-                      + UInt32(EndOfCentralDirectoryRecord.size)
-                      - UInt32(entry.fullSize)
+                      - UInt32(entry.sizeWithinArchive)
+                      - UInt32(entry.centralDirectoryStructure.data.count)
         progress?.totalUnitCount = Int64(finalSize)
         defer { progress?.completedUnitCount = Int64(finalSize) }
         for currentEntry in self {
@@ -162,12 +162,12 @@ extension Archive {
                     _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
                     progress?.completedUnitCount += Int64($0.count)
                 }
-                _ = try Data.consumePart(of: self.archiveFile, size: Int(currentEntry.fullSize),
+                _ = try Data.consumePart(of: self.archiveFile, size: Int(currentEntry.sizeWithinArchive),
                                          chunkSize: Int(bufferSize), skipCRC32: true, consumer: consumer)
                 let centralDir = CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
                                                            offset: UInt32(offset))
                 centralDirectoryData.append(centralDir.data)
-            } else { offset = currentEntry.fullSize }
+            } else { offset = currentEntry.sizeWithinArchive }
         }
         let startOfCentralDirectory = ftell(tempArchive.archiveFile)
         _ = try Data.write(chunk: centralDirectoryData, to: tempArchive.archiveFile)
