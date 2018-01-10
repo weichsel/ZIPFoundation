@@ -162,7 +162,7 @@ public struct Entry: Equatable {
         return Int(dataDescriptor?.uncompressedSize ?? localFileHeader.uncompressedSize)
     }
     /// Returns the combined size of the local header, the data and the optional data descriptor
-    var sizeWithinArchive: Int {
+    var localSize: Int {
         let localFileHeader = self.localFileHeader
         var extraDataLength = Int(localFileHeader.fileNameLength)
         extraDataLength += Int(localFileHeader.extraFieldLength)
