@@ -39,16 +39,14 @@ extension FileManager {
         }
         let isDirectory = try FileManager.typeForItem(at: sourceURL) == .directory
         if isDirectory {
-            progress?.totalUnitCount = try Int64(FileManager.numberOfSubItems(at: sourceURL))
-            defer { progress?.completedUnitCount = progress?.totalUnitCount ?? 0 }
+            let subPaths = try self.subpathsOfDirectory(atPath: sourceURL.path)
+            progress?.totalUnitCount = Int64(subPaths.count)
+            defer { progress?.completedUnitCount = Int64(subPaths.count) }
 
-            // Use the path based enumerator because it returns String objects containing
-            // relative paths instead of absolute URLs
-            let dirEnumerator = self.enumerator(atPath: sourceURL.path)
             // If the caller wants to keep the parent directory, we use the lastPathComponent of the source URL
             // as common base for all entries (similar to macOS' Archive Utility.app)
             let directoryPrefix = sourceURL.lastPathComponent
-            while let entryPath = dirEnumerator?.nextObject() as? String {
+            for entryPath in subPaths {
                 var entryProgress: Progress? = nil
                 if let progress = progress {
                     entryProgress = Progress(totalUnitCount: -1, parent: progress, pendingUnitCount: 1)
@@ -200,14 +198,6 @@ extension FileManager {
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
         return Entry.EntryType(mode: fileStat.st_mode)
-    }
-
-    class func numberOfSubItems(at url: URL) throws -> Int {
-        let fileManager = FileManager()
-        guard fileManager.fileExists(atPath: url.path) else {
-            throw CocoaError.error(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path], url: nil)
-        }
-        return try fileManager.subpathsOfDirectory(atPath: url.path).count
     }
 }
 
