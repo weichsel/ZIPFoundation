@@ -49,16 +49,20 @@ extension FileManager {
             // as common base for all entries (similar to macOS' Archive Utility.app)
             let directoryPrefix = sourceURL.lastPathComponent
             while let entryPath = dirEnumerator?.nextObject() as? String {
+                var entryProgress: Progress? = nil
+                if let progress = progress {
+                    entryProgress = Progress(totalUnitCount: -1, parent: progress, pendingUnitCount: 1)
+                }
                 let finalEntryPath = shouldKeepParent ? directoryPrefix + "/" + entryPath : entryPath
                 let finalBaseURL = shouldKeepParent ? sourceURL.deletingLastPathComponent() : sourceURL
-                try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL)
+                try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL, progress: entryProgress)
             }
         } else {
             progress?.totalUnitCount = 1
             defer { progress?.completedUnitCount = 1 }
 
             let baseURL = sourceURL.deletingLastPathComponent()
-            try archive.addEntry(with: sourceURL.lastPathComponent, relativeTo: baseURL)
+            try archive.addEntry(with: sourceURL.lastPathComponent, relativeTo: baseURL, progress: progress)
         }
     }
 
