@@ -112,7 +112,7 @@ extension Archive {
                                 progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = entry.centralDirectoryStructure.compressedSize
         progress?.totalUnitCount = Int64(entry.centralDirectoryStructure.uncompressedSize)
-        defer { progress?.completedUnitCount = Int64(size) }
+        defer { progress?.completedUnitCount = Int64(entry.centralDirectoryStructure.uncompressedSize) }
         return try Data.decompress(size: Int(size), bufferSize: Int(bufferSize), provider: { (_, chunkSize) -> Data in
             return try Data.readChunk(of: chunkSize, from: self.archiveFile)
         }, consumer: { (data) in
