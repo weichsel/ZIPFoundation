@@ -222,12 +222,8 @@ extension Archive {
                                                                    progress: progress, provider: provider)
             }
         case .directory:
-            progress?.totalUnitCount = Int64(1)
-            defer { progress?.completedUnitCount = Int64(1) }
             _ = try provider(0, 0)
         case .symlink:
-            progress?.totalUnitCount = Int64(1)
-            defer { progress?.completedUnitCount = Int64(1) }
             (sizeWritten, checksum) = try self.writeSymbolicLink(size: localFileHeader.uncompressedSize,
                                                                  provider: provider)
         }

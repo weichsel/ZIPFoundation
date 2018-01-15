@@ -80,12 +80,8 @@ extension Archive {
                                                               progress: progress, with: consumer)
             }
         case .directory:
-            progress?.totalUnitCount = 1
-            defer { progress?.completedUnitCount = 1 }
             try consumer(Data())
         case .symlink:
-            progress?.totalUnitCount = 1
-            defer { progress?.completedUnitCount = 1 }
             let localFileHeader = entry.localFileHeader
             let size = Int(localFileHeader.compressedSize)
             let data = try Data.readChunk(of: size, from: self.archiveFile)
