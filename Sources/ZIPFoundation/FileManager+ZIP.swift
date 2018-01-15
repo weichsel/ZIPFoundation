@@ -40,8 +40,17 @@ extension FileManager {
         let isDirectory = try FileManager.typeForItem(at: sourceURL) == .directory
         if isDirectory {
             let subPaths = try self.subpathsOfDirectory(atPath: sourceURL.path)
-            progress?.totalUnitCount = Int64(subPaths.count)
-            defer { progress?.completedUnitCount = Int64(subPaths.count) }
+            var totalUnitCount = Int64(0)
+            if let progress = progress {
+                totalUnitCount = Int64(subPaths.reduce(Int64(0), {
+                    let itemURL = sourceURL.appendingPathComponent($1)
+                    let itemSize = Int64((try? FileManager.fileSizeForItem(at: itemURL)) ?? 0)
+                    return $0 + itemSize
+                }))
+                progress.totalUnitCount = totalUnitCount
+                progress.kind = .file
+            }
+            defer { progress?.completedUnitCount = totalUnitCount }
 
             // If the caller wants to keep the parent directory, we use the lastPathComponent of the source URL
             // as common base for all entries (similar to macOS' Archive Utility.app)
@@ -49,15 +58,22 @@ extension FileManager {
             for entryPath in subPaths {
                 var entryProgress: Progress? = nil
                 if let progress = progress {
-                    entryProgress = Progress(totalUnitCount: -1, parent: progress, pendingUnitCount: 1)
+                    let itemURL = sourceURL.appendingPathComponent(entryPath)
+                    let itemSize = Int64((try? FileManager.fileSizeForItem(at: itemURL)) ?? 0)
+                    entryProgress = Progress(totalUnitCount: -1, parent: progress, pendingUnitCount: itemSize)
                 }
                 let finalEntryPath = shouldKeepParent ? directoryPrefix + "/" + entryPath : entryPath
                 let finalBaseURL = shouldKeepParent ? sourceURL.deletingLastPathComponent() : sourceURL
                 try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL, progress: entryProgress)
             }
         } else {
-            progress?.totalUnitCount = 1
-            defer { progress?.completedUnitCount = 1 }
+            var totalUnitCount = Int64(0)
+            if let progress = progress {
+                totalUnitCount = Int64((try? FileManager.fileSizeForItem(at: sourceURL)) ?? 0)
+                progress.totalUnitCount = totalUnitCount
+                progress.kind = .file
+            }
+            defer { progress?.completedUnitCount = totalUnitCount }
 
             let baseURL = sourceURL.deletingLastPathComponent()
             try archive.addEntry(with: sourceURL.lastPathComponent, relativeTo: baseURL, progress: progress)
@@ -87,15 +103,20 @@ extension FileManager {
             default: return false
             }
         }
-        progress?.totalUnitCount = Int64(sortedEntries.count)
-        defer { progress?.completedUnitCount = Int64(sortedEntries.count) }
+        var totalUnitCount = Int64(0)
+        if let progress = progress {
+            totalUnitCount = Int64(sortedEntries.reduce(0, { $0 + $1.uncompressedSize }))
+            progress.totalUnitCount = totalUnitCount
+            progress.kind = .file
+        }
+        defer { progress?.completedUnitCount = totalUnitCount }
 
         for entry in sortedEntries {
             var entryProgress: Progress? = nil
             if let progress = progress {
-                entryProgress = Progress(totalUnitCount: -1, parent: progress, pendingUnitCount: 1)
+                let pending = Int64(entry.uncompressedSize)
+                entryProgress = Progress(totalUnitCount: -1, parent: progress, pendingUnitCount: pending)
             }
-
             let destinationEntryURL = destinationURL.appendingPathComponent(entry.path)
             _ = try archive.extract(entry, to: destinationEntryURL, progress: entryProgress)
         }
