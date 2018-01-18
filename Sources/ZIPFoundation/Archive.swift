@@ -239,6 +239,48 @@ public final class Archive: Sequence {
     }
 }
 
+extension Archive {
+    public func totalUnitCountForRemoving(_ entry: Entry) -> Int64 {
+        return Int64(self.endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory
+                   + self.endOfCentralDirectoryRecord.sizeOfCentralDirectory
+                   + UInt32(self.endOfCentralDirectoryRecord.data.count)
+                   - UInt32(entry.localSize)
+                   - UInt32(entry.centralDirectoryStructure.data.count))
+    }
+
+    public func makeProgressForRemoving(_ entry: Entry) -> Progress {
+        return Progress(totalUnitCount: self.totalUnitCountForRemoving(entry))
+    }
+
+    public func totalUnitCountForReading(_ entry: Entry) -> Int64 {
+        switch entry.type {
+        case .file, .symlink:
+            return Int64(entry.uncompressedSize)
+        case .directory:
+            return 1
+        }
+    }
+
+    public func makeProgressForReading(_ entry: Entry) -> Progress {
+        return Progress(totalUnitCount: self.totalUnitCountForReading(entry))
+    }
+
+    public func totalUnitCountForAddingItem(at url: URL) -> Int64 {
+        guard let type = try? FileManager.typeForItem(at: url) else { return -1 }
+        switch type {
+        case .file, .symlink:
+            guard let count = try? FileManager.fileSizeForItem(at: url) else { return -1 }
+            return Int64(count)
+        case .directory:
+            return 1
+        }
+    }
+
+    public func makeProgressForAddingItem(at url: URL) -> Progress {
+        return Progress(totalUnitCount: self.totalUnitCountForAddingItem(at: url))
+    }
+}
+
 extension Archive.EndOfCentralDirectoryRecord {
     var data: Data {
         var endOfCentralDirectorySignature = self.endOfCentralDirectorySignature
