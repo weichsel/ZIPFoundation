@@ -146,13 +146,6 @@ extension Archive {
         }
         var centralDirectoryData = Data()
         var offset = 0
-        let finalSize = self.endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory
-                      + self.endOfCentralDirectoryRecord.sizeOfCentralDirectory
-                      + UInt32(self.endOfCentralDirectoryRecord.data.count)
-                      - UInt32(entry.localSize)
-                      - UInt32(entry.centralDirectoryStructure.data.count)
-        progress?.totalUnitCount = Int64(finalSize)
-        defer { progress?.completedUnitCount = Int64(finalSize) }
         for currentEntry in self {
             let centralDirectoryStructure = currentEntry.centralDirectoryStructure
             if currentEntry != entry {
@@ -235,9 +228,6 @@ extension Archive {
         var position = 0
         var sizeWritten = 0
         var checksum = CRC32(0)
-        progress?.totalUnitCount = Int64(size)
-        defer { progress?.completedUnitCount = Int64(size) }
-
         while position < size {
             let readSize = (Int(size) - position) >= bufferSize ? Int(bufferSize) : (Int(size) - position)
             let entryChunk = try provider(Int(position), Int(readSize))
@@ -252,9 +242,6 @@ extension Archive {
     private func writeCompressed(size: UInt32, bufferSize: UInt32, progress: Progress? = nil,
                                  provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
         var sizeWritten = 0
-        progress?.totalUnitCount = Int64(size)
-        defer { progress?.completedUnitCount = Int64(size) }
-
         let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize), provider: provider) { data in
             sizeWritten += try Data.write(chunk: data, to: self.archiveFile)
             progress?.completedUnitCount = Int64(sizeWritten)

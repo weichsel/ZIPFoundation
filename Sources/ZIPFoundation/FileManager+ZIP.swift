@@ -105,20 +105,20 @@ extension FileManager {
         }
         var totalUnitCount = Int64(0)
         if let progress = progress {
-            totalUnitCount = Int64(sortedEntries.reduce(0, { $0 + $1.uncompressedSize }))
+            totalUnitCount = Int64(sortedEntries.reduce(0, { $0 + archive.totalUnitCountForReading($1) }))
             progress.totalUnitCount = totalUnitCount
-            progress.kind = .file
         }
         defer { progress?.completedUnitCount = totalUnitCount }
 
         for entry in sortedEntries {
-            var entryProgress: Progress? = nil
-            if let progress = progress {
-                let pending = Int64(entry.uncompressedSize)
-                entryProgress = Progress(totalUnitCount: -1, parent: progress, pendingUnitCount: pending)
-            }
             let destinationEntryURL = destinationURL.appendingPathComponent(entry.path)
-            _ = try archive.extract(entry, to: destinationEntryURL, progress: entryProgress)
+            if let progress = progress {
+                let entryProgress = archive.makeProgressForReading(entry)
+                progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
+                _ = try archive.extract(entry, to: destinationEntryURL, progress: entryProgress)
+            } else {
+                _ = try archive.extract(entry, to: destinationEntryURL)
+            }
         }
     }
 

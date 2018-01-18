@@ -123,6 +123,35 @@ extension ZIPFoundationTests {
         XCTAssert(itemsExist)
     }
 
+    func testUnzipItemProgress() {
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        let progress = Progress()
+        let expectation = self.keyValueObservingExpectation(for: progress,
+                                                            keyPath: #keyPath(Progress.fractionCompleted),
+                                                            expectedValue: 1.0)
+        DispatchQueue.global().async {
+            do {
+                try fileManager.unzipItem(at: archive.url, to: destinationURL, progress: progress)
+            } catch {
+                XCTFail("Failed to extract item.")
+                return
+            }
+            var itemsExist = false
+            for entry in archive {
+                let directoryURL = destinationURL.appendingPathComponent(entry.path)
+                itemsExist = fileManager.fileExists(atPath: directoryURL.path)
+                if !itemsExist {
+                    break
+                }
+            }
+            XCTAssert(itemsExist)
+        }
+        self.wait(for: [expectation], timeout: 10.0)
+        print(progress)
+    }
+
     func testUnzipItemErrorConditions() {
         var nonexistantArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         nonexistantArchiveURL.appendPathComponent("invalid")
