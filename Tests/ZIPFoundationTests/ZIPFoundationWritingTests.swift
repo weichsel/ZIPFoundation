@@ -198,7 +198,7 @@ extension ZIPFoundationTests {
             XCTAssertNotNil(error == .invalidStartOfCentralDirectoryOffset)
             didCatchExpectedError = true
         } catch {
-            XCTFail("Unexpected error while trying to remove entry from unwritable archive.")
+            XCTFail("Unexpected error while trying to add an entry exceeding maximum size.")
         }
         XCTAssert(didCatchExpectedError)
     }
