@@ -231,6 +231,27 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
+    func testRemoveEntryProgress() {
+        let archive = self.archive(for: #function, mode: .update)
+        guard let entryToRemove = archive["test/data.random"] else {
+            XCTFail("Failed to find entry to remove in uncompressed folder")
+            return
+        }
+        let progress = Progress()
+        let expectation = self.keyValueObservingExpectation(for: progress,
+                                                            keyPath: #keyPath(Progress.fractionCompleted),
+                                                            expectedValue: 1.0)
+        DispatchQueue.global().async {
+            do {
+                try archive.remove(entryToRemove, progress: progress)
+            } catch {
+                XCTFail("Failed to remove entry from uncompressed folder archive with error : \(error)")
+            }
+            XCTAssert(archive.checkIntegrity())
+        }
+        self.wait(for: [expectation], timeout: 10.0)
+    }
+
     func testRemoveDataDescriptorCompressedEntry() {
         let archive = self.archive(for: #function, mode: .update)
         guard let entryToRemove = archive["second.txt"] else {
