@@ -144,6 +144,7 @@ extension Archive {
         guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
             throw ArchiveError.unwritableArchive
         }
+        progress?.totalUnitCount = self.totalUnitCountForRemoving(entry)
         var centralDirectoryData = Data()
         var offset = 0
         for currentEntry in self {

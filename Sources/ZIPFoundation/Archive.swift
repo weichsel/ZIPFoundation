@@ -242,13 +242,10 @@ public final class Archive: Sequence {
 extension Archive {
     public func totalUnitCountForRemoving(_ entry: Entry) -> Int64 {
         return Int64(self.endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory
-                   + self.endOfCentralDirectoryRecord.sizeOfCentralDirectory
-                   + UInt32(self.endOfCentralDirectoryRecord.data.count)
-                   - UInt32(entry.localSize)
-                   - UInt32(entry.centralDirectoryStructure.data.count))
+                   - UInt32(entry.localSize))
     }
 
-    public func makeProgressForRemoving(_ entry: Entry) -> Progress {
+    func makeProgressForRemoving(_ entry: Entry) -> Progress {
         return Progress(totalUnitCount: self.totalUnitCountForRemoving(entry))
     }
 
@@ -261,7 +258,7 @@ extension Archive {
         }
     }
 
-    public func makeProgressForReading(_ entry: Entry) -> Progress {
+    func makeProgressForReading(_ entry: Entry) -> Progress {
         return Progress(totalUnitCount: self.totalUnitCountForReading(entry))
     }
 
@@ -276,7 +273,7 @@ extension Archive {
         }
     }
 
-    public func makeProgressForAddingItem(at url: URL) -> Progress {
+    func makeProgressForAddingItem(at url: URL) -> Progress {
         return Progress(totalUnitCount: self.totalUnitCountForAddingItem(at: url))
     }
 }

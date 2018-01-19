@@ -68,6 +68,7 @@ extension Archive {
         var checksum = CRC32(0)
         let localFileHeader = entry.localFileHeader
         fseek(self.archiveFile, entry.dataOffset, SEEK_SET)
+        progress?.totalUnitCount = self.totalUnitCountForReading(entry)
         switch entry.type {
         case .file:
             guard let compressionMethod = CompressionMethod(rawValue: localFileHeader.compressionMethod) else {
