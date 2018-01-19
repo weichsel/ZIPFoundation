@@ -93,6 +93,7 @@ extension Archive {
                          compressionMethod: CompressionMethod = .none, bufferSize: UInt32 = defaultWriteChunkSize,
                          progress: Progress? = nil, provider: Provider) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
+        progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : Int64(uncompressedSize)
         var endOfCentralDirectoryRecord = self.endOfCentralDirectoryRecord
         var startOfCentralDirectory = Int(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
         var existingCentralDirectoryData = Data()
@@ -217,9 +218,11 @@ extension Archive {
             }
         case .directory:
             _ = try provider(0, 0)
+            if let progress = progress { progress.completedUnitCount = progress.totalUnitCount }
         case .symlink:
             (sizeWritten, checksum) = try self.writeSymbolicLink(size: localFileHeader.uncompressedSize,
                                                                  provider: provider)
+            if let progress = progress { progress.completedUnitCount = progress.totalUnitCount }
         }
         return (sizeWritten, checksum)
     }

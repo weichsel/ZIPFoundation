@@ -17,6 +17,7 @@ public let defaultWriteChunkSize = defaultReadChunkSize
 /// The default permissions for newly added entries.
 public let defaultPermissions = UInt16(0o644)
 let defaultPOSIXBufferSize = defaultReadChunkSize
+let defaultDirectoryUnitCount = Int64(1)
 let minDirectoryEndOffset = 22
 let maxDirectoryEndOffset = 66000
 let endOfCentralDirectoryStructSignature = 0x06054b50
@@ -254,7 +255,7 @@ extension Archive {
         case .file, .symlink:
             return Int64(entry.uncompressedSize)
         case .directory:
-            return 1
+            return defaultDirectoryUnitCount
         }
     }
 
@@ -269,7 +270,7 @@ extension Archive {
             guard let count = try? FileManager.fileSizeForItem(at: url) else { return -1 }
             return Int64(count)
         case .directory:
-            return 1
+            return defaultDirectoryUnitCount
         }
     }
 
