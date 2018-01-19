@@ -58,6 +58,53 @@ extension ZIPFoundationTests {
         XCTAssert(parentDirectoryArchive.checkIntegrity())
     }
 
+    func testZipItemProgress() {
+        let fileManager = FileManager()
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        var fileArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+        fileArchiveURL.appendPathComponent(self.pathComponent(for: #function))
+        fileArchiveURL.appendPathExtension("zip")
+        let fileProgress = Progress()
+        let fileExpectation = self.keyValueObservingExpectation(for: fileProgress,
+                                                                keyPath: #keyPath(Progress.fractionCompleted),
+                                                                expectedValue: 1.0)
+        DispatchQueue.global().async {
+            do {
+                try fileManager.zipItem(at: assetURL, to: fileArchiveURL, progress: fileProgress)
+            } catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
+            guard let archive = Archive(url: fileArchiveURL, accessMode: .read) else {
+                XCTFail("Failed to read archive.") ; return
+            }
+            XCTAssert(archive.checkIntegrity())
+        }
+        var directoryURL = ZIPFoundationTests.tempZipDirectoryURL
+        directoryURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
+        var directoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+        directoryArchiveURL.appendPathComponent(self.pathComponent(for: #function) + "Directory")
+        directoryArchiveURL.appendPathExtension("zip")
+        let newAssetURL = directoryURL.appendingPathComponent(assetURL.lastPathComponent)
+        let directoryProgress = Progress()
+        let directoryExpectation = self.keyValueObservingExpectation(for: directoryProgress,
+                                                                     keyPath: #keyPath(Progress.fractionCompleted),
+                                                                     expectedValue: 1.0)
+        DispatchQueue.global().async {
+            do {
+                try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
+                try fileManager.createDirectory(at: directoryURL.appendingPathComponent("nested"),
+                                                withIntermediateDirectories: true, attributes: nil)
+                try fileManager.copyItem(at: assetURL, to: newAssetURL)
+                try fileManager.createSymbolicLink(at: directoryURL.appendingPathComponent("link"),
+                                                   withDestinationURL: newAssetURL)
+                try fileManager.zipItem(at: directoryURL, to: directoryArchiveURL, progress: directoryProgress)
+            } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
+            guard let directoryArchive = Archive(url: directoryArchiveURL, accessMode: .read) else {
+                XCTFail("Failed to read archive."); return
+            }
+            XCTAssert(directoryArchive.checkIntegrity())
+        }
+        self.wait(for: [fileExpectation, directoryExpectation], timeout: 20.0)
+    }
+
     func testZipItemErrorConditions() {
         let fileManager = FileManager()
         do {
@@ -149,7 +196,6 @@ extension ZIPFoundationTests {
             XCTAssert(itemsExist)
         }
         self.wait(for: [expectation], timeout: 10.0)
-        print(progress)
     }
 
     func testUnzipItemErrorConditions() {
