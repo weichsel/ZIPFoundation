@@ -43,10 +43,8 @@ extension ZIPFoundationTests {
     func testCreateArchiveAddDirectory() {
         let archive = self.archive(for: #function, mode: .create)
         do {
-            try archive.addEntry(with: "Test",
-                                 type: .directory,
-                                 uncompressedSize: 0,
-                                 provider: { _, _ in return Data()})
+            try archive.addEntry(with: "Test", type: .directory,
+                                 uncompressedSize: 0, provider: { _, _ in return Data()})
         } catch {
             XCTFail("Failed to add directory entry without file system representation to archive.")
         }

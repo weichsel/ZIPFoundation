@@ -192,4 +192,12 @@ extension ZIPFoundationTests {
         // We currently don't support encryption so we expect failed initialization for entry objects.
         XCTAssert(entriesRead == 0)
     }
+
+    func testProgressHelpers() {
+        let tempPath = NSTemporaryDirectory()
+        var nonExistantURL = URL(fileURLWithPath: tempPath)
+        nonExistantURL.appendPathComponent("invalid.path")
+        let archive = self.archive(for: #function, mode: .update)
+        XCTAssert(archive.totalUnitCountForAddingItem(at: nonExistantURL) == -1)
+    }
 }

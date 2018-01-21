@@ -264,14 +264,19 @@ extension Archive {
     }
 
     public func totalUnitCountForAddingItem(at url: URL) -> Int64 {
-        guard let type = try? FileManager.typeForItem(at: url) else { return -1 }
-        switch type {
-        case .file, .symlink:
-            guard let count = try? FileManager.fileSizeForItem(at: url) else { return -1 }
-            return Int64(count)
-        case .directory:
-            return defaultDirectoryUnitCount
+        var count = Int64(0)
+        do {
+            let type = try FileManager.typeForItem(at: url)
+            switch type {
+            case .file, .symlink:
+                count = Int64(try FileManager.fileSizeForItem(at: url))
+            case .directory:
+                count = defaultDirectoryUnitCount
+            }
+        } catch {
+            count = -1
         }
+        return count
     }
 
     func makeProgressForAddingItem(at url: URL) -> Progress {
