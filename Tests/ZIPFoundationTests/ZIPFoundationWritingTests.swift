@@ -237,7 +237,7 @@ extension ZIPFoundationTests {
             XCTFail("Failed to find entry to remove in uncompressed folder")
             return
         }
-        let progress = Progress()
+        let progress = archive.makeProgressForRemoving(entryToRemove)
         let expectation = self.keyValueObservingExpectation(for: progress,
                                                             keyPath: #keyPath(Progress.fractionCompleted),
                                                             expectedValue: 1.0)
