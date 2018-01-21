@@ -62,7 +62,19 @@ extension ZIPFoundationTests {
         }
     }
 
-    func testExtractDataDescriptorArchive() {
+    func testExtractCompressedDataDescriptorArchive() {
+        let archive = self.archive(for: #function, mode: .read)
+        for entry in archive {
+            do {
+                let checksum = try archive.extract(entry, consumer: { _ in })
+                XCTAssert(entry.checksum == checksum)
+            } catch {
+                XCTFail("Failed to unzip data descriptor archive")
+            }
+        }
+    }
+
+    func testExtractUncompressedDataDescriptorArchive() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
             do {

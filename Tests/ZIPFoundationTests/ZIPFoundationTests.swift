@@ -270,7 +270,7 @@ extension ZIPFoundationTests {
             ("testEntryTypeDetectionHeuristics", testEntryTypeDetectionHeuristics),
             ("testEntryWrongDataLengthErrorConditions", testEntryWrongDataLengthErrorConditions),
             ("testExtractCompressedFolderEntries", testExtractCompressedFolderEntries),
-            ("testExtractDataDescriptorArchive", testExtractDataDescriptorArchive),
+            ("testExtractDataDescriptorArchive", testExtractCompressedDataDescriptorArchive),
             ("testExtractEncryptedArchiveErrorConditions", testExtractEncryptedArchiveErrorConditions),
             ("testExtractErrorConditions", testExtractErrorConditions),
             ("testExtractMSDOSArchive", testExtractMSDOSArchive),
