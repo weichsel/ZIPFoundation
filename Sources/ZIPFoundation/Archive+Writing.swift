@@ -24,6 +24,7 @@ extension Archive {
     ///              The `baseURL` combined with `path` must form a fully qualified file URL.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied to `Entry`.
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
+    ///   - progress: A progress object that can be used to track or cancel the add operation.
     /// - Throws: An error if the source file cannot be read or the receiver is not writable.
     public func addEntry(with path: String, relativeTo baseURL: URL, compressionMethod: CompressionMethod = .none,
                          bufferSize: UInt32 = defaultWriteChunkSize, progress: Progress? = nil) throws {
@@ -85,6 +86,7 @@ extension Archive {
     ///                  Default is `0`o`644`.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied to `Entry`.
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
+    ///   - progress: A progress object that can be used to track or cancel the add operation.
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
     /// - Throws: An error if the source data is invalid or the receiver is not writable.
     public func addEntry(with path: String, type: Entry.EntryType, uncompressedSize: UInt32,
@@ -138,6 +140,7 @@ extension Archive {
     /// - Parameters:
     ///   - entry: The `Entry` to remove.
     ///   - bufferSize: The maximum size for the read and write buffers used during removal.
+    ///   - progress: A progress object that can be used to track or cancel the remove operation.
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
     public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
         let uniqueString = ProcessInfo.processInfo.globallyUniqueString

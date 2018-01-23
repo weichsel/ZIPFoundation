@@ -25,6 +25,7 @@ extension FileManager {
     ///   - destinationURL: The file URL that identifies the destination of the zip operation.
     ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element
     ///                       within the archive. Default is `true`.
+    ///   - progress: A progress object that can be used to track or cancel the zip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func zipItem(at sourceURL: URL, to destinationURL: URL,
                         shouldKeepParent: Bool = true, progress: Progress? = nil) throws {
@@ -77,6 +78,7 @@ extension FileManager {
     /// - Parameters:
     ///   - sourceURL: The file URL pointing to an existing ZIP file.
     ///   - destinationURL: The file URL that identifies the destination of the unzip operation.
+    ///   - progress: A progress object that can be used to track or cancel the unzip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func unzipItem(at sourceURL: URL, to destinationURL: URL, progress: Progress? = nil) throws {
         guard self.fileExists(atPath: sourceURL.path) else {

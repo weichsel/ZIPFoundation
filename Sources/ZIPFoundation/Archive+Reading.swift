@@ -17,6 +17,7 @@ extension Archive {
     ///   - entry: The ZIP `Entry` to read.
     ///   - url: The destination file URL.
     ///   - bufferSize: The maximum size of the read buffer and the decompression buffer (if needed).
+    ///   - progress: A progress object that can be used to track or cancel the extract operation.
     /// - Returns: The checksum of the processed content.
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
     public func extract(_ entry: Entry, to url: URL, bufferSize: UInt32 = defaultReadChunkSize,
@@ -60,6 +61,7 @@ extension Archive {
     /// - Parameters:
     ///   - entry: The ZIP `Entry` to read.
     ///   - bufferSize: The maximum size of the read buffer and the decompression buffer (if needed).
+    ///   - progress: A progress object that can be used to track or cancel the extract operation.
     ///   - consumer: A closure that consumes contents of `Entry` as `Data` chunks.
     /// - Returns: The checksum of the processed content.
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
