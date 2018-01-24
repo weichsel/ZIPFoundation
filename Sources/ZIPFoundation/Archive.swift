@@ -78,6 +78,8 @@ public final class Archive: Sequence {
         case invalidStartOfCentralDirectoryOffset
         /// Thrown when an archive does not contain the required End of Central Directory Record.
         case missingEndOfCentralDirectoryRecord
+        /// Thrown when an extract, add or remove operation was canceled.
+        case canceledOperation
     }
 
     /// The access mode for an `Archive`.
