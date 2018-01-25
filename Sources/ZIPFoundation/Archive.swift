@@ -243,6 +243,11 @@ public final class Archive: Sequence {
 }
 
 extension Archive {
+    /// The number of the work units that have to be performed when
+    /// removing `entry` from the receiver.
+    ///
+    /// - Parameter entry: The entry that will be removed.
+    /// - Returns: The number of the work units.
     public func totalUnitCountForRemoving(_ entry: Entry) -> Int64 {
         return Int64(self.endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory
                    - UInt32(entry.localSize))
@@ -252,6 +257,11 @@ extension Archive {
         return Progress(totalUnitCount: self.totalUnitCountForRemoving(entry))
     }
 
+    /// The number of the work units that have to be performed when
+    /// reading `entry` from the receiver.
+    ///
+    /// - Parameter entry: The entry that will be read.
+    /// - Returns: The number of the work units.
     public func totalUnitCountForReading(_ entry: Entry) -> Int64 {
         switch entry.type {
         case .file, .symlink:
@@ -265,6 +275,10 @@ extension Archive {
         return Progress(totalUnitCount: self.totalUnitCountForReading(entry))
     }
 
+    /// The number of the work units that have to be performed when
+    /// adding the file at `url` to the receiver.
+    /// - Parameter entry: The entry that will be removed.
+    /// - Returns: The number of the work units.
     public func totalUnitCountForAddingItem(at url: URL) -> Int64 {
         var count = Int64(0)
         do {
