@@ -240,6 +240,7 @@ extension Archive {
         var sizeWritten = 0
         var checksum = CRC32(0)
         while position < size {
+            if progress?.isCancelled == true { throw ArchiveError.canceledOperation }
             let readSize = (Int(size) - position) >= bufferSize ? Int(bufferSize) : (Int(size) - position)
             let entryChunk = try provider(Int(position), Int(readSize))
             checksum = entryChunk.crc32(checksum: checksum)
@@ -253,10 +254,14 @@ extension Archive {
     private func writeCompressed(size: UInt32, bufferSize: UInt32, progress: Progress? = nil,
                                  provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
         var sizeWritten = 0
-        let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize), provider: provider) { data in
+        let consumer: Consumer = { data in
             sizeWritten += try Data.write(chunk: data, to: self.archiveFile)
             progress?.completedUnitCount = Int64(sizeWritten)
         }
+        let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize), provider: { (position, size) -> Data in
+            if progress?.isCancelled == true { throw ArchiveError.canceledOperation }
+            return try provider(position, size)
+        }, consumer: consumer)
         return(UInt32(sizeWritten), checksum)
     }
 
