@@ -101,7 +101,9 @@ extension Archive {
     private func readUncompressed(entry: Entry, bufferSize: UInt32,
                                   progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = Int(entry.centralDirectoryStructure.uncompressedSize)
-        return try Data.consumePart(of: self.archiveFile, size: size, chunkSize: Int(bufferSize), consumer: { (data) in
+        return try Data.consumePart(of: size, chunkSize: Int(bufferSize), provider: { (_, chunkSize) -> Data in
+            return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
+        }, consumer: { (data) in
             try consumer(data)
             progress?.completedUnitCount += Int64(data.count)
         })

@@ -37,9 +37,8 @@ extension Data {
         return structure
     }
 
-    static func consumePart(of file: UnsafeMutablePointer<FILE>,
-                            size: Int, chunkSize: Int, skipCRC32: Bool = false,
-                            consumer: Consumer) throws -> CRC32 {
+    static func consumePart(of size: Int, chunkSize: Int, skipCRC32: Bool = false,
+                            provider: Provider, consumer: Consumer) throws -> CRC32 {
         let readInOneChunk = (size < chunkSize)
         var chunkSize = readInOneChunk ? size : chunkSize
         var checksum = CRC32(0)
@@ -47,7 +46,7 @@ extension Data {
         while bytesRead < size {
             let remainingSize = size - bytesRead
             chunkSize = remainingSize < chunkSize ? remainingSize : chunkSize
-            let data = try Data.readChunk(of: Int(chunkSize), from: file)
+            let data = try provider(bytesRead, chunkSize)
             try consumer(data)
             if !skipCRC32 {
                 checksum = data.crc32(checksum: checksum)

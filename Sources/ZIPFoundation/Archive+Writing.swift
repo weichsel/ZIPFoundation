@@ -160,8 +160,10 @@ extension Archive {
                     _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
                     progress?.completedUnitCount += Int64($0.count)
                 }
-                _ = try Data.consumePart(of: self.archiveFile, size: Int(currentEntry.localSize),
-                                         chunkSize: Int(bufferSize), skipCRC32: true, consumer: consumer)
+                _ = try Data.consumePart(of: Int(currentEntry.localSize), chunkSize: Int(bufferSize),
+                                         provider: { (_, chunkSize) -> Data in
+                                            return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile) },
+                                         consumer: consumer)
                 let centralDir = CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
                                                            offset: UInt32(offset))
                 centralDirectoryData.append(centralDir.data)
