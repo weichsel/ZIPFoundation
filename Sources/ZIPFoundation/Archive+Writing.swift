@@ -156,14 +156,16 @@ extension Archive {
             if currentEntry != entry {
                 let entryStart = Int(currentEntry.centralDirectoryStructure.relativeOffsetOfLocalHeader)
                 fseek(self.archiveFile, entryStart, SEEK_SET)
+                let provider: Provider = { (_, chunkSize) -> Data in
+                    if progress?.isCancelled == true { throw ArchiveError.canceledOperation }
+                    return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
+                }
                 let consumer: Consumer = {
                     _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
                     progress?.completedUnitCount += Int64($0.count)
                 }
                 _ = try Data.consumePart(of: Int(currentEntry.localSize), chunkSize: Int(bufferSize),
-                                         provider: { (_, chunkSize) -> Data in
-                                            return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile) },
-                                         consumer: consumer)
+                                         provider: provider, consumer: consumer)
                 let centralDir = CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
                                                            offset: UInt32(offset))
                 centralDirectoryData.append(centralDir.data)
