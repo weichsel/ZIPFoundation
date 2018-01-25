@@ -258,10 +258,11 @@ extension Archive {
             sizeWritten += try Data.write(chunk: data, to: self.archiveFile)
             progress?.completedUnitCount = Int64(sizeWritten)
         }
-        let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize), provider: { (position, size) -> Data in
-            if progress?.isCancelled == true { throw ArchiveError.canceledOperation }
-            return try provider(position, size)
-        }, consumer: consumer)
+        let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize),
+                                         provider: { (position, size) -> Data in
+                                            if progress?.isCancelled == true { throw ArchiveError.canceledOperation }
+                                            return try provider(position, size)
+                                         }, consumer: consumer)
         return(UInt32(sizeWritten), checksum)
     }
 
