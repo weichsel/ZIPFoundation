@@ -62,7 +62,7 @@ extension ZIPFoundationTests {
         }
     }
 
-    func testExtractCompressedDataDescriptorArchive() {
+    func testExtractUncompressedDataDescriptorArchive() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
             do {
@@ -74,7 +74,7 @@ extension ZIPFoundationTests {
         }
     }
 
-    func testExtractUncompressedDataDescriptorArchive() {
+    func testExtractCompressedDataDescriptorArchive() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
             do {
@@ -206,6 +206,24 @@ extension ZIPFoundationTests {
     }
 
     func testExtractUncompressedEntryCancelation() {
+        let archive = self.archive(for: #function, mode: .read)
+        guard let entry = archive["original"] else { XCTFail("Failed to extract entry."); return }
+        let progress = archive.makeProgressForReading(entry)
+        do {
+            var readCount = 0
+            _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (_) in
+                if readCount == 3 { progress.cancel() }
+                readCount += 1
+            }
+        } catch let error as Archive.ArchiveError {
+            XCTAssert(error == Archive.ArchiveError.canceledOperation)
+            XCTAssertEqual(progress.fractionCompleted, 0.5, accuracy: .ulpOfOne)
+        } catch {
+            XCTFail("Unexpected error while trying to cancel extraction.")
+        }
+    }
+
+    func testExtractCompressedEntryCancelation() {
         let archive = self.archive(for: #function, mode: .read)
         guard let entry = archive["original"] else { XCTFail("Failed to extract entry."); return }
         let progress = archive.makeProgressForReading(entry)
