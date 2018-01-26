@@ -271,6 +271,8 @@ extension ZIPFoundationTests {
             ("testExtractCompressedDataDescriptorArchive", testExtractCompressedDataDescriptorArchive),
             ("testExtractCompressedFolderEntries", testExtractCompressedFolderEntries),
             ("testExtractEncryptedArchiveErrorConditions", testExtractEncryptedArchiveErrorConditions),
+            ("testExtractUncompressedEntryCancelation", testExtractUncompressedEntryCancelation),
+            ("testExtractCompressedEntryCancelation", testExtractCompressedEntryCancelation),
             ("testExtractErrorConditions", testExtractErrorConditions),
             ("testExtractMSDOSArchive", testExtractMSDOSArchive),
             ("testExtractUncompressedDataDescriptorArchive", testExtractUncompressedDataDescriptorArchive),
