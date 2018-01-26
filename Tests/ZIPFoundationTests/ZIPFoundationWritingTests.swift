@@ -231,18 +231,28 @@ extension ZIPFoundationTests {
             return
         }
         let progress = archive.makeProgressForRemoving(entryToRemove)
-        let expectation = self.keyValueObservingExpectation(for: progress,
-                                                            keyPath: #keyPath(Progress.fractionCompleted),
-                                                            expectedValue: 1.0)
+        let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
+            if progress.fractionCompleted > 0.5 {
+                progress.cancel()
+                return true
+            }
+            return false
+        }
+        let cancel = self.keyValueObservingExpectation(for: progress,
+                                                       keyPath: #keyPath(Progress.fractionCompleted),
+                                                       handler: handler)
         DispatchQueue.global().async {
             do {
                 try archive.remove(entryToRemove, progress: progress)
+            } catch let error as Archive.ArchiveError {
+                XCTAssert(error == Archive.ArchiveError.canceledOperation)
             } catch {
                 XCTFail("Failed to remove entry from uncompressed folder archive with error : \(error)")
             }
-            XCTAssert(archive.checkIntegrity())
         }
-        self.wait(for: [expectation], timeout: 10.0)
+        self.wait(for: [cancel], timeout: 20.0)
+        XCTAssert(progress.fractionCompleted > 0.5)
+        XCTAssert(archive.checkIntegrity())
     }
 
     func testRemoveDataDescriptorCompressedEntry() {
