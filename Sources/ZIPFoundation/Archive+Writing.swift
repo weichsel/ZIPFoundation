@@ -96,12 +96,12 @@ extension Archive {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
         progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : Int64(uncompressedSize)
         var endOfCentralDirRecord = self.endOfCentralDirectoryRecord
-        var startOfCentralDirectory = Int(endOfCentralDirRecord.offsetToStartOfCentralDirectory)
-        var existingCentralDirectoryData = Data()
-        fseek(self.archiveFile, startOfCentralDirectory, SEEK_SET)
-        existingCentralDirectoryData = try Data.readChunk(of: Int(endOfCentralDirRecord.sizeOfCentralDirectory),
+        var startOfCentralDir = Int(endOfCentralDirRecord.offsetToStartOfCentralDirectory)
+        var existingCentralDirData = Data()
+        fseek(self.archiveFile, startOfCentralDir, SEEK_SET)
+        existingCentralDirData = try Data.readChunk(of: Int(endOfCentralDirRecord.sizeOfCentralDirectory),
                                                           from: self.archiveFile)
-        fseek(self.archiveFile, startOfCentralDirectory, SEEK_SET)
+        fseek(self.archiveFile, startOfCentralDir, SEEK_SET)
         let localFileHeaderStart = ftell(self.archiveFile)
         let modDateTime = modificationDate.fileModificationDateTime
         defer { fflush(self.archiveFile) }
@@ -112,27 +112,27 @@ extension Archive {
             let (written, checksum) = try self.writeEntry(localFileHeader: localFileHeader, type: type,
                                                           compressionMethod: compressionMethod, bufferSize: bufferSize,
                                                           progress: progress, provider: provider)
-            startOfCentralDirectory = ftell(self.archiveFile)
+            startOfCentralDir = ftell(self.archiveFile)
             fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
             // Write the local file header a second time. Now with compressedSize (if applicable) and a valid checksum.
             localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
                                                             size: (uncompressedSize, written),
                                                             checksum: checksum, modificationDateTime: modDateTime)
-            fseek(self.archiveFile, startOfCentralDirectory, SEEK_SET)
-            _ = try Data.write(chunk: existingCentralDirectoryData, to: self.archiveFile)
+            fseek(self.archiveFile, startOfCentralDir, SEEK_SET)
+            _ = try Data.write(chunk: existingCentralDirData, to: self.archiveFile)
             let externalAttributes = FileManager.externalFileAttributesForEntry(of: type, permissions: permissions)
             let offset = UInt32(localFileHeaderStart)
-            let centralDirectory = try self.writeCentralDirectoryStructure(localFileHeader: localFileHeader,
-                                                                           relativeOffset: offset,
-                                                                           externalFileAttributes: externalAttributes)
-            if startOfCentralDirectory > UINT32_MAX { throw ArchiveError.invalidStartOfCentralDirectoryOffset }
-            let start = UInt32(startOfCentralDirectory)
-            endOfCentralDirRecord = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDirectory,
-                                                                              startOfCentralDirectory: start,
-                                                                              operation: .add)
+            let centralDir = try self.writeCentralDirectoryStructure(localFileHeader: localFileHeader,
+                                                                     relativeOffset: offset,
+                                                                     externalFileAttributes: externalAttributes)
+            if startOfCentralDir > UINT32_MAX { throw ArchiveError.invalidStartOfCentralDirectoryOffset }
+            let start = UInt32(startOfCentralDir)
+            endOfCentralDirRecord = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDir,
+                                                                        startOfCentralDirectory: start,
+                                                                        operation: .add)
             self.endOfCentralDirectoryRecord = endOfCentralDirRecord
         } catch ArchiveError.canceledOperation {
-            try rollback(localFileHeaderStart, existingCentralDirectoryData, endOfCentralDirRecord)
+            try rollback(localFileHeaderStart, existingCentralDirData, endOfCentralDirRecord)
             throw ArchiveError.canceledOperation
         }
     }
