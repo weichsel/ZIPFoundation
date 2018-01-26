@@ -325,3 +325,14 @@ extension Archive {
         return isCorrect
     }
 }
+
+extension Data {
+    static func makeRandomData(size: Int) -> Data {
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+            let bytes = [UInt32](repeating: 0, count: size).map { _ in arc4random() }
+        #else
+            let bytes = [UInt32](repeating: 0, count: size).map { _ in random() }
+        #endif
+        return Data(bytes: bytes, count: size)
+    }
+}

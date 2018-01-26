@@ -161,8 +161,7 @@ extension ZIPFoundationTests {
         let data = Data.makeRandomData(size: size)
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
-            try archive.addEntry(with: entryName, type: .file,
-                                 uncompressedSize: UInt32(size),
+            try archive.addEntry(with: entryName, type: .file, uncompressedSize: UInt32(size),
                                  compressionMethod: .deflate,
                                  provider: { (position, bufferSize) -> Data in
                                     let upperBound = Swift.min(size, position + bufferSize)
@@ -186,9 +185,7 @@ extension ZIPFoundationTests {
         let fileName = ProcessInfo.processInfo.globallyUniqueString
         var didCatchExpectedError = false
         do {
-            try archive.addEntry(with: fileName,
-                                 type: .file,
-                                 uncompressedSize: UINT32_MAX,
+            try archive.addEntry(with: fileName, type: .file, uncompressedSize: UINT32_MAX,
                                  provider: { (_, chunkSize) -> Data in
                 return Data.makeRandomData(size: chunkSize)
             })
@@ -204,8 +201,7 @@ extension ZIPFoundationTests {
     func testRemoveUncompressedEntry() {
         let archive = self.archive(for: #function, mode: .update)
         guard let entryToRemove = archive["test/data.random"] else {
-            XCTFail("Failed to find entry to remove in uncompressed folder")
-            return
+            XCTFail("Failed to find entry to remove in uncompressed folder"); return
         }
         do {
             try archive.remove(entryToRemove)
@@ -218,8 +214,7 @@ extension ZIPFoundationTests {
     func testRemoveCompressedEntry() {
         let archive = self.archive(for: #function, mode: .update)
         guard let entryToRemove = archive["test/data.random"] else {
-            XCTFail("Failed to find entry to remove in compressed folder archive")
-            return
+            XCTFail("Failed to find entry to remove in compressed folder archive"); return
         }
         do {
             try archive.remove(entryToRemove)
@@ -296,66 +291,6 @@ extension ZIPFoundationTests {
         XCTAssertTrue(didCatchExpectedError)
     }
 
-    func testFileModificationDate() {
-        var testDateComponents = DateComponents()
-        testDateComponents.calendar = Calendar(identifier: Calendar.Identifier.gregorian)
-        testDateComponents.timeZone = TimeZone(identifier: "UTC")
-        testDateComponents.year = 2000
-        testDateComponents.month = 1
-        testDateComponents.day = 1
-        testDateComponents.hour = 12
-        testDateComponents.minute = 30
-        testDateComponents.second = 10
-        guard let testDate = testDateComponents.date else {
-            XCTFail("Failed to create test date/timestamp")
-            return
-        }
-        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
-        let fileManager = FileManager()
-        let archive = self.archive(for: #function, mode: .create)
-        do {
-            try fileManager.setAttributes([.modificationDate: testDate], ofItemAtPath: assetURL.path)
-            let relativePath = assetURL.lastPathComponent
-            let baseURL = assetURL.deletingLastPathComponent()
-            try archive.addEntry(with: relativePath, relativeTo: baseURL)
-            guard let entry = archive["\(assetURL.lastPathComponent)"] else {
-                throw Archive.ArchiveError.unreadableArchive
-            }
-            guard let fileDate = entry.fileAttributes[.modificationDate] as? Date else {
-                throw CocoaError(CocoaError.fileReadUnknown)
-            }
-            let currentTimeInterval = testDate.timeIntervalSinceReferenceDate
-            let fileTimeInterval = fileDate.timeIntervalSinceReferenceDate
-            // ZIP uses MSDOS timestamps, which provide very poor accuracy
-            // https://blogs.msdn.microsoft.com/oldnewthing/20151030-00/?p=91881
-            XCTAssertEqual(currentTimeInterval, fileTimeInterval, accuracy: 2.0)
-        } catch {
-            XCTFail("Failed to test last file modification date")
-        }
-    }
-
-    func testPOSIXPermissions() {
-        let permissions = Int16(0o753)
-        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
-        let fileManager = FileManager()
-        let archive = self.archive(for: #function, mode: .create)
-        do {
-            try fileManager.setAttributes([.posixPermissions: permissions], ofItemAtPath: assetURL.path)
-            let relativePath = assetURL.lastPathComponent
-            let baseURL = assetURL.deletingLastPathComponent()
-            try archive.addEntry(with: relativePath, relativeTo: baseURL)
-            guard let entry = archive["\(assetURL.lastPathComponent)"] else {
-                throw Archive.ArchiveError.unreadableArchive
-            }
-            guard let filePermissions = entry.fileAttributes[.posixPermissions] as? UInt16 else {
-                throw CocoaError(CocoaError.fileReadUnknown)
-            }
-            XCTAssert(permissions == filePermissions)
-        } catch {
-            XCTFail("Failed to test POSIX permissions")
-        }
-    }
-
     func testArchiveCreateErrorConditions() {
         let existantURL = ZIPFoundationTests.tempZipDirectoryURL
         let nonCreatableArchive = Archive(url: existantURL, accessMode: .create)
@@ -384,16 +319,5 @@ extension ZIPFoundationTests {
         XCTAssert(result == true)
         let nonUpdatableArchive = Archive(url: nonUpdatableArchiveURL, accessMode: .update)
         XCTAssertNil(nonUpdatableArchive)
-    }
-}
-
-extension Data {
-    static func makeRandomData(size: Int) -> Data {
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-            let bytes = [UInt32](repeating: 0, count: size).map { _ in arc4random() }
-#else
-            let bytes = [UInt32](repeating: 0, count: size).map { _ in random() }
-#endif
-        return Data(bytes: bytes, count: size)
     }
 }
