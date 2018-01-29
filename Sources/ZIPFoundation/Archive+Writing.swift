@@ -308,7 +308,9 @@ extension Archive {
     private func rollback(_ localFileHeaderStart: Int,
                           _ existingCentralDirectoryData: Data,
                           _ endOfCentralDirRecord: EndOfCentralDirectoryRecord) throws {
+        fflush(self.archiveFile)
         ftruncate(fileno(self.archiveFile), off_t(localFileHeaderStart))
+        fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
         _ = try Data.write(chunk: existingCentralDirectoryData, to: self.archiveFile)
         _ = try Data.write(chunk: endOfCentralDirRecord.data, to: self.archiveFile)
     }
