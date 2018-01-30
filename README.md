@@ -257,6 +257,14 @@ try archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: 4, p
 The closure is called until enough data has been provided to create an entry of `uncompressedSize`. The closure receives `position` and `size` arguments 
 so that you can manage the state of your data source.
 
+### Progress Reporting and Cancellation
+All `Archive` operations take an optional `progress` parameter. By passing in an instance of [Progress](https://developer.apple.com/documentation/foundation/progress), you indicate that
+you want to track the progress of the current ZIP operation. ZIP Foundation automatically configures the `totalUnitCount` of the `progress` object and continuously updates its `completedUnitCount`.  
+To get notifications about the completed work of the current operation, you can attach a Key-Value Observer to the `fractionCompleted` property of your `progress` object.  
+The ZIP Foundation `FileManager` extension methods also accept optional `progress` parameters. `zipItem` and `unzipItem` both automatically create a hierarchy of progress objects that reflect the progress of all items contained in a directory or an archive that contains multiple items.  
+
+The [cancel()](https://developer.apple.com/documentation/foundation/progress/1413832-cancel) method of `Progress` can be used to terminate an unfinished ZIP operation. In case of cancelation, the current operation throws an `ArchiveError.cancelledOperation` exception. 
+
 ## Credits
 
 ZIP Foundation is written and maintained by [Thomas Zoechling](http://thomas.zoechling.me).  
