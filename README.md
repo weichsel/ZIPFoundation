@@ -15,12 +15,12 @@ To learn more about the performance characteristics of the framework, you can re
 - [Installation](#installation)
 - [Usage](#usage)
     - [Zipping Files and Directories](#zipping-files-and-directories)
-	- [Unzipping Archives](#unzipping-archives)
+    - [Unzipping Archives](#unzipping-archives)
 - [Advanced Usage](#advanced-usage)
-	- [Accessing individual Entries](#accessing-individual-entries)
-	- [Creating Archives](#creating-archives)
-	- [Adding and Removing Entries](#adding-and-removing-entries)
-	- [Closure based Reading and Writing](#closure-based-reading-and-writing)
+    - [Accessing individual Entries](#accessing-individual-entries)
+    - [Creating Archives](#creating-archives)
+    - [Adding and Removing Entries](#adding-and-removing-entries)
+    - [Closure based Reading and Writing](#closure-based-reading-and-writing)
 - [Credits](#credits)
 - [License](#license)
 
@@ -53,12 +53,12 @@ To add ZIP Foundation as a dependency, you have to add it to the `dependencies` 
 import PackageDescription
 let package = Package(
     name: "<Your Product Name>",
-	dependencies: [
+    dependencies: [
 		.package(url: "https://github.com/weichsel/ZIPFoundation/", .upToNextMajor(from: "0.9.0"))
-	],
+    ],
     targets: [
         .target(
-            name: "<Your Target Name>",
+			name: "<Your Target Name>",
             dependencies: ["ZIPFoundation"]),
     ]
 )
@@ -239,7 +239,7 @@ The `extract` method accepts a closure of type `Consumer`. This closure is calle
 
 ```swift
 try archive.extract(entry, consumer: { (data) in
-	print(data.count)
+    print(data.count)
 })
 ```   
 The `data` passed into the closure contains chunks of the current entry. You can control the chunk size of the entry by providing the optional `bufferSize` parameter.
