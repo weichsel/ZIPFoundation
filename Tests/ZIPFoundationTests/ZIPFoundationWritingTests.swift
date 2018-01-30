@@ -152,7 +152,6 @@ extension ZIPFoundationTests {
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         let progress = archive.makeProgressForAddingItem(at: assetURL)
         let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
-            print(progress.fractionCompleted)
             if progress.fractionCompleted > 0.5 {
                 progress.cancel()
                 return true
