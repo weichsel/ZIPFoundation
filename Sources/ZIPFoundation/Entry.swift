@@ -92,18 +92,12 @@ public struct Entry: Equatable {
         let fileNameData: Data
         let extraFieldData: Data
         let fileCommentData: Data
-        var usesDataDescriptor: Bool {
-            return (self.generalPurposeBitFlag & (1 << 3 )) != 0
-        }
-        var isZIP64: Bool {
-            return self.versionNeededToExtract >= 45
-        }
-        var isEncrypted: Bool {
-            return (self.generalPurposeBitFlag & (1 << 0)) != 0
-        }
+        var usesDataDescriptor: Bool { return (self.generalPurposeBitFlag & (1 << 3 )) != 0 }
+        var isZIP64: Bool { return self.versionNeededToExtract >= 45 }
+        var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
     }
 
-    /// Returns the `path` of the receiver within a ZIP `Archive`.
+    /// The `path` of the receiver within a ZIP `Archive`.
     public var path: String {
         let dosLatinUS = 0x400
         let dosLatinUSEncoding = CFStringEncoding(dosLatinUS)
@@ -113,13 +107,13 @@ public struct Entry: Equatable {
         let encoding = isUTF8 ? String.Encoding.utf8 : codepage437
         return String(data: self.centralDirectoryStructure.fileNameData, encoding: encoding) ?? ""
     }
-    /// Returns the file attributes of the receiver as key/value pairs.
+    /// The file attributes of the receiver as key/value pairs.
     ///
     /// Contains the modification date and file permissions.
     public var fileAttributes: [FileAttributeKey: Any] {
         return FileManager.attributes(from: self.centralDirectoryStructure)
     }
-    /// Returns the `CRC32` checksum of the receiver.
+    /// The `CRC32` checksum of the receiver.
     ///
     /// - Note: Always returns `0` for entries of type `EntryType.directory`.
     public var checksum: CRC32 {
@@ -132,9 +126,9 @@ public struct Entry: Equatable {
         }
         return checksum
     }
-    /// Returns the `EntryType` of the receiver.
+    /// The `EntryType` of the receiver.
     public var type: EntryType {
-        //OS Type is stored in the upper byte of versionMadeBy
+        // OS Type is stored in the upper byte of versionMadeBy
         let osTypeRaw = self.centralDirectoryStructure.versionMadeBy >> 8
         let osType = OSType(rawValue: UInt(osTypeRaw)) ?? .unused
         var isDirectory = self.path.hasSuffix("/")
@@ -155,9 +149,28 @@ public struct Entry: Equatable {
             isDirectory = isDirectory || ((centralDirectoryStructure.externalFileAttributes >> 4) == 0x01)
             fallthrough
         default:
-            //for all other OSes we can only guess based on the directory suffix char
+            // for all other OSes we can only guess based on the directory suffix char
             return isDirectory ? .directory : .file
         }
+    }
+    /// The size of the receiver's compressed data.
+    public var compressedSize: Int {
+        return Int(dataDescriptor?.compressedSize ?? localFileHeader.compressedSize)
+    }
+    /// The size of the receiver's uncompressed data.
+    public var uncompressedSize: Int {
+        return Int(dataDescriptor?.uncompressedSize ?? localFileHeader.uncompressedSize)
+    }
+    /// The combined size of the local header, the data and the optional data descriptor.
+    var localSize: Int {
+        let localFileHeader = self.localFileHeader
+        var extraDataLength = Int(localFileHeader.fileNameLength)
+        extraDataLength += Int(localFileHeader.extraFieldLength)
+        var size = LocalFileHeader.size + extraDataLength
+        let isCompressed = localFileHeader.compressionMethod != CompressionMethod.none.rawValue
+        size += isCompressed ? self.compressedSize : self.uncompressedSize
+        size += self.dataDescriptor != nil ? DataDescriptor.size : 0
+        return size
     }
     var dataOffset: Int {
         var dataOffset = Int(self.centralDirectoryStructure.relativeOffsetOfLocalHeader)
@@ -181,7 +194,7 @@ public struct Entry: Equatable {
     init?(centralDirectoryStructure: CentralDirectoryStructure,
           localFileHeader: LocalFileHeader,
           dataDescriptor: DataDescriptor?) {
-        //We currently don't support ZIP64 or encrypted archives
+        // We currently don't support ZIP64 or encrypted archives
         guard !centralDirectoryStructure.isZIP64 else { return nil }
         guard !centralDirectoryStructure.isEncrypted else { return nil }
         self.centralDirectoryStructure = centralDirectoryStructure
@@ -233,9 +246,7 @@ extension Entry.LocalFileHeader {
         self.fileNameLength = data.scanValue(start: 26)
         self.extraFieldLength = data.scanValue(start: 28)
         let additionalDataLength = Int(self.fileNameLength + self.extraFieldLength)
-        guard let additionalData = try? provider(additionalDataLength) else {
-            return nil
-        }
+        guard let additionalData = try? provider(additionalDataLength) else { return nil }
         guard additionalData.count == additionalDataLength else { return nil }
         var subRangeStart = 0
         var subRangeEnd = Int(self.fileNameLength)
@@ -308,9 +319,7 @@ extension Entry.CentralDirectoryStructure {
         self.externalFileAttributes = data.scanValue(start: 38)
         self.relativeOffsetOfLocalHeader = data.scanValue(start: 42)
         let additionalDataLength = Int(self.fileNameLength + self.extraFieldLength + self.fileCommentLength)
-        guard let additionalData = try? provider(additionalDataLength) else {
-            return nil
-        }
+        guard let additionalData = try? provider(additionalDataLength) else { return nil }
         guard additionalData.count == additionalDataLength else { return nil }
         var subRangeStart = 0
         var subRangeEnd = Int(self.fileNameLength)

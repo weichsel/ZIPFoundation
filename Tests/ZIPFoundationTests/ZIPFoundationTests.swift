@@ -245,22 +245,23 @@ extension ZIPFoundationTests {
 
     static var allTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
         return [
-            ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests),
             ("testArchiveAddEntryErrorConditions", testArchiveAddEntryErrorConditions),
             ("testArchiveCreateErrorConditions", testArchiveCreateErrorConditions),
-            ("testArchiveUpdateErrorConditions", testArchiveUpdateErrorConditions),
             ("testArchiveInvalidDataErrorConditions", testArchiveInvalidDataErrorConditions),
             ("testArchiveIteratorErrorConditions", testArchiveIteratorErrorConditions),
             ("testArchiveReadErrorConditions", testArchiveReadErrorConditions),
+            ("testArchiveUpdateErrorConditions", testArchiveUpdateErrorConditions),
             ("testCorruptFileErrorConditions", testCorruptFileErrorConditions),
             ("testCorruptSymbolicLinkErrorConditions", testCorruptSymbolicLinkErrorConditions),
             ("testCreateArchiveAddCompressedEntry", testCreateArchiveAddCompressedEntry),
             ("testCreateArchiveAddDirectory", testCreateArchiveAddDirectory),
             ("testCreateArchiveAddEntryErrorConditions", testCreateArchiveAddEntryErrorConditions),
+            ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
+            ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress),
             ("testCreateArchiveAddLargeCompressedEntry", testCreateArchiveAddLargeCompressedEntry),
             ("testCreateArchiveAddLargeUncompressedEntry", testCreateArchiveAddLargeUncompressedEntry),
-            ("testCreateArchiveAddTooLargeUncompressedEntry", testCreateArchiveAddTooLargeUncompressedEntry),
             ("testCreateArchiveAddSymbolicLink", testCreateArchiveAddSymbolicLink),
+            ("testCreateArchiveAddTooLargeUncompressedEntry", testCreateArchiveAddTooLargeUncompressedEntry),
             ("testCreateArchiveAddUncompressedEntry", testCreateArchiveAddUncompressedEntry),
             ("testDirectoryCreationHelperMethods", testDirectoryCreationHelperMethods),
             ("testEntryInvalidAdditionalDataErrorConditions", testEntryInvalidAdditionalDataErrorConditions),
@@ -269,37 +270,45 @@ extension ZIPFoundationTests {
             ("testEntryMissingDataDescriptorErrorCondition", testEntryMissingDataDescriptorErrorCondition),
             ("testEntryTypeDetectionHeuristics", testEntryTypeDetectionHeuristics),
             ("testEntryWrongDataLengthErrorConditions", testEntryWrongDataLengthErrorConditions),
+            ("testExtractCompressedDataDescriptorArchive", testExtractCompressedDataDescriptorArchive),
             ("testExtractCompressedFolderEntries", testExtractCompressedFolderEntries),
-            ("testExtractDataDescriptorArchive", testExtractDataDescriptorArchive),
             ("testExtractEncryptedArchiveErrorConditions", testExtractEncryptedArchiveErrorConditions),
+            ("testExtractUncompressedEntryCancelation", testExtractUncompressedEntryCancelation),
+            ("testExtractCompressedEntryCancelation", testExtractCompressedEntryCancelation),
             ("testExtractErrorConditions", testExtractErrorConditions),
             ("testExtractMSDOSArchive", testExtractMSDOSArchive),
+            ("testExtractUncompressedDataDescriptorArchive", testExtractUncompressedDataDescriptorArchive),
             ("testExtractUncompressedFolderEntries", testExtractUncompressedFolderEntries),
             ("testExtractZIP64ArchiveErrorConditions", testExtractZIP64ArchiveErrorConditions),
-            ("testFilePermissionErrorConditions", testFilePermissionErrorConditions),
             ("testFileAttributeHelperMethods", testFileAttributeHelperMethods),
             ("testFileModificationDate", testFileModificationDate),
             ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
+            ("testFilePermissionErrorConditions", testFilePermissionErrorConditions),
             ("testFilePermissionHelperMethods", testFilePermissionHelperMethods),
             ("testFileSizeHelperMethods", testFileSizeHelperMethods),
             ("testFileTypeHelperMethods", testFileTypeHelperMethods),
             ("testInvalidCompressionMethodErrorConditions", testInvalidCompressionMethodErrorConditions),
-            ("testPerformanceWriteUncompressed", testPerformanceWriteUncompressed),
-            ("testPerformanceReadUncompressed", testPerformanceWriteUncompressed),
+            ("testPerformanceReadCompressed", testPerformanceReadCompressed),
+            ("testPerformanceReadUncompressed", testPerformanceReadUncompressed),
             ("testPerformanceWriteCompressed", testPerformanceWriteCompressed),
-            ("testPerformanceReadCompressed", testPerformanceWriteCompressed),
+            ("testPerformanceWriteUncompressed", testPerformanceWriteUncompressed),
             ("testPOSIXPermissions", testPOSIXPermissions),
+            ("testProgressHelpers", testProgressHelpers),
             ("testReadChunkErrorConditions", testReadChunkErrorConditions),
             ("testReadStructureErrorConditions", testReadStructureErrorConditions),
             ("testRemoveCompressedEntry", testRemoveCompressedEntry),
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
+            ("testRemoveEntryProgress", testRemoveEntryProgress),
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
+            ("testUnzipItemProgress", testUnzipItemProgress),
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             ("testZipItem", testZipItem),
-            ("testZipItemErrorConditions", testZipItemErrorConditions)
+            ("testZipItemErrorConditions", testZipItemErrorConditions),
+            ("testZipItemProgress", testZipItemProgress),
+            ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
         ]
     }
 }
@@ -316,5 +325,16 @@ extension Archive {
             return false
         }
         return isCorrect
+    }
+}
+
+extension Data {
+    static func makeRandomData(size: Int) -> Data {
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+            let bytes = [UInt32](repeating: 0, count: size).map { _ in arc4random() }
+        #else
+            let bytes = [UInt32](repeating: 0, count: size).map { _ in random() }
+        #endif
+        return Data(bytes: bytes, count: size)
     }
 }

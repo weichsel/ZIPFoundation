@@ -25,8 +25,10 @@ extension FileManager {
     ///   - destinationURL: The file URL that identifies the destination of the zip operation.
     ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element
     ///                       within the archive. Default is `true`.
+    ///   - progress: A progress object that can be used to track or cancel the zip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
-    public func zipItem(at sourceURL: URL, to destinationURL: URL, shouldKeepParent: Bool = true) throws {
+    public func zipItem(at sourceURL: URL, to destinationURL: URL,
+                        shouldKeepParent: Bool = true, progress: Progress? = nil) throws {
         guard self.fileExists(atPath: sourceURL.path) else {
             throw CocoaError.error(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path], url: nil)
         }
@@ -38,20 +40,36 @@ extension FileManager {
         }
         let isDirectory = try FileManager.typeForItem(at: sourceURL) == .directory
         if isDirectory {
-            // Use the path based enumerator because it returns String objects containing
-            // relative paths instead of absolute URLs
-            let dirEnumerator = self.enumerator(atPath: sourceURL.path)
+            let subPaths = try self.subpathsOfDirectory(atPath: sourceURL.path)
+            var totalUnitCount = Int64(0)
+            if let progress = progress {
+                totalUnitCount = subPaths.reduce(Int64(0), {
+                    let itemURL = sourceURL.appendingPathComponent($1)
+                    let itemSize = archive.totalUnitCountForAddingItem(at: itemURL)
+                    return $0 + itemSize
+                })
+                progress.totalUnitCount = totalUnitCount
+            }
+
             // If the caller wants to keep the parent directory, we use the lastPathComponent of the source URL
             // as common base for all entries (similar to macOS' Archive Utility.app)
             let directoryPrefix = sourceURL.lastPathComponent
-            while let entryPath = dirEnumerator?.nextObject() as? String {
+            for entryPath in subPaths {
                 let finalEntryPath = shouldKeepParent ? directoryPrefix + "/" + entryPath : entryPath
                 let finalBaseURL = shouldKeepParent ? sourceURL.deletingLastPathComponent() : sourceURL
-                try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL)
+                if let progress = progress {
+                    let itemURL = sourceURL.appendingPathComponent(entryPath)
+                    let entryProgress = archive.makeProgressForAddingItem(at: itemURL)
+                    progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
+                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL, progress: entryProgress)
+                } else {
+                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL)
+                }
             }
         } else {
+            progress?.totalUnitCount = archive.totalUnitCountForAddingItem(at: sourceURL)
             let baseURL = sourceURL.deletingLastPathComponent()
-            try archive.addEntry(with: sourceURL.lastPathComponent, relativeTo: baseURL)
+            try archive.addEntry(with: sourceURL.lastPathComponent, relativeTo: baseURL, progress: progress)
         }
     }
 
@@ -60,8 +78,9 @@ extension FileManager {
     /// - Parameters:
     ///   - sourceURL: The file URL pointing to an existing ZIP file.
     ///   - destinationURL: The file URL that identifies the destination of the unzip operation.
+    ///   - progress: A progress object that can be used to track or cancel the unzip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
-    public func unzipItem(at sourceURL: URL, to destinationURL: URL) throws {
+    public func unzipItem(at sourceURL: URL, to destinationURL: URL, progress: Progress? = nil) throws {
         guard self.fileExists(atPath: sourceURL.path) else {
             throw CocoaError.error(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path], url: nil)
         }
@@ -78,9 +97,21 @@ extension FileManager {
             default: return false
             }
         }
+        var totalUnitCount = Int64(0)
+        if let progress = progress {
+            totalUnitCount = sortedEntries.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
+            progress.totalUnitCount = totalUnitCount
+        }
+
         for entry in sortedEntries {
             let destinationEntryURL = destinationURL.appendingPathComponent(entry.path)
-            _ = try archive.extract(entry, to: destinationEntryURL)
+            if let progress = progress {
+                let entryProgress = archive.makeProgressForReading(entry)
+                progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
+                _ = try archive.extract(entry, to: destinationEntryURL, progress: entryProgress)
+            } else {
+                _ = try archive.extract(entry, to: destinationEntryURL)
+            }
         }
     }
 

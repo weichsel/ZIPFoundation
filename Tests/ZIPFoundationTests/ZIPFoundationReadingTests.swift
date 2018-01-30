@@ -62,7 +62,19 @@ extension ZIPFoundationTests {
         }
     }
 
-    func testExtractDataDescriptorArchive() {
+    func testExtractUncompressedDataDescriptorArchive() {
+        let archive = self.archive(for: #function, mode: .read)
+        for entry in archive {
+            do {
+                let checksum = try archive.extract(entry, consumer: { _ in })
+                XCTAssert(entry.checksum == checksum)
+            } catch {
+                XCTFail("Failed to unzip data descriptor archive")
+            }
+        }
+    }
+
+    func testExtractCompressedDataDescriptorArchive() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
             do {
@@ -191,5 +203,49 @@ extension ZIPFoundationTests {
         }
         // We currently don't support encryption so we expect failed initialization for entry objects.
         XCTAssert(entriesRead == 0)
+    }
+
+    func testExtractUncompressedEntryCancelation() {
+        let archive = self.archive(for: #function, mode: .read)
+        guard let entry = archive["original"] else { XCTFail("Failed to extract entry."); return }
+        let progress = archive.makeProgressForReading(entry)
+        do {
+            var readCount = 0
+            _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (_) in
+                if readCount == 3 { progress.cancel() }
+                readCount += 1
+            }
+        } catch let error as Archive.ArchiveError {
+            XCTAssert(error == Archive.ArchiveError.cancelledOperation)
+            XCTAssertEqual(progress.fractionCompleted, 0.5, accuracy: .ulpOfOne)
+        } catch {
+            XCTFail("Unexpected error while trying to cancel extraction.")
+        }
+    }
+
+    func testExtractCompressedEntryCancelation() {
+        let archive = self.archive(for: #function, mode: .read)
+        guard let entry = archive["original"] else { XCTFail("Failed to extract entry."); return }
+        let progress = archive.makeProgressForReading(entry)
+        do {
+            var readCount = 0
+            _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (_) in
+                if readCount == 3 { progress.cancel() }
+                readCount += 1
+            }
+        } catch let error as Archive.ArchiveError {
+            XCTAssert(error == Archive.ArchiveError.cancelledOperation)
+            XCTAssertEqual(progress.fractionCompleted, 0.5, accuracy: .ulpOfOne)
+        } catch {
+            XCTFail("Unexpected error while trying to cancel extraction.")
+        }
+    }
+
+    func testProgressHelpers() {
+        let tempPath = NSTemporaryDirectory()
+        var nonExistantURL = URL(fileURLWithPath: tempPath)
+        nonExistantURL.appendPathComponent("invalid.path")
+        let archive = self.archive(for: #function, mode: .update)
+        XCTAssert(archive.totalUnitCountForAddingItem(at: nonExistantURL) == -1)
     }
 }

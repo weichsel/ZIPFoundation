@@ -24,9 +24,10 @@ extension Archive {
     ///              The `baseURL` combined with `path` must form a fully qualified file URL.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied to `Entry`.
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
+    ///   - progress: A progress object that can be used to track or cancel the add operation.
     /// - Throws: An error if the source file cannot be read or the receiver is not writable.
     public func addEntry(with path: String, relativeTo baseURL: URL, compressionMethod: CompressionMethod = .none,
-                         bufferSize: UInt32 = defaultWriteChunkSize) throws {
+                         bufferSize: UInt32 = defaultWriteChunkSize, progress: Progress? = nil) throws {
         let fileManager = FileManager()
         let entryURL = baseURL.appendingPathComponent(path)
         guard fileManager.fileExists(atPath: entryURL.path) else {
@@ -45,21 +46,22 @@ extension Archive {
             let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: entryURL.path)
             let entryFile: UnsafeMutablePointer<FILE> = fopen(entryFileSystemRepresentation, "rb")
             defer { fclose(entryFile) }
-            provider = { _, _ in return try Data.readChunk(from: entryFile, size: Int(bufferSize)) }
+            provider = { _, _ in return try Data.readChunk(of: Int(bufferSize), from: entryFile) }
             try self.addEntry(with: path, type: type, uncompressedSize: uncompressedSize,
                               modificationDate: modDate, permissions: permissions,
-                              compressionMethod: compressionMethod, bufferSize: bufferSize, provider: provider)
+                              compressionMethod: compressionMethod, bufferSize: bufferSize,
+                              progress: progress, provider: provider)
         case .directory:
             provider = { _, _ in return Data() }
             try self.addEntry(with: path.hasSuffix("/") ? path : path + "/",
                               type: type, uncompressedSize: uncompressedSize,
                               modificationDate: modDate, permissions: permissions,
-                              compressionMethod: compressionMethod, bufferSize: bufferSize, provider: provider)
+                              compressionMethod: compressionMethod, bufferSize: bufferSize,
+                              progress: progress, provider: provider)
         case .symlink:
             provider = { _, _ -> Data in
                 let fileManager = FileManager()
-                let path = entryURL.path
-                let linkDestination = try fileManager.destinationOfSymbolicLink(atPath: path)
+                let linkDestination = try fileManager.destinationOfSymbolicLink(atPath: entryURL.path)
                 let linkFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: linkDestination)
                 let linkLength = Int(strlen(linkFileSystemRepresentation))
                 let linkBuffer = UnsafeBufferPointer(start: linkFileSystemRepresentation, count: linkLength)
@@ -67,7 +69,8 @@ extension Archive {
             }
             try self.addEntry(with: path, type: type, uncompressedSize: uncompressedSize,
                               modificationDate: modDate, permissions: permissions,
-                              compressionMethod: compressionMethod, bufferSize: bufferSize, provider: provider)
+                              compressionMethod: compressionMethod, bufferSize: bufferSize,
+                              progress: progress, provider: provider)
         }
     }
 
@@ -83,51 +86,55 @@ extension Archive {
     ///                  Default is `0`o`644`.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied to `Entry`.
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
+    ///   - progress: A progress object that can be used to track or cancel the add operation.
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
     /// - Throws: An error if the source data is invalid or the receiver is not writable.
     public func addEntry(with path: String, type: Entry.EntryType, uncompressedSize: UInt32,
-                         modificationDate: Date = Date(),
-                         permissions: UInt16 = defaultPermissions,
+                         modificationDate: Date = Date(), permissions: UInt16 = defaultPermissions,
                          compressionMethod: CompressionMethod = .none, bufferSize: UInt32 = defaultWriteChunkSize,
-                         provider: Provider) throws {
+                         progress: Progress? = nil, provider: Provider) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
-        var endOfCentralDirectoryRecord = self.endOfCentralDirectoryRecord
-        var startOfCentralDirectory = Int(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
-        var existingCentralDirectoryData = Data()
-        fseek(self.archiveFile, startOfCentralDirectory, SEEK_SET)
-        existingCentralDirectoryData = try Data.readChunk(from: self.archiveFile,
-                                                          size: Int(endOfCentralDirectoryRecord.sizeOfCentralDirectory))
-        fseek(self.archiveFile, startOfCentralDirectory, SEEK_SET)
+        progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : Int64(uncompressedSize)
+        var endOfCentralDirRecord = self.endOfCentralDirectoryRecord
+        var startOfCentralDir = Int(endOfCentralDirRecord.offsetToStartOfCentralDirectory)
+        var existingCentralDirData = Data()
+        fseek(self.archiveFile, startOfCentralDir, SEEK_SET)
+        existingCentralDirData = try Data.readChunk(of: Int(endOfCentralDirRecord.sizeOfCentralDirectory),
+                                                    from: self.archiveFile)
+        fseek(self.archiveFile, startOfCentralDir, SEEK_SET)
         let localFileHeaderStart = ftell(self.archiveFile)
         let modDateTime = modificationDate.fileModificationDateTime
-        var localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
-                                                            size: (uncompressedSize, 0), checksum: 0,
-                                                            modificationDateTime: modDateTime)
-        let (sizeWritten, checksum)  = try self.writeEntry(localFileHeader: localFileHeader, type: type,
-                                                           compressionMethod: compressionMethod,
-                                                           bufferSize: bufferSize, provider: provider)
-        startOfCentralDirectory = ftell(self.archiveFile)
-        fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
-        // Write the local file header a second time. Now with compressedSize (if applicable) and a valid checksum.
-        localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
-                                                        size: (uncompressedSize, sizeWritten),
-                                                        checksum: checksum, modificationDateTime: modDateTime)
-        fseek(self.archiveFile, startOfCentralDirectory, SEEK_SET)
-        _ = try Data.write(chunk: existingCentralDirectoryData, to: self.archiveFile)
-        let externalFileAttributes = FileManager.externalFileAttributesForEntry(of: type, permissions: permissions)
-        let offset = UInt32(localFileHeaderStart)
-        let centralDirectory = try self.writeCentralDirectoryStructure(localFileHeader: localFileHeader,
-                                                                       relativeOffset: offset,
-                                                                       externalFileAttributes: externalFileAttributes)
-        if startOfCentralDirectory > UINT32_MAX {
-            throw ArchiveError.invalidStartOfCentralDirectoryOffset
+        defer { fflush(self.archiveFile) }
+        do {
+            var localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
+                                                                size: (uncompressedSize, 0), checksum: 0,
+                                                                modificationDateTime: modDateTime)
+            let (written, checksum) = try self.writeEntry(localFileHeader: localFileHeader, type: type,
+                                                          compressionMethod: compressionMethod, bufferSize: bufferSize,
+                                                          progress: progress, provider: provider)
+            startOfCentralDir = ftell(self.archiveFile)
+            fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
+            // Write the local file header a second time. Now with compressedSize (if applicable) and a valid checksum.
+            localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
+                                                            size: (uncompressedSize, written),
+                                                            checksum: checksum, modificationDateTime: modDateTime)
+            fseek(self.archiveFile, startOfCentralDir, SEEK_SET)
+            _ = try Data.write(chunk: existingCentralDirData, to: self.archiveFile)
+            let externalAttributes = FileManager.externalFileAttributesForEntry(of: type, permissions: permissions)
+            let offset = UInt32(localFileHeaderStart)
+            let centralDir = try self.writeCentralDirectoryStructure(localFileHeader: localFileHeader,
+                                                                     relativeOffset: offset,
+                                                                     externalFileAttributes: externalAttributes)
+            if startOfCentralDir > UINT32_MAX { throw ArchiveError.invalidStartOfCentralDirectoryOffset }
+            let start = UInt32(startOfCentralDir)
+            endOfCentralDirRecord = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDir,
+                                                                        startOfCentralDirectory: start,
+                                                                        operation: .add)
+            self.endOfCentralDirectoryRecord = endOfCentralDirRecord
+        } catch ArchiveError.cancelledOperation {
+            try rollback(localFileHeaderStart, existingCentralDirData, endOfCentralDirRecord)
+            throw ArchiveError.cancelledOperation
         }
-        let start = UInt32(startOfCentralDirectory)
-        endOfCentralDirectoryRecord = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDirectory,
-                                                                          startOfCentralDirectory: start,
-                                                                          operation: .add)
-        fflush(self.archiveFile)
-        self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
     }
 
     /// Remove a ZIP `Entry` from the receiver.
@@ -135,39 +142,36 @@ extension Archive {
     /// - Parameters:
     ///   - entry: The `Entry` to remove.
     ///   - bufferSize: The maximum size for the read and write buffers used during removal.
+    ///   - progress: A progress object that can be used to track or cancel the remove operation.
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
-    public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize) throws {
+    public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
         let uniqueString = ProcessInfo.processInfo.globallyUniqueString
         let tempArchiveURL =  URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(uniqueString)
         guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
             throw ArchiveError.unwritableArchive
         }
+        progress?.totalUnitCount = self.totalUnitCountForRemoving(entry)
         var centralDirectoryData = Data()
         var offset = 0
         for currentEntry in self {
-            let localFileHeader = currentEntry.localFileHeader
             let centralDirectoryStructure = currentEntry.centralDirectoryStructure
-            let dataDescriptor = currentEntry.dataDescriptor
-            var extraDataLength = Int(localFileHeader.fileNameLength)
-            extraDataLength += Int(localFileHeader.extraFieldLength)
-            var entrySize = LocalFileHeader.size + extraDataLength
-            let isCompressed = centralDirectoryStructure.compressionMethod != CompressionMethod.none.rawValue
-            if let dataDescriptor = dataDescriptor {
-                entrySize += Int(isCompressed ? dataDescriptor.compressedSize : dataDescriptor.uncompressedSize)
-                entrySize += DataDescriptor.size
-            } else {
-                entrySize += Int(isCompressed ? localFileHeader.compressedSize : localFileHeader.uncompressedSize)
-            }
             if currentEntry != entry {
                 let entryStart = Int(currentEntry.centralDirectoryStructure.relativeOffsetOfLocalHeader)
                 fseek(self.archiveFile, entryStart, SEEK_SET)
-                let consumer = { _ = try Data.write(chunk: $0, to: tempArchive.archiveFile) }
-                _ = try Data.consumePart(of: self.archiveFile, size: Int(entrySize), chunkSize: Int(bufferSize),
-                                         skipCRC32: true, consumer: consumer)
+                let provider: Provider = { (_, chunkSize) -> Data in
+                    if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
+                    return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
+                }
+                let consumer: Consumer = {
+                    _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
+                    progress?.completedUnitCount += Int64($0.count)
+                }
+                _ = try Data.consumePart(of: Int(currentEntry.localSize), chunkSize: Int(bufferSize),
+                                         provider: provider, consumer: consumer)
                 let centralDir = CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
                                                            offset: UInt32(offset))
                 centralDirectoryData.append(centralDir.data)
-            } else { offset = entrySize }
+            } else { offset = currentEntry.localSize }
         }
         let startOfCentralDirectory = ftell(tempArchive.archiveFile)
         _ = try Data.write(chunk: centralDirectoryData, to: tempArchive.archiveFile)
@@ -205,7 +209,7 @@ extension Archive {
     }
 
     private func writeEntry(localFileHeader: LocalFileHeader, type: Entry.EntryType,
-                            compressionMethod: CompressionMethod, bufferSize: UInt32,
+                            compressionMethod: CompressionMethod, bufferSize: UInt32, progress: Progress? = nil,
                             provider: Provider) throws -> (sizeWritten: UInt32, crc32: CRC32) {
         var checksum = CRC32(0)
         var sizeWritten = UInt32(0)
@@ -214,40 +218,52 @@ extension Archive {
             switch compressionMethod {
             case .none:
                 (sizeWritten, checksum) = try self.writeUncompressed(size: localFileHeader.uncompressedSize,
-                                                                     bufferSize: bufferSize, provider: provider)
+                                                                     bufferSize: bufferSize,
+                                                                     progress: progress, provider: provider)
             case .deflate:
                 (sizeWritten, checksum) = try self.writeCompressed(size: localFileHeader.uncompressedSize,
-                                                                   bufferSize: bufferSize, provider: provider)
+                                                                   bufferSize: bufferSize,
+                                                                   progress: progress, provider: provider)
             }
-        case .directory: _ = try provider(0, 0)
+        case .directory:
+            _ = try provider(0, 0)
+            if let progress = progress { progress.completedUnitCount = progress.totalUnitCount }
         case .symlink:
             (sizeWritten, checksum) = try self.writeSymbolicLink(size: localFileHeader.uncompressedSize,
                                                                  provider: provider)
+            if let progress = progress { progress.completedUnitCount = progress.totalUnitCount }
         }
         return (sizeWritten, checksum)
     }
 
-    private func writeUncompressed(size: UInt32, bufferSize: UInt32,
+    private func writeUncompressed(size: UInt32, bufferSize: UInt32, progress: Progress? = nil,
                                    provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
         var position = 0
         var sizeWritten = 0
         var checksum = CRC32(0)
         while position < size {
+            if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
             let readSize = (Int(size) - position) >= bufferSize ? Int(bufferSize) : (Int(size) - position)
             let entryChunk = try provider(Int(position), Int(readSize))
             checksum = entryChunk.crc32(checksum: checksum)
             sizeWritten += try Data.write(chunk: entryChunk, to: self.archiveFile)
             position += Int(bufferSize)
+            progress?.completedUnitCount = Int64(sizeWritten)
         }
         return (UInt32(sizeWritten), checksum)
     }
 
-    private func writeCompressed(size: UInt32, bufferSize: UInt32,
+    private func writeCompressed(size: UInt32, bufferSize: UInt32, progress: Progress? = nil,
                                  provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
         var sizeWritten = 0
-        let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize), provider: provider) { data in
-            sizeWritten += try Data.write(chunk: data, to: self.archiveFile)
-        }
+        let consumer: Consumer = { data in sizeWritten += try Data.write(chunk: data, to: self.archiveFile) }
+        let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize),
+                                         provider: { (position, size) -> Data in
+                                            if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
+                                            let data = try provider(position, size)
+                                            progress?.completedUnitCount += Int64(data.count)
+                                            return data
+                                         }, consumer: consumer)
         return(UInt32(sizeWritten), checksum)
     }
 
@@ -286,6 +302,16 @@ extension Archive {
                                              startOfCentralDirectory: startOfCentralDirectory)
         _ = try Data.write(chunk: record.data, to: self.archiveFile)
         return record
+    }
+
+    private func rollback(_ localFileHeaderStart: Int,
+                          _ existingCentralDirectoryData: Data,
+                          _ endOfCentralDirRecord: EndOfCentralDirectoryRecord) throws {
+        fflush(self.archiveFile)
+        ftruncate(fileno(self.archiveFile), off_t(localFileHeaderStart))
+        fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
+        _ = try Data.write(chunk: existingCentralDirectoryData, to: self.archiveFile)
+        _ = try Data.write(chunk: endOfCentralDirRecord.data, to: self.archiveFile)
     }
 
     private func replaceCurrentArchiveWithArchive(at URL: URL) throws {

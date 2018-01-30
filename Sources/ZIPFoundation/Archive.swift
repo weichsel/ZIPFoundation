@@ -17,6 +17,7 @@ public let defaultWriteChunkSize = defaultReadChunkSize
 /// The default permissions for newly added entries.
 public let defaultPermissions = UInt16(0o644)
 let defaultPOSIXBufferSize = defaultReadChunkSize
+let defaultDirectoryUnitCount = Int64(1)
 let minDirectoryEndOffset = 22
 let maxDirectoryEndOffset = 66000
 let endOfCentralDirectoryStructSignature = 0x06054b50
@@ -77,6 +78,8 @@ public final class Archive: Sequence {
         case invalidStartOfCentralDirectoryOffset
         /// Thrown when an archive does not contain the required End of Central Directory Record.
         case missingEndOfCentralDirectoryRecord
+        /// Thrown when an extract, add or remove operation was canceled.
+        case cancelledOperation
     }
 
     /// The access mode for an `Archive`.
@@ -236,6 +239,64 @@ public final class Archive: Sequence {
             i += 1
         }
         return nil
+    }
+}
+
+extension Archive {
+    /// The number of the work units that have to be performed when
+    /// removing `entry` from the receiver.
+    ///
+    /// - Parameter entry: The entry that will be removed.
+    /// - Returns: The number of the work units.
+    public func totalUnitCountForRemoving(_ entry: Entry) -> Int64 {
+        return Int64(self.endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory
+                   - UInt32(entry.localSize))
+    }
+
+    func makeProgressForRemoving(_ entry: Entry) -> Progress {
+        return Progress(totalUnitCount: self.totalUnitCountForRemoving(entry))
+    }
+
+    /// The number of the work units that have to be performed when
+    /// reading `entry` from the receiver.
+    ///
+    /// - Parameter entry: The entry that will be read.
+    /// - Returns: The number of the work units.
+    public func totalUnitCountForReading(_ entry: Entry) -> Int64 {
+        switch entry.type {
+        case .file, .symlink:
+            return Int64(entry.uncompressedSize)
+        case .directory:
+            return defaultDirectoryUnitCount
+        }
+    }
+
+    func makeProgressForReading(_ entry: Entry) -> Progress {
+        return Progress(totalUnitCount: self.totalUnitCountForReading(entry))
+    }
+
+    /// The number of the work units that have to be performed when
+    /// adding the file at `url` to the receiver.
+    /// - Parameter entry: The entry that will be removed.
+    /// - Returns: The number of the work units.
+    public func totalUnitCountForAddingItem(at url: URL) -> Int64 {
+        var count = Int64(0)
+        do {
+            let type = try FileManager.typeForItem(at: url)
+            switch type {
+            case .file, .symlink:
+                count = Int64(try FileManager.fileSizeForItem(at: url))
+            case .directory:
+                count = defaultDirectoryUnitCount
+            }
+        } catch {
+            count = -1
+        }
+        return count
+    }
+
+    func makeProgressForAddingItem(at url: URL) -> Progress {
+        return Progress(totalUnitCount: self.totalUnitCountForAddingItem(at: url))
     }
 }
 

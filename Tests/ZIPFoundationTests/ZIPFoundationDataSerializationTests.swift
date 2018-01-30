@@ -43,7 +43,7 @@ extension ZIPFoundationTests {
         // unreadable file data.
         fclose(file)
         do {
-            _ = try Data.readChunk(from: file, size: 10)
+            _ = try Data.readChunk(of: 10, from: file)
         } catch let error as Data.DataError {
             XCTAssert(error == .unreadableFile)
         } catch {

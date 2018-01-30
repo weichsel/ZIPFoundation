@@ -28,28 +28,17 @@ extension Data {
 
     static func readStructure<T>(from file:UnsafeMutablePointer<FILE>, at offset: Int) -> T? where T: DataSerializable {
         fseek(file, offset, SEEK_SET)
-        guard let data = try? self.readChunk(from: file, size: T.size) else {
+        guard let data = try? self.readChunk(of: T.size, from: file) else {
             return nil
         }
         let structure = T(data: data, additionalDataProvider: { (additionalDataSize) -> Data in
-            return try self.readChunk(from: file, size: additionalDataSize)
+            return try self.readChunk(of: additionalDataSize, from: file)
         })
         return structure
     }
 
-    static func readChunk(from file: UnsafeMutablePointer<FILE>, size: Int) throws -> Data {
-        let bytes = UnsafeMutableRawPointer.allocate(bytes: size, alignedTo: 1)
-        let bytesRead = fread(bytes, 1, size, file)
-        let error = ferror(file)
-        if error > 0 {
-            throw DataError.unreadableFile
-        }
-        return Data(bytesNoCopy: bytes, count: bytesRead, deallocator: Data.Deallocator.free)
-    }
-
-    static func consumePart(of file: UnsafeMutablePointer<FILE>,
-                            size: Int, chunkSize: Int, skipCRC32: Bool = false,
-                            consumer: Consumer) throws -> CRC32 {
+    static func consumePart(of size: Int, chunkSize: Int, skipCRC32: Bool = false,
+                            provider: Provider, consumer: Consumer) throws -> CRC32 {
         let readInOneChunk = (size < chunkSize)
         var chunkSize = readInOneChunk ? size : chunkSize
         var checksum = CRC32(0)
@@ -57,7 +46,7 @@ extension Data {
         while bytesRead < size {
             let remainingSize = size - bytesRead
             chunkSize = remainingSize < chunkSize ? remainingSize : chunkSize
-            let data = try Data.readChunk(from: file, size: Int(chunkSize))
+            let data = try provider(bytesRead, chunkSize)
             try consumer(data)
             if !skipCRC32 {
                 checksum = data.crc32(checksum: checksum)
@@ -65,6 +54,16 @@ extension Data {
             bytesRead += chunkSize
         }
         return checksum
+    }
+
+    static func readChunk(of size: Int, from file: UnsafeMutablePointer<FILE>) throws -> Data {
+        let bytes = UnsafeMutableRawPointer.allocate(bytes: size, alignedTo: 1)
+        let bytesRead = fread(bytes, 1, size, file)
+        let error = ferror(file)
+        if error > 0 {
+            throw DataError.unreadableFile
+        }
+        return Data(bytesNoCopy: bytes, count: bytesRead, deallocator: Data.Deallocator.free)
     }
 
     static func write(chunk: Data, to file: UnsafeMutablePointer<FILE>) throws -> Int {

@@ -22,8 +22,7 @@ extension ZIPFoundationTests {
             try fileManager.zipItem(at: assetURL, to: fileArchiveURL)
         } catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
         guard let archive = Archive(url: fileArchiveURL, accessMode: .read) else {
-            XCTFail("Failed to read archive.")
-            return
+            XCTFail("Failed to read archive."); return
         }
         XCTAssertNotNil(archive[assetURL.lastPathComponent])
         XCTAssert(archive.checkIntegrity())
@@ -58,6 +57,53 @@ extension ZIPFoundationTests {
         XCTAssert(parentDirectoryArchive.checkIntegrity())
     }
 
+    func testZipItemProgress() {
+        let fileManager = FileManager()
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        var fileArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+        fileArchiveURL.appendPathComponent(self.pathComponent(for: #function))
+        fileArchiveURL.appendPathExtension("zip")
+        let fileProgress = Progress()
+        let fileExpectation = self.keyValueObservingExpectation(for: fileProgress,
+                                                                keyPath: #keyPath(Progress.fractionCompleted),
+                                                                expectedValue: 1.0)
+        DispatchQueue.global().async {
+            do {
+                try fileManager.zipItem(at: assetURL, to: fileArchiveURL, progress: fileProgress)
+            } catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
+            guard let archive = Archive(url: fileArchiveURL, accessMode: .read) else {
+                XCTFail("Failed to read archive.") ; return
+            }
+            XCTAssert(archive.checkIntegrity())
+        }
+        var directoryURL = ZIPFoundationTests.tempZipDirectoryURL
+        directoryURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
+        var directoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+        directoryArchiveURL.appendPathComponent(self.pathComponent(for: #function) + "Directory")
+        directoryArchiveURL.appendPathExtension("zip")
+        let newAssetURL = directoryURL.appendingPathComponent(assetURL.lastPathComponent)
+        let directoryProgress = Progress()
+        let directoryExpectation = self.keyValueObservingExpectation(for: directoryProgress,
+                                                                     keyPath: #keyPath(Progress.fractionCompleted),
+                                                                     expectedValue: 1.0)
+        DispatchQueue.global().async {
+            do {
+                try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
+                try fileManager.createDirectory(at: directoryURL.appendingPathComponent("nested"),
+                                                withIntermediateDirectories: true, attributes: nil)
+                try fileManager.copyItem(at: assetURL, to: newAssetURL)
+                try fileManager.createSymbolicLink(at: directoryURL.appendingPathComponent("link"),
+                                                   withDestinationURL: newAssetURL)
+                try fileManager.zipItem(at: directoryURL, to: directoryArchiveURL, progress: directoryProgress)
+            } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
+            guard let directoryArchive = Archive(url: directoryArchiveURL, accessMode: .read) else {
+                XCTFail("Failed to read archive."); return
+            }
+            XCTAssert(directoryArchive.checkIntegrity())
+        }
+        self.wait(for: [fileExpectation, directoryExpectation], timeout: 20.0)
+    }
+
     func testZipItemErrorConditions() {
         let fileManager = FileManager()
         do {
@@ -72,17 +118,13 @@ extension ZIPFoundationTests {
                                     to: URL(fileURLWithPath: NSTemporaryDirectory()))
             XCTFail("Error when zipping directory to already existing destination not raised")
         } catch let error as CocoaError { XCTAssert(error.code == CocoaError.fileWriteFileExists)
-        } catch {
-            XCTFail("Unexpected error while trying to zip via fileManager.")
-        }
+        } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
         do {
             let unwritableURL = URL(fileURLWithPath: "/test.zip")
             try fileManager.zipItem(at: URL(fileURLWithPath: NSTemporaryDirectory()), to: unwritableURL)
             XCTFail("Error when zipping to non writable archive not raised")
         } catch let error as Archive.ArchiveError { XCTAssert(error == .unwritableArchive)
-        } catch {
-            XCTFail("Unexpected error while trying to zip via fileManager.")
-        }
+        } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
         var directoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         let pathComponent = self.pathComponent(for: #function) + "Directory"
         directoryArchiveURL.appendPathComponent(pathComponent)
@@ -109,18 +151,40 @@ extension ZIPFoundationTests {
         do {
             try fileManager.unzipItem(at: archive.url, to: destinationURL)
         } catch {
-            XCTFail("Failed to extract item.")
-            return
+            XCTFail("Failed to extract item."); return
         }
         var itemsExist = false
         for entry in archive {
             let directoryURL = destinationURL.appendingPathComponent(entry.path)
             itemsExist = fileManager.fileExists(atPath: directoryURL.path)
-            if !itemsExist {
-                break
-            }
+            if !itemsExist { break }
         }
         XCTAssert(itemsExist)
+    }
+
+    func testUnzipItemProgress() {
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        let progress = Progress()
+        let expectation = self.keyValueObservingExpectation(for: progress,
+                                                            keyPath: #keyPath(Progress.fractionCompleted),
+                                                            expectedValue: 1.0)
+        DispatchQueue.global().async {
+            do {
+                try fileManager.unzipItem(at: archive.url, to: destinationURL, progress: progress)
+            } catch {
+                XCTFail("Failed to extract item."); return
+            }
+            var itemsExist = false
+            for entry in archive {
+                let directoryURL = destinationURL.appendingPathComponent(entry.path)
+                itemsExist = fileManager.fileExists(atPath: directoryURL.path)
+                if !itemsExist { break }
+            }
+            XCTAssert(itemsExist)
+        }
+        self.wait(for: [expectation], timeout: 10.0)
     }
 
     func testUnzipItemErrorConditions() {
@@ -137,10 +201,7 @@ extension ZIPFoundationTests {
             XCTFail("Error when unzipping non-existant archive not raised")
         } catch let error as CocoaError {
             XCTAssertTrue(error.code == CocoaError.fileReadNoSuchFile)
-        } catch {
-            XCTFail("Unexpected error while trying to unzip via fileManager.")
-            return
-        }
+        } catch { XCTFail("Unexpected error while trying to unzip via fileManager."); return }
         do {
             try fileManager.createParentDirectoryStructure(for: existingURL)
             fileManager.createFile(atPath: existingURL.path, contents: Data(), attributes: nil)
@@ -149,8 +210,7 @@ extension ZIPFoundationTests {
         } catch let error as CocoaError {
             XCTAssertTrue(error.code == CocoaError.fileWriteFileExists)
         } catch {
-            XCTFail("Unexpected error while trying to unzip via fileManager.")
-            return
+            XCTFail("Unexpected error while trying to unzip via fileManager."); return
         }
         let nonZipArchiveURL = self.resourceURL(for: #function, pathExtension: "png")
         do {
@@ -158,10 +218,7 @@ extension ZIPFoundationTests {
             XCTFail("Error when trying to unzip non-archive not raised")
         } catch let error as Archive.ArchiveError {
             XCTAssertTrue(error == .unreadableArchive)
-        } catch {
-            XCTFail("Unexpected error while trying to unzip via fileManager.")
-            return
-        }
+        } catch { XCTFail("Unexpected error while trying to unzip via fileManager."); return }
     }
 
     func testDirectoryCreationHelperMethods() {
@@ -190,13 +247,11 @@ extension ZIPFoundationTests {
                                                             XCTAssert(count == pathData.count)
                                                             return pathData
         }) else {
-            XCTFail("Failed to read central directory structure.")
-            return
+            XCTFail("Failed to read central directory structure."); return
         }
         var attributes = FileManager.attributes(from: cds)
         guard let permissions = attributes[.posixPermissions] as? UInt16 else {
-            XCTFail("Failed to read file attributes.")
-            return
+            XCTFail("Failed to read file attributes."); return
         }
         XCTAssert(permissions == defaultPermissions)
     }
@@ -209,10 +264,7 @@ extension ZIPFoundationTests {
             _ = try FileManager.permissionsForItem(at: unreadableURL)
         } catch let error as CocoaError {
             XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
-        } catch {
-            XCTFail("Unexpected error while testing permissions.")
-            return
-        }
+        } catch { XCTFail("Unexpected error while testing permissions."); return }
     }
 
     func testFilePermissionHelperMethods() {
@@ -224,8 +276,7 @@ extension ZIPFoundationTests {
 
     func testFileModificationDateHelperMethods() {
         guard let nonFileURL = URL(string: "https://www.peakstep.com/") else {
-            XCTFail("Failed to create file URL.")
-            return
+            XCTFail("Failed to create file URL."); return
         }
         let nonExistantURL = URL(fileURLWithPath: "/nonexistant")
         do {
@@ -252,9 +303,7 @@ extension ZIPFoundationTests {
             _ = try FileManager.fileSizeForItem(at: nonExistantURL)
         } catch let error as CocoaError {
             XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
-        } catch {
-            XCTFail("Unexpected error while trying to retrieve file size")
-        }
+        } catch { XCTFail("Unexpected error while trying to retrieve file size") }
     }
 
     func testFileTypeHelperMethods() {
@@ -267,15 +316,67 @@ extension ZIPFoundationTests {
             XCTFail("Unexpected error while trying to retrieve file type")
         }
         guard let nonFileURL = URL(string: "https://www.peakstep.com") else {
-            XCTFail("Failed to create test URL.")
-            return
+            XCTFail("Failed to create test URL."); return
         }
         do {
             _ = try FileManager.typeForItem(at: nonFileURL)
         } catch let error as CocoaError {
             XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
-        } catch {
-            XCTFail("Unexpected error while trying to retrieve file type")
+        } catch { XCTFail("Unexpected error while trying to retrieve file type") }
+    }
+
+    func testFileModificationDate() {
+        var testDateComponents = DateComponents()
+        testDateComponents.calendar = Calendar(identifier: Calendar.Identifier.gregorian)
+        testDateComponents.timeZone = TimeZone(identifier: "UTC")
+        testDateComponents.year = 2000
+        testDateComponents.month = 1
+        testDateComponents.day = 1
+        testDateComponents.hour = 12
+        testDateComponents.minute = 30
+        testDateComponents.second = 10
+        guard let testDate = testDateComponents.date else {
+            XCTFail("Failed to create test date/timestamp"); return
         }
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .create)
+        do {
+            try fileManager.setAttributes([.modificationDate: testDate], ofItemAtPath: assetURL.path)
+            let relativePath = assetURL.lastPathComponent
+            let baseURL = assetURL.deletingLastPathComponent()
+            try archive.addEntry(with: relativePath, relativeTo: baseURL)
+            guard let entry = archive["\(assetURL.lastPathComponent)"] else {
+                throw Archive.ArchiveError.unreadableArchive
+            }
+            guard let fileDate = entry.fileAttributes[.modificationDate] as? Date else {
+                throw CocoaError(CocoaError.fileReadUnknown)
+            }
+            let currentTimeInterval = testDate.timeIntervalSinceReferenceDate
+            let fileTimeInterval = fileDate.timeIntervalSinceReferenceDate
+            // ZIP uses MSDOS timestamps, which provide very poor accuracy
+            // https://blogs.msdn.microsoft.com/oldnewthing/20151030-00/?p=91881
+            XCTAssertEqual(currentTimeInterval, fileTimeInterval, accuracy: 2.0)
+        } catch { XCTFail("Failed to test last file modification date") }
+    }
+
+    func testPOSIXPermissions() {
+        let permissions = Int16(0o753)
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .create)
+        do {
+            try fileManager.setAttributes([.posixPermissions: permissions], ofItemAtPath: assetURL.path)
+            let relativePath = assetURL.lastPathComponent
+            let baseURL = assetURL.deletingLastPathComponent()
+            try archive.addEntry(with: relativePath, relativeTo: baseURL)
+            guard let entry = archive["\(assetURL.lastPathComponent)"] else {
+                throw Archive.ArchiveError.unreadableArchive
+            }
+            guard let filePermissions = entry.fileAttributes[.posixPermissions] as? UInt16 else {
+                throw CocoaError(CocoaError.fileReadUnknown)
+            }
+            XCTAssert(permissions == filePermissions)
+        } catch { XCTFail("Failed to test POSIX permissions") }
     }
 }
