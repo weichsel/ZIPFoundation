@@ -79,7 +79,7 @@ public final class Archive: Sequence {
         /// Thrown when an archive does not contain the required End of Central Directory Record.
         case missingEndOfCentralDirectoryRecord
         /// Thrown when an extract, add or remove operation was canceled.
-        case canceledOperation
+        case cancelledOperation
     }
 
     /// The access mode for an `Archive`.

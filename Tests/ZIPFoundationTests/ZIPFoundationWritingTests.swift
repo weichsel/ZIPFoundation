@@ -137,7 +137,7 @@ extension ZIPFoundationTests {
                 let baseURL = assetURL.deletingLastPathComponent()
                 try archive.addEntry(with: relativePath, relativeTo: baseURL, bufferSize: 1, progress: progress)
             } catch let error as Archive.ArchiveError {
-                XCTAssert(error == Archive.ArchiveError.canceledOperation)
+                XCTAssert(error == Archive.ArchiveError.cancelledOperation)
             } catch {
                 XCTFail("Failed to add entry to uncompressed folder archive with error : \(error)")
             }
@@ -275,7 +275,7 @@ extension ZIPFoundationTests {
             do {
                 try archive.remove(entryToRemove, progress: progress)
             } catch let error as Archive.ArchiveError {
-                XCTAssert(error == Archive.ArchiveError.canceledOperation)
+                XCTAssert(error == Archive.ArchiveError.cancelledOperation)
             } catch {
                 XCTFail("Failed to remove entry from uncompressed folder archive with error : \(error)")
             }

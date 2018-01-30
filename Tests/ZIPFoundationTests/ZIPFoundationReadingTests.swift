@@ -216,7 +216,7 @@ extension ZIPFoundationTests {
                 readCount += 1
             }
         } catch let error as Archive.ArchiveError {
-            XCTAssert(error == Archive.ArchiveError.canceledOperation)
+            XCTAssert(error == Archive.ArchiveError.cancelledOperation)
             XCTAssertEqual(progress.fractionCompleted, 0.5, accuracy: .ulpOfOne)
         } catch {
             XCTFail("Unexpected error while trying to cancel extraction.")
@@ -234,7 +234,7 @@ extension ZIPFoundationTests {
                 readCount += 1
             }
         } catch let error as Archive.ArchiveError {
-            XCTAssert(error == Archive.ArchiveError.canceledOperation)
+            XCTAssert(error == Archive.ArchiveError.cancelledOperation)
             XCTAssertEqual(progress.fractionCompleted, 0.5, accuracy: .ulpOfOne)
         } catch {
             XCTFail("Unexpected error while trying to cancel extraction.")

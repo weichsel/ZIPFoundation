@@ -131,9 +131,9 @@ extension Archive {
                                                                         startOfCentralDirectory: start,
                                                                         operation: .add)
             self.endOfCentralDirectoryRecord = endOfCentralDirRecord
-        } catch ArchiveError.canceledOperation {
+        } catch ArchiveError.cancelledOperation {
             try rollback(localFileHeaderStart, existingCentralDirData, endOfCentralDirRecord)
-            throw ArchiveError.canceledOperation
+            throw ArchiveError.cancelledOperation
         }
     }
 
@@ -159,7 +159,7 @@ extension Archive {
                 let entryStart = Int(currentEntry.centralDirectoryStructure.relativeOffsetOfLocalHeader)
                 fseek(self.archiveFile, entryStart, SEEK_SET)
                 let provider: Provider = { (_, chunkSize) -> Data in
-                    if progress?.isCancelled == true { throw ArchiveError.canceledOperation }
+                    if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
                     return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
                 }
                 let consumer: Consumer = {
@@ -242,7 +242,7 @@ extension Archive {
         var sizeWritten = 0
         var checksum = CRC32(0)
         while position < size {
-            if progress?.isCancelled == true { throw ArchiveError.canceledOperation }
+            if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
             let readSize = (Int(size) - position) >= bufferSize ? Int(bufferSize) : (Int(size) - position)
             let entryChunk = try provider(Int(position), Int(readSize))
             checksum = entryChunk.crc32(checksum: checksum)
@@ -262,7 +262,7 @@ extension Archive {
         }
         let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize),
                                          provider: { (position, size) -> Data in
-                                            if progress?.isCancelled == true { throw ArchiveError.canceledOperation }
+                                            if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
                                             return try provider(position, size)
                                          }, consumer: consumer)
         return(UInt32(sizeWritten), checksum)
