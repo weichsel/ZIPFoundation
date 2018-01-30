@@ -100,7 +100,7 @@ extension Archive {
         var existingCentralDirData = Data()
         fseek(self.archiveFile, startOfCentralDir, SEEK_SET)
         existingCentralDirData = try Data.readChunk(of: Int(endOfCentralDirRecord.sizeOfCentralDirectory),
-                                                          from: self.archiveFile)
+                                                    from: self.archiveFile)
         fseek(self.archiveFile, startOfCentralDir, SEEK_SET)
         let localFileHeaderStart = ftell(self.archiveFile)
         let modDateTime = modificationDate.fileModificationDateTime
