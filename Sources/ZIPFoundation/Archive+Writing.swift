@@ -256,14 +256,13 @@ extension Archive {
     private func writeCompressed(size: UInt32, bufferSize: UInt32, progress: Progress? = nil,
                                  provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
         var sizeWritten = 0
-        let consumer: Consumer = { data in
-            sizeWritten += try Data.write(chunk: data, to: self.archiveFile)
-            progress?.completedUnitCount = Int64(sizeWritten)
-        }
+        let consumer: Consumer = { data in sizeWritten += try Data.write(chunk: data, to: self.archiveFile) }
         let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize),
                                          provider: { (position, size) -> Data in
                                             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
-                                            return try provider(position, size)
+                                            let data = try provider(position, size)
+                                            progress?.completedUnitCount += Int64(data.count)
+                                            return data
                                          }, consumer: consumer)
         return(UInt32(sizeWritten), checksum)
     }
