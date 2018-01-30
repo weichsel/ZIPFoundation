@@ -97,7 +97,7 @@ public struct Entry: Equatable {
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
     }
 
-    /// Returns the `path` of the receiver within a ZIP `Archive`.
+    /// The `path` of the receiver within a ZIP `Archive`.
     public var path: String {
         let dosLatinUS = 0x400
         let dosLatinUSEncoding = CFStringEncoding(dosLatinUS)
@@ -107,13 +107,13 @@ public struct Entry: Equatable {
         let encoding = isUTF8 ? String.Encoding.utf8 : codepage437
         return String(data: self.centralDirectoryStructure.fileNameData, encoding: encoding) ?? ""
     }
-    /// Returns the file attributes of the receiver as key/value pairs.
+    /// The file attributes of the receiver as key/value pairs.
     ///
     /// Contains the modification date and file permissions.
     public var fileAttributes: [FileAttributeKey: Any] {
         return FileManager.attributes(from: self.centralDirectoryStructure)
     }
-    /// Returns the `CRC32` checksum of the receiver.
+    /// The `CRC32` checksum of the receiver.
     ///
     /// - Note: Always returns `0` for entries of type `EntryType.directory`.
     public var checksum: CRC32 {
@@ -126,7 +126,7 @@ public struct Entry: Equatable {
         }
         return checksum
     }
-    /// Returns the `EntryType` of the receiver.
+    /// The `EntryType` of the receiver.
     public var type: EntryType {
         // OS Type is stored in the upper byte of versionMadeBy
         let osTypeRaw = self.centralDirectoryStructure.versionMadeBy >> 8
@@ -153,15 +153,15 @@ public struct Entry: Equatable {
             return isDirectory ? .directory : .file
         }
     }
-    /// Returns the size of the receiver's compressed data.
+    /// The size of the receiver's compressed data.
     public var compressedSize: Int {
         return Int(dataDescriptor?.compressedSize ?? localFileHeader.compressedSize)
     }
-    /// Returns the size of the receiver's uncompressed data.
+    /// The size of the receiver's uncompressed data.
     public var uncompressedSize: Int {
         return Int(dataDescriptor?.uncompressedSize ?? localFileHeader.uncompressedSize)
     }
-    /// Returns the combined size of the local header, the data and the optional data descriptor
+    /// The combined size of the local header, the data and the optional data descriptor.
     var localSize: Int {
         let localFileHeader = self.localFileHeader
         var extraDataLength = Int(localFileHeader.fileNameLength)
