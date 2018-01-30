@@ -258,7 +258,7 @@ try archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: 4, p
 The closure is called until enough data has been provided to create an entry of `uncompressedSize`. The closure receives `position` and `size` arguments 
 so that you can manage the state of your data source.
 
-### Progress Reporting and Cancellation
+### Progress Tracking and Cancellation
 All `Archive` operations take an optional `progress` parameter. By passing in an instance of [Progress](https://developer.apple.com/documentation/foundation/progress), you indicate that
 you want to track the progress of the current ZIP operation. ZIP Foundation automatically configures the `totalUnitCount` of the `progress` object and continuously updates its `completedUnitCount`.  
 To get notifications about the completed work of the current operation, you can attach a Key-Value Observer to the `fractionCompleted` property of your `progress` object.  
