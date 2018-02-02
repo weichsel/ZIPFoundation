@@ -370,7 +370,7 @@ extension ZIPFoundationTests {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .create)
         do {
-            try fileManager.setAttributes([.posixPermissions: permissions], ofItemAtPath: assetURL.path)
+            try fileManager.setAttributes([.posixPermissions: NSNumber(value: permissions)], ofItemAtPath: assetURL.path)
             let relativePath = assetURL.lastPathComponent
             let baseURL = assetURL.deletingLastPathComponent()
             try archive.addEntry(with: relativePath, relativeTo: baseURL)

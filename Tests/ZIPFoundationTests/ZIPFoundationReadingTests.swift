@@ -41,10 +41,10 @@ extension ZIPFoundationTests {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
             do {
-                //Test extracting to memory
+                // Test extracting to memory
                 var checksum = try archive.extract(entry, bufferSize: 128, consumer: { _ in })
                 XCTAssert(entry.checksum == checksum)
-                //Test extracting to file
+                // Test extracting to file
                 var fileURL = self.createDirectory(for: #function)
                 fileURL.appendPathComponent(entry.path)
                 checksum = try archive.extract(entry, to: fileURL)

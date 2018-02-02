@@ -373,7 +373,7 @@ extension ZIPFoundationTests {
         let processInfo = ProcessInfo.processInfo
         var noEndOfCentralDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         noEndOfCentralDirectoryArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
-        let fullPermissionAttributes = [FileAttributeKey.posixPermissions: defaultPermissions]
+        let fullPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: defaultPermissions)]
         let fileManager = FileManager()
         let result = fileManager.createFile(atPath: noEndOfCentralDirectoryArchiveURL.path, contents: nil,
                                                     attributes: fullPermissionAttributes)
@@ -387,7 +387,7 @@ extension ZIPFoundationTests {
         var nonUpdatableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         let processInfo = ProcessInfo.processInfo
         nonUpdatableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
-        let noPermissionAttributes = [FileAttributeKey.posixPermissions: Int16(0o000)]
+        let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
         let fileManager = FileManager()
         let result = fileManager.createFile(atPath: nonUpdatableArchiveURL.path, contents: nil,
                                             attributes: noPermissionAttributes)
