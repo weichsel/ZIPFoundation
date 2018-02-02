@@ -317,12 +317,12 @@ extension Archive {
     private func replaceCurrentArchiveWithArchive(at URL: URL) throws {
         fclose(self.archiveFile)
         let fileManager = FileManager()
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
             _ = try fileManager.replaceItemAt(self.url, withItemAt: URL)
-#else
+        #else
             _ = try fileManager.removeItem(at: self.url)
             _ = try fileManager.moveItem(at: URL, to: self.url)
-#endif
+        #endif
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: self.url.path)
         self.archiveFile = fopen(fileSystemRepresentation, "rb+")
     }

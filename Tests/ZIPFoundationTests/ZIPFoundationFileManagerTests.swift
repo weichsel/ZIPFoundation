@@ -57,6 +57,7 @@ extension ZIPFoundationTests {
         XCTAssert(parentDirectoryArchive.checkIntegrity())
     }
 
+    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
     func testZipItemProgress() {
         let fileManager = FileManager()
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
@@ -103,6 +104,7 @@ extension ZIPFoundationTests {
         }
         self.wait(for: [fileExpectation, directoryExpectation], timeout: 20.0)
     }
+    #endif
 
     func testZipItemErrorConditions() {
         let fileManager = FileManager()
@@ -162,6 +164,7 @@ extension ZIPFoundationTests {
         XCTAssert(itemsExist)
     }
 
+    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
     func testUnzipItemProgress() {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)
@@ -186,6 +189,7 @@ extension ZIPFoundationTests {
         }
         self.wait(for: [expectation], timeout: 10.0)
     }
+    #endif
 
     func testUnzipItemErrorConditions() {
         var nonexistantArchiveURL = ZIPFoundationTests.tempZipDirectoryURL

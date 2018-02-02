@@ -117,6 +117,7 @@ extension ZIPFoundationTests {
         XCTAssertTrue(didCatchExpectedError)
     }
 
+    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
     func testArchiveAddUncompressedEntryProgress() {
         let archive = self.archive(for: #function, mode: .update)
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
@@ -177,6 +178,7 @@ extension ZIPFoundationTests {
         XCTAssert(progress.fractionCompleted > 0.5)
         XCTAssert(archive.checkIntegrity())
     }
+    #endif
 
     func testArchiveAddEntryErrorConditions() {
         var didCatchExpectedError = false
@@ -285,6 +287,7 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
+    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
     func testRemoveEntryProgress() {
         let archive = self.archive(for: #function, mode: .update)
         guard let entryToRemove = archive["test/data.random"] else {
@@ -315,6 +318,7 @@ extension ZIPFoundationTests {
         XCTAssert(progress.fractionCompleted > 0.5)
         XCTAssert(archive.checkIntegrity())
     }
+    #endif
 
     func testRemoveDataDescriptorCompressedEntry() {
         let archive = self.archive(for: #function, mode: .update)
@@ -340,11 +344,11 @@ extension ZIPFoundationTests {
         // We don't have access to the temp archive file that Archive.remove
         // uses. To exercise the error code path, we temporarily limit the number of open files for
         // the test process to exercise the error code path here.
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         let fileNoFlag = RLIMIT_NOFILE
-#else
+        #else
         let fileNoFlag = Int32(RLIMIT_NOFILE.rawValue)
-#endif
+        #endif
         var storedRlimit = rlimit()
         getrlimit(fileNoFlag, &storedRlimit)
         var tempRlimit = storedRlimit
