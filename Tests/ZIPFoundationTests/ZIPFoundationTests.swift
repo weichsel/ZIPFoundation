@@ -72,7 +72,7 @@ class ZIPFoundationTests: XCTestCase {
         var unreadableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         let processInfo = ProcessInfo.processInfo
         unreadableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
-        let noPermissionAttributes = [FileAttributeKey.posixPermissions: Int16(0o000)]
+        let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
         let fileManager = FileManager()
         var result = fileManager.createFile(atPath: unreadableArchiveURL.path, contents: nil,
                                                     attributes: noPermissionAttributes)
@@ -81,7 +81,7 @@ class ZIPFoundationTests: XCTestCase {
         XCTAssertNil(unreadableArchive)
         var noEndOfCentralDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         noEndOfCentralDirectoryArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
-        let fullPermissionAttributes = [FileAttributeKey.posixPermissions: defaultPermissions]
+        let fullPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: defaultPermissions)]
         result = fileManager.createFile(atPath: noEndOfCentralDirectoryArchiveURL.path, contents: nil,
                                                 attributes: fullPermissionAttributes)
         XCTAssert(result == true)
@@ -233,14 +233,14 @@ class ZIPFoundationTests: XCTestCase {
 extension ZIPFoundationTests {
     // From https://oleb.net/blog/2017/03/keeping-xctest-in-sync/
     func testLinuxTestSuiteIncludesAllTests() {
-#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
             let thisClass = type(of: self)
             let linuxCount = thisClass.allTests.count
             let darwinCount = Int(thisClass
                 .defaultTestSuite.testCaseCount)
             XCTAssertEqual(linuxCount, darwinCount,
                            "\(darwinCount - linuxCount) tests are missing from allTests")
-#endif
+        #endif
     }
 
     static var allTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
@@ -256,8 +256,6 @@ extension ZIPFoundationTests {
             ("testCreateArchiveAddCompressedEntry", testCreateArchiveAddCompressedEntry),
             ("testCreateArchiveAddDirectory", testCreateArchiveAddDirectory),
             ("testCreateArchiveAddEntryErrorConditions", testCreateArchiveAddEntryErrorConditions),
-            ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
-            ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress),
             ("testCreateArchiveAddLargeCompressedEntry", testCreateArchiveAddLargeCompressedEntry),
             ("testCreateArchiveAddLargeUncompressedEntry", testCreateArchiveAddLargeUncompressedEntry),
             ("testCreateArchiveAddSymbolicLink", testCreateArchiveAddSymbolicLink),
@@ -299,17 +297,28 @@ extension ZIPFoundationTests {
             ("testRemoveCompressedEntry", testRemoveCompressedEntry),
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
-            ("testRemoveEntryProgress", testRemoveEntryProgress),
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
-            ("testUnzipItemProgress", testUnzipItemProgress),
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             ("testZipItem", testZipItem),
             ("testZipItemErrorConditions", testZipItemErrorConditions),
-            ("testZipItemProgress", testZipItemProgress),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
+        ] + darwinOnlyTests
+    }
+
+    static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        return [
+            ("testZipItemProgress", testZipItemProgress),
+            ("testUnzipItemProgress", testUnzipItemProgress),
+            ("testRemoveEntryProgress", testRemoveEntryProgress),
+            ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
+            ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress)
         ]
+        #else
+        return []
+        #endif
     }
 }
 

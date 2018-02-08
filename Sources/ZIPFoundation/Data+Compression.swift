@@ -114,21 +114,21 @@ extension Data {
     }
 
     static func compress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_ENCODE, size: size, bufferSize: bufferSize,
                                 provider: provider, consumer: consumer)
-#else
+        #else
         return try self.encode(size: size, bufferSize: bufferSize, provider: provider, consumer: consumer)
-#endif
+        #endif
     }
 
     static func decompress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize,
                                 provider: provider, consumer: consumer)
-#else
+        #else
         return try self.decode(bufferSize: bufferSize, provider: provider, consumer: consumer)
-#endif
+        #endif
     }
 }
 

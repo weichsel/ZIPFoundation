@@ -57,6 +57,7 @@ extension ZIPFoundationTests {
         XCTAssert(parentDirectoryArchive.checkIntegrity())
     }
 
+    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
     func testZipItemProgress() {
         let fileManager = FileManager()
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
@@ -103,6 +104,7 @@ extension ZIPFoundationTests {
         }
         self.wait(for: [fileExpectation, directoryExpectation], timeout: 20.0)
     }
+    #endif
 
     func testZipItemErrorConditions() {
         let fileManager = FileManager()
@@ -162,6 +164,7 @@ extension ZIPFoundationTests {
         XCTAssert(itemsExist)
     }
 
+    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
     func testUnzipItemProgress() {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)
@@ -186,6 +189,7 @@ extension ZIPFoundationTests {
         }
         self.wait(for: [expectation], timeout: 10.0)
     }
+    #endif
 
     func testUnzipItemErrorConditions() {
         var nonexistantArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
@@ -361,7 +365,7 @@ extension ZIPFoundationTests {
     }
 
     func testPOSIXPermissions() {
-        let permissions = Int16(0o753)
+        let permissions = NSNumber(value: Int16(0o753))
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .create)
@@ -373,10 +377,10 @@ extension ZIPFoundationTests {
             guard let entry = archive["\(assetURL.lastPathComponent)"] else {
                 throw Archive.ArchiveError.unreadableArchive
             }
-            guard let filePermissions = entry.fileAttributes[.posixPermissions] as? UInt16 else {
+            guard let filePermissions = entry.fileAttributes[.posixPermissions] as? NSNumber else {
                 throw CocoaError(CocoaError.fileReadUnknown)
             }
-            XCTAssert(permissions == filePermissions)
+            XCTAssert(permissions.int16Value == filePermissions.int16Value)
         } catch { XCTFail("Failed to test POSIX permissions") }
     }
 }
