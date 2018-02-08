@@ -365,22 +365,22 @@ extension ZIPFoundationTests {
     }
 
     func testPOSIXPermissions() {
-        let permissions = Int16(0o753)
+        let permissions = NSNumber(value: Int16(0o753))
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .create)
         do {
-            try fileManager.setAttributes([.posixPermissions: NSNumber(value: permissions)], ofItemAtPath: assetURL.path)
+            try fileManager.setAttributes([.posixPermissions: permissions], ofItemAtPath: assetURL.path)
             let relativePath = assetURL.lastPathComponent
             let baseURL = assetURL.deletingLastPathComponent()
             try archive.addEntry(with: relativePath, relativeTo: baseURL)
             guard let entry = archive["\(assetURL.lastPathComponent)"] else {
                 throw Archive.ArchiveError.unreadableArchive
             }
-            guard let filePermissions = entry.fileAttributes[.posixPermissions] as? UInt16 else {
+            guard let filePermissions = entry.fileAttributes[.posixPermissions] as? NSNumber else {
                 throw CocoaError(CocoaError.fileReadUnknown)
             }
-            XCTAssert(permissions == filePermissions)
+            XCTAssert(permissions.int16Value == filePermissions.int16Value)
         } catch { XCTFail("Failed to test POSIX permissions") }
     }
 }
