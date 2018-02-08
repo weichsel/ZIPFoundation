@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.5](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.5)
+
+### Added
+ - Progress tracking support
+ - Operation cancellation support
+ 
+### Updated
+ - Improved performance of CRC32 calculations
+ - Improved Linux support
+ - Fixed wrong behaviour when using the `shouldKeepParent` flag
+ - Fixed a linker error during archive builds when integrating via Carthage
+
 ## [0.9.4](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.4)
 
 ### Updated
