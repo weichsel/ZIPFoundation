@@ -329,6 +329,7 @@ extension Archive {
             for entry in self {
                 let checksum = try self.extract(entry, consumer: { _ in })
                 isCorrect = checksum == entry.checksum
+                guard isCorrect else { break }
             }
         } catch {
             return false
