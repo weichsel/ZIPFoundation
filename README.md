@@ -59,8 +59,8 @@ let package = Package(
     ],
     targets: [
         .target(
-			name: "<Your Target Name>",
-            dependencies: ["ZIPFoundation"]),
+		name: "<Your Target Name>",
+		dependencies: ["ZIPFoundation"]),
     ]
 )
 ```
