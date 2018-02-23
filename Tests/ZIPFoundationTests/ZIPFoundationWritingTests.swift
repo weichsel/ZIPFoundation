@@ -132,7 +132,8 @@ extension ZIPFoundationTests {
         let cancel = self.keyValueObservingExpectation(for: progress,
                                                        keyPath: #keyPath(Progress.fractionCompleted),
                                                        handler: handler)
-        DispatchQueue.global().async {
+        let zipQueue = DispatchQueue.init(label: "ZIPFoundationTests")
+        zipQueue.async {
             do {
                 let relativePath = assetURL.lastPathComponent
                 let baseURL = assetURL.deletingLastPathComponent()
@@ -144,8 +145,10 @@ extension ZIPFoundationTests {
             }
         }
         self.wait(for: [cancel], timeout: 20.0)
-        XCTAssert(progress.fractionCompleted > 0.5)
-        XCTAssert(archive.checkIntegrity())
+        zipQueue.sync {
+            XCTAssert(progress.fractionCompleted > 0.5)
+            XCTAssert(archive.checkIntegrity())
+        }
     }
 
     func testArchiveAddCompressedEntryProgress() {
@@ -162,7 +165,8 @@ extension ZIPFoundationTests {
         let cancel = self.keyValueObservingExpectation(for: progress,
                                                        keyPath: #keyPath(Progress.fractionCompleted),
                                                        handler: handler)
-        DispatchQueue.global().async {
+        let zipQueue = DispatchQueue.init(label: "ZIPFoundationTests")
+        zipQueue.async {
             do {
                 let relativePath = assetURL.lastPathComponent
                 let baseURL = assetURL.deletingLastPathComponent()
@@ -175,8 +179,10 @@ extension ZIPFoundationTests {
             }
         }
         self.wait(for: [cancel], timeout: 20.0)
-        XCTAssert(progress.fractionCompleted > 0.5)
-        XCTAssert(archive.checkIntegrity())
+        zipQueue.sync {
+            XCTAssert(progress.fractionCompleted > 0.5)
+            XCTAssert(archive.checkIntegrity())
+        }
     }
     #endif
 
