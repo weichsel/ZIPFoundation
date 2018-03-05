@@ -117,75 +117,6 @@ extension ZIPFoundationTests {
         XCTAssertTrue(didCatchExpectedError)
     }
 
-    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-    func testArchiveAddUncompressedEntryProgress() {
-        let archive = self.archive(for: #function, mode: .update)
-        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
-        let progress = archive.makeProgressForAddingItem(at: assetURL)
-        let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
-            if progress.fractionCompleted > 0.5 {
-                progress.cancel()
-                return true
-            }
-            return false
-        }
-        let cancel = self.keyValueObservingExpectation(for: progress,
-                                                       keyPath: #keyPath(Progress.fractionCompleted),
-                                                       handler: handler)
-        let zipQueue = DispatchQueue.init(label: "ZIPFoundationTests")
-        zipQueue.async {
-            do {
-                let relativePath = assetURL.lastPathComponent
-                let baseURL = assetURL.deletingLastPathComponent()
-                try archive.addEntry(with: relativePath, relativeTo: baseURL, bufferSize: 1, progress: progress)
-            } catch let error as Archive.ArchiveError {
-                XCTAssert(error == Archive.ArchiveError.cancelledOperation)
-            } catch {
-                XCTFail("Failed to add entry to uncompressed folder archive with error : \(error)")
-            }
-        }
-        self.wait(for: [cancel], timeout: 20.0)
-        zipQueue.sync {
-            XCTAssert(progress.fractionCompleted > 0.5)
-            XCTAssert(archive.checkIntegrity())
-        }
-    }
-
-    func testArchiveAddCompressedEntryProgress() {
-        let archive = self.archive(for: #function, mode: .update)
-        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
-        let progress = archive.makeProgressForAddingItem(at: assetURL)
-        let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
-            if progress.fractionCompleted > 0.5 {
-                progress.cancel()
-                return true
-            }
-            return false
-        }
-        let cancel = self.keyValueObservingExpectation(for: progress,
-                                                       keyPath: #keyPath(Progress.fractionCompleted),
-                                                       handler: handler)
-        let zipQueue = DispatchQueue.init(label: "ZIPFoundationTests")
-        zipQueue.async {
-            do {
-                let relativePath = assetURL.lastPathComponent
-                let baseURL = assetURL.deletingLastPathComponent()
-                try archive.addEntry(with: relativePath, relativeTo: baseURL,
-                                     compressionMethod: .deflate, bufferSize: 1, progress: progress)
-            } catch let error as Archive.ArchiveError {
-                XCTAssert(error == Archive.ArchiveError.cancelledOperation)
-            } catch {
-                XCTFail("Failed to add entry to uncompressed folder archive with error : \(error)")
-            }
-        }
-        self.wait(for: [cancel], timeout: 20.0)
-        zipQueue.sync {
-            XCTAssert(progress.fractionCompleted > 0.5)
-            XCTAssert(archive.checkIntegrity())
-        }
-    }
-    #endif
-
     func testArchiveAddEntryErrorConditions() {
         var didCatchExpectedError = false
         let readonlyArchive = self.archive(for: #function, mode: .read)
@@ -293,39 +224,6 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
-    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-    func testRemoveEntryProgress() {
-        let archive = self.archive(for: #function, mode: .update)
-        guard let entryToRemove = archive["test/data.random"] else {
-            XCTFail("Failed to find entry to remove in uncompressed folder")
-            return
-        }
-        let progress = archive.makeProgressForRemoving(entryToRemove)
-        let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
-            if progress.fractionCompleted > 0.5 {
-                progress.cancel()
-                return true
-            }
-            return false
-        }
-        let cancel = self.keyValueObservingExpectation(for: progress,
-                                                       keyPath: #keyPath(Progress.fractionCompleted),
-                                                       handler: handler)
-        DispatchQueue.global().async {
-            do {
-                try archive.remove(entryToRemove, progress: progress)
-            } catch let error as Archive.ArchiveError {
-                XCTAssert(error == Archive.ArchiveError.cancelledOperation)
-            } catch {
-                XCTFail("Failed to remove entry from uncompressed folder archive with error : \(error)")
-            }
-        }
-        self.wait(for: [cancel], timeout: 20.0)
-        XCTAssert(progress.fractionCompleted > 0.5)
-        XCTAssert(archive.checkIntegrity())
-    }
-    #endif
-
     func testRemoveDataDescriptorCompressedEntry() {
         let archive = self.archive(for: #function, mode: .update)
         guard let entryToRemove = archive["second.txt"] else {
@@ -401,4 +299,101 @@ extension ZIPFoundationTests {
         let nonUpdatableArchive = Archive(url: nonUpdatableArchiveURL, accessMode: .update)
         XCTAssertNil(nonUpdatableArchive)
     }
+
+    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+    func testArchiveAddUncompressedEntryProgress() {
+        let archive = self.archive(for: #function, mode: .update)
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        let progress = archive.makeProgressForAddingItem(at: assetURL)
+        let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
+            if progress.fractionCompleted > 0.5 {
+                progress.cancel()
+                return true
+            }
+            return false
+        }
+        let cancel = self.keyValueObservingExpectation(for: progress, keyPath: #keyPath(Progress.fractionCompleted),
+                                                       handler: handler)
+        let zipQueue = DispatchQueue.init(label: "ZIPFoundationTests")
+        zipQueue.async {
+            do {
+                let relativePath = assetURL.lastPathComponent
+                let baseURL = assetURL.deletingLastPathComponent()
+                try archive.addEntry(with: relativePath, relativeTo: baseURL, bufferSize: 1, progress: progress)
+            } catch let error as Archive.ArchiveError {
+                XCTAssert(error == Archive.ArchiveError.cancelledOperation)
+            } catch {
+                XCTFail("Failed to add entry to uncompressed folder archive with error : \(error)")
+            }
+        }
+        self.wait(for: [cancel], timeout: 20.0)
+        zipQueue.sync {
+            XCTAssert(progress.fractionCompleted > 0.5)
+            XCTAssert(archive.checkIntegrity())
+        }
+    }
+
+    func testArchiveAddCompressedEntryProgress() {
+        let archive = self.archive(for: #function, mode: .update)
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        let progress = archive.makeProgressForAddingItem(at: assetURL)
+        let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
+            if progress.fractionCompleted > 0.5 {
+                progress.cancel()
+                return true
+            }
+            return false
+        }
+        let cancel = self.keyValueObservingExpectation(for: progress, keyPath: #keyPath(Progress.fractionCompleted),
+                                                       handler: handler)
+        let zipQueue = DispatchQueue.init(label: "ZIPFoundationTests")
+        zipQueue.async {
+            do {
+                let relativePath = assetURL.lastPathComponent
+                let baseURL = assetURL.deletingLastPathComponent()
+                try archive.addEntry(with: relativePath, relativeTo: baseURL,
+                                     compressionMethod: .deflate, bufferSize: 1, progress: progress)
+            } catch let error as Archive.ArchiveError {
+                XCTAssert(error == Archive.ArchiveError.cancelledOperation)
+            } catch {
+                XCTFail("Failed to add entry to uncompressed folder archive with error : \(error)")
+            }
+        }
+        self.wait(for: [cancel], timeout: 20.0)
+        zipQueue.sync {
+            XCTAssert(progress.fractionCompleted > 0.5)
+            XCTAssert(archive.checkIntegrity())
+        }
+    }
+
+    func testRemoveEntryProgress() {
+        let archive = self.archive(for: #function, mode: .update)
+        guard let entryToRemove = archive["test/data.random"] else {
+            XCTFail("Failed to find entry to remove in uncompressed folder")
+            return
+        }
+        let progress = archive.makeProgressForRemoving(entryToRemove)
+        let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
+            if progress.fractionCompleted > 0.5 {
+                progress.cancel()
+                return true
+            }
+            return false
+        }
+        let cancel = self.keyValueObservingExpectation(for: progress, keyPath: #keyPath(Progress.fractionCompleted),
+                                                       handler: handler)
+        DispatchQueue.global().async {
+            do {
+                try archive.remove(entryToRemove, progress: progress)
+            } catch let error as Archive.ArchiveError {
+                XCTAssert(error == Archive.ArchiveError.cancelledOperation)
+            } catch {
+                XCTFail("Failed to remove entry from uncompressed folder archive with error : \(error)")
+            }
+        }
+        self.wait(for: [cancel], timeout: 20.0)
+        XCTAssert(progress.fractionCompleted > 0.5)
+        XCTAssert(archive.checkIntegrity())
+    }
+    #endif
 }
