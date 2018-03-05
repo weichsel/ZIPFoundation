@@ -25,7 +25,7 @@ extension ZIPFoundationTests {
         // Close the file to exercice the error path during readStructure that deals with
         // unreadable file data.
         fclose(file)
-        let centralDirectoryStructure: Entry.CentralDirectoryStructure? = Data.readStructure(from: file, at: 0)
+        let centralDirectoryStructure: Entry.CentralDirectoryStructure? = Data.readStruct(from: file, at: 0)
         XCTAssertNil(centralDirectoryStructure)
     }
 

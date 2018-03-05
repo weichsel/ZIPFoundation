@@ -180,20 +180,20 @@ public final class Archive: Sequence {
         var i = 0
         return AnyIterator {
             guard i < Int(endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory) else { return nil }
-            guard let centralDirStruct: CentralDirectoryStructure = Data.readStructure(from: self.archiveFile,
-                                                                                             at: directoryIndex) else {
-                                                                                                return nil
+            guard let centralDirStruct: CentralDirectoryStructure = Data.readStruct(from: self.archiveFile,
+                                                                                    at: directoryIndex) else {
+                                                                                        return nil
             }
             let offset = Int(centralDirStruct.relativeOffsetOfLocalHeader)
-            guard let localFileHeader: LocalFileHeader = Data.readStructure(from: self.archiveFile,
-                                                                            at: offset) else { return nil }
+            guard let localFileHeader: LocalFileHeader = Data.readStruct(from: self.archiveFile,
+                                                                         at: offset) else { return nil }
             var dataDescriptor: DataDescriptor? = nil
             if centralDirStruct.usesDataDescriptor {
                 let additionalSize = Int(localFileHeader.fileNameLength + localFileHeader.extraFieldLength)
                 let isCompressed = centralDirStruct.compressionMethod != CompressionMethod.none.rawValue
                 let dataSize = isCompressed ? centralDirStruct.compressedSize : centralDirStruct.uncompressedSize
                 let descriptorPosition = offset + LocalFileHeader.size + additionalSize + Int(dataSize)
-                dataDescriptor = Data.readStructure(from: self.archiveFile, at: descriptorPosition)
+                dataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
             }
             defer {
                 directoryIndex += CentralDirectoryStructure.size
@@ -234,7 +234,7 @@ public final class Archive: Sequence {
             fread(&potentialDirectoryEndTag, 1, MemoryLayout<UInt32>.size, file)
             if potentialDirectoryEndTag == UInt32(endOfCentralDirectoryStructSignature) {
                 directoryEnd = archiveLength - i
-                return Data.readStructure(from: file, at: directoryEnd)
+                return Data.readStruct(from: file, at: directoryEnd)
             }
             i += 1
         }
