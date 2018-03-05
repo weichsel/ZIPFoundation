@@ -177,9 +177,9 @@ public final class Archive: Sequence {
     public func makeIterator() -> AnyIterator<Entry> {
         let endOfCentralDirectoryRecord = self.endOfCentralDirectoryRecord
         var directoryIndex = Int(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
-        var i = 0
+        var index = 0
         return AnyIterator {
-            guard i < Int(endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory) else { return nil }
+            guard index < Int(endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory) else { return nil }
             guard let centralDirStruct: CentralDirectoryStructure = Data.readStruct(from: self.archiveFile,
                                                                                     at: directoryIndex) else {
                                                                                         return nil
@@ -200,7 +200,7 @@ public final class Archive: Sequence {
                 directoryIndex += Int(centralDirStruct.fileNameLength)
                 directoryIndex += Int(centralDirStruct.extraFieldLength)
                 directoryIndex += Int(centralDirStruct.fileCommentLength)
-                i += 1
+                index += 1
             }
             return Entry(centralDirectoryStructure: centralDirStruct,
                          localFileHeader: localFileHeader, dataDescriptor: dataDescriptor)
@@ -224,19 +224,19 @@ public final class Archive: Sequence {
     private static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
         -> EndOfCentralDirectoryRecord? {
         var directoryEnd = 0
-        var i = minDirectoryEndOffset
+        var index = minDirectoryEndOffset
         var fileStat = stat()
         fstat(fileno(file), &fileStat)
         let archiveLength = Int(fileStat.st_size)
-        while directoryEnd == 0 && i < maxDirectoryEndOffset && i <= archiveLength {
-            fseek(file, archiveLength - i, SEEK_SET)
+        while directoryEnd == 0 && index < maxDirectoryEndOffset && index <= archiveLength {
+            fseek(file, archiveLength - index, SEEK_SET)
             var potentialDirectoryEndTag: UInt32 = UInt32()
             fread(&potentialDirectoryEndTag, 1, MemoryLayout<UInt32>.size, file)
             if potentialDirectoryEndTag == UInt32(endOfCentralDirectoryStructSignature) {
-                directoryEnd = archiveLength - i
+                directoryEnd = archiveLength - index
                 return Data.readStruct(from: file, at: directoryEnd)
             }
-            i += 1
+            index += 1
         }
         return nil
     }
