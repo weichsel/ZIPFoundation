@@ -124,9 +124,10 @@ extension FileManager {
         }
     }
 
-    class func attributes(from entry: Entry) -> [FileAttributeKey: Any] {
-        let centralDirectoryStructure = entry.centralDirectoryStructure
-        var attributes = [.posixPermissions: entry.type == .directory ? defaultDirectoryPermissions : defaultFilePermissions,
+    class func attributes(from centralDirectoryStructure: CentralDirectoryStructure,
+                          for entryType: Entry.EntryType = .file) -> [FileAttributeKey: Any] {
+        var attributes = [.posixPermissions: entryType ==
+            .directory ? defaultDirectoryPermissions : defaultFilePermissions,
                           .modificationDate: Date()] as [FileAttributeKey: Any]
         let versionMadeBy = centralDirectoryStructure.versionMadeBy
         let fileTime = centralDirectoryStructure.lastModFileTime
@@ -135,13 +136,14 @@ extension FileManager {
             return attributes
         }
         let externalFileAttributes = centralDirectoryStructure.externalFileAttributes
-        let permissions = self.permissions(for: externalFileAttributes, osType: osType, entryType: entry.type)
+        let permissions = self.permissions(for: externalFileAttributes, osType: osType, entryType: entryType)
         attributes[.posixPermissions] = NSNumber(value: permissions)
         attributes[.modificationDate] = Date(dateTime: (fileDate, fileTime))
         return attributes
     }
 
-    class func permissions(for externalFileAttributes: UInt32, osType: Entry.OSType, entryType: Entry.EntryType) -> UInt16 {
+    class func permissions(for externalFileAttributes: UInt32, osType: Entry.OSType,
+                           entryType: Entry.EntryType = .file) -> UInt16 {
         switch osType {
         case .unix, .osx:
             let permissions = mode_t(externalFileAttributes >> 16) & (~S_IFMT)

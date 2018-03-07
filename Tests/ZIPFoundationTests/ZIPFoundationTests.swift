@@ -81,7 +81,7 @@ class ZIPFoundationTests: XCTestCase {
         XCTAssertNil(unreadableArchive)
         var noEndOfCentralDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         noEndOfCentralDirectoryArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
-        let fullPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: defaultPermissions)]
+        let fullPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: defaultFilePermissions)]
         result = fileManager.createFile(atPath: noEndOfCentralDirectoryArchiveURL.path, contents: nil,
                                                 attributes: fullPermissionAttributes)
         XCTAssert(result == true)

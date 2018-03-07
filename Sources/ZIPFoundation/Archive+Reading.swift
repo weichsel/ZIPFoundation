@@ -51,7 +51,7 @@ extension Archive {
             }
             checksum = try self.extract(entry, bufferSize: bufferSize, progress: progress, consumer: consumer)
         }
-        let attributes = FileManager.attributes(from: entry)
+        let attributes = FileManager.attributes(from: entry.centralDirectoryStructure, for: entry.type)
         try fileManager.setAttributes(attributes, ofItemAtPath: url.path)
         return checksum
     }
