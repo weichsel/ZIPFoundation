@@ -253,11 +253,24 @@ extension ZIPFoundationTests {
         }) else {
             XCTFail("Failed to read central directory structure."); return
         }
-        var attributes = FileManager.attributes(from: cds)
+        let lfhBytes: [UInt8] = [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x08, 0x08,
+                                 0x08, 0x00, 0xab, 0x85, 0x77, 0x47, 0x00, 0x00,
+                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        guard let lfh = Entry.LocalFileHeader(data: Data(bytes: lfhBytes),
+                                              additionalDataProvider: { _ -> Data in
+                                                return Data()
+        }) else {
+            XCTFail("Failed to read local file header."); return
+        }
+        guard let entry = Entry(centralDirectoryStructure: cds, localFileHeader: lfh, dataDescriptor: nil) else {
+            XCTFail("Failed to create test entry."); return
+        }
+        var attributes = FileManager.attributes(from: entry)
         guard let permissions = attributes[.posixPermissions] as? UInt16 else {
             XCTFail("Failed to read file attributes."); return
         }
-        XCTAssert(permissions == defaultFilePermissions)
+        XCTAssert(permissions == defaultDirectoryPermissions)
     }
 
     func testFilePermissionErrorConditions() {

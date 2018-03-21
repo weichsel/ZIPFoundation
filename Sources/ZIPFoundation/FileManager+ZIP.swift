@@ -124,8 +124,9 @@ extension FileManager {
         }
     }
 
-    class func attributes(from centralDirectoryStructure: CentralDirectoryStructure,
-                          for entryType: Entry.EntryType = .file) -> [FileAttributeKey: Any] {
+    class func attributes(from entry: Entry) -> [FileAttributeKey: Any] {
+        let centralDirectoryStructure = entry.centralDirectoryStructure
+        let entryType = entry.type
         var attributes = [.posixPermissions: entryType ==
             .directory ? defaultDirectoryPermissions : defaultFilePermissions,
                           .modificationDate: Date()] as [FileAttributeKey: Any]

@@ -83,25 +83,25 @@ extension Archive {
     ///   - modificationDate: A `Date` describing the file modification date of the `Entry`.
     ///                       Default is the current `Date`.
     ///   - permissions: POSIX file permissions for the `Entry`.
-    ///                  Default is `0`o`644`.
+    ///                  Default is `0`o`644` for files and symlinks and `0`o`755` for directories.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied to `Entry`.
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
     ///   - progress: A progress object that can be used to track or cancel the add operation.
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
     /// - Throws: An error if the source data is invalid or the receiver is not writable.
     public func addEntry(with path: String, type: Entry.EntryType, uncompressedSize: UInt32,
-                         modificationDate: Date = Date(), permissions: UInt16 = defaultFilePermissions,
+                         modificationDate: Date = Date(), permissions: UInt16? = nil,
                          compressionMethod: CompressionMethod = .none, bufferSize: UInt32 = defaultWriteChunkSize,
                          progress: Progress? = nil, provider: Provider) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
         progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : Int64(uncompressedSize)
         var endOfCentralDirRecord = self.endOfCentralDirectoryRecord
-        var startOfCentralDir = Int(endOfCentralDirRecord.offsetToStartOfCentralDirectory)
+        var startOfCD = Int(endOfCentralDirRecord.offsetToStartOfCentralDirectory)
         var existingCentralDirData = Data()
-        fseek(self.archiveFile, startOfCentralDir, SEEK_SET)
+        fseek(self.archiveFile, startOfCD, SEEK_SET)
         existingCentralDirData = try Data.readChunk(of: Int(endOfCentralDirRecord.sizeOfCentralDirectory),
                                                     from: self.archiveFile)
-        fseek(self.archiveFile, startOfCentralDir, SEEK_SET)
+        fseek(self.archiveFile, startOfCD, SEEK_SET)
         let localFileHeaderStart = ftell(self.archiveFile)
         let modDateTime = modificationDate.fileModificationDateTime
         defer { fflush(self.archiveFile) }
@@ -112,23 +112,23 @@ extension Archive {
             let (written, checksum) = try self.writeEntry(localFileHeader: localFileHeader, type: type,
                                                           compressionMethod: compressionMethod, bufferSize: bufferSize,
                                                           progress: progress, provider: provider)
-            startOfCentralDir = ftell(self.archiveFile)
+            startOfCD = ftell(self.archiveFile)
             fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
             // Write the local file header a second time. Now with compressedSize (if applicable) and a valid checksum.
             localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
                                                             size: (uncompressedSize, written),
                                                             checksum: checksum, modificationDateTime: modDateTime)
-            fseek(self.archiveFile, startOfCentralDir, SEEK_SET)
+            fseek(self.archiveFile, startOfCD, SEEK_SET)
             _ = try Data.write(chunk: existingCentralDirData, to: self.archiveFile)
+            let permissions = permissions ?? (type == .directory ? defaultDirectoryPermissions :defaultFilePermissions)
             let externalAttributes = FileManager.externalFileAttributesForEntry(of: type, permissions: permissions)
             let offset = UInt32(localFileHeaderStart)
             let centralDir = try self.writeCentralDirectoryStructure(localFileHeader: localFileHeader,
                                                                      relativeOffset: offset,
                                                                      externalFileAttributes: externalAttributes)
-            if startOfCentralDir > UINT32_MAX { throw ArchiveError.invalidStartOfCentralDirectoryOffset }
-            let start = UInt32(startOfCentralDir)
+            if startOfCD > UINT32_MAX { throw ArchiveError.invalidStartOfCentralDirectoryOffset }
             endOfCentralDirRecord = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDir,
-                                                                        startOfCentralDirectory: start,
+                                                                        startOfCentralDirectory: UInt32(startOfCD),
                                                                         operation: .add)
             self.endOfCentralDirectoryRecord = endOfCentralDirRecord
         } catch ArchiveError.cancelledOperation {
