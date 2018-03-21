@@ -226,13 +226,12 @@ extension ZIPFoundationTests {
     }
 
     func testDirectoryCreationHelperMethods() {
-        let fileManager = FileManager()
         let processInfo = ProcessInfo.processInfo
         var nestedURL = ZIPFoundationTests.tempZipDirectoryURL
         nestedURL.appendPathComponent(processInfo.globallyUniqueString)
         nestedURL.appendPathComponent(processInfo.globallyUniqueString)
         do {
-            try fileManager.createParentDirectoryStructure(for: nestedURL)
+            try FileManager().createParentDirectoryStructure(for: nestedURL)
         } catch { XCTFail("Failed to create parent directory.") }
     }
 
@@ -285,10 +284,12 @@ extension ZIPFoundationTests {
     }
 
     func testFilePermissionHelperMethods() {
-        var permissions = FileManager.permissions(for: UInt32(777), osType: .unix)
+        var permissions = FileManager.permissions(for: UInt32(777), osType: .unix, entryType: .file)
         XCTAssert(permissions == defaultFilePermissions)
-        permissions = FileManager.permissions(for: UInt32(0), osType: .msdos)
+        permissions = FileManager.permissions(for: UInt32(0), osType: .msdos, entryType: .file)
         XCTAssert(permissions == defaultFilePermissions)
+        permissions = FileManager.permissions(for: UInt32(0), osType: .msdos, entryType: .directory)
+        XCTAssert(permissions == defaultDirectoryPermissions)
     }
 
     func testFileModificationDateHelperMethods() {

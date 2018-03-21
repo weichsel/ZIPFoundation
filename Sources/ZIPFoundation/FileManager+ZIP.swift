@@ -144,7 +144,7 @@ extension FileManager {
     }
 
     class func permissions(for externalFileAttributes: UInt32, osType: Entry.OSType,
-                           entryType: Entry.EntryType = .file) -> UInt16 {
+                           entryType: Entry.EntryType) -> UInt16 {
         switch osType {
         case .unix, .osx:
             let permissions = mode_t(externalFileAttributes >> 16) & (~S_IFMT)
