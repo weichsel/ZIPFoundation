@@ -90,7 +90,7 @@ extension Archive {
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
     /// - Throws: An error if the source data is invalid or the receiver is not writable.
     public func addEntry(with path: String, type: Entry.EntryType, uncompressedSize: UInt32,
-                         modificationDate: Date = Date(), permissions: UInt16 = defaultPermissions,
+                         modificationDate: Date = Date(), permissions: UInt16 = defaultFilePermissions,
                          compressionMethod: CompressionMethod = .none, bufferSize: UInt32 = defaultWriteChunkSize,
                          progress: Progress? = nil, provider: Provider) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }

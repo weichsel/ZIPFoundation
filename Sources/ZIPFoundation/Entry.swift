@@ -111,7 +111,7 @@ public struct Entry: Equatable {
     ///
     /// Contains the modification date and file permissions.
     public var fileAttributes: [FileAttributeKey: Any] {
-        return FileManager.attributes(from: self.centralDirectoryStructure)
+        return FileManager.attributes(from: self.centralDirectoryStructure, for: self.type)
     }
     /// The `CRC32` checksum of the receiver.
     ///

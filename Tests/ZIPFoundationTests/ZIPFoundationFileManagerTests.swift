@@ -257,7 +257,7 @@ extension ZIPFoundationTests {
         guard let permissions = attributes[.posixPermissions] as? UInt16 else {
             XCTFail("Failed to read file attributes."); return
         }
-        XCTAssert(permissions == defaultPermissions)
+        XCTAssert(permissions == defaultFilePermissions)
     }
 
     func testFilePermissionErrorConditions() {
@@ -273,9 +273,9 @@ extension ZIPFoundationTests {
 
     func testFilePermissionHelperMethods() {
         var permissions = FileManager.permissions(for: UInt32(777), osType: .unix)
-        XCTAssert(permissions == defaultPermissions)
+        XCTAssert(permissions == defaultFilePermissions)
         permissions = FileManager.permissions(for: UInt32(0), osType: .msdos)
-        XCTAssert(permissions == defaultPermissions)
+        XCTAssert(permissions == defaultFilePermissions)
     }
 
     func testFileModificationDateHelperMethods() {
