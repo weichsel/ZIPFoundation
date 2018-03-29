@@ -57,7 +57,11 @@ extension Data {
     }
 
     static func readChunk(of size: Int, from file: UnsafeMutablePointer<FILE>) throws -> Data {
+        #if swift(>=4.1)
+        let bytes = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: 1)
+        #else
         let bytes = UnsafeMutableRawPointer.allocate(bytes: size, alignedTo: 1)
+        #endif
         let bytesRead = fread(bytes, 1, size, file)
         let error = ferror(file)
         if error > 0 {
