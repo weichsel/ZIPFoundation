@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.6](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.6)
+
+### Added
+ - Swift 4.1 support
+ 
+### Updated
+ - Fixed default directory permissions
+ - Fixed a compile issue when targeting Linux
+
 ## [0.9.5](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.5)
 
 ### Added
