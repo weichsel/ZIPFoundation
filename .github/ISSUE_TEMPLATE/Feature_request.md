@@ -1,5 +1,5 @@
 ---
-name: Feature request
+name: "\U0001F528 Feature Request"
 about: Suggest an idea for this project
 
 ---

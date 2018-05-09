@@ -1,5 +1,5 @@
 ---
-name: Support Question
+name: "❓ Support Question"
 about: Ask here if you have a question about the usage of ZIP Foundation
 
 ---
