@@ -36,6 +36,10 @@ extension ZIPFoundationTests {
         let parentPathComponent = self.pathComponent(for: #function) + "ParentDirectory"
         parentDirectoryArchiveURL.appendPathComponent(parentPathComponent)
         parentDirectoryArchiveURL.appendPathExtension("zip")
+        var compressedDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+        let compressedPathComponent = self.pathComponent(for: #function) + "CompressedDirectory"
+        compressedDirectoryArchiveURL.appendPathComponent(compressedPathComponent)
+        compressedDirectoryArchiveURL.appendPathExtension("zip")
         let newAssetURL = directoryURL.appendingPathComponent(assetURL.lastPathComponent)
         do {
             try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
@@ -46,6 +50,7 @@ extension ZIPFoundationTests {
                                                withDestinationURL: newAssetURL)
             try fileManager.zipItem(at: directoryURL, to: directoryArchiveURL)
             try fileManager.zipItem(at: directoryURL, to: parentDirectoryArchiveURL, shouldKeepParent: false)
+            try fileManager.zipItem(at: directoryURL, to: compressedDirectoryArchiveURL, compressionMethod: .deflate)
         } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
         guard let directoryArchive = Archive(url: directoryArchiveURL, accessMode: .read) else {
             XCTFail("Failed to read archive."); return
