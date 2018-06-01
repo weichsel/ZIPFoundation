@@ -127,8 +127,9 @@ extension ZIPFoundationTests {
         } catch let error as Archive.ArchiveError { XCTAssert(error == .unwritableArchive)
         } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
         var directoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
-        let pathComponent = self.archiveName(for: #function, suffix: "Directory")
+        let pathComponent = self.pathComponent(for: #function) + "Directory"
         directoryArchiveURL.appendPathComponent(pathComponent)
+        directoryArchiveURL.appendPathExtension("zip")
         var unreadableFileURL = ZIPFoundationTests.tempZipDirectoryURL
         do {
             unreadableFileURL.appendPathComponent(pathComponent)
