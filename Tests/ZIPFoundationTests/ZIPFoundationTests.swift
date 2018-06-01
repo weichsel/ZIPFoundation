@@ -197,6 +197,11 @@ class ZIPFoundationTests: XCTestCase {
         return testFunction.replacingOccurrences(of: "()", with: "")
     }
 
+    func archiveName(for testFunction: String, suffix: String = "") -> String {
+        let archiveName = testFunction.replacingOccurrences(of: "()", with: "")
+        return archiveName.appending(suffix).appending(".zip")
+    }
+
     func resourceURL(for testFunction: String, pathExtension: String) -> URL {
         var sourceAssetURL = ZIPFoundationTests.resourceDirectoryURL
         sourceAssetURL.appendPathComponent(testFunction.replacingOccurrences(of: "()", with: ""))

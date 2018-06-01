@@ -16,8 +16,7 @@ extension ZIPFoundationTests {
         let fileManager = FileManager()
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         var fileArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
-        fileArchiveURL.appendPathComponent(self.pathComponent(for: #function))
-        fileArchiveURL.appendPathExtension("zip")
+        fileArchiveURL.appendPathComponent(self.archiveName(for: #function))
         do {
             try fileManager.zipItem(at: assetURL, to: fileArchiveURL)
         } catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
@@ -29,17 +28,14 @@ extension ZIPFoundationTests {
         var directoryURL = ZIPFoundationTests.tempZipDirectoryURL
         directoryURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
         var directoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
-        let pathComponent = self.pathComponent(for: #function) + "Directory"
+        let pathComponent = self.archiveName(for: #function, suffix: "Directory")
         directoryArchiveURL.appendPathComponent(pathComponent)
-        directoryArchiveURL.appendPathExtension("zip")
         var parentDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
-        let parentPathComponent = self.pathComponent(for: #function) + "ParentDirectory"
+        let parentPathComponent = self.archiveName(for: #function, suffix: "ParentDirectory")
         parentDirectoryArchiveURL.appendPathComponent(parentPathComponent)
-        parentDirectoryArchiveURL.appendPathExtension("zip")
         var compressedDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
-        let compressedPathComponent = self.pathComponent(for: #function) + "CompressedDirectory"
+        let compressedPathComponent = self.archiveName(for: #function, suffix: "CompressedDirectory")
         compressedDirectoryArchiveURL.appendPathComponent(compressedPathComponent)
-        compressedDirectoryArchiveURL.appendPathExtension("zip")
         let newAssetURL = directoryURL.appendingPathComponent(assetURL.lastPathComponent)
         do {
             try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
@@ -67,8 +63,7 @@ extension ZIPFoundationTests {
         let fileManager = FileManager()
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         var fileArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
-        fileArchiveURL.appendPathComponent(self.pathComponent(for: #function))
-        fileArchiveURL.appendPathExtension("zip")
+        fileArchiveURL.appendPathComponent(self.archiveName(for: #function))
         let fileProgress = Progress()
         let fileExpectation = self.keyValueObservingExpectation(for: fileProgress,
                                                                 keyPath: #keyPath(Progress.fractionCompleted),
@@ -85,8 +80,7 @@ extension ZIPFoundationTests {
         var directoryURL = ZIPFoundationTests.tempZipDirectoryURL
         directoryURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
         var directoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
-        directoryArchiveURL.appendPathComponent(self.pathComponent(for: #function) + "Directory")
-        directoryArchiveURL.appendPathExtension("zip")
+        directoryArchiveURL.appendPathComponent(self.archiveName(for: #function, suffix: "Directory"))
         let newAssetURL = directoryURL.appendingPathComponent(assetURL.lastPathComponent)
         let directoryProgress = Progress()
         let directoryExpectation = self.keyValueObservingExpectation(for: directoryProgress,
@@ -133,9 +127,8 @@ extension ZIPFoundationTests {
         } catch let error as Archive.ArchiveError { XCTAssert(error == .unwritableArchive)
         } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
         var directoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
-        let pathComponent = self.pathComponent(for: #function) + "Directory"
+        let pathComponent = self.archiveName(for: #function, suffix: "Directory")
         directoryArchiveURL.appendPathComponent(pathComponent)
-        directoryArchiveURL.appendPathExtension("zip")
         var unreadableFileURL = ZIPFoundationTests.tempZipDirectoryURL
         do {
             unreadableFileURL.appendPathComponent(pathComponent)
