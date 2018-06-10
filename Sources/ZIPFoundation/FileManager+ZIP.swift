@@ -25,10 +25,12 @@ extension FileManager {
     ///   - destinationURL: The file URL that identifies the destination of the zip operation.
     ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element
     ///                       within the archive. Default is `true`.
+    ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied.
     ///   - progress: A progress object that can be used to track or cancel the zip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func zipItem(at sourceURL: URL, to destinationURL: URL,
-                        shouldKeepParent: Bool = true, progress: Progress? = nil) throws {
+                        shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
+                        progress: Progress? = nil) throws {
         guard self.fileExists(atPath: sourceURL.path) else {
             throw CocoaError.error(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path], url: nil)
         }
@@ -61,15 +63,18 @@ extension FileManager {
                     let itemURL = sourceURL.appendingPathComponent(entryPath)
                     let entryProgress = archive.makeProgressForAddingItem(at: itemURL)
                     progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
-                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL, progress: entryProgress)
+                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL,
+                                         compressionMethod: compressionMethod, progress: entryProgress)
                 } else {
-                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL)
+                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL,
+                                         compressionMethod: compressionMethod)
                 }
             }
         } else {
             progress?.totalUnitCount = archive.totalUnitCountForAddingItem(at: sourceURL)
             let baseURL = sourceURL.deletingLastPathComponent()
-            try archive.addEntry(with: sourceURL.lastPathComponent, relativeTo: baseURL, progress: progress)
+            try archive.addEntry(with: sourceURL.lastPathComponent, relativeTo: baseURL,
+                                 compressionMethod: compressionMethod, progress: progress)
         }
     }
 
