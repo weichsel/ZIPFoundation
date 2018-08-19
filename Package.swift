@@ -1,20 +1,18 @@
-// swift-tools-version:4.0
-import PackageDescription
+// swift-tools-version:3.0
 
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-let dependencies: [Package.Dependency] = []
-#else
-let dependencies: [Package.Dependency] = [.package(url: "https://github.com/IBM-Swift/CZlib.git", .exact("0.1.2"))]
-#endif
+import PackageDescription
 
 let package = Package(
     name: "ZIPFoundation",
-    products: [
-        .library(name: "ZIPFoundation", targets: ["ZIPFoundation"])
-    ],
-	dependencies: dependencies,
     targets: [
-        .target(name: "ZIPFoundation"),
-		.testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
+        Target(
+            name: "ZIPFoundation"
+        )
     ]
 )
+
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#elseif os(Linux)
+let dependency: Package.Dependency = .Package(url: "https://github.com/IBM-Swift/CZlib.git", majorVersion: 0)
+package.dependencies.append(dependency)
+#endif
