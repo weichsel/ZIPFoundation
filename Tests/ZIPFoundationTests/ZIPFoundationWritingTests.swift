@@ -185,7 +185,7 @@ extension ZIPFoundationTests {
         let fileName = ProcessInfo.processInfo.globallyUniqueString
         var didCatchExpectedError = false
         do {
-            try archive.addEntry(with: fileName, type: .file, uncompressedSize: UINT32_MAX,
+            try archive.addEntry(with: fileName, type: .file, uncompressedSize: UInt32.max,
                                  provider: { (_, chunkSize) -> Data in
                 return Data.makeRandomData(size: chunkSize)
             })
@@ -300,7 +300,7 @@ extension ZIPFoundationTests {
         XCTAssertNil(nonUpdatableArchive)
     }
 
-    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+    #if swift(>=3.2) && (os(macOS) || os(iOS) || os(watchOS) || os(tvOS))
     func testArchiveAddUncompressedEntryProgress() {
         let archive = self.archive(for: #function, mode: .update)
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")

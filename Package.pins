@@ -1,0 +1,12 @@
+{
+  "autoPin": true,
+  "pins": [
+    {
+      "package": "CZlib",
+      "reason": null,
+      "repositoryURL": "https://github.com/IBM-Swift/CZlib.git",
+      "version": "0.1.2"
+    }
+  ],
+  "version": 1
+}
