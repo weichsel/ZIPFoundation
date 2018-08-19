@@ -126,7 +126,7 @@ extension Archive {
             let centralDir = try self.writeCentralDirectoryStructure(localFileHeader: localFileHeader,
                                                                      relativeOffset: offset,
                                                                      externalFileAttributes: externalAttributes)
-            if startOfCD > UINT32_MAX { throw ArchiveError.invalidStartOfCentralDirectoryOffset }
+            if startOfCD > Int(UInt32.max) { throw ArchiveError.invalidStartOfCentralDirectoryOffset }
             endOfCentralDirRecord = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDir,
                                                                         startOfCentralDirectory: UInt32(startOfCD),
                                                                         operation: .add)
@@ -241,9 +241,9 @@ extension Archive {
         var position = 0
         var sizeWritten = 0
         var checksum = CRC32(0)
-        while position < size {
+        while position < Int(size) {
             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
-            let readSize = (Int(size) - position) >= bufferSize ? Int(bufferSize) : (Int(size) - position)
+            let readSize = (Int(size) - position) >= Int(bufferSize) ? Int(bufferSize) : (Int(size) - position)
             let entryChunk = try provider(Int(position), Int(readSize))
             checksum = entryChunk.crc32(checksum: checksum)
             sizeWritten += try Data.write(chunk: entryChunk, to: self.archiveFile)
