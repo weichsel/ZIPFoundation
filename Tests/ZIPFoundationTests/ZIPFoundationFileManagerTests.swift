@@ -343,6 +343,7 @@ extension ZIPFoundationTests {
     }
 
     func testFileModificationDate() {
+        #if swift(>=3.2)
         var testDateComponents = DateComponents()
         testDateComponents.calendar = Calendar(identifier: Calendar.Identifier.gregorian)
         testDateComponents.timeZone = TimeZone(identifier: "UTC")
@@ -358,6 +359,7 @@ extension ZIPFoundationTests {
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .create)
+
         do {
             try fileManager.setAttributes([.modificationDate: testDate], ofItemAtPath: assetURL.path)
             let relativePath = assetURL.lastPathComponent
@@ -375,6 +377,7 @@ extension ZIPFoundationTests {
             // https://blogs.msdn.microsoft.com/oldnewthing/20151030-00/?p=91881
             XCTAssertEqual(currentTimeInterval, fileTimeInterval, accuracy: 2.0)
         } catch { XCTFail("Failed to test last file modification date") }
+        #endif
     }
 
     func testPOSIXPermissions() {
@@ -397,3 +400,34 @@ extension ZIPFoundationTests {
         } catch { XCTFail("Failed to test POSIX permissions") }
     }
 }
+
+// MARK: - Swift 3 compatibility
+
+#if swift(>=4.0)
+#else
+internal extension FileManager {
+
+    @discardableResult
+    func createFile(atPath path: String,
+                    contents: Data? = nil,
+                    attributes swift4Attributes: [FileAttributeKey: Any]) -> Bool {
+        var attributes = [String: Any](minimumCapacity: swift4Attributes.count)
+        swift4Attributes.forEach {
+            attributes[$0.key.rawValue] = $0.value
+        }
+        return createFile(atPath: path, contents: contents, attributes: attributes)
+    }
+
+    /**
+     Not Implemented in swift-corelibs-foundation for Swift 3
+     
+     fatal error: copyItem(atPath:toPath:) is not yet implemented: file Foundation/NSFileManager.swift, line 376
+     */
+    #if os(Linux)
+    func copyItem(at sourceURL: URL, to destinationURL: URL) throws {
+
+        system("cp \(sourceURL.path) \(destinationURL.path)")
+    }
+    #endif
+}
+#endif
