@@ -171,6 +171,17 @@ public final class Archive: Sequence {
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
+    public init?(data: UnsafeMutableRawPointer, length: Int) {
+        self.url            = URL(fileURLWithPath: "/")
+        self.accessMode     = .read
+        self.archiveFile    = fmemopen(data, length, "rb")
+        guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: self.archiveFile)
+        else {
+            return nil
+        }
+        self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+    }
+
     deinit {
         fclose(self.archiveFile)
     }
@@ -226,9 +237,8 @@ public final class Archive: Sequence {
         -> EndOfCentralDirectoryRecord? {
         var directoryEnd = 0
         var index = minDirectoryEndOffset
-        var fileStat = stat()
-        fstat(fileno(file), &fileStat)
-        let archiveLength = Int(fileStat.st_size)
+        fseek(file, 0, SEEK_END)
+        let archiveLength = ftell(file)
         while directoryEnd == 0 && index < maxDirectoryEndOffset && index <= archiveLength {
             fseek(file, archiveLength - index, SEEK_SET)
             var potentialDirectoryEndTag: UInt32 = UInt32()
