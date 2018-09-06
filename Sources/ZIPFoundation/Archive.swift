@@ -175,6 +175,47 @@ public final class Archive: Sequence {
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
+    var memoryFile : MemoryFile?
+    public init?(data: Data = Data(), accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
+        self.url = URL(string: "memory:")!
+        self.accessMode = mode
+        self.preferredEncoding = preferredEncoding
+        let posixMode : String
+        switch mode {
+        case .read:
+            posixMode = "rb"
+        case .create:
+            posixMode = "wb+"
+        case .update:
+            posixMode = "rb+"
+        }
+        self.memoryFile = MemoryFile(data: data)
+        guard let archiveFile = memoryFile?.open(mode: posixMode)
+            else {
+                return nil
+        }
+        self.archiveFile = archiveFile
+        if mode == .create {
+            let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
+                                                                          totalNumberOfEntriesOnDisk: 0,
+                                                                          totalNumberOfEntriesInCentralDirectory: 0,
+                                                                          sizeOfCentralDirectory: 0,
+                                                                          offsetToStartOfCentralDirectory: 0,
+                                                                          zipFileCommentLength: 0,
+                                                                          zipFileCommentData: Data())
+            _ = endOfCentralDirectoryRecord.data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
+                fwrite(buffer.baseAddress, buffer.count, 1, archiveFile) // Errors caught on read below
+            }
+        }
+        guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: self.archiveFile)
+            else {
+                return nil
+        }
+        self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+    }
+
+    public var data : Data? { return memoryFile?.data }
+
     deinit {
         fclose(self.archiveFile)
     }
@@ -233,9 +274,8 @@ public final class Archive: Sequence {
         -> EndOfCentralDirectoryRecord? {
         var directoryEnd = 0
         var index = minDirectoryEndOffset
-        var fileStat = stat()
-        fstat(fileno(file), &fileStat)
-        let archiveLength = Int(fileStat.st_size)
+        fseek(file, 0, SEEK_END)
+        let archiveLength = ftell(file)
         while directoryEnd == 0 && index < maxDirectoryEndOffset && index <= archiveLength {
             fseek(file, archiveLength - index, SEEK_SET)
             var potentialDirectoryEndTag: UInt32 = UInt32()
