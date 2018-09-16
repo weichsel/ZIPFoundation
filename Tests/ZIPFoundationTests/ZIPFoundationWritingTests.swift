@@ -63,11 +63,40 @@ extension ZIPFoundationTests {
             let baseURL = assetURL.deletingLastPathComponent()
             try archive.addEntry(with: relativePath, relativeTo: baseURL, compressionMethod: .deflate)
         } catch {
-            XCTFail("Failed to add entry to uncompressed folder archive with error : \(error)")
+            XCTFail("Failed to add entry to compressed folder archive with error : \(error)")
         }
         let entry = archive[assetURL.lastPathComponent]
         XCTAssertNotNil(entry)
         XCTAssert(archive.checkIntegrity())
+    }
+
+    @available(macOS 10.13, iOS 11.0, tvOS 11.0, watchOS 4.0, *)
+    func testCreateArchiveAddCompressedEntryToMemory() {
+        var data : Data
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        do {
+            data = try Archive.dataWithArchive { archive in
+                do {
+                    let relativePath = assetURL.lastPathComponent
+                    let baseURL = assetURL.deletingLastPathComponent()
+                    try archive.addEntry(with: relativePath, relativeTo: baseURL, compressionMethod: .deflate)
+                } catch {
+                    XCTFail("Failed to add entry to compressed folder archive with error : \(error)")
+                }
+            }
+        } catch {
+            XCTFail("Failed to create writable memory archive")
+            return
+        }
+        do {
+            try Archive.extract(data: data) { archive in
+                let entry = archive[assetURL.lastPathComponent]
+                XCTAssertNotNil(entry)
+                XCTAssert(archive.checkIntegrity())
+            }
+        } catch {
+            XCTFail("Failed to create memory archive for reading")
+        }
     }
 
     func testCreateArchiveAddDirectory() {

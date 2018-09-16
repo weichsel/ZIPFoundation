@@ -207,6 +207,34 @@ public final class Archive: Sequence {
         fclose(self.archiveFile)
     }
 
+    @available(macOS 10.13, iOS 11.0, tvOS 11.0, watchOS 4.0, *)
+    static public func extract(data: Data, body: (Archive) -> Void) throws {
+        let length = data.count
+        try data.withUnsafeBytes { (ptr: UnsafePointer<UInt8>) -> Void in
+            if let archive = Archive(readData: ptr, length: length) {
+                body(archive)
+            } else {
+                throw ArchiveError.unreadableArchive
+            }
+        }
+    }
+
+    @available(macOS 10.13, iOS 11.0, tvOS 11.0, watchOS 4.0, *)
+    static public func dataWithArchive(body: (Archive) -> Void) throws -> Data {
+        var bytes   : UnsafeMutablePointer<Int8>?
+        var length  = 0
+        if let archive = Archive(writeData: &bytes, length: &length) {
+            body(archive)
+        } else {
+            throw ArchiveError.unwritableArchive
+        }
+        if bytes != nil {
+            return Data(bytesNoCopy: bytes!, count: length, deallocator: Data.Deallocator.free)
+        } else {
+            throw ArchiveError.unwritableArchive
+        }
+    }
+
     public func makeIterator() -> AnyIterator<Entry> {
         let endOfCentralDirectoryRecord = self.endOfCentralDirectoryRecord
         var directoryIndex = Int(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)

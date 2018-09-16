@@ -37,6 +37,33 @@ extension ZIPFoundationTests {
         }
     }
 
+    @available(macOS 10.13, iOS 11.0, tvOS 11.0, watchOS 4.0, *)
+    func testExtractUncompressedFolderEntriesFromMemory() {
+        withMemoryArchive(for: #function) { archive in
+            for entry in archive {
+                do {
+                    //Test extracting to memory
+                    var checksum = try archive.extract(entry, bufferSize: 32, consumer: { _ in })
+                    XCTAssert(entry.checksum == checksum)
+                    //Test extracting to file
+                    var fileURL = self.createDirectory(for: #function)
+                    fileURL.appendPathComponent(entry.path)
+                    checksum = try archive.extract(entry, to: fileURL)
+                    XCTAssert(entry.checksum == checksum)
+                    let fileManager = FileManager()
+                    XCTAssertTrue(fileManager.fileExists(atPath: fileURL.path))
+                    if entry.type == .file {
+                        let fileData = try Data(contentsOf: fileURL)
+                        let checksum = fileData.crc32(checksum: 0)
+                        XCTAssert(checksum == entry.checksum)
+                    }
+                } catch {
+                    XCTFail("Failed to unzip uncompressed folder entries")
+                }
+            }
+        }
+    }
+
     func testExtractCompressedFolderEntries() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
@@ -59,6 +86,43 @@ extension ZIPFoundationTests {
             } catch {
                 XCTFail("Failed to unzip compressed folder entries")
             }
+        }
+    }
+
+    @available(macOS 10.13, iOS 11.0, tvOS 11.0, watchOS 4.0, *)
+    func testExtractCompressedFolderEntriesFromMemory() {
+        var sourceArchiveURL = ZIPFoundationTests.resourceDirectoryURL
+        sourceArchiveURL.appendPathComponent(#function.replacingOccurrences(of: "()", with: ""))
+        sourceArchiveURL.appendPathExtension("zip")
+        do {
+            let data    = try Data(contentsOf: sourceArchiveURL)
+            try Archive.extract(data: data) { archive in
+                for entry in archive {
+                    do {
+                        // Test extracting to memory
+                        var checksum = try archive.extract(entry, bufferSize: 128, consumer: { _ in })
+                        XCTAssert(entry.checksum == checksum)
+                        // Test extracting to file
+                        var fileURL = self.createDirectory(for: #function)
+                        fileURL.appendPathComponent(entry.path)
+                        checksum = try archive.extract(entry, to: fileURL)
+                        XCTAssert(entry.checksum == checksum)
+                        let fileManager = FileManager()
+                        XCTAssertTrue(fileManager.fileExists(atPath: fileURL.path))
+                        if entry.type != .directory {
+                            let fileData = try Data(contentsOf: fileURL)
+                            let checksum = fileData.crc32(checksum: 0)
+                            XCTAssert(checksum == entry.checksum)
+                        }
+                    } catch {
+                        XCTFail("Failed to unzip compressed folder entries")
+                    }
+                }
+            }
+        } catch {
+            XCTFail("Failed to open memory archive for '\(sourceArchiveURL.lastPathComponent)'")
+            type(of: self).tearDown()
+            preconditionFailure()
         }
     }
 
@@ -247,59 +311,5 @@ extension ZIPFoundationTests {
         nonExistantURL.appendPathComponent("invalid.path")
         let archive = self.archive(for: #function, mode: .update)
         XCTAssert(archive.totalUnitCountForAddingItem(at: nonExistantURL) == -1)
-    }
-
-    @available(macOS 10.13, iOS 11.0, tvOS 11.0, watchOS 4.0, *)
-    func testExtractUncompressedFolderEntriesFromMemory() {
-        withMemoryArchive(for: #function) { archive in
-            for entry in archive {
-                do {
-                    //Test extracting to memory
-                    var checksum = try archive.extract(entry, bufferSize: 32, consumer: { _ in })
-                    XCTAssert(entry.checksum == checksum)
-                    //Test extracting to file
-                    var fileURL = self.createDirectory(for: #function)
-                    fileURL.appendPathComponent(entry.path)
-                    checksum = try archive.extract(entry, to: fileURL)
-                    XCTAssert(entry.checksum == checksum)
-                    let fileManager = FileManager()
-                    XCTAssertTrue(fileManager.fileExists(atPath: fileURL.path))
-                    if entry.type == .file {
-                        let fileData = try Data(contentsOf: fileURL)
-                        let checksum = fileData.crc32(checksum: 0)
-                        XCTAssert(checksum == entry.checksum)
-                    }
-                } catch {
-                    XCTFail("Failed to unzip uncompressed folder entries")
-                }
-            }
-        }
-    }
-
-    @available(macOS 10.13, iOS 11.0, tvOS 11.0, watchOS 4.0, *)
-    func testExtractCompressedFolderEntriesFromMemory() {
-        withMemoryArchive(for: #function) { archive in
-            for entry in archive {
-                do {
-                    // Test extracting to memory
-                    var checksum = try archive.extract(entry, bufferSize: 128, consumer: { _ in })
-                    XCTAssert(entry.checksum == checksum)
-                    // Test extracting to file
-                    var fileURL = self.createDirectory(for: #function)
-                    fileURL.appendPathComponent(entry.path)
-                    checksum = try archive.extract(entry, to: fileURL)
-                    XCTAssert(entry.checksum == checksum)
-                    let fileManager = FileManager()
-                    XCTAssertTrue(fileManager.fileExists(atPath: fileURL.path))
-                    if entry.type != .directory {
-                        let fileData = try Data(contentsOf: fileURL)
-                        let checksum = fileData.crc32(checksum: 0)
-                        XCTAssert(checksum == entry.checksum)
-                    }
-                } catch {
-                    XCTFail("Failed to unzip compressed folder entries")
-                }
-            }
-        }
     }
 }
