@@ -51,7 +51,7 @@
 		OBJ_6 /* Package.swift */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		OBJ_9 /* Archive+Reading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Reading.swift"; sourceTree = "<group>"; };
 		"ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = ZIPFoundation.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		"ZIPFoundation::ZIPFoundationTests::Product" /* ZIPFoundationTests.xctest */ = {isa = PBXFileReference; lastKnownFileType = file; path = ZIPFoundationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		"ZIPFoundation::ZIPFoundationTests::Product" /* ZIPFoundationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ZIPFoundationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

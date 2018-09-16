@@ -171,14 +171,35 @@ public final class Archive: Sequence {
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
-    public init?(data: UnsafeMutableRawPointer, length: Int) {
-        self.url            = URL(fileURLWithPath: "/")
+    @available(macOS 10.13, iOS 11.0, tvOS 11.0, watchOS 4.0, *)
+    public init?(readData: UnsafeRawPointer, length: Int) {
+        self.url            = URL(string: "memory:")!
         self.accessMode     = .read
-        self.archiveFile    = fmemopen(data, length, "rb")
+        // In "rb" mode, fmemopen is in fact non-mutating
+        self.archiveFile    = fmemopen(UnsafeMutableRawPointer(mutating: readData), length, "rb")
         guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: self.archiveFile)
-        else {
-            return nil
+            else {
+                return nil
         }
+        self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+    }
+
+    @available(macOS 10.13, iOS 11.0, tvOS 11.0, watchOS 4.0, *)
+    public init?(writeData: UnsafeMutablePointer<UnsafeMutablePointer<Int8>?>, length: UnsafeMutablePointer<Int>) {
+        self.url            = URL(string: "memory:")!
+        self.accessMode     = .create
+        self.archiveFile    = open_memstream(writeData, length)
+        let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
+                                                                      totalNumberOfEntriesOnDisk: 0,
+                                                                      totalNumberOfEntriesInCentralDirectory: 0,
+                                                                      sizeOfCentralDirectory: 0,
+                                                                      offsetToStartOfCentralDirectory: 0,
+                                                                      zipFileCommentLength: 0,
+                                                                      zipFileCommentData: Data())
+        guard let _ = try? Data.write(chunk: endOfCentralDirectoryRecord.data, to: self.archiveFile) else
+            { return nil }
+        fseek(self.archiveFile, 0, SEEK_SET)
+
         self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
     }
 

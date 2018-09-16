@@ -193,6 +193,24 @@ class ZIPFoundationTests: XCTestCase {
         }
     }
 
+    @available(macOS 10.13, iOS 11.0, tvOS 11.0, watchOS 4.0, *)
+    func withMemoryArchive(for testFunction: String, body: (Archive) -> Void) {
+        var sourceArchiveURL = ZIPFoundationTests.resourceDirectoryURL
+        sourceArchiveURL.appendPathComponent(testFunction.replacingOccurrences(of: "()", with: ""))
+        sourceArchiveURL.appendPathExtension("zip")
+        do {
+            let data    = try Data(contentsOf: sourceArchiveURL)
+            let length  = data.count
+            data.withUnsafeBytes { ptr in
+                body(Archive(readData:ptr, length:length)!)
+            }
+        } catch {
+            XCTFail("Failed to open memory archive for '\(sourceArchiveURL.lastPathComponent)'")
+            type(of: self).tearDown()
+            preconditionFailure()
+        }
+    }
+
     func pathComponent(for testFunction: String) -> String {
         return testFunction.replacingOccurrences(of: "()", with: "")
     }
@@ -309,7 +327,19 @@ extension ZIPFoundationTests {
             ("testZipItem", testZipItem),
             ("testZipItemErrorConditions", testZipItemErrorConditions),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
-        ] + darwinOnlyTests
+        ] + darwinOnlyTests + inMemoryTests
+    }
+
+    static var inMemoryTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
+        if #available(macOS 10.13, iOS 11.0, tvOS 11.0, watchOS 4.0, *) {
+            return [
+                ("testCreateArchiveAddUncompressedEntryToMemory", testCreateArchiveAddUncompressedEntryToMemory),
+                ("testExtractCompressedFolderEntriesFromMemory", testExtractCompressedFolderEntriesFromMemory),
+                ("testExtractUncompressedFolderEntriesFromMemory", testExtractUncompressedFolderEntriesFromMemory)
+            ]
+        } else {
+            return []
+        }
     }
 
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
