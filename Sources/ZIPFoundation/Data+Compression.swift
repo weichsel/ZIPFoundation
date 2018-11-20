@@ -176,7 +176,6 @@ extension Data {
                     try consumer(outputData)
                     if operation == COMPRESSION_STREAM_DECODE { checksum = outputData.crc32(checksum: checksum) }
                 }
-            case COMPRESSION_STATUS_ERROR: fallthrough
             default: throw CompressionError.corruptedData
             }
         } while (status == COMPRESSION_STATUS_OK)
