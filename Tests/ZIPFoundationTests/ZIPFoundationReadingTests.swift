@@ -118,6 +118,17 @@ extension ZIPFoundationTests {
             XCTFail("Failed to obtain test asset from archive.")
             return
         }
+        do {
+            let longFileName = String(repeating: ProcessInfo.processInfo.globallyUniqueString, count: 100)
+            var overlongURL = URL(fileURLWithPath: NSTemporaryDirectory())
+            overlongURL.appendPathComponent(longFileName)
+            _ = try archive.extract(fileEntry, to: overlongURL)
+        } catch let error as CocoaError {
+            XCTAssert(error.code == CocoaError.fileNoSuchFile)
+        } catch {
+            XCTFail("Unexpected error while trying to extract entry to invalid URL.")
+            return
+        }
         XCTAssertNotNil(linkEntry)
         do {
             _ = try archive.extract(linkEntry, to: archive.url)
