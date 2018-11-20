@@ -141,10 +141,11 @@ public final class Archive: Sequence {
             guard fileManager.fileExists(atPath: url.path) else { return nil }
             guard fileManager.isReadableFile(atPath: url.path) else { return nil }
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            self.archiveFile = fopen(fileSystemRepresentation, "rb")
-            guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+            guard let archiveFile = fopen(fileSystemRepresentation, "rb"),
+                let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
                 return nil
             }
+            self.archiveFile = archiveFile
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         case .create:
             guard !fileManager.fileExists(atPath: url.path) else { return nil }
@@ -161,10 +162,11 @@ public final class Archive: Sequence {
         case .update:
             guard fileManager.isWritableFile(atPath: url.path) else { return nil }
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            self.archiveFile = fopen(fileSystemRepresentation, "rb+")
-            guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+            guard let archiveFile = fopen(fileSystemRepresentation, "rb+"),
+                let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
                 return nil
             }
+            self.archiveFile = archiveFile
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
             fseek(self.archiveFile, 0, SEEK_SET)
         }
@@ -188,7 +190,7 @@ public final class Archive: Sequence {
             let offset = Int(centralDirStruct.relativeOffsetOfLocalHeader)
             guard let localFileHeader: LocalFileHeader = Data.readStruct(from: self.archiveFile,
                                                                          at: offset) else { return nil }
-            var dataDescriptor: DataDescriptor? = nil
+            var dataDescriptor: DataDescriptor?
             if centralDirStruct.usesDataDescriptor {
                 let additionalSize = Int(localFileHeader.fileNameLength + localFileHeader.extraFieldLength)
                 let isCompressed = centralDirStruct.compressionMethod != CompressionMethod.none.rawValue

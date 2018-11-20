@@ -30,8 +30,10 @@ extension Archive {
                 throw CocoaError.error(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path], url: nil)
             }
             try fileManager.createParentDirectoryStructure(for: url)
-            let destinationFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            let destinationFile: UnsafeMutablePointer<FILE> = fopen(destinationFileSystemRepresentation, "wb+")
+            let destinationRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
+            guard let destinationFile: UnsafeMutablePointer<FILE> = fopen(destinationRepresentation, "wb+") else {
+                throw CocoaError.error(.fileNoSuchFile)
+            }
             defer { fclose(destinationFile) }
             let consumer = { _ = try Data.write(chunk: $0, to: destinationFile) }
             checksum = try self.extract(entry, bufferSize: bufferSize, progress: progress, consumer: consumer)
