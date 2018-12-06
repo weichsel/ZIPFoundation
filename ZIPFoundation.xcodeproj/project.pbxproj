@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6EFF111321B97CCE003AC682 /* Archive+Reading.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_9 /* Archive+Reading.swift */; };
+		6EFF111421B97CCE003AC682 /* Archive+Writing.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_10 /* Archive+Writing.swift */; };
+		6EFF111521B97CCE003AC682 /* Archive.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_11 /* Archive.swift */; };
+		6EFF111621B97CCE003AC682 /* Data+Compression.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_12 /* Data+Compression.swift */; };
+		6EFF111721B97CCE003AC682 /* Data+Serialization.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_13 /* Data+Serialization.swift */; };
+		6EFF111821B97CCE003AC682 /* Entry.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_14 /* Entry.swift */; };
+		6EFF111921B97CCE003AC682 /* FileManager+ZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_15 /* FileManager+ZIP.swift */; };
 		OBJ_33 /* ZIPFoundationDataSerializationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_18 /* ZIPFoundationDataSerializationTests.swift */; };
 		OBJ_34 /* ZIPFoundationEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_19 /* ZIPFoundationEntryTests.swift */; };
 		OBJ_35 /* ZIPFoundationFileManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_20 /* ZIPFoundationFileManagerTests.swift */; };
@@ -35,6 +42,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6EFF111E21B97CCE003AC682 /* ZIPFoundation.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ZIPFoundation.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		OBJ_10 /* Archive+Writing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Writing.swift"; sourceTree = "<group>"; };
 		OBJ_11 /* Archive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Archive.swift; sourceTree = "<group>"; };
 		OBJ_12 /* Data+Compression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Compression.swift"; sourceTree = "<group>"; };
@@ -51,10 +59,17 @@
 		OBJ_6 /* Package.swift */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		OBJ_9 /* Archive+Reading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Reading.swift"; sourceTree = "<group>"; };
 		"ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = ZIPFoundation.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		"ZIPFoundation::ZIPFoundationTests::Product" /* ZIPFoundationTests.xctest */ = {isa = PBXFileReference; lastKnownFileType = file; path = ZIPFoundationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		"ZIPFoundation::ZIPFoundationTests::Product" /* ZIPFoundationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ZIPFoundationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		6EFF111A21B97CCE003AC682 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		OBJ_40 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 0;
@@ -101,6 +116,7 @@
 			children = (
 				"ZIPFoundation::ZIPFoundationTests::Product" /* ZIPFoundationTests.xctest */,
 				"ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */,
+				6EFF111E21B97CCE003AC682 /* ZIPFoundation.framework */,
 			);
 			name = Products;
 			sourceTree = BUILT_PRODUCTS_DIR;
@@ -141,9 +157,25 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		"ZIPFoundation::ZIPFoundation" /* ZIPFoundation */ = {
+		6EFF111121B97CCE003AC682 /* ZIPFoundation iOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = OBJ_44 /* Build configuration list for PBXNativeTarget "ZIPFoundation" */;
+			buildConfigurationList = 6EFF111B21B97CCE003AC682 /* Build configuration list for PBXNativeTarget "ZIPFoundation iOS" */;
+			buildPhases = (
+				6EFF111221B97CCE003AC682 /* Sources */,
+				6EFF111A21B97CCE003AC682 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "ZIPFoundation iOS";
+			productName = ZIPFoundation;
+			productReference = 6EFF111E21B97CCE003AC682 /* ZIPFoundation.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		"ZIPFoundation::ZIPFoundation" /* ZIPFoundation macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = OBJ_44 /* Build configuration list for PBXNativeTarget "ZIPFoundation macOS" */;
 			buildPhases = (
 				OBJ_47 /* Sources */,
 				OBJ_55 /* Frameworks */,
@@ -152,7 +184,7 @@
 			);
 			dependencies = (
 			);
-			name = ZIPFoundation;
+			name = "ZIPFoundation macOS";
 			productName = ZIPFoundation;
 			productReference = "ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */;
 			productType = "com.apple.product-type.framework";
@@ -183,6 +215,9 @@
 			attributes = {
 				LastUpgradeCheck = 0930;
 				TargetAttributes = {
+					6EFF111121B97CCE003AC682 = {
+						LastSwiftMigration = 1010;
+					};
 					"ZIPFoundation::ZIPFoundation" = {
 						LastSwiftMigration = 0900;
 					};
@@ -203,8 +238,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				"ZIPFoundation::ZIPFoundation" /* ZIPFoundation */,
+				"ZIPFoundation::ZIPFoundation" /* ZIPFoundation macOS */,
 				"ZIPFoundation::ZIPFoundationTests" /* ZIPFoundationTests */,
+				6EFF111121B97CCE003AC682 /* ZIPFoundation iOS */,
 			);
 		};
 /* End PBXProject section */
@@ -226,6 +262,20 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		6EFF111221B97CCE003AC682 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 0;
+			files = (
+				6EFF111321B97CCE003AC682 /* Archive+Reading.swift in Sources */,
+				6EFF111421B97CCE003AC682 /* Archive+Writing.swift in Sources */,
+				6EFF111521B97CCE003AC682 /* Archive.swift in Sources */,
+				6EFF111621B97CCE003AC682 /* Data+Compression.swift in Sources */,
+				6EFF111721B97CCE003AC682 /* Data+Serialization.swift in Sources */,
+				6EFF111821B97CCE003AC682 /* Entry.swift in Sources */,
+				6EFF111921B97CCE003AC682 /* FileManager+ZIP.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		OBJ_32 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
@@ -259,12 +309,59 @@
 /* Begin PBXTargetDependency section */
 		OBJ_42 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = "ZIPFoundation::ZIPFoundation" /* ZIPFoundation */;
+			target = "ZIPFoundation::ZIPFoundation" /* ZIPFoundation macOS */;
 			targetProxy = BAEFCCF91EFD201600AFB154 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		6EFF111C21B97CCE003AC682 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 0.9.6;
+				ENABLE_TESTABILITY = YES;
+				HEADER_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundation_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited)";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=appletvos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=iphoneos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=watchos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = ZIPFoundation;
+				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(PROJECT_NAME:c99extidentifier)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGET_NAME = ZIPFoundation;
+			};
+			name = Debug;
+		};
+		6EFF111D21B97CCE003AC682 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 0.9.6;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = fast;
+				HEADER_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundation_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited)";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=appletvos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=iphoneos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=watchos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = ZIPFoundation;
+				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(PROJECT_NAME:c99extidentifier)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGET_NAME = ZIPFoundation;
+			};
+			name = Release;
+		};
 		OBJ_3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -306,10 +403,10 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = "";
-				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
+				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 4.2;
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				USE_HEADERMAP = NO;
 				WATCHOS_DEPLOYMENT_TARGET = 2.0;
@@ -330,7 +427,6 @@
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
-				SWIFT_VERSION = 4.0;
 				TARGET_NAME = ZIPFoundationTests;
 			};
 			name = Debug;
@@ -350,7 +446,6 @@
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
-				SWIFT_VERSION = 4.0;
 				TARGET_NAME = ZIPFoundationTests;
 			};
 			name = Release;
@@ -393,9 +488,9 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = "";
-				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
+				SDKROOT = macosx;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 4.2;
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				USE_HEADERMAP = NO;
 				WATCHOS_DEPLOYMENT_TARGET = 2.0;
@@ -417,11 +512,12 @@
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = ZIPFoundation;
-				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_MODULE_NAME = "$(PROJECT_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(PROJECT_NAME:c99extidentifier)";
+				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
-				SWIFT_VERSION = 4.0;
 				TARGET_NAME = ZIPFoundation;
 			};
 			name = Debug;
@@ -442,11 +538,12 @@
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = ZIPFoundation;
-				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PRODUCT_MODULE_NAME = "$(PROJECT_NAME:c99extidentifier)";
+				PRODUCT_NAME = "$(PROJECT_NAME:c99extidentifier)";
+				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
 				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
-				SWIFT_VERSION = 4.0;
 				TARGET_NAME = ZIPFoundation;
 			};
 			name = Release;
@@ -454,6 +551,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		6EFF111B21B97CCE003AC682 /* Build configuration list for PBXNativeTarget "ZIPFoundation iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6EFF111C21B97CCE003AC682 /* Debug */,
+				6EFF111D21B97CCE003AC682 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		OBJ_2 /* Build configuration list for PBXProject "ZIPFoundation" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -472,7 +578,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		OBJ_44 /* Build configuration list for PBXNativeTarget "ZIPFoundation" */ = {
+		OBJ_44 /* Build configuration list for PBXNativeTarget "ZIPFoundation macOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				OBJ_45 /* Debug */,

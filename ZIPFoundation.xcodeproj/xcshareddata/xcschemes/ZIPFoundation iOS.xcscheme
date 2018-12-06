@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "0930"
+   LastUpgradeVersion = "1010"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,41 +14,21 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ZIPFoundation::ZIPFoundation"
+               BlueprintIdentifier = "6EFF111121B97CCE003AC682"
                BuildableName = "ZIPFoundation.framework"
-               BlueprintName = "ZIPFoundation"
+               BlueprintName = "ZIPFoundation iOS"
                ReferencedContainer = "container:ZIPFoundation.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
-      buildConfiguration = "Release"
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      codeCoverageEnabled = "YES"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "ZIPFoundation::ZIPFoundationTests"
-               BuildableName = "ZIPFoundationTests.xctest"
-               BlueprintName = "ZIPFoundationTests"
-               ReferencedContainer = "container:ZIPFoundation.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "ZIPFoundation::ZIPFoundation"
-            BuildableName = "ZIPFoundation.framework"
-            BlueprintName = "ZIPFoundation"
-            ReferencedContainer = "container:ZIPFoundation.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
       <AdditionalOptions>
       </AdditionalOptions>
    </TestAction>
@@ -65,9 +45,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "ZIPFoundation::ZIPFoundation"
+            BlueprintIdentifier = "6EFF111121B97CCE003AC682"
             BuildableName = "ZIPFoundation.framework"
-            BlueprintName = "ZIPFoundation"
+            BlueprintName = "ZIPFoundation iOS"
             ReferencedContainer = "container:ZIPFoundation.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -83,9 +63,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "ZIPFoundation::ZIPFoundation"
+            BlueprintIdentifier = "6EFF111121B97CCE003AC682"
             BuildableName = "ZIPFoundation.framework"
-            BlueprintName = "ZIPFoundation"
+            BlueprintName = "ZIPFoundation iOS"
             ReferencedContainer = "container:ZIPFoundation.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
