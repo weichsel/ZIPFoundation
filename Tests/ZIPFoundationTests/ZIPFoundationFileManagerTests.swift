@@ -8,6 +8,8 @@
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
 //
 
+// swiftlint:disable file_length
+
 import XCTest
 @testable import ZIPFoundation
 
@@ -395,5 +397,17 @@ extension ZIPFoundationTests {
             }
             XCTAssert(permissions.int16Value == filePermissions.int16Value)
         } catch { XCTFail("Failed to test POSIX permissions") }
+    }
+
+    func testTraversalAttack() {
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        do {
+            try fileManager.unzipItem(at: archive.url, to: destinationURL)
+        } catch {
+            XCTAssert((error as? CocoaError)?.code == .fileReadInvalidFileName); return
+        }
+        XCTFail("Extraction should fail")
     }
 }

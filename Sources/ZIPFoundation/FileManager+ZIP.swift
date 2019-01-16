@@ -109,7 +109,13 @@ extension FileManager {
         }
 
         for entry in sortedEntries {
-            let destinationEntryURL = destinationURL.appendingPathComponent(entry.path)
+            let destinationEntryURL = destinationURL.appendingPathComponent(entry.path).standardizedFileURL
+            // Need to delete last path component first or case like '../destinationURLxxx' will be ignored
+            guard destinationEntryURL.deletingLastPathComponent().path.hasPrefix(destinationURL.path) else {
+                throw CocoaError.error(.fileReadInvalidFileName,
+                                       userInfo: [NSFilePathErrorKey: destinationEntryURL.path],
+                                       url: nil)
+            }
             if let progress = progress {
                 let entryProgress = archive.makeProgressForReading(entry)
                 progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
