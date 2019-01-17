@@ -109,9 +109,8 @@ extension FileManager {
         }
 
         for entry in sortedEntries {
-            let destinationEntryURL = destinationURL.appendingPathComponent(entry.path).standardizedFileURL
-            // Need to delete last path component first or case like '../destinationURLxxx' will be ignored
-            guard destinationEntryURL.deletingLastPathComponent().path.hasPrefix(destinationURL.path) else {
+            let destinationEntryURL = destinationURL.appendingPathComponent(entry.path)
+            guard destinationEntryURL.isContained(in: destinationURL) else {
                 throw CocoaError.error(.fileReadInvalidFileName,
                                        userInfo: [NSFilePathErrorKey: destinationEntryURL.path],
                                        url: nil)
@@ -302,3 +301,14 @@ public extension CocoaError {
 
 #endif
 #endif
+
+public extension URL {
+    func isContained(in parentDirectoryURL: URL) -> Bool {
+        // Ensure this URL is contained in the passed in URL
+        let parentDirectoryURL = URL(
+            fileURLWithPath: parentDirectoryURL.path,
+            isDirectory: true
+            ).standardizedFileURL
+        return self.standardizedFileURL.absoluteString.hasPrefix(parentDirectoryURL.absoluteString)
+    }
+}

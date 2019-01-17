@@ -309,7 +309,7 @@ extension ZIPFoundationTests {
             ("testZipItem", testZipItem),
             ("testZipItemErrorConditions", testZipItemErrorConditions),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests),
-            ("testTraversalAttack", testTraversalAttack),
+            ("testTraversalAttack", testTraversalAttack)
         ] + darwinOnlyTests
     }
 
