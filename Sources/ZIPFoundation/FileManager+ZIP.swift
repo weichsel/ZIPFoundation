@@ -82,7 +82,7 @@ extension FileManager {
     ///
     /// - Parameters:
     ///   - sourceURL: The file URL pointing to an existing ZIP file.
-    ///   - destinationURL: The file URL that identifies the destination of the unzip operation.
+    ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func unzipItem(at sourceURL: URL, to destinationURL: URL, progress: Progress? = nil) throws {
