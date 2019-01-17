@@ -308,7 +308,8 @@ extension ZIPFoundationTests {
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             ("testZipItem", testZipItem),
             ("testZipItemErrorConditions", testZipItemErrorConditions),
-            ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
+            ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests),
+            ("testTraversalAttack", testTraversalAttack)
         ] + darwinOnlyTests
     }
 

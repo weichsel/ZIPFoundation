@@ -110,6 +110,11 @@ extension FileManager {
 
         for entry in sortedEntries {
             let destinationEntryURL = destinationURL.appendingPathComponent(entry.path)
+            guard destinationEntryURL.isContained(in: destinationURL) else {
+                throw CocoaError.error(.fileReadInvalidFileName,
+                                       userInfo: [NSFilePathErrorKey: destinationEntryURL.path],
+                                       url: nil)
+            }
             if let progress = progress {
                 let entryProgress = archive.makeProgressForReading(entry)
                 progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
@@ -296,3 +301,14 @@ public extension CocoaError {
 
 #endif
 #endif
+
+public extension URL {
+    func isContained(in parentDirectoryURL: URL) -> Bool {
+        // Ensure this URL is contained in the passed in URL
+        let parentDirectoryURL = URL(
+            fileURLWithPath: parentDirectoryURL.path,
+            isDirectory: true
+            ).standardizedFileURL
+        return self.standardizedFileURL.absoluteString.hasPrefix(parentDirectoryURL.absoluteString)
+    }
+}
