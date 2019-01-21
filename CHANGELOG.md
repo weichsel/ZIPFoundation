@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.9.8](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.8)
+
+### Updated
+- Disabled symlink resolution during path traversal checking
+
 ## [0.9.7](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.7)
 
 ### Added
