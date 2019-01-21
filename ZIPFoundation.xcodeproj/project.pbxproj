@@ -410,7 +410,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CURRENT_PROJECT_VERSION = 0.9.7;
+				CURRENT_PROJECT_VERSION = 0.9.8;
 				ENABLE_TESTABILITY = YES;
 				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundation_Info.plist;
@@ -435,7 +435,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CURRENT_PROJECT_VERSION = 0.9.7;
+				CURRENT_PROJECT_VERSION = 0.9.8;
 				ENABLE_TESTABILITY = YES;
 				GCC_OPTIMIZATION_LEVEL = fast;
 				HEADER_SEARCH_PATHS = "$(inherited)";
