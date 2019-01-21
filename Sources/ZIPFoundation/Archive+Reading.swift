@@ -53,8 +53,13 @@ extension Archive {
             }
             checksum = try self.extract(entry, bufferSize: bufferSize, progress: progress, consumer: consumer)
         }
-        let attributes = FileManager.attributes(from: entry)
+
+        var attributes = FileManager.attributes(from: entry)
+        #if os(Linux) // Certain keys are not yet supported in swift-corelibs
+        attributes.removeValue(forKey: .modificationDate)
+        #endif
         try fileManager.setAttributes(attributes, ofItemAtPath: url.path)
+        
         return checksum
     }
 
