@@ -137,22 +137,20 @@ extension FileManager {
     class func attributes(from entry: Entry) -> [FileAttributeKey: Any] {
         let centralDirectoryStructure = entry.centralDirectoryStructure
         let entryType = entry.type
-        var attributes = [.posixPermissions: entryType ==
-            .directory ? defaultDirectoryPermissions : defaultFilePermissions,
-                          .modificationDate: Date()] as [FileAttributeKey: Any]
-        let versionMadeBy = centralDirectoryStructure.versionMadeBy
         let fileTime = centralDirectoryStructure.lastModFileTime
         let fileDate = centralDirectoryStructure.lastModFileDate
-        guard let osType = Entry.OSType(rawValue: UInt(versionMadeBy >> 8)) else {
-            return attributes
-        }
-        let externalFileAttributes = centralDirectoryStructure.externalFileAttributes
-        let permissions = self.permissions(for: externalFileAttributes, osType: osType, entryType: entryType)
-        attributes[.posixPermissions] = NSNumber(value: permissions)
+        let defaultPermissions = entryType == .directory ? defaultDirectoryPermissions : defaultFilePermissions
+        var attributes = [.posixPermissions: defaultPermissions] as [FileAttributeKey: Any]
         // Certain keys are not yet supported in swift-corelibs
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         attributes[.modificationDate] = Date(dateTime: (fileDate, fileTime))
         #endif
+        let versionMadeBy = centralDirectoryStructure.versionMadeBy
+        guard let osType = Entry.OSType(rawValue: UInt(versionMadeBy >> 8)) else { return attributes }
+
+        let externalFileAttributes = centralDirectoryStructure.externalFileAttributes
+        let permissions = self.permissions(for: externalFileAttributes, osType: osType, entryType: entryType)
+        attributes[.posixPermissions] = NSNumber(value: permissions)
         return attributes
     }
 
