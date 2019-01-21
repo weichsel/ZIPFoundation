@@ -284,8 +284,6 @@ extension ZIPFoundationTests {
             ("testExtractUncompressedFolderEntries", testExtractUncompressedFolderEntries),
             ("testExtractZIP64ArchiveErrorConditions", testExtractZIP64ArchiveErrorConditions),
             ("testFileAttributeHelperMethods", testFileAttributeHelperMethods),
-            ("testFileModificationDate", testFileModificationDate),
-            ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
             ("testFilePermissionErrorConditions", testFilePermissionErrorConditions),
             ("testFilePermissionHelperMethods", testFilePermissionHelperMethods),
             ("testFileSizeHelperMethods", testFileSizeHelperMethods),
@@ -316,6 +314,8 @@ extension ZIPFoundationTests {
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
         return [
+            ("testFileModificationDate", testFileModificationDate),
+            ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
             ("testZipItemProgress", testZipItemProgress),
             ("testUnzipItemProgress", testUnzipItemProgress),
             ("testRemoveEntryProgress", testRemoveEntryProgress),
