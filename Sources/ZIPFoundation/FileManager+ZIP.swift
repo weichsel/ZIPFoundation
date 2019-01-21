@@ -306,10 +306,7 @@ public extension CocoaError {
 public extension URL {
     func isContained(in parentDirectoryURL: URL) -> Bool {
         // Ensure this URL is contained in the passed in URL
-        let parentDirectoryURL = URL(
-            fileURLWithPath: parentDirectoryURL.path,
-            isDirectory: true
-            ).standardizedFileURL
-        return self.standardizedFileURL.absoluteString.hasPrefix(parentDirectoryURL.absoluteString)
+        let parentDirectoryURL = URL(fileURLWithPath: parentDirectoryURL.path, isDirectory: true).standardized
+        return self.standardized.absoluteString.hasPrefix(parentDirectoryURL.absoluteString)
     }
 }
