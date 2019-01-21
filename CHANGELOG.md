@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.7](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.7)
+
+### Added
+ - App extension support
+ - Optional `compressionMethod` paramter for `zipItem:`
+ 
+### Updated
+ - Fixed a path traversal attack vulnerability
+ - Fixed a crash due to wrong error handling after failed `fopen` calls
+
+### Removed
+ - Temporarily removed the currently unsupported `.modificationDate` attribute on non-Darwin platforms
+
 ## [0.9.6](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.6)
 
 ### Added
