@@ -149,7 +149,10 @@ extension FileManager {
         let externalFileAttributes = centralDirectoryStructure.externalFileAttributes
         let permissions = self.permissions(for: externalFileAttributes, osType: osType, entryType: entryType)
         attributes[.posixPermissions] = NSNumber(value: permissions)
+        // Certain keys are not yet supported in swift-corelibs
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         attributes[.modificationDate] = Date(dateTime: (fileDate, fileTime))
+        #endif
         return attributes
     }
 
