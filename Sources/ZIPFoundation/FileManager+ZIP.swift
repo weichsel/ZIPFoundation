@@ -109,7 +109,7 @@ extension FileManager {
         }
 
         for entry in sortedEntries {
-            let path = preferredEncoding == nil ? entry.path : entry.path(using: preferredEncoding!) ?? ""
+            let path = preferredEncoding == nil ? entry.path : entry.path(using: preferredEncoding!)
             let destinationEntryURL = destinationURL.appendingPathComponent(path)
             guard destinationEntryURL.isContained(in: destinationURL) else {
                 throw CocoaError.error(.fileReadInvalidFileName,

@@ -96,14 +96,6 @@ public struct Entry: Equatable {
         var isZIP64: Bool { return self.versionNeededToExtract >= 45 }
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
     }
-
-    /// Returns the `path` of the receiver within a ZIP `Archive` using a given encoding.
-    ///
-    /// - Parameters:
-    ///   - encoding: `String.Encoding`
-    public func path(using encoding: String.Encoding) -> String? {
-        return String(data: self.centralDirectoryStructure.fileNameData, encoding: encoding)
-    }
     /// The `path` of the receiver within a ZIP `Archive`.
     public var path: String {
         let dosLatinUS = 0x400
@@ -112,7 +104,7 @@ public struct Entry: Equatable {
         let codepage437 = String.Encoding(rawValue: dosLatinUSStringEncoding)
         let isUTF8 = ((self.centralDirectoryStructure.generalPurposeBitFlag >> 11) & 1) != 0
         let encoding = isUTF8 ? String.Encoding.utf8 : codepage437
-        return self.path(using: encoding) ?? ""
+        return self.path(using: encoding)
     }
     /// The file attributes of the receiver as key/value pairs.
     ///
@@ -207,6 +199,14 @@ public struct Entry: Equatable {
         self.centralDirectoryStructure = centralDirectoryStructure
         self.localFileHeader = localFileHeader
         self.dataDescriptor = dataDescriptor
+    }
+
+    /// Returns the `path` of the receiver within a ZIP `Archive` using a given encoding.
+    ///
+    /// - Parameters:
+    ///   - encoding: `String.Encoding`
+    public func path(using encoding: String.Encoding) -> String {
+        return String(data: self.centralDirectoryStructure.fileNameData, encoding: encoding) ?? ""
     }
 }
 
