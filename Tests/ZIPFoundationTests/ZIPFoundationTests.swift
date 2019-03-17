@@ -232,7 +232,6 @@ class ZIPFoundationTests: XCTestCase {
         }
         return URL
     }
-
 }
 
 extension ZIPFoundationTests {
@@ -279,6 +278,7 @@ extension ZIPFoundationTests {
             ("testExtractUncompressedEntryCancelation", testExtractUncompressedEntryCancelation),
             ("testExtractCompressedEntryCancelation", testExtractCompressedEntryCancelation),
             ("testExtractErrorConditions", testExtractErrorConditions),
+            ("testExtractPreferredEncoding", testExtractPreferredEncoding),
             ("testExtractMSDOSArchive", testExtractMSDOSArchive),
             ("testExtractUncompressedDataDescriptorArchive", testExtractUncompressedDataDescriptorArchive),
             ("testExtractUncompressedFolderEntries", testExtractUncompressedFolderEntries),
@@ -302,6 +302,7 @@ extension ZIPFoundationTests {
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
             ("testUnzipItem", testUnzipItem),
+            ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             ("testZipItem", testZipItem),
