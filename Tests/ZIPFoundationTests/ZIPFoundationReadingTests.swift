@@ -86,6 +86,16 @@ extension ZIPFoundationTests {
         }
     }
 
+    func testExtractPreferredEncoding() {
+        let encoding = String.Encoding.utf8
+        let archive = self.archive(for: #function, mode: .read, preferredEncoding: encoding)
+        XCTAssertTrue(archive.checkIntegrity())
+        let imageEntry = archive["data/pic👨‍👩‍👧‍👦🎂.jpg"]
+        XCTAssertNotNil(imageEntry)
+        let textEntry = archive["data/Benoît.txt"]
+        XCTAssertNotNil(textEntry)
+    }
+
     func testExtractMSDOSArchive() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
