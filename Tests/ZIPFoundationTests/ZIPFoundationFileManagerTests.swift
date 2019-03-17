@@ -116,6 +116,25 @@ extension ZIPFoundationTests {
         XCTAssert(itemsExist)
     }
 
+    func testUnzipItemWithPreferredEncoding() {
+        let fileManager = FileManager()
+        let encoding = String.Encoding.utf8
+        let archive = self.archive(for: #function, mode: .read, preferredEncoding: encoding)
+        let destinationURL = self.createDirectory(for: #function)
+        do {
+            try fileManager.unzipItem(at: archive.url, to: destinationURL, preferredEncoding: encoding)
+        } catch {
+            XCTFail("Failed to extract item."); return
+        }
+        var itemsExist = false
+        for entry in archive {
+            let directoryURL = destinationURL.appendingPathComponent(entry.path(using: encoding) ?? "")
+            itemsExist = fileManager.fileExists(atPath: directoryURL.path)
+            if !itemsExist { break }
+        }
+        XCTAssert(itemsExist)
+    }
+
     func testUnzipItemErrorConditions() {
         var nonexistantArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         nonexistantArchiveURL.appendPathComponent("invalid")

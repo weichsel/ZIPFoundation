@@ -171,7 +171,7 @@ class ZIPFoundationTests: XCTestCase {
 
     // MARK: - Helpers
 
-    func archive(for testFunction: String, mode: Archive.AccessMode) -> Archive {
+    func archive(for testFunction: String, mode: Archive.AccessMode, preferredEncoding: String.Encoding? = nil) -> Archive {
         var sourceArchiveURL = ZIPFoundationTests.resourceDirectoryURL
         sourceArchiveURL.appendPathComponent(testFunction.replacingOccurrences(of: "()", with: ""))
         sourceArchiveURL.appendPathExtension("zip")
@@ -182,7 +182,7 @@ class ZIPFoundationTests: XCTestCase {
                 let fileManager = FileManager()
                 try fileManager.copyItem(at: sourceArchiveURL, to: destinationArchiveURL)
             }
-            guard let archive = Archive(url: destinationArchiveURL, accessMode: mode) else {
+            guard let archive = Archive(url: destinationArchiveURL, accessMode: mode, preferredEncoding: preferredEncoding) else {
                 throw Archive.ArchiveError.unreadableArchive
             }
             return archive
