@@ -177,8 +177,10 @@ extension Data {
             case COMPRESSION_STATUS_OK, COMPRESSION_STATUS_END:
                 let count = bufferSize - stream.dst_size
                 let outputData = Data(bytesNoCopy: destinationBufferPointer, count: count, deallocator: .none)
-                try? consumer(outputData)
-                if operation == COMPRESSION_STREAM_DECODE { checksum = outputData.crc32(checksum: checksum) }
+                if outputData.count > 0 {
+                    try? consumer(outputData)
+                    if operation == COMPRESSION_STREAM_DECODE { checksum = outputData.crc32(checksum: checksum) }
+                }
                 stream.dst_ptr = destinationBufferPointer
                 stream.dst_size = bufferSize
             default: throw CompressionError.corruptedData
