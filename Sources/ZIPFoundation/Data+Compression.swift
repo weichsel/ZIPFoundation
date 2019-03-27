@@ -155,20 +155,19 @@ extension Data {
         var position = 0
         var sourceData: Data?
         repeat {
-            var flags = Int32(0)
             if stream.src_size == 0 {
                 do {
                     sourceData = try provider(position, bufferSize)
                     if let sourceData = sourceData {
                         position += sourceData.count
                         stream.src_size = sourceData.count
-                        if sourceData.count < bufferSize { flags = Int32(COMPRESSION_STREAM_FINALIZE.rawValue) }
                     }
                 } catch { throw error }
             }
             if let sourceData = sourceData {
                 sourceData.withUnsafeBytes { (bytes: UnsafePointer<UInt8>) in
                     stream.src_ptr = bytes.advanced(by: sourceData.count - stream.src_size)
+                    let flags = sourceData.count < bufferSize ? Int32(COMPRESSION_STREAM_FINALIZE.rawValue) : 0
                     status = compression_stream_process(&stream, flags)
                 }
                 if operation == COMPRESSION_STREAM_ENCODE { checksum = sourceData.crc32(checksum: checksum) }
