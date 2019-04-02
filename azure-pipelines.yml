@@ -1,13 +1,8 @@
-# Xcode
-# Build, test, and archive an Xcode workspace on macOS.
-# Add steps that install certificates, test, sign, and distribute an app, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/xcode
-
 trigger:
   - master
 
 jobs:
-# - job: linuxSwift50
+# - job: linux_Swift_5_0
 #   pool:
 #     vmImage: 'Ubuntu 16.04'
 #   container: swift:5.0
@@ -45,6 +40,7 @@ jobs:
   variables:
     DEVELOPER_DIR: /Applications/Xcode_10.1.app
   steps:
+    # We currently only perform a build-only script for watchOS (xcodebuild test is unable to find the XCTest module)
     - script: >
         set -o pipefail &&
         xcodebuild build -sdk watchsimulator -destination "name=Apple Watch Series 3 - 38mm" -scheme "ZIPFoundation" |
@@ -59,7 +55,7 @@ jobs:
   steps:
     - script: >
         set -o pipefail &&
-        xcodebuild build -sdk appletvsimulator -destination "name=Apple TV 4K" -scheme "ZIPFoundation" |
+        xcodebuild test -sdk appletvsimulator -destination "name=Apple TV 4K" -scheme "ZIPFoundation" |
         xcpretty -r junit -o build/reports/xcodebuild-tvOS.xml
       displayName: tvOS Swfit 4.2
 
