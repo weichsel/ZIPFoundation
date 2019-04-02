@@ -22,6 +22,6 @@ jobs:
   steps:
     - script: >
         set -o pipefail &&
-        xcodebuild xcodebuild test -sdk macOS -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" |
+        xcodebuild test -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" |
         xcpretty -r junit -o build/reports/xcodebuild-macos.xml
       displayName: macOS Swfit 4.2
