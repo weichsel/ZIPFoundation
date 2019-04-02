@@ -12,7 +12,5 @@ jobs:
     vmImage: 'Ubuntu 16.04'
   container: swift:5.0
   steps:
-    - script: sudo apt-get install -y libz-dev && swift package resolve
-      displayName: Linux Swift 5.0 Install Dependencies
     - script: swift test -c release -Xswiftc -enable-testing
       displayName: Linux Swift 5.0
