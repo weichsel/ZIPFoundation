@@ -4,17 +4,15 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/xcode
 
 trigger:
-- master
+  - master
 
-pool:
-  vmImage: 'macOS-10.13'
-
-steps:
-- task: Xcode@5
-  inputs:
-    actions: 'build'
-    scheme: ''
-    sdk: 'iphoneos'
-    configuration: 'Release'
-    xcWorkspacePath: '**/*.xcodeproj/project.xcworkspace'
-    xcodeVersion: 'default' # Options: 8, 9, 10, default, specifyPath
+jobs:
+- job: linuxSwift50
+  pool:
+    vmImage: 'Ubuntu 16.04'
+  container: swift:5.0
+  steps:
+    - script: apt-get install -y libz-dev && swift package resolve
+      displayName: Linux Swift 5.0 Install Dependencies
+    - script: swift test -c release -Xswiftc -enable-testing
+      displayName: Linux Swift 5.0
