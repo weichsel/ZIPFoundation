@@ -35,11 +35,6 @@ jobs:
   steps:
     - script: >
         set -o pipefail &&
-        xcodebuild test -sdk iphonesimulator -destination "name=iPhone 5" -scheme "ZIPFoundation" |
-        xcpretty -r junit -o build/reports/xcodebuild-iOS32.xml
-      displayName: iOS Swfit 4.2 (32-bit)
-    - script: >
-        set -o pipefail &&
         xcodebuild test -sdk iphonesimulator -destination "name=iPhone X" -scheme "ZIPFoundation" |
-        xcpretty -r junit -o build/reports/xcodebuild-iOS64.xml
-      displayName: iOS Swfit 4.2 (64-bit)
+        xcpretty -r junit -o build/reports/xcodebuild-iOS.xml
+      displayName: iOS Swfit 4.2
