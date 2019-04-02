@@ -51,7 +51,7 @@ jobs:
         xcpretty -r junit -o build/reports/xcodebuild-watchOS.xml
       displayName: watchOS Swfit 4.2
 
-- job: tvOS_5_1
+- job: tvOS_12_1
   pool:
     vmImage: 'macOS 10.13'
   variables:
@@ -61,7 +61,7 @@ jobs:
         set -o pipefail &&
         xcodebuild build -sdk appletvsimulator -destination "name=Apple TV 4K" -scheme "ZIPFoundation" |
         xcpretty -r junit -o build/reports/xcodebuild-tvOS.xml
-      displayName: tvOS Swfit 12.1
+      displayName: tvOS Swfit 4.2
 
 - job: Analyze
   pool:
