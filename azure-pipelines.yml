@@ -24,7 +24,7 @@ jobs:
     - script: >
         set -o pipefail &&
         xcodebuild test -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" |
-        xcpretty -r junit -o build/reports/xcodebuild-macos.xml
+        xcpretty -r junit -o build/reports/xcodebuild-macOS.xml
       displayName: macOS Swfit 4.2
 
 - job: iOS_12_1
@@ -38,3 +38,15 @@ jobs:
         xcodebuild test -sdk iphonesimulator -destination "name=iPhone X" -scheme "ZIPFoundation" |
         xcpretty -r junit -o build/reports/xcodebuild-iOS.xml
       displayName: iOS Swfit 4.2
+
+- job: watchOS_5_1
+  pool:
+    vmImage: 'macOS 10.13'
+  variables:
+    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+  steps:
+    - script: >
+        set -o pipefail &&
+        xcodebuild build -sdk watchsimulator -destination "name=Apple Watch Series 3 - 38mm" -scheme "ZIPFoundation" |
+        xcpretty -r junit -o build/reports/xcodebuild-watchOS.xml
+      displayName: watchOS Swfit 4.2
