@@ -71,3 +71,14 @@ jobs:
       displayName: Install SwiftLint
     - script: swiftlint analyze --strict --compiler-log-path xcodebuild.log
       displayName: SwiftLint Analyze
+
+- job: CodeCoverage
+  pool:
+    vmImage: 'macOS 10.13'
+  variables:
+    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+  steps:
+    - script: xcodebuild test -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" -derivedDataPath Build/ 
+      displayName: Generate xccovreport
+    - script: (xcrun xccov view --only-targets Build/Logs/Test/*.xcresult/*_Test/action.xccovreport | grep -Eq  "ZIPFoundation.*100\.00%") && (exit 0) || (exit 1)
+      displayName: Check for 100% coverage
