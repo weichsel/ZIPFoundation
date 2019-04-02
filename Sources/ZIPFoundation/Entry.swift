@@ -397,4 +397,8 @@ extension Entry.DataDescriptor {
         // when copying those entries to the tempArchive during remove(_ entry:).
         self.data = Data()
     }
+
+    public func dummy() {
+        print("Unreachable Code")
+    }
 }
