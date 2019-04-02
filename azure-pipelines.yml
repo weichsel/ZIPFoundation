@@ -61,7 +61,7 @@ jobs:
         set -o pipefail &&
         xcodebuild build -sdk appletvsimulator -destination "name=Apple TV 4K" -scheme "ZIPFoundation" |
         xcpretty -r junit -o build/reports/xcodebuild-tvOS.xml
-      displayName: tvOS Swfit 4.2
+      displayName: tvOS Swfit 12.1
 
 - job: Analyze
   pool:
