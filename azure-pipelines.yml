@@ -50,3 +50,15 @@ jobs:
         xcodebuild build -sdk watchsimulator -destination "name=Apple Watch Series 3 - 38mm" -scheme "ZIPFoundation" |
         xcpretty -r junit -o build/reports/xcodebuild-watchOS.xml
       displayName: watchOS Swfit 4.2
+
+- job: tvOS_5_1
+  pool:
+    vmImage: 'macOS 10.13'
+  variables:
+    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+  steps:
+    - script: >
+        set -o pipefail &&
+        xcodebuild build -sdk appletvsimulator -destination "name=Apple TV 4K" -scheme "ZIPFoundation" |
+        xcpretty -r junit -o build/reports/xcodebuild-tvOS.xml
+      displayName: tvOS Swfit 4.2
