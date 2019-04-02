@@ -138,84 +138,54 @@ extension Data {
 import Compression
 
 extension Data {
-    @inline(__always)
     static func process(operation: compression_stream_operation, size: Int, bufferSize: Int,
                         provider: Provider, consumer: Consumer) throws -> CRC32 {
-        var position = 0
         var checksum = CRC32(0)
+        let destinationBufferPointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        defer { destinationBufferPointer.deallocate() }
         let streamPtr = UnsafeMutablePointer<compression_stream>.allocate(capacity: 1)
         defer { free(streamPtr) }
         var stream = streamPtr.pointee
         var status = compression_stream_init(&stream, operation, COMPRESSION_ZLIB)
+        guard status != COMPRESSION_STATUS_ERROR else { throw CompressionError.invalidStream }
         defer { compression_stream_destroy(&stream) }
         stream.src_size = 0
-        let bufferPtr = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
-        defer { free(bufferPtr) }
-        var chunk = Data()
-        stream.dst_ptr = bufferPtr
+        stream.dst_ptr = destinationBufferPointer
         stream.dst_size = bufferSize
-        var flags = Int32(0)
+        var position = 0
+        var sourceData: Data?
         repeat {
-            let readSize = (size - position) >= bufferSize ? bufferSize : (size - position)
-            position = try self.fill(stream: &stream, checksum: &checksum, chunk: &chunk,
-                                     progress: (advance: (position: position, readSize: readSize),
-                                                configuration: (operation: operation, flags: flags)),
-                                     provider: provider)
-            try self.flush(stream: &stream, checksum: &checksum, buffer: (pointer: bufferPtr, size: bufferSize),
-                           operation: operation, consumer: consumer)
-            if position >= size { flags = Int32(COMPRESSION_STREAM_FINALIZE.rawValue) }
-            status = compression_stream_process(&stream, flags)
+            if stream.src_size == 0 {
+                do {
+                    sourceData = try provider(position, bufferSize)
+                    if let sourceData = sourceData {
+                        position += sourceData.count
+                        stream.src_size = sourceData.count
+                    }
+                } catch { throw error }
+            }
+            if let sourceData = sourceData {
+                sourceData.withUnsafeBytes { (bytes: UnsafePointer<UInt8>) in
+                    stream.src_ptr = bytes.advanced(by: sourceData.count - stream.src_size)
+                    let flags = sourceData.count < bufferSize ? Int32(COMPRESSION_STREAM_FINALIZE.rawValue) : 0
+                    status = compression_stream_process(&stream, flags)
+                }
+                if operation == COMPRESSION_STREAM_ENCODE { checksum = sourceData.crc32(checksum: checksum) }
+            }
             switch status {
-            case COMPRESSION_STATUS_OK:
-                try self.flush(stream: &stream, checksum: &checksum, buffer: (pointer: bufferPtr, size: bufferSize),
-                               operation: operation, consumer: consumer)
-            case COMPRESSION_STATUS_END:
-                if stream.dst_ptr > bufferPtr {
-                    let outputSize = stream.dst_ptr - bufferPtr
-                    let outputData = Data(bytesNoCopy: bufferPtr, count: outputSize, deallocator: .none)
-                    try consumer(outputData)
+            case COMPRESSION_STATUS_OK, COMPRESSION_STATUS_END:
+                let count = bufferSize - stream.dst_size
+                let outputData = Data(bytesNoCopy: destinationBufferPointer, count: count, deallocator: .none)
+                if outputData.count > 0 {
+                    try? consumer(outputData)
                     if operation == COMPRESSION_STREAM_DECODE { checksum = outputData.crc32(checksum: checksum) }
                 }
+                stream.dst_ptr = destinationBufferPointer
+                stream.dst_size = bufferSize
             default: throw CompressionError.corruptedData
             }
-        } while (status == COMPRESSION_STATUS_OK)
+        } while status == COMPRESSION_STATUS_OK
         return checksum
-    }
-
-    @inline(__always)
-    static func fill(stream: inout compression_stream, checksum: inout CRC32, chunk: inout Data,
-                     progress: (advance: (position: Int, readSize: Int),
-                     configuration: (operation: compression_stream_operation, flags: Int32)),
-                     provider: Provider) throws -> Int {
-        var resultPosition = progress.advance.position
-        if stream.src_size == 0 {
-            let shouldProvideData = progress.configuration.flags != Int32(COMPRESSION_STREAM_FINALIZE.rawValue)
-            if shouldProvideData || progress.configuration.operation == COMPRESSION_STREAM_ENCODE {
-                chunk = try provider(progress.advance.position, progress.advance.readSize)
-                chunk.withUnsafeBytes { stream.src_ptr = $0 }
-                if progress.configuration.operation == COMPRESSION_STREAM_ENCODE {
-                    checksum = chunk.crc32(checksum: checksum)
-                }
-                resultPosition += chunk.count
-                stream.src_size = chunk.count
-            }
-        }
-        return resultPosition
-    }
-
-    @inline(__always)
-    static func flush(stream: inout compression_stream, checksum: inout CRC32,
-                      buffer: (size: Int, pointer: UnsafeMutablePointer<UInt8>),
-                      operation: compression_stream_operation, consumer: Consumer) throws {
-        if stream.dst_size == 0 {
-            let outputData = Data(bytesNoCopy: buffer.pointer, count: buffer.size, deallocator: .none)
-            try consumer(outputData)
-            if operation == COMPRESSION_STREAM_DECODE {
-                checksum = outputData.crc32(checksum: checksum)
-            }
-            stream.dst_ptr = buffer.pointer
-            stream.dst_size = buffer.size
-        }
     }
 }
 
