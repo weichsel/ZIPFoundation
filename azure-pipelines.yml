@@ -7,10 +7,21 @@ trigger:
   - master
 
 jobs:
-- job: linuxSwift50
+# - job: linuxSwift50
+#   pool:
+#     vmImage: 'Ubuntu 16.04'
+#   container: swift:5.0
+#   steps:
+#     - script: swift test -c release -Xswiftc -enable-testing
+#       displayName: Linux Swift 5.0
+- job: macOS1013
   pool:
-    vmImage: 'Ubuntu 16.04'
-  container: swift:5.0
+    vmImage: 'macOS 10.13'
+  variables:
+    DEVELOPER_DIR: /Applications/Xcode_10.1.app
   steps:
-    - script: swift test -c release -Xswiftc -enable-testing
-      displayName: Linux Swift 5.0
+    - script: >
+        set -o pipefail &&
+        xcodebuild xcodebuild test -sdk macOS -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" |
+        xcpretty -r junit -o build/reports/xcodebuild-macos.xml
+      displayName: macOS Swfit 4.2
