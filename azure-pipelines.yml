@@ -59,7 +59,7 @@ jobs:
         xcpretty -r junit -o build/reports/xcodebuild-tvOS.xml
       displayName: tvOS Swfit 4.2
 
-- job: Analyze
+- job: SwiftLint
   pool:
     vmImage: 'macOS 10.13'
   variables:
@@ -69,6 +69,8 @@ jobs:
       displayName: Generate xcodebuild.log
     - script: HOMEBREW_NO_AUTO_UPDATE=1 brew install https://raw.github.com/Homebrew/homebrew-core/master/Formula/swiftlint.rb
       displayName: Install SwiftLint
+    - script: swiftlint
+      displayName: SwiftLint	  
     - script: swiftlint analyze --strict --compiler-log-path xcodebuild.log
       displayName: SwiftLint Analyze
 
