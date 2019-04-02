@@ -69,8 +69,15 @@ jobs:
       displayName: Generate xcodebuild.log
     - script: HOMEBREW_NO_AUTO_UPDATE=1 brew install https://raw.github.com/Homebrew/homebrew-core/master/Formula/swiftlint.rb
       displayName: Install SwiftLint
-    - script: swiftlint
-      displayName: SwiftLint	  
+    - script: |
+        set -o pipefail
+        mkdir -p build/reports/
+        swiftlint lint --reporter junit > build/reports/swiftlint.xml
+      displayName: SwiftLint
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**    
     - script: swiftlint analyze --strict --compiler-log-path xcodebuild.log
       displayName: SwiftLint Analyze
 
