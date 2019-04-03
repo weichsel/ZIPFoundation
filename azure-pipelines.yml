@@ -58,6 +58,7 @@ jobs:
       inputs:
         testRunner: JUnit
         testResultsFiles: build/reports/**
+        failTaskOnFailedTests: true
 
 - job: watchOS_5_1
   pool:
@@ -66,11 +67,18 @@ jobs:
     DEVELOPER_DIR: /Applications/Xcode_10.1.app
   steps:
     # We currently only perform a build-only script for watchOS (xcodebuild test is unable to find the XCTest module)
-    - script: >
-        set -o pipefail &&
-        xcodebuild build -sdk watchsimulator -destination "name=Apple Watch Series 3 - 38mm" -scheme "ZIPFoundation" |
-        xcpretty -r junit -o build/reports/xcodebuild-watchOS.xml
-      displayName: watchOS Swfit 4.2
+    - task: Xcode@5
+      inputs:
+        actions: 'build'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        sdk: 'watchsimulator'
+        destinationPlatformOption: 'custom'
+        destinationTypeOption: 'simulators'
+        destinationSimulators: 'Apple Watch Series 3 - 38mm'
 
 - job: tvOS_12_1
   pool:
