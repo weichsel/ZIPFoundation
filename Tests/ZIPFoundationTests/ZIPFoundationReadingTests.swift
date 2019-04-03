@@ -13,6 +13,7 @@ import XCTest
 
 extension ZIPFoundationTests {
     func testExtractUncompressedFolderEntries() {
+        XCTFail("Dummy failure to test CI")
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
             do {
