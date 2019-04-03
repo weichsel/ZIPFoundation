@@ -108,5 +108,5 @@ jobs:
   steps:
     - script: xcodebuild test -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" -derivedDataPath Build/ 
       displayName: Generate xccovreport
-    - script: (xcrun xccov view --only-targets Build/Logs/Test/*.xcresult/*_Test/action.xccovreport | grep -Eq  "ZIPFoundation.*100\.00%") && { exit 0; } || { echo 'Please make sure that the test suite fully covers all library code.'; exit 1; }
+    - script: (xcrun xccov view --only-targets Build/Logs/Test/*.xcresult/*_Test/action.xccovreport | grep -Eq  "ZIPFoundation.*100\.00%") && { exit 0; } || { echo '##vso[task.logissue type=error;]Please make sure that the test suite covers all framework code paths.'; }
       displayName: Check for 100% coverage
