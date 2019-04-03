@@ -21,6 +21,10 @@ jobs:
         xcodebuild test -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" |
         xcpretty -r junit -o build/reports/xcodebuild-macOS.xml
       displayName: macOS Swfit 4.2
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
 
 - job: iOS_12_1
   pool:
@@ -33,6 +37,10 @@ jobs:
         xcodebuild test -sdk iphonesimulator -destination "name=iPhone X" -scheme "ZIPFoundation" |
         xcpretty -r junit -o build/reports/xcodebuild-iOS.xml
       displayName: iOS Swfit 4.2
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
 
 - job: watchOS_5_1
   pool:
@@ -46,6 +54,10 @@ jobs:
         xcodebuild build -sdk watchsimulator -destination "name=Apple Watch Series 3 - 38mm" -scheme "ZIPFoundation" |
         xcpretty -r junit -o build/reports/xcodebuild-watchOS.xml
       displayName: watchOS Swfit 4.2
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
 
 - job: tvOS_12_1
   pool:
@@ -58,6 +70,10 @@ jobs:
         xcodebuild test -sdk appletvsimulator -destination "name=Apple TV 4K" -scheme "ZIPFoundation" |
         xcpretty -r junit -o build/reports/xcodebuild-tvOS.xml
       displayName: tvOS Swfit 4.2
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
 
 - job: SwiftLint
   pool:
@@ -77,7 +93,7 @@ jobs:
     - task: PublishTestResults@2
       inputs:
         testRunner: JUnit
-        testResultsFiles: build/reports/**    
+        testResultsFiles: build/reports/**
     - script: swiftlint analyze --strict --compiler-log-path xcodebuild.log
       displayName: SwiftLint Analyze
 
@@ -89,5 +105,5 @@ jobs:
   steps:
     - script: xcodebuild test -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" -derivedDataPath Build/ 
       displayName: Generate xccovreport
-    - script: (xcrun xccov view --only-targets Build/Logs/Test/*.xcresult/*_Test/action.xccovreport | grep -Eq  "ZIPFoundation.*100\.00%") && (exit 0) || (exit 1)
+    - script: (xcrun xccov view --only-targets Build/Logs/Test/*.xcresult/*_Test/action.xccovreport | grep -Eq  "ZIPFoundation.*100\.00%") && { exit 0; } || { echo 'Please make sure that the test suite fully covers all library code.'; exit 1; }
       displayName: Check for 100% coverage
