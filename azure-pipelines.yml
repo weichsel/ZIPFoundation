@@ -24,7 +24,7 @@ jobs:
         exportOptionsPlist: ''
         configuration: 'Release'
         scheme: 'ZIPFoundation'
-        sdk: 'macOS'
+        sdk: 'macos'
         destinationPlatformOption: 'macOS'
         useXcpretty: true
         publishJUnitResults: true
