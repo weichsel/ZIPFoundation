@@ -16,11 +16,17 @@ jobs:
   variables:
     DEVELOPER_DIR: /Applications/Xcode_10.1.app
   steps:
-    - script: >
-        set -o pipefail &&
-        xcodebuild test -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" |
-        xcpretty -r junit -o build/reports/xcodebuild-macOS.xml
-      displayName: macOS Swfit 4.2
+    - task: Xcode@5
+      inputs:
+        actions: 'test'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        destinationPlatformOption: 'macOS'
+        useXcpretty: true
+        publishJUnitResults: true
     - task: PublishTestResults@2
       inputs:
         testRunner: JUnit
