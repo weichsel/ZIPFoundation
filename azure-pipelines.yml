@@ -40,11 +40,20 @@ jobs:
   variables:
     DEVELOPER_DIR: /Applications/Xcode_10.1.app
   steps:
-    - script: >
-        set -o pipefail &&
-        xcodebuild test -sdk iphonesimulator -destination "name=iPhone X" -scheme "ZIPFoundation" |
-        xcpretty -r junit -o build/reports/xcodebuild-iOS.xml
-      displayName: iOS Swfit 4.2
+    - task: Xcode@5
+      inputs:
+        actions: 'test'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        sdk: 'iphonesimulator'
+        destinationPlatformOption: 'iOS'
+        destinationTypeOption: 'simulators'
+        destinationSimulators: 'iPhone X'
+        useXcpretty: true
+        publishJUnitResults: true
     - task: PublishTestResults@2
       inputs:
         testRunner: JUnit
