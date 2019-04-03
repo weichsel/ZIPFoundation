@@ -32,6 +32,7 @@ jobs:
       inputs:
         testRunner: JUnit
         testResultsFiles: build/reports/**
+        failTaskOnFailedTests: true
 
 - job: iOS_12_1
   pool:
