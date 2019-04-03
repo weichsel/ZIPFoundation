@@ -16,11 +16,23 @@ jobs:
   variables:
     DEVELOPER_DIR: /Applications/Xcode_10.1.app
   steps:
-    - script: >
-        set -o pipefail &&
-        xcodebuild test -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" |
-        xcpretty -r junit -o build/reports/xcodebuild-macOS.xml
-      displayName: macOS Swfit 4.2
+    - task: Xcode@5
+      inputs:
+        actions: 'test'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        sdk: 'macosx'
+        destinationPlatformOption: 'macOS'
+        useXcpretty: true
+        publishJUnitResults: true
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
+        failTaskOnFailedTests: true
 
 - job: iOS_12_1
   pool:
@@ -28,11 +40,25 @@ jobs:
   variables:
     DEVELOPER_DIR: /Applications/Xcode_10.1.app
   steps:
-    - script: >
-        set -o pipefail &&
-        xcodebuild test -sdk iphonesimulator -destination "name=iPhone X" -scheme "ZIPFoundation" |
-        xcpretty -r junit -o build/reports/xcodebuild-iOS.xml
-      displayName: iOS Swfit 4.2
+    - task: Xcode@5
+      inputs:
+        actions: 'test'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        sdk: 'iphonesimulator'
+        destinationPlatformOption: 'iOS'
+        destinationTypeOption: 'simulators'
+        destinationSimulators: 'iPhone X'
+        useXcpretty: true
+        publishJUnitResults: true
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
+        failTaskOnFailedTests: true
 
 - job: watchOS_5_1
   pool:
@@ -41,11 +67,18 @@ jobs:
     DEVELOPER_DIR: /Applications/Xcode_10.1.app
   steps:
     # We currently only perform a build-only script for watchOS (xcodebuild test is unable to find the XCTest module)
-    - script: >
-        set -o pipefail &&
-        xcodebuild build -sdk watchsimulator -destination "name=Apple Watch Series 3 - 38mm" -scheme "ZIPFoundation" |
-        xcpretty -r junit -o build/reports/xcodebuild-watchOS.xml
-      displayName: watchOS Swfit 4.2
+    - task: Xcode@5
+      inputs:
+        actions: 'build'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        sdk: 'watchsimulator'
+        destinationPlatformOption: 'custom'
+        destinationTypeOption: 'simulators'
+        destinationSimulators: 'Apple Watch Series 3 - 38mm'
 
 - job: tvOS_12_1
   pool:
@@ -53,13 +86,27 @@ jobs:
   variables:
     DEVELOPER_DIR: /Applications/Xcode_10.1.app
   steps:
-    - script: >
-        set -o pipefail &&
-        xcodebuild test -sdk appletvsimulator -destination "name=Apple TV 4K" -scheme "ZIPFoundation" |
-        xcpretty -r junit -o build/reports/xcodebuild-tvOS.xml
-      displayName: tvOS Swfit 4.2
+    - task: Xcode@5
+      inputs:
+        actions: 'test'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        sdk: 'appletvsimulator'
+        destinationPlatformOption: 'tvOS'
+        destinationTypeOption: 'simulators'
+        destinationSimulators: 'Apple TV 4K'
+        useXcpretty: true
+        publishJUnitResults: true
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
+        failTaskOnFailedTests: true
 
-- job: Analyze
+- job: SwiftLint
   pool:
     vmImage: 'macOS 10.13'
   variables:
@@ -69,5 +116,26 @@ jobs:
       displayName: Generate xcodebuild.log
     - script: HOMEBREW_NO_AUTO_UPDATE=1 brew install https://raw.github.com/Homebrew/homebrew-core/master/Formula/swiftlint.rb
       displayName: Install SwiftLint
+    - script: |
+        set -o pipefail
+        mkdir -p build/reports/
+        swiftlint lint --reporter junit > build/reports/swiftlint.xml
+      displayName: SwiftLint
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
+        failTaskOnFailedTests: true
     - script: swiftlint analyze --strict --compiler-log-path xcodebuild.log
       displayName: SwiftLint Analyze
+
+- job: CodeCoverage
+  pool:
+    vmImage: 'macOS 10.13'
+  variables:
+    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+  steps:
+    - script: xcodebuild test -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" -derivedDataPath Build/ 
+      displayName: Generate xccovreport
+    - script: (xcrun xccov view --only-targets Build/Logs/Test/*.xcresult/*_Test/action.xccovreport | grep -Eq  "ZIPFoundation.*100\.00%") && { exit 0; } || { echo '##vso[task.logissue type=error;]Please make sure that the test suite covers all framework code paths.'; exit 1; }
+      displayName: Check for full line coverage
