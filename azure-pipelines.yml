@@ -54,10 +54,6 @@ jobs:
         xcodebuild build -sdk watchsimulator -destination "name=Apple Watch Series 3 - 38mm" -scheme "ZIPFoundation" |
         xcpretty -r junit -o build/reports/xcodebuild-watchOS.xml
       displayName: watchOS Swfit 4.2
-    - task: PublishTestResults@2
-      inputs:
-        testRunner: JUnit
-        testResultsFiles: build/reports/**
 
 - job: tvOS_12_1
   pool:
