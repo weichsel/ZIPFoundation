@@ -86,15 +86,25 @@ jobs:
   variables:
     DEVELOPER_DIR: /Applications/Xcode_10.1.app
   steps:
-    - script: >
-        set -o pipefail &&
-        xcodebuild test -sdk appletvsimulator -destination "name=Apple TV 4K" -scheme "ZIPFoundation" |
-        xcpretty -r junit -o build/reports/xcodebuild-tvOS.xml
-      displayName: tvOS Swfit 4.2
+    - task: Xcode@5
+      inputs:
+        actions: 'test'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        sdk: 'appletvsimulator'
+        destinationPlatformOption: 'tvOS'
+        destinationTypeOption: 'simulators'
+        destinationSimulators: 'Apple TV 4K'
+        useXcpretty: true
+        publishJUnitResults: true
     - task: PublishTestResults@2
       inputs:
         testRunner: JUnit
         testResultsFiles: build/reports/**
+        failTaskOnFailedTests: true
 
 - job: SwiftLint
   pool:
