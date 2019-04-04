@@ -99,7 +99,7 @@ class ZIPFoundationTests: XCTestCase {
         let invalidCentralDirECDS: [UInt8] = [0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
                                               0x01, 0x00, 0x01, 0x00, 0x5A, 0x00, 0x00, 0x00,
                                               0x2A, 0x00, 0x00, 0x00, 0x00, 0x00]
-        let invalidCentralDirECDSData = Data(bytes: invalidCentralDirECDS)
+        let invalidCentralDirECDSData = Data(invalidCentralDirECDS)
         let processInfo = ProcessInfo.processInfo
         var invalidCentralDirArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         invalidCentralDirArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
@@ -154,7 +154,7 @@ class ZIPFoundationTests: XCTestCase {
         let ecdrInvalidCommentBytes: [UInt8] = [0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
                                                 0x01, 0x00, 0x01, 0x00, 0x5A, 0x00, 0x00, 0x00,
                                                 0x2A, 0x00, 0x00, 0x00, 0x00, 0x00]
-        let invalidECDRCommentData = Data(bytes: ecdrInvalidCommentBytes)
+        let invalidECDRCommentData = Data(ecdrInvalidCommentBytes)
         let invalidECDRComment = Archive.EndOfCentralDirectoryRecord(data: invalidECDRCommentData,
                                                                      additionalDataProvider: {_ -> Data in
                                                                         throw AdditionalDataError.invalidDataError })
@@ -162,7 +162,7 @@ class ZIPFoundationTests: XCTestCase {
         let ecdrInvalidCommentLengthBytes: [UInt8] = [0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
                                                       0x01, 0x00, 0x01, 0x00, 0x5A, 0x00, 0x00, 0x00,
                                                       0x2A, 0x00, 0x00, 0x00, 0x00, 0x01]
-        let invalidECDRCommentLengthData = Data(bytes: ecdrInvalidCommentLengthBytes)
+        let invalidECDRCommentLengthData = Data(ecdrInvalidCommentLengthBytes)
         let invalidECDRCommentLength = Archive.EndOfCentralDirectoryRecord(data: invalidECDRCommentLengthData,
                                                                            additionalDataProvider: {_ -> Data in
                                                                             return Data() })

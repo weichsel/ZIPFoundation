@@ -186,7 +186,7 @@ extension ZIPFoundationTests {
                                  0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
-        guard let cds = Entry.CentralDirectoryStructure(data: Data(bytes: cdsBytes),
+        guard let cds = Entry.CentralDirectoryStructure(data: Data(cdsBytes),
                                                         additionalDataProvider: { count -> Data in
                                                             guard let pathData = "/".data(using: .utf8) else {
                                                                 throw AdditionalDataError.encodingError
@@ -200,7 +200,7 @@ extension ZIPFoundationTests {
                                  0x08, 0x00, 0xab, 0x85, 0x77, 0x47, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-        guard let lfh = Entry.LocalFileHeader(data: Data(bytes: lfhBytes),
+        guard let lfh = Entry.LocalFileHeader(data: Data(lfhBytes),
                                               additionalDataProvider: { _ -> Data in
                                                 return Data()
         }) else {

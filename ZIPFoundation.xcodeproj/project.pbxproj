@@ -36,7 +36,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		AA804C48224552F80006A522 /* Package@swift-5.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Package@swift-5.swift"; sourceTree = "<group>"; };
 		BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationProgressTests.swift; sourceTree = "<group>"; };
 		OBJ_10 /* Archive+Writing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Writing.swift"; sourceTree = "<group>"; };
 		OBJ_11 /* Archive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Archive.swift; sourceTree = "<group>"; };
@@ -54,7 +53,7 @@
 		OBJ_6 /* Package.swift */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 		OBJ_9 /* Archive+Reading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Reading.swift"; sourceTree = "<group>"; };
 		"ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = ZIPFoundation.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		"ZIPFoundation::ZIPFoundationTests::Product" /* ZIPFoundationTests.xctest */ = {isa = PBXFileReference; lastKnownFileType = file; path = ZIPFoundationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		"ZIPFoundation::ZIPFoundationTests::Product" /* ZIPFoundationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ZIPFoundationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,7 +112,6 @@
 			isa = PBXGroup;
 			children = (
 				OBJ_6 /* Package.swift */,
-				AA804C48224552F80006A522 /* Package@swift-5.swift */,
 				OBJ_7 /* Sources */,
 				OBJ_16 /* Tests */,
 				OBJ_25 /* Products */,
@@ -186,23 +184,23 @@
 		OBJ_1 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0930;
+				LastUpgradeCheck = 1020;
 				TargetAttributes = {
 					"ZIPFoundation::ZIPFoundation" = {
-						LastSwiftMigration = 0900;
+						LastSwiftMigration = 1020;
 					};
 					"ZIPFoundation::ZIPFoundationTests" = {
-						LastSwiftMigration = 0900;
+						LastSwiftMigration = 1020;
 					};
 				};
 			};
 			buildConfigurationList = OBJ_2 /* Build configuration list for PBXProject "ZIPFoundation" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
+				Base,
 			);
 			mainGroup = OBJ_5;
 			productRefGroup = OBJ_25 /* Products */;
@@ -275,6 +273,7 @@
 		OBJ_3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
@@ -317,6 +316,7 @@
 				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 4.0;
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				USE_HEADERMAP = NO;
 				WATCHOS_DEPLOYMENT_TARGET = 2.0;
@@ -336,8 +336,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
-				SWIFT_VERSION = 4.0;
 				TARGET_NAME = ZIPFoundationTests;
 			};
 			name = Debug;
@@ -356,8 +354,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
-				SWIFT_VERSION = 4.0;
 				TARGET_NAME = ZIPFoundationTests;
 			};
 			name = Release;
@@ -365,6 +361,7 @@
 		OBJ_4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
 				CLANG_WARN_BOOL_CONVERSION = YES;
@@ -403,6 +400,7 @@
 				SDKROOT = "";
 				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 4.0;
 				TVOS_DEPLOYMENT_TARGET = 9.0;
 				USE_HEADERMAP = NO;
 				WATCHOS_DEPLOYMENT_TARGET = 2.0;
@@ -430,8 +428,6 @@
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
-				SWIFT_VERSION = 4.0;
 				TARGET_NAME = ZIPFoundation;
 			};
 			name = Debug;
@@ -458,8 +454,6 @@
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				SWIFT_SWIFT3_OBJC_INFERENCE = Off;
-				SWIFT_VERSION = 4.0;
 				TARGET_NAME = ZIPFoundation;
 			};
 			name = Release;
