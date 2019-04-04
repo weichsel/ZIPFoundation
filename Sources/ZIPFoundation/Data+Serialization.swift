@@ -41,7 +41,7 @@ extension Data {
             return try body(unsafePointer)
         }
         #else
-        return self.withUnsafeBytes(body: body)
+        return try self.withUnsafeBytes(body)
         #endif
     }
 
