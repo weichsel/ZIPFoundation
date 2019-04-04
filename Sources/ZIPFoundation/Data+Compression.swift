@@ -209,7 +209,7 @@ extension Data {
             let readSize = (size - position) >= bufferSize ? bufferSize : (size - position)
             var inputChunk = try provider(position, readSize)
             stream.avail_in = UInt32(inputChunk.count)
-            inputChunk.withUnsafeMutableBytes { (bytes: UnsafeMutablePointer<Bytef>) in
+            inputChunk.withUnsafeMutableUInt8Pointer { (bytes: UnsafeMutablePointer<UInt8>) in
                 stream.next_in = bytes
             }
             zipCRC32 = inputChunk.crc32(checksum: zipCRC32)
@@ -217,7 +217,7 @@ extension Data {
             var outputChunk = Data(count: bufferSize)
             repeat {
                 stream.avail_out = UInt32(bufferSize)
-                outputChunk.withUnsafeMutableBytes({ (bytes: UnsafeMutablePointer<Bytef>) in
+                outputChunk.withUnsafeMutableUInt8Pointer({ (bytes: UnsafeMutablePointer<UInt8>) in
                     stream.next_out = bytes
                 })
                 result = deflate(&stream, flush)
@@ -247,13 +247,13 @@ extension Data {
             stream.avail_in = UInt32(bufferSize)
             var chunk = try provider(position, bufferSize)
             position += chunk.count
-            chunk.withUnsafeMutableBytes { (bytes: UnsafeMutablePointer<Bytef>) in
+            chunk.withUnsafeMutableUInt8Pointer { (bytes: UnsafeMutablePointer<UInt8>) in
                 stream.next_in = bytes
             }
             repeat {
                 var outputData = Data(count: bufferSize)
                 stream.avail_out = UInt32(bufferSize)
-                outputData.withUnsafeMutableBytes { (bytes: UnsafeMutablePointer<Bytef>) in
+                outputData.withUnsafeMutableUInt8Pointer { (bytes: UnsafeMutablePointer<UInt8>) in
                     stream.next_out = bytes
                 }
                 result = inflate(&stream, Z_NO_FLUSH)
@@ -270,5 +270,21 @@ extension Data {
         } while result != Z_STREAM_END
         return unzipCRC32
     }
+
+    mutating func withUnsafeMutableUInt8Pointer<T>(_ body: (UnsafeMutablePointer<UInt8>) throws -> T) rethrows -> T {
+        #if swift(>=5.0)
+        return try self.withUnsafeMutableBytes { (rawBufferPointer: UnsafeMutableRawBufferPointer) -> T in
+            let unsafeBufferPointer = rawBufferPointer.bindMemory(to: UInt8.self)
+            guard let unsafePointer = unsafeBufferPointer.baseAddress else {
+                var int: UInt8 = 0
+                return try body(&int)
+            }
+            return try body(unsafePointer)
+        }
+        #else
+        return try self.withUnsafeBytes(body)
+        #endif
+    }
 }
+
 #endif
