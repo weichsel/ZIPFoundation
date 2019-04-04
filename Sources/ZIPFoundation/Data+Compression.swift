@@ -97,7 +97,7 @@ extension Data {
         let mask = 0xffffffff as UInt32
         let bufferSize = self.count/MemoryLayout<UInt8>.size
         var result = checksum ^ mask
-        self.withUnsafeBytes { (bytes: UnsafePointer<UInt8>) in
+        self.withUnsafeUInt8Pointer { (bytes: UnsafePointer<UInt8>) in
             let bins = stride(from: 0, to: bufferSize, by: 256)
             for bin in bins {
                 for binIndex in 0..<256 {
@@ -165,7 +165,7 @@ extension Data {
                 } catch { throw error }
             }
             if let sourceData = sourceData {
-                sourceData.withUnsafeBytes { (bytes: UnsafePointer<UInt8>) in
+                sourceData.withUnsafeUInt8Pointer { (bytes: UnsafePointer<UInt8>) in
                     stream.src_ptr = bytes.advanced(by: sourceData.count - stream.src_size)
                     let flags = sourceData.count < bufferSize ? Int32(COMPRESSION_STREAM_FINALIZE.rawValue) : 0
                     status = compression_stream_process(&stream, flags)
