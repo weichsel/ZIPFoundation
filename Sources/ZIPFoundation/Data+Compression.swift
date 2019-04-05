@@ -194,7 +194,6 @@ extension Data {
 import CZlib
 
 extension Data {
-    @inline(__always)
     static func encode(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
         var stream = z_stream()
         let streamSize = Int32(MemoryLayout<z_stream>.size)
@@ -232,7 +231,6 @@ extension Data {
         return zipCRC32
     }
 
-    @inline(__always)
     static func decode(bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
         var stream = z_stream()
         let streamSize = Int32(MemoryLayout<z_stream>.size)
