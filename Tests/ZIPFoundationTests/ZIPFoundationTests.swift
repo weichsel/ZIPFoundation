@@ -242,8 +242,7 @@ extension ZIPFoundationTests {
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
             let thisClass = type(of: self)
             let linuxCount = thisClass.allTests.count
-            let darwinCount = Int(thisClass
-                .defaultTestSuite.testCaseCount)
+            let darwinCount = Int(thisClass.defaultTestSuite.testCaseCount)
             XCTAssertEqual(linuxCount, darwinCount,
                            "\(darwinCount - linuxCount) tests are missing from allTests")
         #endif
@@ -286,7 +285,6 @@ extension ZIPFoundationTests {
             ("testExtractUncompressedFolderEntries", testExtractUncompressedFolderEntries),
             ("testExtractZIP64ArchiveErrorConditions", testExtractZIP64ArchiveErrorConditions),
             ("testFileAttributeHelperMethods", testFileAttributeHelperMethods),
-            ("testFilePermissionErrorConditions", testFilePermissionErrorConditions),
             ("testFilePermissionHelperMethods", testFilePermissionHelperMethods),
             ("testFileSizeHelperMethods", testFileSizeHelperMethods),
             ("testFileTypeHelperMethods", testFileTypeHelperMethods),

@@ -93,7 +93,9 @@ extension ZIPFoundationTests {
                                                         attributes: noPermissionAttributes)
             XCTAssert(result == true)
             try fileManager.zipItem(at: unreadableFileURL.deletingLastPathComponent(), to: directoryArchiveURL)
-        } catch let error as CocoaError { XCTAssert(error.code == CocoaError.fileReadNoPermission) } catch {
+        } catch let error as CocoaError {
+            XCTAssert(error.code == CocoaError.fileReadNoPermission)
+        } catch {
             XCTFail("Unexpected error while trying to zip via fileManager.")
         }
     }
@@ -214,17 +216,6 @@ extension ZIPFoundationTests {
             XCTFail("Failed to read file attributes."); return
         }
         XCTAssert(permissions == defaultDirectoryPermissions)
-    }
-
-    func testFilePermissionErrorConditions() {
-        do {
-            let deviceURL = URL(fileURLWithPath: "/dev/zero")
-            _ = try FileManager.permissionsForItem(at: deviceURL)
-            let unreadableURL = URL(fileURLWithPath: "/unreadable")
-            _ = try FileManager.permissionsForItem(at: unreadableURL)
-        } catch let error as CocoaError {
-            XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
-        } catch { XCTFail("Unexpected error while testing permissions."); return }
     }
 
     func testFilePermissionHelperMethods() {
