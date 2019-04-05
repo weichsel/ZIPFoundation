@@ -104,9 +104,9 @@ extension Archive {
                                   progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = Int(entry.centralDirectoryStructure.uncompressedSize)
         return try Data.consumePart(of: size, chunkSize: Int(bufferSize), provider: { (_, chunkSize) -> Data in
-            if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
             return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
         }, consumer: { (data) in
+            if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
             try consumer(data)
             progress?.completedUnitCount += Int64(data.count)
         })
@@ -116,9 +116,9 @@ extension Archive {
                                 progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = Int(entry.centralDirectoryStructure.compressedSize)
         return try Data.decompress(size: size, bufferSize: Int(bufferSize), provider: { (_, chunkSize) -> Data in
-            if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
             return try Data.readChunk(of: chunkSize, from: self.archiveFile)
         }, consumer: { (data) in
+            if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
             try consumer(data)
             progress?.completedUnitCount += Int64(data.count)
         })

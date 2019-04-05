@@ -160,10 +160,10 @@ extension Archive {
                 let entryStart = Int(currentEntry.centralDirectoryStructure.relativeOffsetOfLocalHeader)
                 fseek(self.archiveFile, entryStart, SEEK_SET)
                 let provider: Provider = { (_, chunkSize) -> Data in
-                    if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
                     return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
                 }
                 let consumer: Consumer = {
+                    if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
                     _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
                     progress?.completedUnitCount += Int64($0.count)
                 }
