@@ -31,10 +31,10 @@ extension Archive {
         let fileManager = FileManager()
         let entryURL = baseURL.appendingPathComponent(path)
         guard fileManager.fileExists(atPath: entryURL.path) else {
-            throw CocoaError.error(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: entryURL.path], url: nil)
+            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: entryURL.path])
         }
         guard fileManager.isReadableFile(atPath: entryURL.path) else {
-            throw CocoaError.error(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: url.path], url: nil)
+            throw CocoaError(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: url.path])
         }
         let type = try FileManager.typeForItem(at: entryURL)
         let modDate = try FileManager.fileModificationDateTimeForItem(at: entryURL)
@@ -45,7 +45,7 @@ extension Archive {
         case .file:
             let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: entryURL.path)
             guard let entryFile: UnsafeMutablePointer<FILE> = fopen(entryFileSystemRepresentation, "rb") else {
-                throw CocoaError.error(.fileNoSuchFile)
+                throw CocoaError(.fileNoSuchFile)
             }
             defer { fclose(entryFile) }
             provider = { _, _ in return try Data.readChunk(of: Int(bufferSize), from: entryFile) }

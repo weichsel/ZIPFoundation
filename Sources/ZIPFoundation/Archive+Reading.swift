@@ -27,12 +27,12 @@ extension Archive {
         switch entry.type {
         case .file:
             guard !fileManager.fileExists(atPath: url.path) else {
-                throw CocoaError.error(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path], url: nil)
+                throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
             try fileManager.createParentDirectoryStructure(for: url)
             let destinationRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             guard let destinationFile: UnsafeMutablePointer<FILE> = fopen(destinationRepresentation, "wb+") else {
-                throw CocoaError.error(.fileNoSuchFile)
+                throw CocoaError(.fileNoSuchFile)
             }
             defer { fclose(destinationFile) }
             let consumer = { _ = try Data.write(chunk: $0, to: destinationFile) }
@@ -44,7 +44,7 @@ extension Archive {
             checksum = try self.extract(entry, bufferSize: bufferSize, progress: progress, consumer: consumer)
         case .symlink:
             guard !fileManager.fileExists(atPath: url.path) else {
-                throw CocoaError.error(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path], url: nil)
+                throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
             let consumer = { (data: Data) in
                 guard let linkPath = String(data: data, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
