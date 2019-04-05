@@ -232,9 +232,9 @@ extension ZIPFoundationTests {
         let progress = archive.makeProgressForReading(entry)
         do {
             var readCount = 0
-            _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (_) in
+            _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (data) in
                 if readCount == 3 { progress.cancel() }
-                readCount += 1
+                readCount += data.count
             }
         } catch let error as Archive.ArchiveError {
             XCTAssert(error == Archive.ArchiveError.cancelledOperation)
@@ -250,9 +250,9 @@ extension ZIPFoundationTests {
         let progress = archive.makeProgressForReading(entry)
         do {
             var readCount = 0
-            _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (_) in
+            _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (data) in
                 if readCount == 3 { progress.cancel() }
-                readCount += 1
+                readCount += data.count
             }
         } catch let error as Archive.ArchiveError {
             XCTAssert(error == Archive.ArchiveError.cancelledOperation)
