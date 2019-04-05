@@ -233,8 +233,8 @@ extension ZIPFoundationTests {
         do {
             var readCount = 0
             _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (data) in
-                if readCount == 3 { progress.cancel() }
                 readCount += data.count
+                if readCount == 4 { progress.cancel() }
             }
         } catch let error as Archive.ArchiveError {
             XCTAssert(error == Archive.ArchiveError.cancelledOperation)
@@ -251,8 +251,8 @@ extension ZIPFoundationTests {
         do {
             var readCount = 0
             _ = try archive.extract(entry, bufferSize: 256, progress: progress) { (data) in
-                if readCount == 512 { progress.cancel() }
                 readCount += data.count
+                if readCount == 512 { progress.cancel() }
             }
         } catch let error as Archive.ArchiveError {
             XCTAssert(error == Archive.ArchiveError.cancelledOperation)
