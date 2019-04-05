@@ -246,12 +246,12 @@ extension ZIPFoundationTests {
 
     func testExtractCompressedEntryCancelation() {
         let archive = self.archive(for: #function, mode: .read)
-        guard let entry = archive["original"] else { XCTFail("Failed to extract entry."); return }
+        guard let entry = archive["random"] else { XCTFail("Failed to extract entry."); return }
         let progress = archive.makeProgressForReading(entry)
         do {
             var readCount = 0
-            _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (data) in
-                if readCount == 3 { progress.cancel() }
+            _ = try archive.extract(entry, bufferSize: 256, progress: progress) { (data) in
+                if readCount == 512 { progress.cancel() }
                 readCount += data.count
             }
         } catch let error as Archive.ArchiveError {
