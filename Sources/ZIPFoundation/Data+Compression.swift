@@ -280,7 +280,7 @@ extension Data {
             return try body(unsafePointer)
         }
         #else
-        return try self.withUnsafeBytes(body)
+        return try self.withUnsafeMutableBytes(body)
         #endif
     }
 }
