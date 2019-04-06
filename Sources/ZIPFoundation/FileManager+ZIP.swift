@@ -223,7 +223,7 @@ extension FileManager {
 
     class func typeForItem(at url: URL) throws -> Entry.EntryType {
         let fileManager = FileManager()
-        guard fileManager.fileExists(atPath: url.path) else {
+        guard url.isFileURL, fileManager.fileExists(atPath: url.path) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)

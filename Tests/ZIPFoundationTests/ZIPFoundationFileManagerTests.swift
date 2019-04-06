@@ -275,7 +275,9 @@ extension ZIPFoundationTests {
             _ = try FileManager.typeForItem(at: nonFileURL)
         } catch let error as CocoaError {
             XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
-        } catch { XCTFail("Unexpected error while trying to retrieve file type") }
+        } catch {
+            XCTFail("Unexpected error while trying to retrieve file type")
+        }
     }
 
     func testFileModificationDate() {
