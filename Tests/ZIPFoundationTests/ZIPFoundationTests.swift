@@ -296,6 +296,7 @@ extension ZIPFoundationTests {
             ("testPOSIXPermissions", testPOSIXPermissions),
             ("testProgressHelpers", testProgressHelpers),
             ("testReadChunkErrorConditions", testReadChunkErrorConditions),
+            ("testReadStructureErrorConditions", testReadStructureErrorConditions),
             ("testRemoveCompressedEntry", testRemoveCompressedEntry),
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
@@ -316,7 +317,6 @@ extension ZIPFoundationTests {
         return [
             ("testFileModificationDate", testFileModificationDate),
             ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
-            ("testReadStructureErrorConditions", testReadStructureErrorConditions),
             ("testZipItemProgress", testZipItemProgress),
             ("testUnzipItemProgress", testUnzipItemProgress),
             ("testRemoveEntryProgress", testRemoveEntryProgress),

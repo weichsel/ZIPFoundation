@@ -2,7 +2,7 @@ trigger:
   - master
 
 jobs:
-- job: Linux_Swift_4_0
+- job: linux_Swift_4_0
   pool:
     vmImage: 'Ubuntu 16.04'
   container: swift:4.0
@@ -10,7 +10,7 @@ jobs:
     - script: swift test -c release -Xswiftc -enable-testing
       displayName: Linux Swift 4.0
 
-- job: Linux_Swift_4_1
+- job: linux_Swift_4_1
   pool:
     vmImage: 'Ubuntu 16.04'
   container: swift:4.1
@@ -18,7 +18,7 @@ jobs:
     - script: swift test -c release -Xswiftc -enable-testing
       displayName: Linux Swift 4.1
 
-- job: Linux_Swift_4_2
+- job: linux_Swift_4_2
   pool:
     vmImage: 'Ubuntu 16.04'
   container: swift:4.2
@@ -26,7 +26,7 @@ jobs:
     - script: swift test -c release -Xswiftc -enable-testing
       displayName: Linux Swift 4.2
     
-- job: Linux_Swift_5_0
+- job: linux_Swift_5_0
   pool:
     vmImage: 'Ubuntu 16.04'
   container: swift:5.0
