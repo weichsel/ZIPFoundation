@@ -2,7 +2,7 @@ trigger:
   - master
 
 jobs:
-- job: linux_Swift_5_0
+- job: Linux_Swift_5_0
   pool:
     vmImage: 'Ubuntu 16.04'
   container: swift:5.0
