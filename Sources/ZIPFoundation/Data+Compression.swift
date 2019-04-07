@@ -143,7 +143,7 @@ extension Data {
         let destinationBufferPointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
         defer { destinationBufferPointer.deallocate() }
         let streamPtr = UnsafeMutablePointer<compression_stream>.allocate(capacity: 1)
-        defer { free(streamPtr) }
+        defer { streamPtr.deallocate() }
         var stream = streamPtr.pointee
         var status = compression_stream_init(&stream, operation, COMPRESSION_ZLIB)
         guard status != COMPRESSION_STATUS_ERROR else { throw CompressionError.invalidStream }

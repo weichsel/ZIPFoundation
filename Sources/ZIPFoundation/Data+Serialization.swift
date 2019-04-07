@@ -87,7 +87,7 @@ extension Data {
         if error > 0 {
             throw DataError.unreadableFile
         }
-        return Data(bytesNoCopy: bytes, count: bytesRead, deallocator: Data.Deallocator.free)
+        return Data(bytesNoCopy: bytes, count: bytesRead, deallocator: .custom({ buf, _ in buf.deallocate() }))
     }
 
     static func write(chunk: Data, to file: UnsafeMutablePointer<FILE>) throws -> Int {
