@@ -23,10 +23,11 @@ extension Data {
     }
 
     func scanValue<T>(start: Int) -> T {
+        let subdata = self.subdata(in: start..<start+MemoryLayout<T>.size)
         #if swift(>=5.0)
-        return self.withUnsafeBytes { $0.load(fromByteOffset: start, as: T.self) }
+        return subdata.withUnsafeBytes { $0.load(as: T.self) }
         #else
-        return self.subdata(in: start..<start+MemoryLayout<T>.size).withUnsafeBytes { $0.pointee }
+        return subdata.withUnsafeBytes { $0.pointee }
         #endif
     }
 
