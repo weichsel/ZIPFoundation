@@ -31,21 +31,6 @@ extension Data {
         #endif
     }
 
-    func withUnsafeUInt8Pointer<T>(_ body: (UnsafePointer<UInt8>) throws -> T) rethrows -> T {
-        #if swift(>=5.0)
-        return try self.withUnsafeBytes { (rawBufferPointer: UnsafeRawBufferPointer) -> T in
-            let unsafeBufferPointer = rawBufferPointer.bindMemory(to: UInt8.self)
-            guard let unsafePointer = unsafeBufferPointer.baseAddress else {
-                var int: UInt8 = 0
-                return try body(&int)
-            }
-            return try body(unsafePointer)
-        }
-        #else
-        return try self.withUnsafeBytes(body)
-        #endif
-    }
-
     static func readStruct<T>(from file: UnsafeMutablePointer<FILE>, at offset: Int) -> T? where T: DataSerializable {
         fseek(file, offset, SEEK_SET)
         guard let data = try? self.readChunk(of: T.size, from: file) else {
@@ -92,7 +77,12 @@ extension Data {
 
     static func write(chunk: Data, to file: UnsafeMutablePointer<FILE>) throws -> Int {
         var sizeWritten = 0
-        chunk.withUnsafeUInt8Pointer { sizeWritten = fwrite($0, 1, chunk.count, file) }
+        chunk.withUnsafeBytes { (rawBufferPointer) in
+            if let baseAddress = rawBufferPointer.baseAddress {
+                let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+                sizeWritten = fwrite(pointer, 1, chunk.count, file)
+            }
+        }
         let error = ferror(file)
         if error > 0 {
             throw DataError.unwritableFile
