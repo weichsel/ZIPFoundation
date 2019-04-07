@@ -2,13 +2,13 @@ trigger:
   - master
 
 jobs:
-# - job: linux_Swift_5_0
-#   pool:
-#     vmImage: 'Ubuntu 16.04'
-#   container: swift:5.0
-#   steps:
-#     - script: swift test -c release -Xswiftc -enable-testing
-#       displayName: Linux Swift 5.0
+- job: linux_Swift_5_0
+  pool:
+    vmImage: 'Ubuntu 16.04'
+  container: swift:5.0
+  steps:
+    - script: swift test -c release -Xswiftc -enable-testing
+      displayName: Linux Swift 5.0
 
 - job: macOS_10_13
   pool:
