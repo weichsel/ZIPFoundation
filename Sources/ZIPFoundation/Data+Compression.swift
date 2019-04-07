@@ -285,11 +285,14 @@ internal extension Data {
         }
     }
 
+    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+    #else
     mutating func withUnsafeMutableBytes<T>(_ body: (UnsafeMutableRawBufferPointer) throws -> T) rethrows -> T {
         let count = self.count
         return try withUnsafeMutableBytes { (pointer: UnsafeMutablePointer<UInt8>) throws -> T in
             try body(UnsafeMutableRawBufferPointer(start: pointer, count: count))
         }
     }
+    #endif
 }
 #endif
