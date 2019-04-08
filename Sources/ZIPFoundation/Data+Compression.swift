@@ -206,17 +206,23 @@ extension Data {
             let readSize = (size - position) >= bufferSize ? bufferSize : (size - position)
             var inputChunk = try provider(position, readSize)
             stream.avail_in = UInt32(inputChunk.count)
-            inputChunk.withUnsafeMutableUInt8Pointer { (bytes: UnsafeMutablePointer<UInt8>) in
-                stream.next_in = bytes
+            inputChunk.withUnsafeMutableBytes { (rawBufferPointer) in
+                if let baseAddress = rawBufferPointer.baseAddress {
+                    let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+                    stream.next_in = pointer
+                }
             }
             zipCRC32 = inputChunk.crc32(checksum: zipCRC32)
             flush = position + bufferSize >= size ? Z_FINISH : Z_NO_FLUSH
             var outputChunk = Data(count: bufferSize)
             repeat {
                 stream.avail_out = UInt32(bufferSize)
-                outputChunk.withUnsafeMutableUInt8Pointer({ (bytes: UnsafeMutablePointer<UInt8>) in
-                    stream.next_out = bytes
-                })
+                outputChunk.withUnsafeMutableBytes { (rawBufferPointer) in
+                    if let baseAddress = rawBufferPointer.baseAddress {
+                        let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+                        stream.next_out = pointer
+                    }
+                }
                 result = deflate(&stream, flush)
                 guard result >= Z_OK  else {
                     throw CompressionError.corruptedData
@@ -243,14 +249,20 @@ extension Data {
             stream.avail_in = UInt32(bufferSize)
             var chunk = try provider(position, bufferSize)
             position += chunk.count
-            chunk.withUnsafeMutableUInt8Pointer { (bytes: UnsafeMutablePointer<UInt8>) in
-                stream.next_in = bytes
+            chunk.withUnsafeMutableBytes { (rawBufferPointer) in
+                if let baseAddress = rawBufferPointer.baseAddress {
+                    let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+                    stream.next_in = pointer
+                }
             }
             repeat {
                 var outputData = Data(count: bufferSize)
                 stream.avail_out = UInt32(bufferSize)
-                outputData.withUnsafeMutableUInt8Pointer { (bytes: UnsafeMutablePointer<UInt8>) in
-                    stream.next_out = bytes
+                outputData.withUnsafeMutableBytes { (rawBufferPointer) in
+                    if let baseAddress = rawBufferPointer.baseAddress {
+                        let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+                        stream.next_out = pointer
+                    }
                 }
                 result = inflate(&stream, Z_NO_FLUSH)
                 guard result != Z_NEED_DICT &&
