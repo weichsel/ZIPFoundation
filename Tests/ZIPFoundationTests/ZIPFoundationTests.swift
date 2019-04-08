@@ -322,7 +322,7 @@ extension ZIPFoundationTests {
             // corruption on non-Darwin platforms. We disable them for now.
             ("testReadStructureErrorConditions", testReadStructureErrorConditions),
             ("testReadChunkErrorConditions", testReadChunkErrorConditions),
-            ("testWriteChunkErrorConditions", testWriteChunkErrorConditions)
+            ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
             ("testZipItemErrorConditions", testZipItemErrorConditions),
         ]
