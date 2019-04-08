@@ -324,7 +324,7 @@ extension ZIPFoundationTests {
             ("testReadChunkErrorConditions", testReadChunkErrorConditions),
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
-            ("testZipItemErrorConditions", testZipItemErrorConditions),
+            ("testZipItemErrorConditions", testZipItemErrorConditions)
         ]
         #else
         return []
