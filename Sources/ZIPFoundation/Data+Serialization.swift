@@ -23,25 +23,11 @@ extension Data {
     }
 
     func scanValue<T>(start: Int) -> T {
+        let subdata = self.subdata(in: start..<start+MemoryLayout<T>.size)
         #if swift(>=5.0)
-        return self.withUnsafeBytes { $0.load(fromByteOffset: start, as: T.self) }
+        return subdata.withUnsafeBytes { $0.load(as: T.self) }
         #else
-        return self.subdata(in: start..<start+MemoryLayout<T>.size).withUnsafeBytes { $0.pointee }
-        #endif
-    }
-
-    func withUnsafeUInt8Pointer<T>(_ body: (UnsafePointer<UInt8>) throws -> T) rethrows -> T {
-        #if swift(>=5.0)
-        return try self.withUnsafeBytes { (rawBufferPointer: UnsafeRawBufferPointer) -> T in
-            let unsafeBufferPointer = rawBufferPointer.bindMemory(to: UInt8.self)
-            guard let unsafePointer = unsafeBufferPointer.baseAddress else {
-                var int: UInt8 = 0
-                return try body(&int)
-            }
-            return try body(unsafePointer)
-        }
-        #else
-        return try self.withUnsafeBytes(body)
+        return subdata.withUnsafeBytes { $0.pointee }
         #endif
     }
 
@@ -86,12 +72,22 @@ extension Data {
         if error > 0 {
             throw DataError.unreadableFile
         }
-        return Data(bytesNoCopy: bytes, count: bytesRead, deallocator: Data.Deallocator.free)
+        #if swift(>=4.1)
+        return Data(bytesNoCopy: bytes, count: bytesRead, deallocator: .custom({ buf, _ in buf.deallocate() }))
+        #else
+        let deallocator = Deallocator.custom({ buf, _ in buf.deallocate(bytes: size, alignedTo: 1) })
+        return Data(bytesNoCopy: bytes, count: bytesRead, deallocator: deallocator)
+        #endif
     }
 
     static func write(chunk: Data, to file: UnsafeMutablePointer<FILE>) throws -> Int {
         var sizeWritten = 0
-        chunk.withUnsafeUInt8Pointer { sizeWritten = fwrite($0, 1, chunk.count, file) }
+        chunk.withUnsafeBytes { (rawBufferPointer) in
+            if let baseAddress = rawBufferPointer.baseAddress {
+                let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+                sizeWritten = fwrite(pointer, 1, chunk.count, file)
+            }
+        }
         let error = ferror(file)
         if error > 0 {
             throw DataError.unwritableFile
