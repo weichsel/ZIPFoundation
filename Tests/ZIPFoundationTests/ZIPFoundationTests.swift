@@ -295,8 +295,6 @@ extension ZIPFoundationTests {
             ("testPerformanceWriteUncompressed", testPerformanceWriteUncompressed),
             ("testPOSIXPermissions", testPOSIXPermissions),
             ("testProgressHelpers", testProgressHelpers),
-            ("testReadChunkErrorConditions", testReadChunkErrorConditions),
-            ("testReadStructureErrorConditions", testReadStructureErrorConditions),
             ("testRemoveCompressedEntry", testRemoveCompressedEntry),
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
@@ -304,7 +302,6 @@ extension ZIPFoundationTests {
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
-            ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             ("testZipItem", testZipItem),
             ("testZipItemErrorConditions", testZipItemErrorConditions),
             ("testTraversalAttack", testTraversalAttack),
@@ -321,7 +318,12 @@ extension ZIPFoundationTests {
             ("testUnzipItemProgress", testUnzipItemProgress),
             ("testRemoveEntryProgress", testRemoveEntryProgress),
             ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
-            ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress)
+            ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress),
+            // The below test cases test error code paths but they lead to undefined behavior and memory
+            // corruption on non-Darwin platforms. We disable them for now.
+            ("testReadStructureErrorConditions", testReadStructureErrorConditions),
+            ("testReadChunkErrorConditions", testReadChunkErrorConditions),
+            ("testWriteChunkErrorConditions", testWriteChunkErrorConditions)
         ]
         #else
         return []
