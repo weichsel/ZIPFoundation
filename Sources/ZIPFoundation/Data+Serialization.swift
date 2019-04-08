@@ -72,7 +72,11 @@ extension Data {
         if error > 0 {
             throw DataError.unreadableFile
         }
+        #if swift(>=4.1)
         return Data(bytesNoCopy: bytes, count: bytesRead, deallocator: .custom({ buf, _ in buf.deallocate() }))
+        #else
+        return Data(bytesNoCopy: bytes, count: bytesRead, deallocator: .custom({ buf, _ in buf.deallocate(bytes: size, alignedTo: 1) }))
+        #endif
     }
 
     static func write(chunk: Data, to file: UnsafeMutablePointer<FILE>) throws -> Int {
