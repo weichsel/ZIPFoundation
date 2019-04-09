@@ -219,7 +219,7 @@ extension Data {
         var position = 0
         var zipCRC32 = CRC32(0)
         repeat {
-            let readSize = (size - position) >= bufferSize ? bufferSize : (size - position)
+            let readSize = Swift.min((size - position), bufferSize)
             var inputChunk = try provider(position, readSize)
             stream.avail_in = UInt32(inputChunk.count)
             inputChunk.withUnsafeMutableBytes { (rawBufferPointer) in
