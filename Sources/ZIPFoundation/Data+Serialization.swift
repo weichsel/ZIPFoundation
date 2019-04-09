@@ -83,7 +83,7 @@ extension Data {
     static func write(chunk: Data, to file: UnsafeMutablePointer<FILE>) throws -> Int {
         var sizeWritten = 0
         chunk.withUnsafeBytes { (rawBufferPointer) in
-            if let baseAddress = rawBufferPointer.baseAddress {
+            if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
                 let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
                 sizeWritten = fwrite(pointer, 1, chunk.count, file)
             }
