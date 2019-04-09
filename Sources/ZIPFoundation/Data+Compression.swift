@@ -170,7 +170,7 @@ extension Data {
         repeat {
             if stream.src_size == 0 {
                 do {
-                    sourceData = try provider(position, bufferSize)
+                    sourceData = try provider(position, Swift.min((size - position), bufferSize))
                     if let sourceData = sourceData {
                         position += sourceData.count
                         stream.src_size = sourceData.count
@@ -191,7 +191,7 @@ extension Data {
             switch status {
             case COMPRESSION_STATUS_OK, COMPRESSION_STATUS_END:
                 let outputData = Data(bytesNoCopy: destPointer, count: bufferSize - stream.dst_size, deallocator: .none)
-                try? consumer(outputData)
+                try consumer(outputData)
                 if operation == COMPRESSION_STREAM_DECODE { checksum = outputData.crc32(checksum: checksum) }
                 stream.dst_ptr = destPointer
                 stream.dst_size = bufferSize
