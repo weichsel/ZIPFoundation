@@ -223,7 +223,7 @@ extension Data {
             var inputChunk = try provider(position, readSize)
             stream.avail_in = UInt32(inputChunk.count)
             inputChunk.withUnsafeMutableBytes { (rawBufferPointer) in
-                if let baseAddress = rawBufferPointer.baseAddress {
+                if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
                     let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
                     stream.next_in = pointer
                 }
@@ -234,7 +234,7 @@ extension Data {
             repeat {
                 stream.avail_out = UInt32(bufferSize)
                 outputChunk.withUnsafeMutableBytes { (rawBufferPointer) in
-                    if let baseAddress = rawBufferPointer.baseAddress {
+                    if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
                         let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
                         stream.next_out = pointer
                     }
@@ -266,7 +266,7 @@ extension Data {
             var chunk = try provider(position, bufferSize)
             position += chunk.count
             chunk.withUnsafeMutableBytes { (rawBufferPointer) in
-                if let baseAddress = rawBufferPointer.baseAddress {
+                if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
                     let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
                     stream.next_in = pointer
                 }
@@ -275,7 +275,7 @@ extension Data {
                 var outputData = Data(count: bufferSize)
                 stream.avail_out = UInt32(bufferSize)
                 outputData.withUnsafeMutableBytes { (rawBufferPointer) in
-                    if let baseAddress = rawBufferPointer.baseAddress {
+                    if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
                         let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
                         stream.next_out = pointer
                     }
