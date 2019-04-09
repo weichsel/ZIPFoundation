@@ -19,7 +19,6 @@ let package = Package(
     products: [
         .library(name: "ZIPFoundation", targets: ["ZIPFoundation"])
     ],
-	dependencies: dependencies,
     targets: targets,
     swiftLanguageVersions: [.v4, .v4_2]
 )
