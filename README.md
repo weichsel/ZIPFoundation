@@ -49,7 +49,7 @@ Swift Package Manager is a dependency manager currently under active development
 To add ZIP Foundation as a dependency, you have to add it to the `dependencies` of your `Package.swift` file and refer to that dependency in your `target`.
 
 ```swift
-// swift-tools-version:4.0
+// swift-tools-version:5.0
 import PackageDescription
 let package = Package(
     name: "<Your Product Name>",
