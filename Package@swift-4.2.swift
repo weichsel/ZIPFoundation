@@ -6,12 +6,14 @@ let targets: [Target] = [
     .target(name: "ZIPFoundation"),
     .testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
 ]
+let dependencies: [Package.Dependency] = []
 #else
 let targets: [Target] = [
     .systemLibrary(name: "CZLib", pkgConfig: "zlib", providers: [.brew(["zlib"]), .apt(["zlib"])]),
     .target(name: "ZIPFoundation", dependencies: ["CZLib"]),
     .testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
 ]
+let dependencies: [Package.Dependency] = ["CZLib"]
 #endif
 
 let package = Package(
@@ -20,5 +22,6 @@ let package = Package(
         .library(name: "ZIPFoundation", targets: ["ZIPFoundation"])
     ],
     targets: targets,
+    dependencies: dependencies,
     swiftLanguageVersions: [.v4, .v4_2]
 )
