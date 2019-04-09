@@ -15,13 +15,13 @@ let targets: [Target] = [
 #endif
 
 let package = Package(
-name: "ZIPFoundation",
-platforms: [
-    .macOS(.v10_11), .iOS(.v9), .tvOS(.v9), .watchOS(.v2)
-],
-products: [
-    .library(name: "ZIPFoundation", targets: ["ZIPFoundation"])
-],
-targets: targets,
-swiftLanguageVersions: [.v4, .v4_2, .v5]
+    name: "ZIPFoundation",
+    platforms: [
+        .macOS(.v10_11), .iOS(.v9), .tvOS(.v9), .watchOS(.v2)
+    ],
+    products: [
+        .library(name: "ZIPFoundation", targets: ["ZIPFoundation"])
+    ],
+    targets: targets,
+    swiftLanguageVersions: [.v4, .v4_2, .v5]
 )
