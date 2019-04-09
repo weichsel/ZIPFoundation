@@ -189,7 +189,7 @@ extension Data {
             }
             if let sourceData = sourceData {
                 sourceData.withUnsafeBytes { (rawBufferPointer) in
-                    if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
+                    if let baseAddress = rawBufferPointer.baseAddress {
                         let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
                         stream.src_ptr = pointer.advanced(by: sourceData.count - stream.src_size)
                         let flags = sourceData.count < bufferSize ? Int32(COMPRESSION_STREAM_FINALIZE.rawValue) : 0
