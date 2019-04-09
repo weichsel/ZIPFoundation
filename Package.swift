@@ -22,5 +22,6 @@ platforms: [
 products: [
     .library(name: "ZIPFoundation", targets: ["ZIPFoundation"])
 ],
-targets: targets
+targets: targets,
+swiftLanguageVersions: [.v4, .v4_2, .v5]
 )
