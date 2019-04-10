@@ -318,8 +318,7 @@ internal extension Data {
     mutating func withUnsafeMutableBytes<T>(_ body: (UnsafeMutableRawBufferPointer) throws -> T) rethrows -> T {
         let count = self.count
         guard count > 0 else {
-            let alignment = MemoryLayout<UInt>.alignment
-            return try body(UnsafeMutableRawBufferPointer.allocate(byteCount: 0, alignment: alignment))
+            return try body(UnsafeMutableRawBufferPointer(start: nil, count: count))
         }
         return try withUnsafeMutableBytes { (pointer: UnsafeMutablePointer<UInt8>) throws -> T in
             try body(UnsafeMutableRawBufferPointer(start: pointer, count: count))
