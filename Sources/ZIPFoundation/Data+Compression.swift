@@ -127,11 +127,6 @@ extension Data {
     }
 
     static func compress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
-        guard size > 0 else {
-            try consumer(Data())
-            return CRC32(0)
-        }
-
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_ENCODE, size: size, bufferSize: bufferSize,
                                 provider: provider, consumer: consumer)
@@ -141,11 +136,6 @@ extension Data {
     }
 
     static func decompress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
-        guard size > 0 else {
-            try consumer(Data())
-            return CRC32(0)
-        }
-
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize,
                                 provider: provider, consumer: consumer)
@@ -327,6 +317,9 @@ internal extension Data {
     #else
     mutating func withUnsafeMutableBytes<T>(_ body: (UnsafeMutableRawBufferPointer) throws -> T) rethrows -> T {
         let count = self.count
+        guard count > 0 else {
+            return try body(UnsafeMutableRawBufferPointer(start: nil, count: count))
+        }
         return try withUnsafeMutableBytes { (pointer: UnsafeMutablePointer<UInt8>) throws -> T in
             try body(UnsafeMutableRawBufferPointer(start: pointer, count: count))
         }
