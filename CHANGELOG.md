@@ -9,6 +9,8 @@
 ### Updated
  - Fixed a library load error related to dylib versioning
  - Fixed a hang during read when decoding small, `.deflate` compressed entries
+ - Improved Linux support
+ - Improved test suite on non-Darwin platforms
 
 ## [0.9.8](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.8)
 
