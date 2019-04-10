@@ -132,6 +132,45 @@ extension ZIPFoundationTests {
         XCTAssertTrue(didCatchExpectedError)
     }
 
+    func testCreateArchiveAddZeroSizeUncompressedEntry() {
+        let archive = self.archive(for: #function, mode: .create)
+        let entryName = ProcessInfo.processInfo.globallyUniqueString
+        do {
+            try archive.addEntry(with: entryName, type: .file,
+                                 uncompressedSize: UInt32(0), provider: { (_, _) -> Data in
+                                    return Data()
+            })
+        } catch {
+            XCTFail("Failed to add zero size entry to uncompressed archive with error : \(error)")
+        }
+        guard let entry = archive[entryName] else {
+            XCTFail("Failed to add zero size entry to uncompressed archive")
+            return
+        }
+        XCTAssert(entry.checksum == CRC32(0))
+        XCTAssert(archive.checkIntegrity())
+    }
+
+    func testCreateArchiveAddZeroSizeCompressedEntry() {
+        let archive = self.archive(for: #function, mode: .create)
+        let entryName = ProcessInfo.processInfo.globallyUniqueString
+        do {
+            try archive.addEntry(with: entryName, type: .file,
+                                 uncompressedSize: UInt32(0), compressionMethod: .deflate,
+                                 provider: { (_, _) -> Data in
+                                    return Data()
+            })
+        } catch {
+            XCTFail("Failed to add zero size entry to compressed archive with error : \(error)")
+        }
+        guard let entry = archive[entryName] else {
+            XCTFail("Failed to add zero size entry to compressed archive")
+            return
+        }
+        XCTAssert(entry.checksum == CRC32(0))
+        XCTAssert(archive.checkIntegrity())
+    }
+
     func testCreateArchiveAddLargeUncompressedEntry() {
         let archive = self.archive(for: #function, mode: .create)
         let size = 1024*1024*20
