@@ -99,7 +99,7 @@ class ZIPFoundationTests: XCTestCase {
         let invalidCentralDirECDS: [UInt8] = [0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
                                               0x01, 0x00, 0x01, 0x00, 0x5A, 0x00, 0x00, 0x00,
                                               0x2A, 0x00, 0x00, 0x00, 0x00, 0x00]
-        let invalidCentralDirECDSData = Data(bytes: invalidCentralDirECDS)
+        let invalidCentralDirECDSData = Data(invalidCentralDirECDS)
         let processInfo = ProcessInfo.processInfo
         var invalidCentralDirArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         invalidCentralDirArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
@@ -154,7 +154,7 @@ class ZIPFoundationTests: XCTestCase {
         let ecdrInvalidCommentBytes: [UInt8] = [0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
                                                 0x01, 0x00, 0x01, 0x00, 0x5A, 0x00, 0x00, 0x00,
                                                 0x2A, 0x00, 0x00, 0x00, 0x00, 0x00]
-        let invalidECDRCommentData = Data(bytes: ecdrInvalidCommentBytes)
+        let invalidECDRCommentData = Data(ecdrInvalidCommentBytes)
         let invalidECDRComment = Archive.EndOfCentralDirectoryRecord(data: invalidECDRCommentData,
                                                                      additionalDataProvider: {_ -> Data in
                                                                         throw AdditionalDataError.invalidDataError })
@@ -162,7 +162,7 @@ class ZIPFoundationTests: XCTestCase {
         let ecdrInvalidCommentLengthBytes: [UInt8] = [0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
                                                       0x01, 0x00, 0x01, 0x00, 0x5A, 0x00, 0x00, 0x00,
                                                       0x2A, 0x00, 0x00, 0x00, 0x00, 0x01]
-        let invalidECDRCommentLengthData = Data(bytes: ecdrInvalidCommentLengthBytes)
+        let invalidECDRCommentLengthData = Data(ecdrInvalidCommentLengthBytes)
         let invalidECDRCommentLength = Archive.EndOfCentralDirectoryRecord(data: invalidECDRCommentLengthData,
                                                                            additionalDataProvider: {_ -> Data in
                                                                             return Data() })
@@ -171,7 +171,8 @@ class ZIPFoundationTests: XCTestCase {
 
     // MARK: - Helpers
 
-    func archive(for testFunction: String, mode: Archive.AccessMode) -> Archive {
+    func archive(for testFunction: String, mode: Archive.AccessMode,
+                 preferredEncoding: String.Encoding? = nil) -> Archive {
         var sourceArchiveURL = ZIPFoundationTests.resourceDirectoryURL
         sourceArchiveURL.appendPathComponent(testFunction.replacingOccurrences(of: "()", with: ""))
         sourceArchiveURL.appendPathExtension("zip")
@@ -182,7 +183,8 @@ class ZIPFoundationTests: XCTestCase {
                 let fileManager = FileManager()
                 try fileManager.copyItem(at: sourceArchiveURL, to: destinationArchiveURL)
             }
-            guard let archive = Archive(url: destinationArchiveURL, accessMode: mode) else {
+            guard let archive = Archive(url: destinationArchiveURL, accessMode: mode,
+                                        preferredEncoding: preferredEncoding) else {
                 throw Archive.ArchiveError.unreadableArchive
             }
             return archive
@@ -232,7 +234,6 @@ class ZIPFoundationTests: XCTestCase {
         }
         return URL
     }
-
 }
 
 extension ZIPFoundationTests {
@@ -241,8 +242,7 @@ extension ZIPFoundationTests {
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
             let thisClass = type(of: self)
             let linuxCount = thisClass.allTests.count
-            let darwinCount = Int(thisClass
-                .defaultTestSuite.testCaseCount)
+            let darwinCount = Int(thisClass.defaultTestSuite.testCaseCount)
             XCTAssertEqual(linuxCount, darwinCount,
                            "\(darwinCount - linuxCount) tests are missing from allTests")
         #endif
@@ -261,6 +261,8 @@ extension ZIPFoundationTests {
             ("testCreateArchiveAddCompressedEntry", testCreateArchiveAddCompressedEntry),
             ("testCreateArchiveAddDirectory", testCreateArchiveAddDirectory),
             ("testCreateArchiveAddEntryErrorConditions", testCreateArchiveAddEntryErrorConditions),
+            ("testCreateArchiveAddZeroSizeUncompressedEntry", testCreateArchiveAddZeroSizeUncompressedEntry),
+            ("testCreateArchiveAddZeroSizeCompressedEntry", testCreateArchiveAddZeroSizeCompressedEntry),
             ("testCreateArchiveAddLargeCompressedEntry", testCreateArchiveAddLargeCompressedEntry),
             ("testCreateArchiveAddLargeUncompressedEntry", testCreateArchiveAddLargeUncompressedEntry),
             ("testCreateArchiveAddSymbolicLink", testCreateArchiveAddSymbolicLink),
@@ -279,12 +281,12 @@ extension ZIPFoundationTests {
             ("testExtractUncompressedEntryCancelation", testExtractUncompressedEntryCancelation),
             ("testExtractCompressedEntryCancelation", testExtractCompressedEntryCancelation),
             ("testExtractErrorConditions", testExtractErrorConditions),
+            ("testExtractPreferredEncoding", testExtractPreferredEncoding),
             ("testExtractMSDOSArchive", testExtractMSDOSArchive),
             ("testExtractUncompressedDataDescriptorArchive", testExtractUncompressedDataDescriptorArchive),
             ("testExtractUncompressedFolderEntries", testExtractUncompressedFolderEntries),
             ("testExtractZIP64ArchiveErrorConditions", testExtractZIP64ArchiveErrorConditions),
             ("testFileAttributeHelperMethods", testFileAttributeHelperMethods),
-            ("testFilePermissionErrorConditions", testFilePermissionErrorConditions),
             ("testFilePermissionHelperMethods", testFilePermissionHelperMethods),
             ("testFileSizeHelperMethods", testFileSizeHelperMethods),
             ("testFileTypeHelperMethods", testFileTypeHelperMethods),
@@ -295,17 +297,14 @@ extension ZIPFoundationTests {
             ("testPerformanceWriteUncompressed", testPerformanceWriteUncompressed),
             ("testPOSIXPermissions", testPOSIXPermissions),
             ("testProgressHelpers", testProgressHelpers),
-            ("testReadChunkErrorConditions", testReadChunkErrorConditions),
-            ("testReadStructureErrorConditions", testReadStructureErrorConditions),
             ("testRemoveCompressedEntry", testRemoveCompressedEntry),
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
             ("testUnzipItem", testUnzipItem),
+            ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
-            ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             ("testZipItem", testZipItem),
-            ("testZipItemErrorConditions", testZipItemErrorConditions),
             ("testTraversalAttack", testTraversalAttack),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
         ] + darwinOnlyTests
@@ -320,7 +319,14 @@ extension ZIPFoundationTests {
             ("testUnzipItemProgress", testUnzipItemProgress),
             ("testRemoveEntryProgress", testRemoveEntryProgress),
             ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
-            ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress)
+            ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress),
+            // The below test cases test error code paths but they lead to undefined behavior and memory
+            // corruption on non-Darwin platforms. We disable them for now.
+            ("testReadStructureErrorConditions", testReadStructureErrorConditions),
+            ("testReadChunkErrorConditions", testReadChunkErrorConditions),
+            ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
+            // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
+            ("testZipItemErrorConditions", testZipItemErrorConditions)
         ]
         #else
         return []

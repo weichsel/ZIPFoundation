@@ -112,6 +112,7 @@ public final class Archive: Sequence {
     public let accessMode: AccessMode
     var archiveFile: UnsafeMutablePointer<FILE>
     var endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
+    var preferredEncoding: String.Encoding?
 
     /// Initializes a new ZIP `Archive`.
     ///
@@ -126,15 +127,17 @@ public final class Archive: Sequence {
     /// - Parameters:
     ///   - url: File URL to the receivers backing file.
     ///   - mode: Access mode of the receiver.
+    ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     ///
     /// - Returns: An archive initialized with a backing file at the passed in file URL and the given access mode
     ///   or `nil` if the following criteria are not met:
     ///   - The file URL _must_ point to an existing file for `AccessMode.read`
     ///   - The file URL _must_ point to a non-existing file for `AccessMode.write`
     ///   - The file URL _must_ point to an existing file for `AccessMode.update`
-    public init?(url: URL, accessMode mode: AccessMode) {
+    public init?(url: URL, accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
         self.url = url
         self.accessMode = mode
+        self.preferredEncoding = preferredEncoding
         let fileManager = FileManager()
         switch mode {
         case .read:
@@ -219,6 +222,9 @@ public final class Archive: Sequence {
     /// - Parameter path: A relative file path identifiying the corresponding `Entry`.
     /// - Returns: An `Entry` with the given `path`. Otherwise, `nil`.
     public subscript(path: String) -> Entry? {
+        if let encoding = preferredEncoding {
+            return self.filter { $0.path(using: encoding) == path }.first
+        }
         return self.filter { $0.path == path }.first
     }
 

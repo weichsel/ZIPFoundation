@@ -20,7 +20,7 @@ extension ZIPFoundationTests {
             let baseURL = assetURL.deletingLastPathComponent()
             try archive.addEntry(with: relativePath, relativeTo: baseURL)
         } catch {
-            XCTFail("Failed to add entry to uncompressed folder archive with error : \(error)")
+            XCTFail("Failed to add uncompressed entry archive with error : \(error)")
         }
         XCTAssert(archive.checkIntegrity())
     }
@@ -33,7 +33,7 @@ extension ZIPFoundationTests {
             let baseURL = assetURL.deletingLastPathComponent()
             try archive.addEntry(with: relativePath, relativeTo: baseURL, compressionMethod: .deflate)
         } catch {
-            XCTFail("Failed to add entry to uncompressed folder archive with error : \(error)")
+            XCTFail("Failed to add compressed entry folder archive : \(error)")
         }
         let entry = archive[assetURL.lastPathComponent]
         XCTAssertNotNil(entry)
@@ -130,6 +130,36 @@ extension ZIPFoundationTests {
             XCTFail("Unexpected error while trying to add an entry to a readonly archive.")
         }
         XCTAssertTrue(didCatchExpectedError)
+    }
+
+    func testCreateArchiveAddZeroSizeUncompressedEntry() {
+        let archive = self.archive(for: #function, mode: .create)
+        let assetURL = self.resourceURL(for: #function, pathExtension: "txt")
+        do {
+            let relativePath = assetURL.lastPathComponent
+            let baseURL = assetURL.deletingLastPathComponent()
+            try archive.addEntry(with: relativePath, relativeTo: baseURL)
+        } catch {
+            XCTFail("Failed to add zero-size uncompressed entry to archive with error : \(error)")
+        }
+        let entry = archive[assetURL.lastPathComponent]
+        XCTAssertNotNil(entry)
+        XCTAssert(archive.checkIntegrity())
+    }
+
+    func testCreateArchiveAddZeroSizeCompressedEntry() {
+        let archive = self.archive(for: #function, mode: .create)
+        let assetURL = self.resourceURL(for: #function, pathExtension: "txt")
+        do {
+            let relativePath = assetURL.lastPathComponent
+            let baseURL = assetURL.deletingLastPathComponent()
+            try archive.addEntry(with: relativePath, relativeTo: baseURL, compressionMethod: .deflate)
+        } catch {
+            XCTFail("Failed to add zero-size compressed entry to archive with error : \(error)")
+        }
+        let entry = archive[assetURL.lastPathComponent]
+        XCTAssertNotNil(entry)
+        XCTAssert(archive.checkIntegrity())
     }
 
     func testCreateArchiveAddLargeUncompressedEntry() {

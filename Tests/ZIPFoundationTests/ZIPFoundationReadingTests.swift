@@ -86,6 +86,16 @@ extension ZIPFoundationTests {
         }
     }
 
+    func testExtractPreferredEncoding() {
+        let encoding = String.Encoding.utf8
+        let archive = self.archive(for: #function, mode: .read, preferredEncoding: encoding)
+        XCTAssertTrue(archive.checkIntegrity())
+        let imageEntry = archive["data/pic👨‍👩‍👧‍👦🎂.jpg"]
+        XCTAssertNotNil(imageEntry)
+        let textEntry = archive["data/Benoît.txt"]
+        XCTAssertNotNil(textEntry)
+    }
+
     func testExtractMSDOSArchive() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
@@ -222,9 +232,9 @@ extension ZIPFoundationTests {
         let progress = archive.makeProgressForReading(entry)
         do {
             var readCount = 0
-            _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (_) in
-                if readCount == 3 { progress.cancel() }
-                readCount += 1
+            _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (data) in
+                readCount += data.count
+                if readCount == 4 { progress.cancel() }
             }
         } catch let error as Archive.ArchiveError {
             XCTAssert(error == Archive.ArchiveError.cancelledOperation)
@@ -236,13 +246,13 @@ extension ZIPFoundationTests {
 
     func testExtractCompressedEntryCancelation() {
         let archive = self.archive(for: #function, mode: .read)
-        guard let entry = archive["original"] else { XCTFail("Failed to extract entry."); return }
+        guard let entry = archive["random"] else { XCTFail("Failed to extract entry."); return }
         let progress = archive.makeProgressForReading(entry)
         do {
             var readCount = 0
-            _ = try archive.extract(entry, bufferSize: 1, progress: progress) { (_) in
-                if readCount == 3 { progress.cancel() }
-                readCount += 1
+            _ = try archive.extract(entry, bufferSize: 256, progress: progress) { (data) in
+                readCount += data.count
+                if readCount == 512 { progress.cancel() }
             }
         } catch let error as Archive.ArchiveError {
             XCTAssert(error == Archive.ArchiveError.cancelledOperation)

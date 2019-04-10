@@ -96,7 +96,13 @@ public struct Entry: Equatable {
         var isZIP64: Bool { return self.versionNeededToExtract >= 45 }
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
     }
-
+    /// Returns the `path` of the receiver within a ZIP `Archive` using a given encoding.
+    ///
+    /// - Parameters:
+    ///   - encoding: `String.Encoding`
+    public func path(using encoding: String.Encoding) -> String {
+        return String(data: self.centralDirectoryStructure.fileNameData, encoding: encoding) ?? ""
+    }
     /// The `path` of the receiver within a ZIP `Archive`.
     public var path: String {
         let dosLatinUS = 0x400
@@ -105,7 +111,7 @@ public struct Entry: Equatable {
         let codepage437 = String.Encoding(rawValue: dosLatinUSStringEncoding)
         let isUTF8 = ((self.centralDirectoryStructure.generalPurposeBitFlag >> 11) & 1) != 0
         let encoding = isUTF8 ? String.Encoding.utf8 : codepage437
-        return String(data: self.centralDirectoryStructure.fileNameData, encoding: encoding) ?? ""
+        return self.path(using: encoding)
     }
     /// The file attributes of the receiver as key/value pairs.
     ///
@@ -119,9 +125,7 @@ public struct Entry: Equatable {
     public var checksum: CRC32 {
         var checksum = self.centralDirectoryStructure.crc32
         if self.centralDirectoryStructure.usesDataDescriptor {
-            guard let dataDescriptor = self.dataDescriptor else {
-                return 0
-            }
+            guard let dataDescriptor = self.dataDescriptor else { return 0 }
             checksum = dataDescriptor.crc32
         }
         return checksum
@@ -148,9 +152,8 @@ public struct Entry: Equatable {
         case .msdos:
             isDirectory = isDirectory || ((centralDirectoryStructure.externalFileAttributes >> 4) == 0x01)
             fallthrough
-        default:
-            // for all other OSes we can only guess based on the directory suffix char
-            return isDirectory ? .directory : .file
+        // For all other OSes we can only guess based on the directory suffix char
+        default: return isDirectory ? .directory : .file
         }
     }
     /// The size of the receiver's compressed data.
@@ -185,8 +188,7 @@ public struct Entry: Equatable {
 
     public static func == (lhs: Entry, rhs: Entry) -> Bool {
         return lhs.path == rhs.path
-            && lhs.localFileHeader.crc32
-            == rhs.localFileHeader.crc32
+            && lhs.localFileHeader.crc32 == rhs.localFileHeader.crc32
             && lhs.centralDirectoryStructure.relativeOffsetOfLocalHeader
             == rhs.centralDirectoryStructure.relativeOffsetOfLocalHeader
     }
@@ -385,9 +387,7 @@ extension Entry.DataDescriptor {
         // The DataDescriptor signature is not mandatory so we have to re-arrange
         // the input data if it is missing
         var readOffset = 0
-        if signature == self.dataDescriptorSignature {
-            readOffset = 4
-        }
+        if signature == self.dataDescriptorSignature { readOffset = 4 }
         self.crc32 = data.scanValue(start: readOffset + 0)
         self.compressedSize = data.scanValue(start: readOffset + 4)
         self.uncompressedSize = data.scanValue(start: readOffset + 8)

@@ -39,18 +39,17 @@ To learn more about the performance characteristics of the framework, you can re
 
 - iOS 9.0+ / macOS 10.11+ / tvOS 9.0+ / watchOS 2.0+
 - Or Linux with zlib development package
-- Xcode 9.0
+- Xcode 10.0
 - Swift 4.0
 
 ## Installation
 
 ### Swift Package Manager
 Swift Package Manager is a dependency manager currently under active development. To learn how to use the Swift Package Manager for your project, please read the [official documentation](https://github.com/apple/swift-package-manager/blob/master/Documentation/Usage.md).  
-The ZIP Foundation package uses the [V4 Package Description API](https://github.com/apple/swift-package-manager/blob/master/Documentation/PackageDescriptionV4.md).
 To add ZIP Foundation as a dependency, you have to add it to the `dependencies` of your `Package.swift` file and refer to that dependency in your `target`.
 
 ```swift
-// swift-tools-version:4.0
+// swift-tools-version:5.0
 import PackageDescription
 let package = Package(
     name: "<Your Product Name>",

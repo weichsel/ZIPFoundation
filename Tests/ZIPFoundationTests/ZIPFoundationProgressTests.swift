@@ -23,7 +23,7 @@ extension ZIPFoundationTests {
         }
         let cancel = self.keyValueObservingExpectation(for: progress, keyPath: #keyPath(Progress.fractionCompleted),
                                                        handler: handler)
-        let zipQueue = DispatchQueue.init(label: "ZIPFoundationTests")
+        let zipQueue = DispatchQueue(label: "ZIPFoundationTests")
         zipQueue.async {
             do {
                 let relativePath = assetURL.lastPathComponent
@@ -55,7 +55,7 @@ extension ZIPFoundationTests {
         }
         let cancel = self.keyValueObservingExpectation(for: progress, keyPath: #keyPath(Progress.fractionCompleted),
                                                        handler: handler)
-        let zipQueue = DispatchQueue.init(label: "ZIPFoundationTests")
+        let zipQueue = DispatchQueue(label: "ZIPFoundationTests")
         zipQueue.async {
             do {
                 let relativePath = assetURL.lastPathComponent
@@ -91,7 +91,8 @@ extension ZIPFoundationTests {
         }
         let cancel = self.keyValueObservingExpectation(for: progress, keyPath: #keyPath(Progress.fractionCompleted),
                                                        handler: handler)
-        DispatchQueue.global().async {
+        let zipQueue = DispatchQueue(label: "ZIPFoundationTests")
+        zipQueue.async {
             do {
                 try archive.remove(entryToRemove, progress: progress)
             } catch let error as Archive.ArchiveError {
@@ -101,8 +102,10 @@ extension ZIPFoundationTests {
             }
         }
         self.wait(for: [cancel], timeout: 20.0)
-        XCTAssert(progress.fractionCompleted > 0.5)
-        XCTAssert(archive.checkIntegrity())
+        zipQueue.sync {
+            XCTAssert(progress.fractionCompleted > 0.5)
+            XCTAssert(archive.checkIntegrity())
+        }
     }
 
     func testZipItemProgress() {

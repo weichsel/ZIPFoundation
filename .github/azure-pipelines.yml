@@ -1,0 +1,165 @@
+trigger:
+  - master
+
+jobs:
+- job: Linux_Swift_5_0
+  pool:
+    vmImage: 'Ubuntu 16.04'
+  container: swift:5.0
+  steps:
+    - script: swift test -c release -Xswiftc -enable-testing
+      displayName: Linux Swift 5.0
+
+- job: Linux_Swift_4_2
+  pool:
+    vmImage: 'Ubuntu 16.04'
+  container: swift:4.2
+  steps:
+    - script: swift test -c release -Xswiftc -enable-testing
+      displayName: Linux Swift 4.2
+
+- job: Linux_Swift_4_1
+  pool:
+    vmImage: 'Ubuntu 16.04'
+  container: swift:4.1
+  steps:
+    - script: swift test -c release -Xswiftc -enable-testing
+      displayName: Linux Swift 4.1
+
+- job: Linux_Swift_4_0
+  pool:
+    vmImage: 'Ubuntu 16.04'
+  container: swift:4.0
+  steps:
+    - script: swift test -c release -Xswiftc -enable-testing
+      displayName: Linux Swift 4.0
+
+- job: macOS_10_13
+  pool:
+    vmImage: 'macOS 10.13'
+  variables:
+    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+  steps:
+    - task: Xcode@5
+      inputs:
+        actions: 'test'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        sdk: 'macosx'
+        destinationPlatformOption: 'macOS'
+        useXcpretty: true
+        publishJUnitResults: true
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
+        failTaskOnFailedTests: true
+
+- job: iOS_12_1
+  pool:
+    vmImage: 'macOS 10.13'
+  variables:
+    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+  steps:
+    - task: Xcode@5
+      inputs:
+        actions: 'test'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        sdk: 'iphonesimulator'
+        destinationPlatformOption: 'iOS'
+        destinationTypeOption: 'simulators'
+        destinationSimulators: 'iPhone X'
+        useXcpretty: true
+        publishJUnitResults: true
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
+        failTaskOnFailedTests: true
+
+- job: watchOS_5_1
+  pool:
+    vmImage: 'macOS 10.13'
+  variables:
+    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+  steps:
+    # We currently only perform a build-only script for watchOS (xcodebuild test is unable to find the XCTest module)
+    - task: Xcode@5
+      inputs:
+        actions: 'build'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        sdk: 'watchsimulator'
+        destinationPlatformOption: 'custom'
+        destinationTypeOption: 'simulators'
+        destinationSimulators: 'Apple Watch Series 3 - 38mm'
+
+- job: tvOS_12_1
+  pool:
+    vmImage: 'macOS 10.13'
+  variables:
+    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+  steps:
+    - task: Xcode@5
+      inputs:
+        actions: 'test'
+        packageApp: false
+        exportMethod: 'development'
+        exportOptionsPlist: ''
+        configuration: 'Release'
+        scheme: 'ZIPFoundation'
+        sdk: 'appletvsimulator'
+        destinationPlatformOption: 'tvOS'
+        destinationTypeOption: 'simulators'
+        destinationSimulators: 'Apple TV 4K'
+        useXcpretty: true
+        publishJUnitResults: true
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
+        failTaskOnFailedTests: true
+
+- job: SwiftLint
+  pool:
+    vmImage: 'macOS 10.13'
+  variables:
+    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+  steps:
+    - script: xcodebuild -scheme ZIPFoundation clean build-for-testing > xcodebuild.log
+      displayName: Generate xcodebuild.log
+    - script: HOMEBREW_NO_AUTO_UPDATE=1 brew install https://raw.github.com/Homebrew/homebrew-core/master/Formula/swiftlint.rb
+      displayName: Install SwiftLint
+    - script: |
+        set -o pipefail
+        mkdir -p build/reports/
+        swiftlint lint --reporter junit > build/reports/swiftlint.xml
+      displayName: SwiftLint
+    - task: PublishTestResults@2
+      inputs:
+        testRunner: JUnit
+        testResultsFiles: build/reports/**
+        failTaskOnFailedTests: true
+    - script: swiftlint analyze --strict --compiler-log-path xcodebuild.log
+      displayName: SwiftLint Analyze
+
+- job: CodeCoverage
+  pool:
+    vmImage: 'macOS 10.13'
+  variables:
+    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+  steps:
+    - script: xcodebuild test -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" -derivedDataPath Build/ 
+      displayName: Generate xccovreport
+    - script: (xcrun xccov view --only-targets Build/Logs/Test/*.xcresult/*_Test/action.xccovreport | grep -Eq  "ZIPFoundation.*100\.00%") && { exit 0; } || { echo '##vso[task.logissue type=error;]Please make sure that the test suite covers all framework code paths.'; exit 1; }
+      displayName: Check for full line coverage

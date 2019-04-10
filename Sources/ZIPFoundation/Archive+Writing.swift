@@ -31,10 +31,10 @@ extension Archive {
         let fileManager = FileManager()
         let entryURL = baseURL.appendingPathComponent(path)
         guard fileManager.fileExists(atPath: entryURL.path) else {
-            throw CocoaError.error(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: entryURL.path], url: nil)
+            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: entryURL.path])
         }
         guard fileManager.isReadableFile(atPath: entryURL.path) else {
-            throw CocoaError.error(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: url.path], url: nil)
+            throw CocoaError(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: url.path])
         }
         let type = try FileManager.typeForItem(at: entryURL)
         let modDate = try FileManager.fileModificationDateTimeForItem(at: entryURL)
@@ -45,7 +45,7 @@ extension Archive {
         case .file:
             let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: entryURL.path)
             guard let entryFile: UnsafeMutablePointer<FILE> = fopen(entryFileSystemRepresentation, "rb") else {
-                throw CocoaError.error(.fileNoSuchFile)
+                throw CocoaError(.fileNoSuchFile)
             }
             defer { fclose(entryFile) }
             provider = { _, _ in return try Data.readChunk(of: Int(bufferSize), from: entryFile) }
@@ -160,10 +160,10 @@ extension Archive {
                 let entryStart = Int(currentEntry.centralDirectoryStructure.relativeOffsetOfLocalHeader)
                 fseek(self.archiveFile, entryStart, SEEK_SET)
                 let provider: Provider = { (_, chunkSize) -> Data in
-                    if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
                     return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
                 }
                 let consumer: Consumer = {
+                    if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
                     _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
                     progress?.completedUnitCount += Int64($0.count)
                 }

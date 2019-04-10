@@ -45,7 +45,7 @@ extension ZIPFoundationTests {
                                  0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
-        let invalidAddtionalDataCDS = Entry.CentralDirectoryStructure(data: Data(bytes: cdsBytes)) { _ -> Data in
+        let invalidAddtionalDataCDS = Entry.CentralDirectoryStructure(data: Data(cdsBytes)) { _ -> Data in
             return Data()
         }
         XCTAssertNil(invalidAddtionalDataCDS)
@@ -53,7 +53,7 @@ extension ZIPFoundationTests {
                                  0x08, 0x00, 0xab, 0x85, 0x77, 0x47, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x01, 0x00, 0x00, 0x00]
-        let invalidAddtionalDataLFH = Entry.LocalFileHeader(data: Data(bytes: lfhBytes)) { _ -> Data in
+        let invalidAddtionalDataLFH = Entry.LocalFileHeader(data: Data(lfhBytes)) { _ -> Data in
             return Data()
         }
         XCTAssertNil(invalidAddtionalDataLFH)
@@ -63,7 +63,7 @@ extension ZIPFoundationTests {
                                   0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
                                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                   0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
-        let cds2 = Entry.CentralDirectoryStructure(data: Data(bytes: cds2Bytes)) { _ -> Data in
+        let cds2 = Entry.CentralDirectoryStructure(data: Data(cds2Bytes)) { _ -> Data in
             throw AdditionalDataError.encodingError
         }
         XCTAssertNil(cds2)
@@ -71,7 +71,7 @@ extension ZIPFoundationTests {
                                   0x08, 0x00, 0xab, 0x85, 0x77, 0x47, 0x00, 0x00,
                                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                   0x00, 0x00, 0x01, 0x00, 0x00, 0x00]
-        let lfh2 = Entry.LocalFileHeader(data: Data(bytes: lfhBytes2)) { _ -> Data in
+        let lfh2 = Entry.LocalFileHeader(data: Data(lfhBytes2)) { _ -> Data in
             throw AdditionalDataError.encodingError
         }
         XCTAssertNil(lfh2)
@@ -87,15 +87,15 @@ extension ZIPFoundationTests {
                                  0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
-        let cds = Entry.CentralDirectoryStructure(data: Data(bytes: cdsBytes)) { _ -> Data in
-            return Data(bytes: invalidPathBytes)
+        let cds = Entry.CentralDirectoryStructure(data: Data(cdsBytes)) { _ -> Data in
+            return Data(invalidPathBytes)
         }
         let lfhBytes: [UInt8] = [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x08, 0x08,
                                  0x08, 0x00, 0xab, 0x85, 0x77, 0x47, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x01, 0x00, 0x00, 0x00]
-        let lfh = Entry.LocalFileHeader(data: Data(bytes: lfhBytes)) { _ -> Data in
-            return Data(bytes: invalidPathBytes)
+        let lfh = Entry.LocalFileHeader(data: Data(lfhBytes)) { _ -> Data in
+            return Data(invalidPathBytes)
         }
         guard let central = cds else {
             XCTFail("Failed to read central directory structure.")
@@ -119,14 +119,14 @@ extension ZIPFoundationTests {
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
-        let cds = Entry.CentralDirectoryStructure(data: Data(bytes: cdsBytes)) { _ -> Data in
+        let cds = Entry.CentralDirectoryStructure(data: Data(cdsBytes)) { _ -> Data in
             return Data()
         }
         let lfhBytes: [UInt8] = [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x08, 0x08,
                                  0x08, 0x00, 0xab, 0x85, 0x77, 0x47, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-        let lfh = Entry.LocalFileHeader(data: Data(bytes: lfhBytes)) { _ -> Data in
+        let lfh = Entry.LocalFileHeader(data: Data(lfhBytes)) { _ -> Data in
             return Data()
         }
         guard let central = cds else {
@@ -153,7 +153,7 @@ extension ZIPFoundationTests {
                                  0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
-        let cds = Entry.CentralDirectoryStructure(data: Data(bytes: cdsBytes)) { _ -> Data in
+        let cds = Entry.CentralDirectoryStructure(data: Data(cdsBytes)) { _ -> Data in
             guard let pathData = "/".data(using: .utf8) else { throw AdditionalDataError.encodingError }
             return pathData
         }
@@ -161,7 +161,7 @@ extension ZIPFoundationTests {
                                  0x08, 0x00, 0xab, 0x85, 0x77, 0x47, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x01, 0x00, 0x00, 0x00]
-        let lfh = Entry.LocalFileHeader(data: Data(bytes: lfhBytes)) { _ -> Data in
+        let lfh = Entry.LocalFileHeader(data: Data(lfhBytes)) { _ -> Data in
             guard let pathData = "/".data(using: .utf8) else { throw AdditionalDataError.encodingError }
             return pathData
         }
