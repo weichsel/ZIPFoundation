@@ -1,11 +1,16 @@
 # Changelog
 
+## [0.9.9](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.10)
+
+### Updated
+ - Swift 5.0 support in Xcode project and podspec file
+
 ## [0.9.9](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.9)
 
 ### Added
  - Swift 5.0 support
  - Optional `preferredEncoding` parameter to explicitly configure an encoding for filepaths
- 
+
 ### Updated
  - Fixed a library load error related to dylib versioning
  - Fixed a hang during read when decoding small, `.deflate` compressed entries
@@ -22,7 +27,7 @@
 ### Added
  - App extension support
  - Optional `compressionMethod` parameter for `zipItem:`
- 
+
 ### Updated
  - Fixed a path traversal attack vulnerability
  - Fixed a crash due to wrong error handling after failed `fopen` calls
@@ -34,7 +39,7 @@
 
 ### Added
  - Swift 4.1 support
- 
+
 ### Updated
  - Fixed default directory permissions
  - Fixed a compile issue when targeting Linux
@@ -44,7 +49,7 @@
 ### Added
  - Progress tracking support
  - Operation cancellation support
- 
+
 ### Updated
  - Improved performance of CRC32 calculations
  - Improved Linux support
@@ -61,7 +66,7 @@
 
 ### Added
  - Carthage support
- 
+
 ### Updated
  - Improved error handling
  - Made consistent use of Swift's `CocoaError` instead of `NSError`
@@ -77,15 +82,15 @@
 
 ### Added
  - Optional parameter to skip CRC32 checksum calculation
- 
+
 ### Updated
  - Tweaked POSIX buffer sizes to improve IO and comrpression performance
  - Improved source readability
  - Refined documentation
- 
+
 ### Removed
  - Optional parameter skip decompression during entry retrieval
- 
+
 ## [0.9.0](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.0)
 
 ### Added
