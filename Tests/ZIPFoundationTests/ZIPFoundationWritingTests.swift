@@ -329,4 +329,15 @@ extension ZIPFoundationTests {
         let nonUpdatableArchive = Archive(url: nonUpdatableArchiveURL, accessMode: .update)
         XCTAssertNil(nonUpdatableArchive)
     }
+
+    func testTemporaryArchiveURLCreation() {
+        let archive = self.archive(for: #function, mode: .create)
+        var tempURLs = Set<URL>()
+        // We choose 2000 temp directories to test workaround for http://openradar.appspot.com/50553219
+        for _ in 1...2000 {
+            let tempArchiveURL = archive.createTempArchiveURL()
+            XCTAssertFalse(tempURLs.contains(tempArchiveURL), "Temp archive URL should be unique. \(tempArchiveURL)")
+            tempURLs.insert(tempArchiveURL)
+        }
+    }
 }
