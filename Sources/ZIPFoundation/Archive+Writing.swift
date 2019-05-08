@@ -326,7 +326,12 @@ extension Archive {
         fclose(self.archiveFile)
         let fileManager = FileManager()
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        do {
             _ = try fileManager.replaceItemAt(self.url, withItemAt: URL)
+        } catch {
+            _ = try fileManager.removeItem(at: self.url)
+            _ = try fileManager.moveItem(at: URL, to: self.url)
+        }
         #else
             _ = try fileManager.removeItem(at: self.url)
             _ = try fileManager.moveItem(at: URL, to: self.url)
