@@ -192,16 +192,16 @@ extension Archive {
 
     // MARK: - Helpers
 
-	func uniqueTemporaryDirectoryURL() -> URL {
-		if let tempDir = try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
-												appropriateFor: self.url, create: true) {
-			return tempDir
-		}
-		
-		return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+    func uniqueTemporaryDirectoryURL() -> URL {
+        if let tempDir = try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
+                                                appropriateFor: self.url, create: true) {
+            return tempDir
+        }
+
+        return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
     }
 
-	private func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
+    private func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
                                       size: (uncompressed: UInt32, compressed: UInt32),
                                       checksum: CRC32,
                                       modificationDateTime: (UInt16, UInt16)) throws -> LocalFileHeader {
@@ -331,12 +331,12 @@ extension Archive {
         fclose(self.archiveFile)
         let fileManager = FileManager()
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        do {
-            _ = try fileManager.replaceItemAt(self.url, withItemAt: URL)
-        } catch {
-            _ = try fileManager.removeItem(at: self.url)
-            _ = try fileManager.moveItem(at: URL, to: self.url)
-        }
+            do {
+                _ = try fileManager.replaceItemAt(self.url, withItemAt: URL)
+            } catch {
+                _ = try fileManager.removeItem(at: self.url)
+                _ = try fileManager.moveItem(at: URL, to: self.url)
+            }
         #else
             _ = try fileManager.removeItem(at: self.url)
             _ = try fileManager.moveItem(at: URL, to: self.url)
@@ -345,3 +345,4 @@ extension Archive {
         self.archiveFile = fopen(fileSystemRepresentation, "rb+")
     }
 }
+

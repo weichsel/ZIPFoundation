@@ -332,19 +332,19 @@ extension ZIPFoundationTests {
 
     func testUniqueTemporaryDirectoryURL() {
         let archive = self.archive(for: #function, mode: .create)
-		var tempURLs = Set<URL>()
-		defer {
-			for url in tempURLs {
-				try? FileManager.default.removeItem(at: url)
-			}
-		}
+        var tempURLs = Set<URL>()
+        defer {
+            for url in tempURLs {
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
         // We choose 2000 temp directories to test workaround for http://openradar.appspot.com/50553219
         for _ in 1...2000 {
-			autoreleasepool {
-				let tempDir = archive.uniqueTemporaryDirectoryURL()
-				XCTAssertFalse(tempURLs.contains(tempDir), "Temp directory URL should be unique. \(tempDir)")
-				tempURLs.insert(tempDir)
-			}
+            autoreleasepool {
+                let tempDir = archive.uniqueTemporaryDirectoryURL()
+                XCTAssertFalse(tempURLs.contains(tempDir), "Temp directory URL should be unique. \(tempDir)")
+                tempURLs.insert(tempDir)
+            }
         }
     }
 
@@ -373,7 +373,8 @@ extension ZIPFoundationTests {
         let scriptURL = tempDir.appendingPathComponent("createVol.sh", isDirectory: false)
         do {
             try script.write(to: scriptURL, atomically: false, encoding: .utf8)
-            try FileManager.default.setAttributes([.posixPermissions: 0o770], ofItemAtPath: scriptURL.path)
+            let permissions = NSNumber(value: Int16(0o770))
+            try FileManager.default.setAttributes([.posixPermissions: permissions], ofItemAtPath: scriptURL.path)
             let task = try NSUserScriptTask.init(url: scriptURL)
             task.execute { (error) in
                 guard error == nil else {
@@ -383,13 +384,13 @@ extension ZIPFoundationTests {
                 let vol2URL = URL(fileURLWithPath: "/Volumes/\(volName)")
 
                 defer {
-                    FileManager.default.unmountVolume(at: vol2URL, options: [.allPartitionsAndEjectDisk, .withoutUI], completionHandler: {
-                        (error) in
-                        guard error == nil else {
-                            XCTFail("\(String(describing: error))")
-                            return
-                        }
-                        unmountVolumeExpectation.fulfill()
+                    FileManager.default.unmountVolume(at: vol2URL, options:
+                        [.allPartitionsAndEjectDisk, .withoutUI], completionHandler: { (error) in
+                            guard error == nil else {
+                                XCTFail("\(String(describing: error))")
+                                return
+                            }
+                            unmountVolumeExpectation.fulfill()
                     })
                 }
 
