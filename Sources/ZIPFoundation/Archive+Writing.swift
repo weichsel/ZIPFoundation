@@ -345,4 +345,3 @@ extension Archive {
         self.archiveFile = fopen(fileSystemRepresentation, "rb+")
     }
 }
-
