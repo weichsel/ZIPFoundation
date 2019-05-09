@@ -196,9 +196,9 @@ extension Archive {
 		if let tempDir = try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
 												appropriateFor: self.url, create: true) {
 			return tempDir
-		} else {
-			return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
 		}
+		
+		return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
     }
 
 	private func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
