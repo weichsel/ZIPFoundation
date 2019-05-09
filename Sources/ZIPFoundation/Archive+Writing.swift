@@ -327,7 +327,7 @@ extension Archive {
         _ = try Data.write(chunk: endOfCentralDirRecord.data, to: self.archiveFile)
     }
 
-    private func replaceCurrentArchiveWithArchive(at URL: URL) throws {
+    func replaceCurrentArchiveWithArchive(at URL: URL) throws {
         fclose(self.archiveFile)
         let fileManager = FileManager()
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)

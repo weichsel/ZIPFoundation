@@ -347,4 +347,79 @@ extension ZIPFoundationTests {
 			}
         }
     }
+
+    func testReplaceCurrentArchiveWithArchiveCrossLink() {
+        let createVolumeExpectation = expectation(description: "Creation of temporary additional volume")
+        let unmountVolumeExpectation = expectation(description: "Unmount temporary additional volume")
+
+        let tempDir = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+        do {
+            try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true, attributes: nil)
+        } catch {
+            XCTFail("\(String(describing: error))")
+            return
+        }
+        defer {
+            try? FileManager.default.removeItem(at: tempDir)
+        }
+
+        let volName = "Test_\(UUID().uuidString)"
+        let dmgURL = tempDir.appendingPathComponent(volName).appendingPathExtension("dmg")
+        let script = """
+        #!/bin/bash
+        hdiutil create -size 5m -fs HFS+ -type SPARSEBUNDLE -ov -attach -volname "\(volName)" "\(dmgURL.path)"
+
+        """
+        let scriptURL = tempDir.appendingPathComponent("createVol.sh", isDirectory: false)
+        do {
+            try script.write(to: scriptURL, atomically: false, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o770], ofItemAtPath: scriptURL.path)
+            let task = try NSUserScriptTask.init(url: scriptURL)
+            task.execute { (error) in
+                guard error == nil else {
+                    XCTFail("\(String(describing: error))")
+                    return
+                }
+                let vol2URL = URL(fileURLWithPath: "/Volumes/\(volName)")
+
+                defer {
+                    FileManager.default.unmountVolume(at: vol2URL, options: [.allPartitionsAndEjectDisk, .withoutUI], completionHandler: {
+                        (error) in
+                        guard error == nil else {
+                            XCTFail("\(String(describing: error))")
+                            return
+                        }
+                        unmountVolumeExpectation.fulfill()
+                    })
+                }
+
+                let vol1ArchiveURL = tempDir.appendingPathComponent("vol1Archive")
+                guard let vol1Archive = Archive(url: vol1ArchiveURL, accessMode: .create) else {
+                    XCTFail("Failed to create test archive '\(vol1ArchiveURL)'")
+                    return
+                }
+
+                let vol2ArchiveURL = vol2URL.appendingPathComponent("vol2Archive")
+                guard let vol2Archive = Archive(url: vol2ArchiveURL, accessMode: .create) else {
+                    XCTFail("Failed to create test archive '\(vol2ArchiveURL)'")
+                    type(of: self).tearDown()
+                    return
+                }
+
+                do {
+                    try vol1Archive.replaceCurrentArchiveWithArchive(at: vol2Archive.url)
+                } catch {
+                    XCTFail("\(String(describing: error))")
+                    return
+                }
+
+                createVolumeExpectation.fulfill()
+            }
+        } catch {
+            XCTFail("\(error)")
+            return
+        }
+
+        waitForExpectations(timeout: 30.0)
+    }
 }

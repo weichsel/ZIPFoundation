@@ -319,6 +319,7 @@ extension ZIPFoundationTests {
             ("testZipItemProgress", testZipItemProgress),
             ("testUnzipItemProgress", testUnzipItemProgress),
             ("testRemoveEntryProgress", testRemoveEntryProgress),
+            ("testReplaceCurrentArchiveWithArchive", testReplaceCurrentArchiveWithArchive),
             ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
             ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress),
             // The below test cases test error code paths but they lead to undefined behavior and memory
