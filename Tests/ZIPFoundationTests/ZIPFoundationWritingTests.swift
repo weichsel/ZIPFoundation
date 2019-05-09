@@ -349,6 +349,7 @@ extension ZIPFoundationTests {
     }
 
     func testReplaceCurrentArchiveWithArchiveCrossLink() {
+		#if os(macOS)
         let createVolumeExpectation = expectation(description: "Creation of temporary additional volume")
         let unmountVolumeExpectation = expectation(description: "Unmount temporary additional volume")
 
@@ -422,5 +423,6 @@ extension ZIPFoundationTests {
         }
 
         waitForExpectations(timeout: 30.0)
+		#endif
     }
 }
