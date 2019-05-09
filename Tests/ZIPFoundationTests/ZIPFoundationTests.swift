@@ -301,11 +301,12 @@ extension ZIPFoundationTests {
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
+            ("testUniqueTemporaryDirectoryURL", testUniqueTemporaryDirectoryURL),
+            ("testTraversalAttack", testTraversalAttack),
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testZipItem", testZipItem),
-            ("testTraversalAttack", testTraversalAttack),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
         ] + darwinOnlyTests
     }

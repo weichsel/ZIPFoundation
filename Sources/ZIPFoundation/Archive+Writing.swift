@@ -146,8 +146,12 @@ extension Archive {
     ///   - progress: A progress object that can be used to track or cancel the remove operation.
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
     public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
-        let tempArchiveURL = createTempArchiveURL()
-        guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
+        let tempDir = uniqueTemporaryDirectoryURL()
+        defer {
+            try? FileManager().removeItem(at: tempDir)
+        }
+        let uniqueString = ProcessInfo.processInfo.globallyUniqueString
+        guard let tempArchive = Archive(url: tempDir.appendingPathComponent(uniqueString), accessMode: .create) else {
             throw ArchiveError.unwritableArchive
         }
         progress?.totalUnitCount = self.totalUnitCountForRemoving(entry)
@@ -188,15 +192,16 @@ extension Archive {
 
     // MARK: - Helpers
 
-    func createTempArchiveURL() -> URL {
-        let tempArchiveURL = ((try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
-                                                      appropriateFor: self.url, create: true))
-            ?? URL(fileURLWithPath: NSTemporaryDirectory()))
-            .appendingPathComponent(ProcessInfo.processInfo.globallyUniqueString)
-        return tempArchiveURL
+	func uniqueTemporaryDirectoryURL() -> URL {
+		if let tempDir = try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
+												appropriateFor: self.url, create: true) {
+			return tempDir
+		} else {
+			return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+		}
     }
-    
-    private func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
+
+	private func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
                                       size: (uncompressed: UInt32, compressed: UInt32),
                                       checksum: CRC32,
                                       modificationDateTime: (UInt16, UInt16)) throws -> LocalFileHeader {

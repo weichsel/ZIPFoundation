@@ -152,6 +152,7 @@ public final class Archive: Sequence {
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         case .create:
             guard !fileManager.fileExists(atPath: url.path) else { return nil }
+            do { try fileManager.createParentDirectoryStructure(for: url) } catch { return nil }
             let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
                                                                           totalNumberOfEntriesOnDisk: 0,
                                                                           totalNumberOfEntriesInCentralDirectory: 0,
