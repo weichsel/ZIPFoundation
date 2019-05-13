@@ -147,14 +147,8 @@ extension Archive {
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
     public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
         let tempDir = uniqueTemporaryDirectoryURL()
-		do {
-			try FileManager().createParentDirectoryStructure(for: tempDir)
-		} catch {
-			throw ArchiveError.unwritableArchive
-		}
-        defer {
-            try? FileManager().removeItem(at: tempDir)
-        }
+        defer { try? FileManager().removeItem(at: tempDir) }
+        do { try FileManager().createParentDirectoryStructure(for: tempDir) } catch { throw ArchiveError.unwritableArchive }
         let uniqueString = ProcessInfo.processInfo.globallyUniqueString
         guard let tempArchive = Archive(url: tempDir.appendingPathComponent(uniqueString), accessMode: .create) else {
             throw ArchiveError.unwritableArchive
@@ -203,7 +197,8 @@ extension Archive {
             return tempDir
         }
 
-        return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+        return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(
+            ProcessInfo.processInfo.globallyUniqueString)
     }
 
     private func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
