@@ -147,6 +147,11 @@ extension Archive {
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
     public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
         let tempDir = uniqueTemporaryDirectoryURL()
+		do {
+			try FileManager().createParentDirectoryStructure(for: tempDir)
+		} catch {
+			throw ArchiveError.unwritableArchive
+		}
         defer {
             try? FileManager().removeItem(at: tempDir)
         }
