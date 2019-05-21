@@ -151,7 +151,6 @@ public final class Archive: Sequence {
             self.archiveFile = archiveFile
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         case .create:
-            guard !fileManager.fileExists(atPath: url.path) else { return nil }
             let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
                                                                           totalNumberOfEntriesOnDisk: 0,
                                                                           totalNumberOfEntriesInCentralDirectory: 0,
@@ -159,8 +158,11 @@ public final class Archive: Sequence {
                                                                           offsetToStartOfCentralDirectory: 0,
                                                                           zipFileCommentLength: 0,
                                                                           zipFileCommentData: Data())
-            guard fileManager.createFile(atPath: url.path, contents: endOfCentralDirectoryRecord.data,
-                                         attributes: nil) else { return nil }
+            do {
+                try endOfCentralDirectoryRecord.data.write(to: url, options: .withoutOverwriting)
+            } catch {
+                return nil
+            }
             fallthrough
         case .update:
             guard fileManager.isWritableFile(atPath: url.path) else { return nil }
