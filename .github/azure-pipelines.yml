@@ -7,7 +7,7 @@ jobs:
     vmImage: 'Ubuntu 16.04'
   container: swift:5.0-xenial
   steps:
-    - script: swift test -c release -Xswiftc -enable-testing
+    - script: apt-get -y update && apt-get install -y && swift test -c release -Xswiftc -enable-testing
       displayName: Linux Swift 5.0
 
 - job: Linux_Swift_4_2
