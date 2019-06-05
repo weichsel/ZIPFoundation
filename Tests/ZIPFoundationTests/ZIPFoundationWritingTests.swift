@@ -340,11 +340,9 @@ extension ZIPFoundationTests {
         }
         // We choose 2000 temp directories to test workaround for http://openradar.appspot.com/50553219
         for _ in 1...2000 {
-            autoreleasepool {
-                let tempDir = archive.uniqueTemporaryDirectoryURL()
-                XCTAssertFalse(tempURLs.contains(tempDir), "Temp directory URL should be unique. \(tempDir)")
-                tempURLs.insert(tempDir)
-            }
+            let tempDir = archive.uniqueTemporaryDirectoryURL()
+            XCTAssertFalse(tempURLs.contains(tempDir), "Temp directory URL should be unique. \(tempDir)")
+            tempURLs.insert(tempDir)
         }
     }
 
