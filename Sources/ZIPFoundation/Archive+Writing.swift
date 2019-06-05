@@ -148,7 +148,8 @@ extension Archive {
     public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
         let tempDir = self.uniqueTemporaryDirectoryURL()
         defer { try? FileManager().removeItem(at: tempDir) }
-        do { try FileManager().createParentDirectoryStructure(for: tempDir) } catch { throw ArchiveError.unwritableArchive }
+        do { try FileManager().createParentDirectoryStructure(for: tempDir) } catch {
+            throw ArchiveError.unwritableArchive }
         let uniqueString = ProcessInfo.processInfo.globallyUniqueString
         guard let tempArchive = Archive(url: tempDir.appendingPathComponent(uniqueString), accessMode: .create) else {
             throw ArchiveError.unwritableArchive
