@@ -5,7 +5,8 @@ jobs:
 - job: Linux_Swift_5_0
   pool:
     vmImage: 'Ubuntu 16.04'
-  container: swift:5.0
+  # We currently can't use the official Swift Docker image, because it no longer comes with with zlib dependency
+  container: norionomura/swift:5.0.0
   steps:
     - script: swift test -c release -Xswiftc -enable-testing
       displayName: Linux Swift 5.0
