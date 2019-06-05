@@ -192,10 +192,12 @@ extension Archive {
     // MARK: - Helpers
 
     func uniqueTemporaryDirectoryURL() -> URL {
+        #if swift(>=5.0)
         if let tempDir = try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
                                                 appropriateFor: self.url, create: true) {
             return tempDir
         }
+        #endif
 
         return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(
             ProcessInfo.processInfo.globallyUniqueString)
