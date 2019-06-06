@@ -146,12 +146,14 @@ extension Archive {
     ///   - progress: A progress object that can be used to track or cancel the remove operation.
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
     public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
+		let manager = FileManager()
         let tempDir = self.uniqueTemporaryDirectoryURL()
-        defer { try? FileManager().removeItem(at: tempDir) }
-        do { try FileManager().createParentDirectoryStructure(for: tempDir) } catch {
-            throw ArchiveError.unwritableArchive }
-        let uniqueString = ProcessInfo.processInfo.globallyUniqueString
-        guard let tempArchive = Archive(url: tempDir.appendingPathComponent(uniqueString), accessMode: .create) else {
+        defer { try? manager.removeItem(at: tempDir) }
+		let uniqueString = ProcessInfo.processInfo.globallyUniqueString
+		let tempArchiveURL =  tempDir.appendingPathComponent(uniqueString)
+        do { try manager.createParentDirectoryStructure(for: tempArchiveURL) } catch {
+			throw ArchiveError.unwritableArchive }
+        guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
             throw ArchiveError.unwritableArchive
         }
         progress?.totalUnitCount = self.totalUnitCountForRemoving(entry)
