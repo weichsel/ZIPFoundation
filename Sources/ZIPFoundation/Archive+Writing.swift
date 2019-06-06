@@ -195,7 +195,7 @@ extension Archive {
     // MARK: - Helpers
 
     func uniqueTemporaryDirectoryURL() -> URL {
-        #if swift(>=5.0)
+        #if swift(>=5.0) || os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         if let tempDir = try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
                                                 appropriateFor: self.url, create: true) {
             return tempDir
