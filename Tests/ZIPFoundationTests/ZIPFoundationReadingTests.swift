@@ -160,7 +160,7 @@ extension ZIPFoundationTests {
             fseek(destinationFile, 64, SEEK_SET)
             // We have to inject a large enough zeroes block to guarantee that libcompression 
             // detects the failure when reading the stream
-            _ = try Data.write(chunk: Data.init(count: 512*1024), to: destinationFile)
+            _ = try Data.write(chunk: Data(count: 512*1024), to: destinationFile)
             fclose(destinationFile)
             guard let archive = Archive(url: archiveURL, accessMode: .read) else {
                 XCTFail("Failed to read archive.")

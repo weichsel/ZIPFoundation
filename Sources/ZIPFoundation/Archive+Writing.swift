@@ -66,7 +66,7 @@ extension Archive {
                 let linkFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: linkDestination)
                 let linkLength = Int(strlen(linkFileSystemRepresentation))
                 let linkBuffer = UnsafeBufferPointer(start: linkFileSystemRepresentation, count: linkLength)
-                return Data.init(buffer: linkBuffer)
+                return Data(buffer: linkBuffer)
             }
             try self.addEntry(with: path, type: type, uncompressedSize: uncompressedSize,
                               modificationDate: modDate, permissions: permissions,
@@ -214,7 +214,7 @@ extension Archive {
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: path)
         let fileNameLength = Int(strlen(fileSystemRepresentation))
         let fileNameBuffer = UnsafeBufferPointer(start: fileSystemRepresentation, count: fileNameLength)
-        let fileNameData = Data.init(buffer: fileNameBuffer)
+        let fileNameData = Data(buffer: fileNameBuffer)
         let localFileHeader = LocalFileHeader(versionNeededToExtract: UInt16(20), generalPurposeBitFlag: UInt16(2048),
                                               compressionMethod: compressionMethod.rawValue,
                                               lastModFileTime: modificationDateTime.1,

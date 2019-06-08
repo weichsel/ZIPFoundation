@@ -28,7 +28,7 @@ extension ZIPFoundationTests {
     }
 
     func testEntryInvalidSignatureErrorConditions() {
-        let invalidCDS = Entry.CentralDirectoryStructure(data: Data.init(count: Entry.CentralDirectoryStructure.size),
+        let invalidCDS = Entry.CentralDirectoryStructure(data: Data(count: Entry.CentralDirectoryStructure.size),
                                                          additionalDataProvider: {_ -> Data in
                                                             return Data() })
         XCTAssertNil(invalidCDS)

@@ -392,7 +392,7 @@ extension ZIPFoundationTests {
         try script.write(to: scriptURL, atomically: false, encoding: .utf8)
         let permissions = NSNumber(value: Int16(0o770))
         try FileManager.default.setAttributes([.posixPermissions: permissions], ofItemAtPath: scriptURL.path)
-        let task = try NSUserScriptTask.init(url: scriptURL)
+        let task = try NSUserScriptTask(url: scriptURL)
         return task
     }
     #endif
