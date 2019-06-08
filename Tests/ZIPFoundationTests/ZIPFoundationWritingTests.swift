@@ -54,9 +54,7 @@ extension ZIPFoundationTests {
         let tempDirectoryURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(uniqueString)
         do {
             let fileManager = FileManager()
-            try fileManager.createDirectory(at: tempDirectoryURL,
-                                            withIntermediateDirectories: true,
-                                            attributes: nil)
+            try fileManager.createDirectory(at: tempDirectoryURL, withIntermediateDirectories: true, attributes: nil)
             let relativePath = tempDirectoryURL.lastPathComponent
             let baseURL = tempDirectoryURL.deletingLastPathComponent()
             try archive.addEntry(with: relativePath + "/", relativeTo: baseURL)
@@ -382,6 +380,7 @@ extension ZIPFoundationTests {
 		#endif
     }
 
+    #if os(macOS)
     private func makeVolumeCreationTask(at tempDir: URL, volumeName: String) throws -> NSUserScriptTask {
         let scriptURL = tempDir.appendingPathComponent("createVol.sh", isDirectory: false)
         let dmgURL = tempDir.appendingPathComponent(volumeName).appendingPathExtension("dmg")
@@ -396,4 +395,5 @@ extension ZIPFoundationTests {
         let task = try NSUserScriptTask.init(url: scriptURL)
         return task
     }
+    #endif
 }
