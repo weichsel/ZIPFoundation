@@ -330,58 +330,21 @@ extension ZIPFoundationTests {
         XCTAssertNil(nonUpdatableArchive)
     }
 
-    func testUniqueTemporaryDirectoryURL() {
-        let archive = self.archive(for: #function, mode: .create)
-        var tempURLs = Set<URL>()
-        defer {
-            for url in tempURLs {
-                try? FileManager.default.removeItem(at: url)
-            }
-        }
-        // We choose 2000 temp directories to test workaround for http://openradar.appspot.com/50553219
-        for _ in 1...2000 {
-            let tempDir = archive.uniqueTemporaryDirectoryURL()
-            XCTAssertFalse(tempURLs.contains(tempDir), "Temp directory URL should be unique. \(tempDir)")
-            tempURLs.insert(tempDir)
-        }
-    }
-
     func testReplaceCurrentArchiveWithArchiveCrossLink() {
 		#if os(macOS)
         let createVolumeExpectation = expectation(description: "Creation of temporary additional volume")
         let unmountVolumeExpectation = expectation(description: "Unmount temporary additional volume")
-
         let tempDir = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
         do {
             try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true, attributes: nil)
-        } catch {
-            XCTFail("\(String(describing: error))")
-            return
-        }
-        defer {
-            try? FileManager.default.removeItem(at: tempDir)
-        }
-
-        let volName = "Test_\(UUID().uuidString)"
-        let dmgURL = tempDir.appendingPathComponent(volName).appendingPathExtension("dmg")
-        let script = """
-        #!/bin/bash
-        hdiutil create -size 5m -fs HFS+ -type SPARSEBUNDLE -ov -attach -volname "\(volName)" "\(dmgURL.path)"
-
-        """
-        let scriptURL = tempDir.appendingPathComponent("createVol.sh", isDirectory: false)
-        do {
-            try script.write(to: scriptURL, atomically: false, encoding: .utf8)
-            let permissions = NSNumber(value: Int16(0o770))
-            try FileManager.default.setAttributes([.posixPermissions: permissions], ofItemAtPath: scriptURL.path)
-            let task = try NSUserScriptTask.init(url: scriptURL)
+            let volName = "Test_\(UUID().uuidString)"
+            let task = try self.makeVolumeCreationTask(at: tempDir, volumeName: volName)
             task.execute { (error) in
                 guard error == nil else {
                     XCTFail("\(String(describing: error))")
                     return
                 }
                 let vol2URL = URL(fileURLWithPath: "/Volumes/\(volName)")
-
                 defer {
                     FileManager.default.unmountVolume(at: vol2URL, options:
                         [.allPartitionsAndEjectDisk, .withoutUI], completionHandler: { (error) in
@@ -392,15 +355,10 @@ extension ZIPFoundationTests {
                             unmountVolumeExpectation.fulfill()
                     })
                 }
-
                 let vol1ArchiveURL = tempDir.appendingPathComponent("vol1Archive")
-                guard let vol1Archive = Archive(url: vol1ArchiveURL, accessMode: .create) else {
-                    XCTFail("Failed to create test archive '\(vol1ArchiveURL)'")
-                    return
-                }
-
                 let vol2ArchiveURL = vol2URL.appendingPathComponent("vol2Archive")
-                guard let vol2Archive = Archive(url: vol2ArchiveURL, accessMode: .create) else {
+                guard let vol1Archive = Archive(url: vol1ArchiveURL, accessMode: .create),
+                    let vol2Archive = Archive(url: vol2ArchiveURL, accessMode: .create) else {
                     XCTFail("Failed to create test archive '\(vol2ArchiveURL)'")
                     type(of: self).tearDown()
                     return
@@ -412,15 +370,30 @@ extension ZIPFoundationTests {
                     XCTFail("\(String(describing: error))")
                     return
                 }
-
                 createVolumeExpectation.fulfill()
             }
         } catch {
             XCTFail("\(error)")
             return
         }
+        defer { try? FileManager.default.removeItem(at: tempDir) }
 
         waitForExpectations(timeout: 30.0)
 		#endif
+    }
+
+    private func makeVolumeCreationTask(at tempDir: URL, volumeName: String) throws -> NSUserScriptTask {
+        let scriptURL = tempDir.appendingPathComponent("createVol.sh", isDirectory: false)
+        let dmgURL = tempDir.appendingPathComponent(volumeName).appendingPathExtension("dmg")
+        let script = """
+        #!/bin/bash
+        hdiutil create -size 5m -fs HFS+ -type SPARSEBUNDLE -ov -attach -volname "\(volumeName)" "\(dmgURL.path)"
+
+        """
+        try script.write(to: scriptURL, atomically: false, encoding: .utf8)
+        let permissions = NSNumber(value: Int16(0o770))
+        try FileManager.default.setAttributes([.posixPermissions: permissions], ofItemAtPath: scriptURL.path)
+        let task = try NSUserScriptTask.init(url: scriptURL)
+        return task
     }
 }

@@ -346,4 +346,20 @@ extension ZIPFoundationTests {
         }
         XCTFail("Extraction should fail")
     }
+
+    func testUniqueTemporaryDirectoryURL() {
+        let archive = self.archive(for: #function, mode: .create)
+        var tempURLs = Set<URL>()
+        defer {
+            for url in tempURLs {
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
+        // We choose 2000 temp directories to test workaround for http://openradar.appspot.com/50553219
+        for _ in 1...2000 {
+            let tempDir = archive.uniqueTemporaryDirectoryURL()
+            XCTAssertFalse(tempURLs.contains(tempDir), "Temp directory URL should be unique. \(tempDir)")
+            tempURLs.insert(tempDir)
+        }
+    }
 }
