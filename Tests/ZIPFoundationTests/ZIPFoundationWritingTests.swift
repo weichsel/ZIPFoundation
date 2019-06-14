@@ -386,14 +386,14 @@ extension ZIPFoundationTests {
         let dmgURL = tempDir.appendingPathComponent(volumeName).appendingPathExtension("dmg")
         let script = """
         #!/bin/bash
-        hdiutil create -size 5m -fs HFS+ -type SPARSEBUNDLE -ov -attach -volname "\(volumeName)" "\(dmgURL.path)"
+        hdiutil create -size 5m -fs HFS+ -type SPARSEBUNDLE -ov -volname "\(volumeName)" "\(dmgURL.path)"
+        hdiutil attach -nobrowse "\(dmgURL.appendingPathExtension("sparsebundle").path)"
 
         """
         try script.write(to: scriptURL, atomically: false, encoding: .utf8)
         let permissions = NSNumber(value: Int16(0o770))
         try FileManager.default.setAttributes([.posixPermissions: permissions], ofItemAtPath: scriptURL.path)
-        let task = try NSUserScriptTask(url: scriptURL)
-        return task
+        return try NSUserScriptTask(url: scriptURL)
     }
     #endif
 }
