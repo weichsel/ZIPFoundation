@@ -301,11 +301,12 @@ extension ZIPFoundationTests {
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
+            ("testUniqueTemporaryDirectoryURL", testUniqueTemporaryDirectoryURL),
+            ("testTraversalAttack", testTraversalAttack),
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testZipItem", testZipItem),
-            ("testTraversalAttack", testTraversalAttack),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
         ] + darwinOnlyTests
     }
@@ -318,6 +319,7 @@ extension ZIPFoundationTests {
             ("testZipItemProgress", testZipItemProgress),
             ("testUnzipItemProgress", testUnzipItemProgress),
             ("testRemoveEntryProgress", testRemoveEntryProgress),
+            ("testReplaceCurrentArchiveWithArchiveCrossLink", testReplaceCurrentArchiveWithArchiveCrossLink),
             ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
             ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress),
             // The below test cases test error code paths but they lead to undefined behavior and memory
