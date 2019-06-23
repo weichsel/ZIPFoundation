@@ -206,6 +206,24 @@ extension Archive {
             ProcessInfo.processInfo.globallyUniqueString)
     }
 
+    func replaceCurrentArchiveWithArchive(at URL: URL) throws {
+        fclose(self.archiveFile)
+        let fileManager = FileManager()
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        do {
+            _ = try fileManager.replaceItemAt(self.url, withItemAt: URL)
+        } catch {
+            _ = try fileManager.removeItem(at: self.url)
+            _ = try fileManager.moveItem(at: URL, to: self.url)
+        }
+        #else
+        _ = try fileManager.removeItem(at: self.url)
+        _ = try fileManager.moveItem(at: URL, to: self.url)
+        #endif
+        let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: self.url.path)
+        self.archiveFile = fopen(fileSystemRepresentation, "rb+")
+    }
+
     private func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
                                       size: (uncompressed: UInt32, compressed: UInt32),
                                       checksum: CRC32,
@@ -330,23 +348,5 @@ extension Archive {
         fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
         _ = try Data.write(chunk: existingCentralDirectoryData, to: self.archiveFile)
         _ = try Data.write(chunk: endOfCentralDirRecord.data, to: self.archiveFile)
-    }
-
-    func replaceCurrentArchiveWithArchive(at URL: URL) throws {
-        fclose(self.archiveFile)
-        let fileManager = FileManager()
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-            do {
-                _ = try fileManager.replaceItemAt(self.url, withItemAt: URL)
-            } catch {
-                _ = try fileManager.removeItem(at: self.url)
-                _ = try fileManager.moveItem(at: URL, to: self.url)
-            }
-        #else
-            _ = try fileManager.removeItem(at: self.url)
-            _ = try fileManager.moveItem(at: URL, to: self.url)
-        #endif
-        let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: self.url.path)
-        self.archiveFile = fopen(fileSystemRepresentation, "rb+")
     }
 }
