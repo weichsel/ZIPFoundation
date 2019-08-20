@@ -249,7 +249,7 @@ You can also add entries from an in-memory data source. To do this you have to p
 ```swift
 guard let data = "abcdefghijkl".data(using: .utf8) else { return }
 try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: 12, bufferSize:  4, provider: { (position, size) -> Data in
-    // This will be called until `data` is exhausted. 3x in this case.
+    // This will be called until `data` is exhausted (3x in this case).
     return data.subdata(in: position..<position+size)
 })
 ```
