@@ -247,11 +247,10 @@ The `data` passed into the closure contains chunks of the current entry. You can
 You can also add entries from an in-memory data source. To do this you have to provide a closure of type `Provider` to the `addEntry` method:
 
 ```swift
-try archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: 4, provider: { (position, size) -> Data in
-    guard let data = "abcd".data(using: .utf8) else {
-        throw DataProviderError.invalidEncoding
-    }
-    return data
+guard let data = "abcdefghijkl".data(using: .utf8) else { return }
+try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: 12, bufferSize:  4, provider: { (position, size) -> Data in
+    // This will be called until `data` is exhausted (3x in this case).
+    return data.subdata(in: position..<position+size)
 })
 ```
 The closure is called until enough data has been provided to create an entry of `uncompressedSize`. The closure receives `position` and `size` arguments 
