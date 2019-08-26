@@ -96,16 +96,15 @@ extension Data {
         let mask = 0xffffffff as UInt32
         let bufferSize = self.count/MemoryLayout<UInt8>.size
         var result = checksum ^ mask
-        #if swift(>=5.0)
-        let bins = stride(from: 0, to: bufferSize, by: 256)
-        for bin in bins {
-            for binIndex in 0..<256 {
-                let byteIndex = bin + binIndex
-                guard byteIndex < bufferSize else { break }
-
-                let byte = self[byteIndex]
-                let index = Int((result ^ UInt32(byte)) & 0xff)
-                result = (result >> 8) ^ crcTable[index]
+		#if swift(>=5.0)
+        crcTable.withUnsafeBufferPointer { crcTablePointer in
+            self.withUnsafeBytes { bufferPointer in
+                let bytePointer = bufferPointer.bindMemory(to: UInt8.self)
+                for bufferIndex in 0..<bufferSize {
+                    let byte = bytePointer[bufferIndex]
+                    let index = Int((result ^ UInt32(byte)) & 0xff)
+                    result = (result >> 8) ^ crcTablePointer[index]
+                }
             }
         }
         #else
