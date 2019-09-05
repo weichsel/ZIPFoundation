@@ -134,10 +134,11 @@ extension Data {
         #endif
     }
 
-    static func decompress(size: Int, bufferSize: Int, skipCRC32: Bool, provider: Provider, consumer: Consumer) throws -> CRC32 {
+    static func decompress(size: Int, bufferSize: Int, skipCRC32: Bool,
+                           provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        return try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
-                                provider: provider, consumer: consumer)
+        return try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize,
+                                skipCRC32: skipCRC32, provider: provider, consumer: consumer)
         #else
         return try self.decode(bufferSize: bufferSize, skipCRC32: skipCRC32, provider: provider, consumer: consumer)
         #endif
@@ -185,13 +186,17 @@ extension Data {
                         status = compression_stream_process(&stream, flags)
                     }
                 }
-                if operation == COMPRESSION_STREAM_ENCODE && !skipCRC32 { checksum = sourceData.crc32(checksum: checksum) }
+                if operation == COMPRESSION_STREAM_ENCODE && !skipCRC32 {
+                    checksum = sourceData.crc32(checksum: checksum)
+                }
             }
             switch status {
             case COMPRESSION_STATUS_OK, COMPRESSION_STATUS_END:
                 let outputData = Data(bytesNoCopy: destPointer, count: bufferSize - stream.dst_size, deallocator: .none)
                 try consumer(outputData)
-                if operation == COMPRESSION_STREAM_DECODE && !skipCRC32 { checksum = outputData.crc32(checksum: checksum) }
+                if operation == COMPRESSION_STREAM_DECODE && !skipCRC32 {
+                    checksum = outputData.crc32(checksum: checksum)
+                }
                 stream.dst_ptr = destPointer
                 stream.dst_size = bufferSize
             default: throw CompressionError.corruptedData
