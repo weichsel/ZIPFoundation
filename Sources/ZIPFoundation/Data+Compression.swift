@@ -187,16 +187,14 @@ extension Data {
                     }
                 }
                 if operation == COMPRESSION_STREAM_ENCODE && !skipCRC32 {
-                    checksum = sourceData.crc32(checksum: checksum)
-                }
+                    checksum = sourceData.crc32(checksum: checksum) }
             }
             switch status {
             case COMPRESSION_STATUS_OK, COMPRESSION_STATUS_END:
                 let outputData = Data(bytesNoCopy: destPointer, count: bufferSize - stream.dst_size, deallocator: .none)
                 try consumer(outputData)
                 if operation == COMPRESSION_STREAM_DECODE && !skipCRC32 {
-                    checksum = outputData.crc32(checksum: checksum)
-                }
+                    checksum = outputData.crc32(checksum: checksum) }
                 stream.dst_ptr = destPointer
                 stream.dst_size = bufferSize
             default: throw CompressionError.corruptedData
