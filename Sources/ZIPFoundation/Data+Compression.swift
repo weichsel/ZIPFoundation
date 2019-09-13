@@ -96,7 +96,7 @@ extension Data {
         let mask = 0xffffffff as UInt32
         let bufferSize = self.count/MemoryLayout<UInt8>.size
         var result = checksum ^ mask
-		#if swift(>=5.0)
+        #if swift(>=5.0)
         crcTable.withUnsafeBufferPointer { crcTablePointer in
             self.withUnsafeBytes { bufferPointer in
                 let bytePointer = bufferPointer.bindMemory(to: UInt8.self)
@@ -153,7 +153,7 @@ import Compression
 extension Data {
     static func process(operation: compression_stream_operation, size: Int, bufferSize: Int, skipCRC32: Bool = false,
                         provider: Provider, consumer: Consumer) throws -> CRC32 {
-        var checksum = CRC32(0)
+        var crc32 = CRC32(0)
         let destPointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
         defer { destPointer.deallocate() }
         let streamPointer = UnsafeMutablePointer<compression_stream>.allocate(capacity: 1)
@@ -186,21 +186,19 @@ extension Data {
                         status = compression_stream_process(&stream, flags)
                     }
                 }
-                if operation == COMPRESSION_STREAM_ENCODE && !skipCRC32 {
-                    checksum = sourceData.crc32(checksum: checksum) }
+                if operation == COMPRESSION_STREAM_ENCODE && !skipCRC32 { crc32 = sourceData.crc32(checksum: crc32) }
             }
             switch status {
             case COMPRESSION_STATUS_OK, COMPRESSION_STATUS_END:
                 let outputData = Data(bytesNoCopy: destPointer, count: bufferSize - stream.dst_size, deallocator: .none)
                 try consumer(outputData)
-                if operation == COMPRESSION_STREAM_DECODE && !skipCRC32 {
-                    checksum = outputData.crc32(checksum: checksum) }
+                if operation == COMPRESSION_STREAM_DECODE && !skipCRC32 { crc32 = outputData.crc32(checksum: crc32) }
                 stream.dst_ptr = destPointer
                 stream.dst_size = bufferSize
             default: throw CompressionError.corruptedData
             }
         } while status == COMPRESSION_STATUS_OK
-        return checksum
+        return crc32
     }
 }
 
