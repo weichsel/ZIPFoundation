@@ -12,7 +12,7 @@ import Foundation
 
 extension FileManager {
     typealias CentralDirectoryStructure = Entry.CentralDirectoryStructure
-
+    
     /// Zips the file or direcory contents at the specified source URL to the destination URL.
     ///
     /// If the item at the source URL is a directory, the directory itself will be
@@ -52,7 +52,7 @@ extension FileManager {
                 })
                 progress.totalUnitCount = totalUnitCount
             }
-
+            
             // If the caller wants to keep the parent directory, we use the lastPathComponent of the source URL
             // as common base for all entries (similar to macOS' Archive Utility.app)
             let directoryPrefix = sourceURL.lastPathComponent
@@ -77,7 +77,7 @@ extension FileManager {
                                  compressionMethod: compressionMethod, progress: progress)
         }
     }
-
+    
     /// Unzips the contents at the specified source URL to the destination URL.
     ///
     /// - Parameters:
@@ -85,8 +85,11 @@ extension FileManager {
     ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
-    public func unzipItem(at sourceURL: URL, to destinationURL: URL,
-                          progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
+    public func unzipItem(at sourceURL: URL,
+                          to destinationURL: URL,
+                          progress: Progress? = nil,
+                          preferredEncoding: String.Encoding? = nil,
+                          ignoreExistingFiles: Bool = false) throws {
         guard self.fileExists(atPath: sourceURL.path) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
@@ -108,13 +111,18 @@ extension FileManager {
             totalUnitCount = sortedEntries.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
             progress.totalUnitCount = totalUnitCount
         }
-
+        
         for entry in sortedEntries {
             let path = preferredEncoding == nil ? entry.path : entry.path(using: preferredEncoding!)
             let destinationEntryURL = destinationURL.appendingPathComponent(path)
             guard destinationEntryURL.isContained(in: destinationURL) else {
                 throw CocoaError(.fileReadInvalidFileName,
                                  userInfo: [NSFilePathErrorKey: destinationEntryURL.path])
+            }
+            if ignoreExistingFiles{
+                guard !FileManager().fileExists(atPath: destinationEntryURL.path) else {
+                    continue
+                }
             }
             if let progress = progress {
                 let entryProgress = archive.makeProgressForReading(entry)
@@ -125,14 +133,14 @@ extension FileManager {
             }
         }
     }
-
+    
     // MARK: - Helpers
-
+    
     func createParentDirectoryStructure(for url: URL) throws {
         let parentDirectoryURL = url.deletingLastPathComponent()
         try self.createDirectory(at: parentDirectoryURL, withIntermediateDirectories: true, attributes: nil)
     }
-
+    
     class func attributes(from entry: Entry) -> [FileAttributeKey: Any] {
         let centralDirectoryStructure = entry.centralDirectoryStructure
         let entryType = entry.type
@@ -146,13 +154,13 @@ extension FileManager {
         #endif
         let versionMadeBy = centralDirectoryStructure.versionMadeBy
         guard let osType = Entry.OSType(rawValue: UInt(versionMadeBy >> 8)) else { return attributes }
-
+        
         let externalFileAttributes = centralDirectoryStructure.externalFileAttributes
         let permissions = self.permissions(for: externalFileAttributes, osType: osType, entryType: entryType)
         attributes[.posixPermissions] = NSNumber(value: permissions)
         return attributes
     }
-
+    
     class func permissions(for externalFileAttributes: UInt32, osType: Entry.OSType,
                            entryType: Entry.EntryType) -> UInt16 {
         switch osType {
@@ -164,7 +172,7 @@ extension FileManager {
             return entryType == .directory ? defaultDirectoryPermissions : defaultFilePermissions
         }
     }
-
+    
     class func externalFileAttributesForEntry(of type: Entry.EntryType, permissions: UInt16) -> UInt32 {
         var typeInt: UInt16
         switch type {
@@ -179,7 +187,7 @@ extension FileManager {
         externalFileAttributes = (externalFileAttributes << 16)
         return externalFileAttributes
     }
-
+    
     class func permissionsForItem(at URL: URL) throws -> UInt16 {
         let fileManager = FileManager()
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: URL.path)
@@ -188,7 +196,7 @@ extension FileManager {
         let permissions = fileStat.st_mode
         return UInt16(permissions)
     }
-
+    
     class func fileModificationDateTimeForItem(at url: URL) throws -> Date {
         let fileManager = FileManager()
         guard fileManager.fileExists(atPath: url.path) else {
@@ -202,12 +210,12 @@ extension FileManager {
         #else
         let modTimeSpec = fileStat.st_mtim
         #endif
-
+        
         let timeStamp = TimeInterval(modTimeSpec.tv_sec) + TimeInterval(modTimeSpec.tv_nsec)/1000000000.0
         let modDate = Date(timeIntervalSince1970: timeStamp)
         return modDate
     }
-
+    
     class func fileSizeForItem(at url: URL) throws -> UInt32 {
         let fileManager = FileManager()
         guard fileManager.fileExists(atPath: url.path) else {
@@ -218,7 +226,7 @@ extension FileManager {
         lstat(entryFileSystemRepresentation, &fileStat)
         return UInt32(fileStat.st_size)
     }
-
+    
     class func typeForItem(at url: URL) throws -> Entry.EntryType {
         let fileManager = FileManager()
         guard url.isFileURL, fileManager.fileExists(atPath: url.path) else {
@@ -248,11 +256,11 @@ extension Date {
         let time = timegm(&unixTime)
         self = Date(timeIntervalSince1970: TimeInterval(time))
     }
-
+    
     var fileModificationDateTime: (UInt16, UInt16) {
         return (self.fileModificationDate, self.fileModificationTime)
     }
-
+    
     var fileModificationDate: UInt16 {
         var time = time_t(self.timeIntervalSince1970)
         guard let unixTime = gmtime(&time) else {
@@ -266,7 +274,7 @@ extension Date {
         let day = unixTime.pointee.tm_mday
         return (UInt16)(day + ((month) * 32) +  ((year - 1980) * 512))
     }
-
+    
     var fileModificationTime: UInt16 {
         var time = time_t(self.timeIntervalSince1970)
         guard let unixTime = gmtime(&time) else {
