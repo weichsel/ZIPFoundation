@@ -211,7 +211,7 @@ extension ZIPFoundationTests {
         guard let entry = Entry(centralDirectoryStructure: cds, localFileHeader: lfh, dataDescriptor: nil) else {
             XCTFail("Failed to create test entry."); return
         }
-        var attributes = FileManager.attributes(from: entry)
+        let attributes = FileManager.attributes(from: entry)
         guard let permissions = attributes[.posixPermissions] as? UInt16 else {
             XCTFail("Failed to read file attributes."); return
         }
