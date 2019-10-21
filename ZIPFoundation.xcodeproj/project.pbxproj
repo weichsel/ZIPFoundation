@@ -424,7 +424,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=watchos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = ZIPFoundation;
+				PRODUCT_BUNDLE_IDENTIFIER = com.peakstep.ZIPFoundation;
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -450,7 +450,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=watchos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = ZIPFoundation;
+				PRODUCT_BUNDLE_IDENTIFIER = com.peakstep.ZIPFoundation;
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
