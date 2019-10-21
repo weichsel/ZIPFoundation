@@ -96,7 +96,7 @@ extension Data {
         let mask = 0xffffffff as UInt32
         let bufferSize = self.count/MemoryLayout<UInt8>.size
         var result = checksum ^ mask
-		#if swift(>=5.0)
+        #if swift(>=5.0)
         crcTable.withUnsafeBufferPointer { crcTablePointer in
             self.withUnsafeBytes { bufferPointer in
                 let bytePointer = bufferPointer.bindMemory(to: UInt8.self)
@@ -134,12 +134,13 @@ extension Data {
         #endif
     }
 
-    static func decompress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
+    static func decompress(size: Int, bufferSize: Int, skipCRC32: Bool,
+                           provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize,
-                                provider: provider, consumer: consumer)
+                                skipCRC32: skipCRC32, provider: provider, consumer: consumer)
         #else
-        return try self.decode(bufferSize: bufferSize, provider: provider, consumer: consumer)
+        return try self.decode(bufferSize: bufferSize, skipCRC32: skipCRC32, provider: provider, consumer: consumer)
         #endif
     }
 }
@@ -150,9 +151,9 @@ extension Data {
 import Compression
 
 extension Data {
-    static func process(operation: compression_stream_operation, size: Int, bufferSize: Int,
+    static func process(operation: compression_stream_operation, size: Int, bufferSize: Int, skipCRC32: Bool = false,
                         provider: Provider, consumer: Consumer) throws -> CRC32 {
-        var checksum = CRC32(0)
+        var crc32 = CRC32(0)
         let destPointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
         defer { destPointer.deallocate() }
         let streamPointer = UnsafeMutablePointer<compression_stream>.allocate(capacity: 1)
@@ -185,19 +186,19 @@ extension Data {
                         status = compression_stream_process(&stream, flags)
                     }
                 }
-                if operation == COMPRESSION_STREAM_ENCODE { checksum = sourceData.crc32(checksum: checksum) }
+                if operation == COMPRESSION_STREAM_ENCODE && !skipCRC32 { crc32 = sourceData.crc32(checksum: crc32) }
             }
             switch status {
             case COMPRESSION_STATUS_OK, COMPRESSION_STATUS_END:
                 let outputData = Data(bytesNoCopy: destPointer, count: bufferSize - stream.dst_size, deallocator: .none)
                 try consumer(outputData)
-                if operation == COMPRESSION_STREAM_DECODE { checksum = outputData.crc32(checksum: checksum) }
+                if operation == COMPRESSION_STREAM_DECODE && !skipCRC32 { crc32 = outputData.crc32(checksum: crc32) }
                 stream.dst_ptr = destPointer
                 stream.dst_size = bufferSize
             default: throw CompressionError.corruptedData
             }
         } while status == COMPRESSION_STATUS_OK
-        return checksum
+        return crc32
     }
 }
 
@@ -250,7 +251,7 @@ extension Data {
         return zipCRC32
     }
 
-    static func decode(bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
+    static func decode(bufferSize: Int, skipCRC32: Bool, provider: Provider, consumer: Consumer) throws -> CRC32 {
         var stream = z_stream()
         let streamSize = Int32(MemoryLayout<z_stream>.size)
         var result = inflateInit2_(&stream, -MAX_WBITS, ZLIB_VERSION, streamSize)
@@ -288,7 +289,7 @@ extension Data {
                 let remainingLength = UInt32(bufferSize) - stream.avail_out
                 outputData.count = Int(remainingLength)
                 try consumer(outputData)
-                unzipCRC32 = outputData.crc32(checksum: unzipCRC32)
+                if !skipCRC32 { unzipCRC32 = outputData.crc32(checksum: unzipCRC32) }
             } while stream.avail_out == 0
         } while result != Z_STREAM_END
         return unzipCRC32

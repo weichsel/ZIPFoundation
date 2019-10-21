@@ -17,10 +17,11 @@ extension Archive {
     ///   - entry: The ZIP `Entry` to read.
     ///   - url: The destination file URL.
     ///   - bufferSize: The maximum size of the read buffer and the decompression buffer (if needed).
+    ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to speed up performance.
     ///   - progress: A progress object that can be used to track or cancel the extract operation.
-    /// - Returns: The checksum of the processed content.
+    /// - Returns: The checksum of the processed content or 0 if the `skipCRC32` flag was set to `true`.
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
-    public func extract(_ entry: Entry, to url: URL, bufferSize: UInt32 = defaultReadChunkSize,
+    public func extract(_ entry: Entry, to url: URL, bufferSize: UInt32 = defaultReadChunkSize, skipCRC32: Bool = false,
                         progress: Progress? = nil) throws -> CRC32 {
         let fileManager = FileManager()
         var checksum = CRC32(0)
@@ -36,12 +37,14 @@ extension Archive {
             }
             defer { fclose(destinationFile) }
             let consumer = { _ = try Data.write(chunk: $0, to: destinationFile) }
-            checksum = try self.extract(entry, bufferSize: bufferSize, progress: progress, consumer: consumer)
+            checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
+                                        progress: progress, consumer: consumer)
         case .directory:
             let consumer = { (_: Data) in
                 try fileManager.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
             }
-            checksum = try self.extract(entry, bufferSize: bufferSize, progress: progress, consumer: consumer)
+            checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
+                                        progress: progress, consumer: consumer)
         case .symlink:
             guard !fileManager.fileExists(atPath: url.path) else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
@@ -51,7 +54,8 @@ extension Archive {
                 try fileManager.createParentDirectoryStructure(for: url)
                 try fileManager.createSymbolicLink(atPath: url.path, withDestinationPath: linkPath)
             }
-            checksum = try self.extract(entry, bufferSize: bufferSize, progress: progress, consumer: consumer)
+            checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
+                                        progress: progress, consumer: consumer)
         }
         let attributes = FileManager.attributes(from: entry)
         try fileManager.setAttributes(attributes, ofItemAtPath: url.path)
@@ -63,11 +67,12 @@ extension Archive {
     /// - Parameters:
     ///   - entry: The ZIP `Entry` to read.
     ///   - bufferSize: The maximum size of the read buffer and the decompression buffer (if needed).
+    ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to speed up performance.
     ///   - progress: A progress object that can be used to track or cancel the extract operation.
     ///   - consumer: A closure that consumes contents of `Entry` as `Data` chunks.
-    /// - Returns: The checksum of the processed content.
+    /// - Returns: The checksum of the processed content or 0 if the `skipCRC32` flag was set to `true`..
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
-    public func extract(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize,
+    public func extract(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, skipCRC32: Bool = false,
                         progress: Progress? = nil, consumer: Consumer) throws -> CRC32 {
         var checksum = CRC32(0)
         let localFileHeader = entry.localFileHeader
@@ -80,9 +85,9 @@ extension Archive {
             }
             switch compressionMethod {
             case .none: checksum = try self.readUncompressed(entry: entry, bufferSize: bufferSize,
-                                                             progress: progress, with: consumer)
+                                                             skipCRC32: skipCRC32, progress: progress, with: consumer)
             case .deflate: checksum = try self.readCompressed(entry: entry, bufferSize: bufferSize,
-                                                              progress: progress, with: consumer)
+                                                              skipCRC32: skipCRC32, progress: progress, with: consumer)
             }
         case .directory:
             try consumer(Data())
@@ -100,10 +105,11 @@ extension Archive {
 
     // MARK: - Helpers
 
-    private func readUncompressed(entry: Entry, bufferSize: UInt32,
+    private func readUncompressed(entry: Entry, bufferSize: UInt32, skipCRC32: Bool,
                                   progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = Int(entry.centralDirectoryStructure.uncompressedSize)
-        return try Data.consumePart(of: size, chunkSize: Int(bufferSize), provider: { (_, chunkSize) -> Data in
+        return try Data.consumePart(of: size, chunkSize: Int(bufferSize), skipCRC32: skipCRC32,
+                                    provider: { (_, chunkSize) -> Data in
             return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
         }, consumer: { (data) in
             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
@@ -112,10 +118,11 @@ extension Archive {
         })
     }
 
-    private func readCompressed(entry: Entry, bufferSize: UInt32,
+    private func readCompressed(entry: Entry, bufferSize: UInt32, skipCRC32: Bool,
                                 progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = Int(entry.centralDirectoryStructure.compressedSize)
-        return try Data.decompress(size: size, bufferSize: Int(bufferSize), provider: { (_, chunkSize) -> Data in
+        return try Data.decompress(size: size, bufferSize: Int(bufferSize), skipCRC32: skipCRC32,
+                                   provider: { (_, chunkSize) -> Data in
             return try Data.readChunk(of: chunkSize, from: self.archiveFile)
         }, consumer: { (data) in
             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
