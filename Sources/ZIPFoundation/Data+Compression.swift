@@ -125,7 +125,7 @@ extension Data {
         return result ^ mask
     }
 
-    static func compress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
+    public static func compress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_ENCODE, size: size, bufferSize: bufferSize,
                                 provider: provider, consumer: consumer)
@@ -134,7 +134,7 @@ extension Data {
         #endif
     }
 
-    static func decompress(size: Int, bufferSize: Int, skipCRC32: Bool,
+    public static func decompress(size: Int, bufferSize: Int, skipCRC32: Bool,
                            provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize,
