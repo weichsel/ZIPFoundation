@@ -15,18 +15,28 @@ extension ZIPFoundationTests {
         let file = MemoryFile(data: "ABCDEabcde".data(using: .utf8)!).open(mode: "r")
         var ch : [UInt8] = [0, 0, 0]
         XCTAssertEqual(fread(&ch, 1, 2, file), 2)
-        XCTAssertEqual(ch[0], Character("A").asciiValue ?? 0)
-        XCTAssertEqual(ch[1], Character("B").asciiValue ?? 0)
+        XCTAssertEqual(String(Unicode.Scalar(ch[0])), "A")
+        XCTAssertEqual(String(Unicode.Scalar(ch[1])), "B")
         XCTAssertNotEqual(fwrite("x", 1, 1, file), 1)
         XCTAssertEqual(fseek(file, 3, SEEK_CUR), 0)
         XCTAssertEqual(fread(&ch, 1, 2, file), 2)
-        XCTAssertEqual(ch[0], Character("a").asciiValue ?? 0)
-        XCTAssertEqual(ch[1], Character("b").asciiValue ?? 0)
+        XCTAssertEqual(String(Unicode.Scalar(ch[0])), "a")
+        XCTAssertEqual(String(Unicode.Scalar(ch[1])), "b")
         XCTAssertEqual(fseek(file, 9, SEEK_SET), 0)
         XCTAssertEqual(fread(&ch, 1, 2, file), 1)
-        XCTAssertEqual(ch[0], Character("e").asciiValue ?? 0)
-        XCTAssertEqual(ch[1], Character("b").asciiValue ?? 0)
+        XCTAssertEqual(String(Unicode.Scalar(ch[0])), "e")
+        XCTAssertEqual(String(Unicode.Scalar(ch[1])), "b")
         XCTAssertEqual(fclose(file), 0)
+    }
+
+    func testReadOnlySlicedFile() {
+        let originalData = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".data(using: .utf8)!
+        let slice        = originalData[10..<originalData.count]
+        let file = MemoryFile(data: slice).open(mode: "r")
+        var ch : [UInt8] = [0, 0, 0]
+        XCTAssertEqual(fread(&ch, 1, 2, file), 2)
+        XCTAssertEqual(String(Unicode.Scalar(ch[0])), "A")
+        XCTAssertEqual(String(Unicode.Scalar(ch[1])), "B")
     }
 
     func testWriteOnlyFile() {
