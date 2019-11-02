@@ -9,6 +9,7 @@
 //
 
 import Foundation
+import Compat
 
 class MemoryFile {
     public private(set) var data:   Data
@@ -22,14 +23,9 @@ class MemoryFile {
         let cookie   = Unmanaged.passRetained(self)
         let writable = mode.count > 0 && (mode.first! != "r" || mode.last! == "+")
         let append   = mode.count > 0 && mode.first! == "a"
-#if os(macOS) || os(iOS) || os(tvOS)
         let result = writable
             ? funopen(cookie.toOpaque(), readStub, writeStub, seekStub, closeStub)
             : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)
-#else
-	let stubs  = cookie_io_functions_t(read: readStub, write: writeStub, seek: seekStub, close: closeStub)
-	let result = fopencookie(cookie.toOpaque(), mode, stubs)
-#endif
         if append {
             fseek(result, 0, SEEK_END)
         }
@@ -88,7 +84,6 @@ fileprivate func closeStub(_ cookie: UnsafeMutableRawPointer?) -> Int32 {
     return 0
 }
 
-#if os(macOS) || os(iOS) || os(tvOS)
 fileprivate func readStub(_ cookie: UnsafeMutableRawPointer?, _ bytePtr: UnsafeMutablePointer<Int8>?, _ count: Int32) -> Int32 {
     guard let cookie = cookie, let bytePtr = bytePtr else { return 0 }
     return Int32(fileFromCookie(cookie: cookie).readData(
@@ -101,31 +96,7 @@ fileprivate func writeStub(_ cookie: UnsafeMutableRawPointer?, _ bytePtr: Unsafe
         buffer: UnsafeRawBufferPointer(start: bytePtr, count: Int(count))))
 }
 
-fileprivate func seekStub(_ cookie: UnsafeMutableRawPointer?, _ offset: fpos_t, _ whence: Int32) -> fpos_t {
+fileprivate func seekStub(_ cookie: UnsafeMutableRawPointer?, _ offset: Int64, _ whence: Int32) -> Int64 {
     guard let cookie = cookie else { return 0 }
-    return fpos_t(fileFromCookie(cookie: cookie).seek(offset: Int(offset), whence: whence))
+    return Int64(fileFromCookie(cookie: cookie).seek(offset: Int(offset), whence: whence))
 }
-#else
-fileprivate func readStub(_ cookie: UnsafeMutableRawPointer?, _ bytePtr: UnsafeMutablePointer<Int8>?, _ count: Int) -> Int {
-    guard let cookie = cookie, let bytePtr = bytePtr else { return 0 }
-    return fileFromCookie(cookie: cookie).readData(
-        buffer: UnsafeMutableRawBufferPointer(start: bytePtr, count: count))
-}
-
-fileprivate func writeStub(_ cookie: UnsafeMutableRawPointer?, _ bytePtr: UnsafePointer<Int8>?, _ count: Int) -> Int {
-    guard let cookie = cookie, let bytePtr = bytePtr else { return 0 }
-    return fileFromCookie(cookie: cookie).writeData(
-        buffer: UnsafeRawBufferPointer(start: bytePtr, count: count))
-}
-
-fileprivate func seekStub(_ cookie: UnsafeMutableRawPointer?, _ offset: UnsafeMutablePointer<Int>?, _ whence: Int32) -> Int32 {
-    guard let cookie = cookie, let offset = offset else { return 0 }
-    let result       = fileFromCookie(cookie: cookie).seek(offset: Int(offset.pointee), whence: whence)
-    if result >= 0 {
-        offset.pointee = result
-	return 0
-    } else {
-        return -1
-    }
-}
-#endif
