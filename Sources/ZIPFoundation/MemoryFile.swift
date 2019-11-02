@@ -32,15 +32,15 @@ class MemoryFile {
         return result
     }
 
-    fileprivate func readData(buffer: UnsafeMutableRawBufferPointer) -> Int {
+    fileprivate func readData(buffer: UnsafeMutableBufferPointer<UInt8>) -> Int {
         let sz = min(buffer.count, data.count-offset)
         let start = data.startIndex
-        data.copyBytes(to: buffer.bindMemory(to: UInt8.self), from: start+offset..<start+offset+sz)
+        data.copyBytes(to: buffer, from: start+offset..<start+offset+sz)
         offset += sz
         return sz
     }
 
-    fileprivate func writeData(buffer: UnsafeRawBufferPointer) -> Int {
+    fileprivate func writeData(buffer: UnsafeBufferPointer<UInt8>) -> Int {
         let start = data.startIndex
         if offset < data.count && offset+buffer.count > data.count {
             data.removeSubrange(start+offset..<start+data.count)
@@ -48,10 +48,10 @@ class MemoryFile {
             data.append(Data(count: offset-data.count))
         }
         if offset == data.count {
-            data.append(buffer.bindMemory(to: UInt8.self))
+            data.append(buffer)
         } else {
             let start = data.startIndex // May have changed in earlier mutation
-            data.replaceSubrange(start+offset..<start+offset+buffer.count, with: buffer.bindMemory(to: UInt8.self))
+            data.replaceSubrange(start+offset..<start+offset+buffer.count, with: buffer)
         }
         offset += buffer.count
         return buffer.count
@@ -87,13 +87,13 @@ fileprivate func closeStub(_ cookie: UnsafeMutableRawPointer?) -> Int32 {
 fileprivate func readStub(_ cookie: UnsafeMutableRawPointer?, _ bytePtr: UnsafeMutablePointer<Int8>?, _ count: Int32) -> Int32 {
     guard let cookie = cookie, let bytePtr = bytePtr else { return 0 }
     return Int32(fileFromCookie(cookie: cookie).readData(
-        buffer: UnsafeMutableRawBufferPointer(start: bytePtr, count: Int(count))))
+        buffer: UnsafeMutableBufferPointer<UInt8>(start: UnsafeMutableRawPointer(bytePtr).assumingMemoryBound(to: UInt8.self), count: Int(count))))
 }
 
 fileprivate func writeStub(_ cookie: UnsafeMutableRawPointer?, _ bytePtr: UnsafePointer<Int8>?, _ count: Int32) -> Int32 {
     guard let cookie = cookie, let bytePtr = bytePtr else { return 0 }
     return Int32(fileFromCookie(cookie: cookie).writeData(
-        buffer: UnsafeRawBufferPointer(start: bytePtr, count: Int(count))))
+        buffer: UnsafeBufferPointer<UInt8>(start: UnsafeRawPointer(bytePtr).assumingMemoryBound(to: UInt8.self), count: Int(count))))
 }
 
 fileprivate func seekStub(_ cookie: UnsafeMutableRawPointer?, _ offset: Int64, _ whence: Int32) -> Int64 {

@@ -14,7 +14,8 @@ let package = Package(
     ],
 	dependencies: dependencies,
     targets: [
-        .target(name: "ZIPFoundation"),
+        .target(name: "Compat"),
+        .target(name: "ZIPFoundation", dependencies: ["Compat"]),
 		.testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
     ]
 )

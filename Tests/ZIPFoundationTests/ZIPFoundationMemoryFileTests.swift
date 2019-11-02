@@ -10,6 +10,7 @@ import Foundation
 import XCTest
 @testable import ZIPFoundation
 
+@available(swift 4.1)
 extension ZIPFoundationTests {
     func testReadOnlyFile() {
         let file = MemoryFile(data: "ABCDEabcde".data(using: .utf8)!).open(mode: "r")
