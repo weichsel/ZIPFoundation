@@ -3,15 +3,15 @@ import PackageDescription
 
 #if canImport(Compression)
 let targets: [Target] = [
-    .target(name: "Compat"),
-    .target(name: "ZIPFoundation", dependencies: ["Compat"]),
+    .target(name: "ZIPFoundationCompat"),
+    .target(name: "ZIPFoundation", dependencies: ["ZIPFoundationCompat"]),
     .testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
 ]
 #else
 let targets: [Target] = [
     .systemLibrary(name: "CZLib", pkgConfig: "zlib", providers: [.brew(["zlib"]), .apt(["zlib"])]),
-    .target(name: "Compat"),
-    .target(name: "ZIPFoundation", dependencies: ["Compat", "CZLib"]),
+    .target(name: "ZIPFoundationCompat"),
+    .target(name: "ZIPFoundation", dependencies: ["ZIPFoundationCompat", "CZLib"]),
     .testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
 ]
 #endif

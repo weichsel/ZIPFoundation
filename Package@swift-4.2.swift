@@ -14,8 +14,8 @@ let package = Package(
     ],
 	dependencies: dependencies,
     targets: [
-        .target(name: "Compat"),
-        .target(name: "ZIPFoundation", dependencies: ["Compat"]),
+        .target(name: "ZIPFoundationCompat"),
+        .target(name: "ZIPFoundation", dependencies: ["ZIPFoundationCompat"]),
 		.testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
     ],
     swiftLanguageVersions: [.v4, .v4_2]

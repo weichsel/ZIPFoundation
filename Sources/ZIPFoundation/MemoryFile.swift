@@ -9,7 +9,7 @@
 //
 
 import Foundation
-import Compat
+import ZIPFoundationCompat
 
 class MemoryFile {
     public private(set) var data:   Data
