@@ -201,7 +201,7 @@ class ZIPFoundationTests: XCTestCase {
         sourceArchiveURL.appendPathComponent(testFunction.replacingOccurrences(of: "()", with: ""))
         sourceArchiveURL.appendPathExtension("zip")
         do {
-            let data    = mode == .create ? Data() : try Data(contentsOf: sourceArchiveURL)
+            let data = mode == .create ? Data() : try Data(contentsOf: sourceArchiveURL)
             guard let archive = Archive(data: data, accessMode: mode,
                                         preferredEncoding: preferredEncoding) else {
                 throw Archive.ArchiveError.unreadableArchive

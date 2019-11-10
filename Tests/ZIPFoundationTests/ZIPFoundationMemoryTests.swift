@@ -11,34 +11,6 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
-    func testCreateArchiveAddUncompressedEntryToMemory() {
-        let archive = self.memoryArchive(for: #function, mode: .create)
-        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
-        do {
-            let relativePath = assetURL.lastPathComponent
-            let baseURL = assetURL.deletingLastPathComponent()
-            try archive.addEntry(with: relativePath, relativeTo: baseURL)
-        } catch {
-            XCTFail("Failed to add entry to uncompressed folder archive with error : \(error)")
-        }
-        XCTAssert(archive.checkIntegrity())
-    }
-
-    func testCreateArchiveAddCompressedEntryToMemory() {
-        let archive = self.memoryArchive(for: #function, mode: .create)
-        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
-        do {
-            let relativePath = assetURL.lastPathComponent
-            let baseURL = assetURL.deletingLastPathComponent()
-            try archive.addEntry(with: relativePath, relativeTo: baseURL, compressionMethod: .deflate)
-        } catch {
-            XCTFail("Failed to add entry to compressed folder archive with error : \(error)")
-        }
-        let entry = archive[assetURL.lastPathComponent]
-        XCTAssertNotNil(entry)
-        XCTAssert(archive.checkIntegrity())
-    }
-
     func testExtractUncompressedFolderEntriesFromMemory() {
         let archive = self.memoryArchive(for: #function, mode: .read)
         for entry in archive {
@@ -87,6 +59,34 @@ extension ZIPFoundationTests {
                 XCTFail("Failed to unzip compressed folder entries")
             }
         }
+    }
+
+    func testCreateArchiveAddUncompressedEntryToMemory() {
+        let archive = self.memoryArchive(for: #function, mode: .create)
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        do {
+            let relativePath = assetURL.lastPathComponent
+            let baseURL = assetURL.deletingLastPathComponent()
+            try archive.addEntry(with: relativePath, relativeTo: baseURL)
+        } catch {
+            XCTFail("Failed to add entry to uncompressed folder archive with error : \(error)")
+        }
+        XCTAssert(archive.checkIntegrity())
+    }
+
+    func testCreateArchiveAddCompressedEntryToMemory() {
+        let archive = self.memoryArchive(for: #function, mode: .create)
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        do {
+            let relativePath = assetURL.lastPathComponent
+            let baseURL = assetURL.deletingLastPathComponent()
+            try archive.addEntry(with: relativePath, relativeTo: baseURL, compressionMethod: .deflate)
+        } catch {
+            XCTFail("Failed to add entry to compressed folder archive with error : \(error)")
+        }
+        let entry = archive[assetURL.lastPathComponent]
+        XCTAssertNotNil(entry)
+        XCTAssert(archive.checkIntegrity())
     }
 
     func testReadOnlyFile() {
