@@ -35,7 +35,7 @@ jobs:
     - script: swift test -c release -Xswiftc -enable-testing
       displayName: Linux Swift 4.0
 
-- job: macOS_10_13
+- job: macOS_10_14
   pool:
     vmImage: 'macOS 10.14'
   variables:
