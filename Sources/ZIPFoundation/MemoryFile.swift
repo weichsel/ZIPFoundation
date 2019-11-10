@@ -22,7 +22,7 @@ class MemoryFile {
         let cookie   = Unmanaged.passRetained(self)
         let writable = mode.count > 0 && (mode.first! != "r" || mode.last! == "+")
         let append   = mode.count > 0 && mode.first! == "a"
-        #if os(macOS) || os(iOS) || os(tvOS)
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         let result = writable
             ? funopen(cookie.toOpaque(), readStub, writeStub, seekStub, closeStub)
             : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)
@@ -89,7 +89,7 @@ private func closeStub(_ cookie: UnsafeMutableRawPointer?) -> Int32 {
     return 0
 }
 
-#if os(macOS) || os(iOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
 private func readStub(_ cookie: UnsafeMutableRawPointer?,
                       _ bytePtr: UnsafeMutablePointer<Int8>?,
                       _ count: Int32) -> Int32 {
@@ -112,8 +112,8 @@ private func seekStub(_ cookie: UnsafeMutableRawPointer?,
     guard let cookie = cookie else { return 0 }
     return fpos_t(fileFromCookie(cookie: cookie).seek(offset: Int(offset), whence: whence))
 }
-#else
 
+#else
 private func readStub(_ cookie: UnsafeMutableRawPointer?,
                       _ bytePtr: UnsafeMutablePointer<Int8>?,
                       _ count: Int) -> Int {
