@@ -175,12 +175,12 @@ public final class Archive: Sequence {
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
-    var memoryFile : MemoryFile?
+    var memoryFile: MemoryFile?
     public init?(data: Data = Data(), accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
         self.url = URL(string: "memory:")!
         self.accessMode = mode
         self.preferredEncoding = preferredEncoding
-        let posixMode : String
+        let posixMode: String
         switch mode {
         case .read:
             posixMode = "rb"
@@ -214,7 +214,7 @@ public final class Archive: Sequence {
         self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
     }
 
-    public var data : Data? { return memoryFile?.data }
+    public var data: Data? { return memoryFile?.data }
 
     deinit {
         fclose(self.archiveFile)
@@ -337,9 +337,7 @@ extension Archive {
             case .directory:
                 count = defaultDirectoryUnitCount
             }
-        } catch {
-            count = -1
-        }
+        } catch { count = -1 }
         return count
     }
 

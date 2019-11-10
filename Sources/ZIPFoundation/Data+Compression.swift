@@ -135,7 +135,7 @@ extension Data {
     }
 
     public static func decompress(size: Int, bufferSize: Int, skipCRC32: Bool,
-                           provider: Provider, consumer: Consumer) throws -> CRC32 {
+                                  provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize,
                                 skipCRC32: skipCRC32, provider: provider, consumer: consumer)
