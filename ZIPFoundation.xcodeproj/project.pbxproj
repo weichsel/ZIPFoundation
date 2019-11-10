@@ -6,285 +6,178 @@
 	objectVersion = 46;
 	objects = {
 
-/* Begin PBXAggregateTarget section */
-		"ZIPFoundation::ZIPFoundationPackageTests::ProductTarget" /* ZIPFoundationPackageTests */ = {
-			isa = PBXAggregateTarget;
-			buildConfigurationList = OBJ_68 /* Build configuration list for PBXAggregateTarget "ZIPFoundationPackageTests" */;
-			buildPhases = (
-			);
-			dependencies = (
-				OBJ_71 /* PBXTargetDependency */,
-			);
-			name = ZIPFoundationPackageTests;
-			productName = ZIPFoundationPackageTests;
-		};
-/* End PBXAggregateTarget section */
-
 /* Begin PBXBuildFile section */
-		OBJ_43 /* Archive+Reading.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_14 /* Archive+Reading.swift */; };
-		OBJ_44 /* Archive+Writing.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_15 /* Archive+Writing.swift */; };
-		OBJ_45 /* Archive.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_16 /* Archive.swift */; };
-		OBJ_46 /* Data+Compression.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_17 /* Data+Compression.swift */; };
-		OBJ_47 /* Data+Serialization.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_18 /* Data+Serialization.swift */; };
-		OBJ_48 /* Entry.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_19 /* Entry.swift */; };
-		OBJ_49 /* FileManager+ZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_20 /* FileManager+ZIP.swift */; };
-		OBJ_50 /* MemoryFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_21 /* MemoryFile.swift */; };
-		OBJ_52 /* ZIPFoundationCompat.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "ZIPFoundation::ZIPFoundationCompat::Product" /* ZIPFoundationCompat.framework */; };
-		OBJ_59 /* funopen_compat.c in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_9 /* funopen_compat.c */; };
-		OBJ_66 /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_6 /* Package.swift */; };
-		OBJ_77 /* ZIPFoundationDataSerializationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_24 /* ZIPFoundationDataSerializationTests.swift */; };
-		OBJ_78 /* ZIPFoundationEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_25 /* ZIPFoundationEntryTests.swift */; };
-		OBJ_79 /* ZIPFoundationFileManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_26 /* ZIPFoundationFileManagerTests.swift */; };
-		OBJ_80 /* ZIPFoundationMemoryFileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_27 /* ZIPFoundationMemoryFileTests.swift */; };
-		OBJ_81 /* ZIPFoundationPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_28 /* ZIPFoundationPerformanceTests.swift */; };
-		OBJ_82 /* ZIPFoundationProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_29 /* ZIPFoundationProgressTests.swift */; };
-		OBJ_83 /* ZIPFoundationReadingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_30 /* ZIPFoundationReadingTests.swift */; };
-		OBJ_84 /* ZIPFoundationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_31 /* ZIPFoundationTests.swift */; };
-		OBJ_85 /* ZIPFoundationWritingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_32 /* ZIPFoundationWritingTests.swift */; };
-		OBJ_87 /* ZIPFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */; };
-		OBJ_88 /* ZIPFoundationCompat.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "ZIPFoundation::ZIPFoundationCompat::Product" /* ZIPFoundationCompat.framework */; };
+		95B5A3D42366731B00D4D8FD /* MemoryFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B5A3D32366731B00D4D8FD /* MemoryFile.swift */; };
+		95B5A3D72367999900D4D8FD /* ZIPFoundationMemoryFileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryFileTests.swift */; };
+		BA3716AB21F0A238006E54E6 /* ZIPFoundationProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */; };
+		OBJ_33 /* ZIPFoundationDataSerializationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_18 /* ZIPFoundationDataSerializationTests.swift */; };
+		OBJ_34 /* ZIPFoundationEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_19 /* ZIPFoundationEntryTests.swift */; };
+		OBJ_35 /* ZIPFoundationFileManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_20 /* ZIPFoundationFileManagerTests.swift */; };
+		OBJ_36 /* ZIPFoundationPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_21 /* ZIPFoundationPerformanceTests.swift */; };
+		OBJ_37 /* ZIPFoundationReadingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_22 /* ZIPFoundationReadingTests.swift */; };
+		OBJ_38 /* ZIPFoundationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_23 /* ZIPFoundationTests.swift */; };
+		OBJ_39 /* ZIPFoundationWritingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_24 /* ZIPFoundationWritingTests.swift */; };
+		OBJ_41 /* ZIPFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */; };
+		OBJ_48 /* Archive+Reading.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_9 /* Archive+Reading.swift */; };
+		OBJ_49 /* Archive+Writing.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_10 /* Archive+Writing.swift */; };
+		OBJ_50 /* Archive.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_11 /* Archive.swift */; };
+		OBJ_51 /* Data+Compression.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_12 /* Data+Compression.swift */; };
+		OBJ_52 /* Data+Serialization.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_13 /* Data+Serialization.swift */; };
+		OBJ_53 /* Entry.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_14 /* Entry.swift */; };
+		OBJ_54 /* FileManager+ZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_15 /* FileManager+ZIP.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		95992FA9236FB2B4008FEE69 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = OBJ_1 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = "ZIPFoundation::ZIPFoundationCompat";
-			remoteInfo = ZIPFoundationCompat;
-		};
-		95992FAA236FB2B4008FEE69 /* PBXContainerItemProxy */ = {
+		BAEFCCF91EFD201600AFB154 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = OBJ_1 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = "ZIPFoundation::ZIPFoundation";
 			remoteInfo = ZIPFoundation;
 		};
-		95992FAB236FB2B4008FEE69 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = OBJ_1 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = "ZIPFoundation::ZIPFoundationCompat";
-			remoteInfo = ZIPFoundationCompat;
-		};
-		95992FAC236FB35A008FEE69 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = OBJ_1 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = "ZIPFoundation::ZIPFoundationTests";
-			remoteInfo = ZIPFoundationTests;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		OBJ_11 /* funopen_compat.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = funopen_compat.h; sourceTree = "<group>"; };
-		OBJ_12 /* module.modulemap */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.module-map"; name = module.modulemap; path = /Users/neeri/Development/ZIPFoundation/ZIPFoundation.xcodeproj/GeneratedModuleMap/ZIPFoundationCompat/module.modulemap; sourceTree = "<group>"; };
-		OBJ_14 /* Archive+Reading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Reading.swift"; sourceTree = "<group>"; };
-		OBJ_15 /* Archive+Writing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Writing.swift"; sourceTree = "<group>"; };
-		OBJ_16 /* Archive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Archive.swift; sourceTree = "<group>"; };
-		OBJ_17 /* Data+Compression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Compression.swift"; sourceTree = "<group>"; };
-		OBJ_18 /* Data+Serialization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Serialization.swift"; sourceTree = "<group>"; };
-		OBJ_19 /* Entry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entry.swift; sourceTree = "<group>"; };
-		OBJ_20 /* FileManager+ZIP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileManager+ZIP.swift"; sourceTree = "<group>"; };
-		OBJ_21 /* MemoryFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryFile.swift; sourceTree = "<group>"; };
-		OBJ_24 /* ZIPFoundationDataSerializationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationDataSerializationTests.swift; sourceTree = "<group>"; };
-		OBJ_25 /* ZIPFoundationEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationEntryTests.swift; sourceTree = "<group>"; };
-		OBJ_26 /* ZIPFoundationFileManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationFileManagerTests.swift; sourceTree = "<group>"; };
-		OBJ_27 /* ZIPFoundationMemoryFileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationMemoryFileTests.swift; sourceTree = "<group>"; };
-		OBJ_28 /* ZIPFoundationPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationPerformanceTests.swift; sourceTree = "<group>"; };
-		OBJ_29 /* ZIPFoundationProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationProgressTests.swift; sourceTree = "<group>"; };
-		OBJ_30 /* ZIPFoundationReadingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationReadingTests.swift; sourceTree = "<group>"; };
-		OBJ_31 /* ZIPFoundationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationTests.swift; sourceTree = "<group>"; };
-		OBJ_32 /* ZIPFoundationWritingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationWritingTests.swift; sourceTree = "<group>"; };
-		OBJ_33 /* ZIPFoundationCompat */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ZIPFoundationCompat; sourceTree = SOURCE_ROOT; };
+		95B5A3D32366731B00D4D8FD /* MemoryFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryFile.swift; sourceTree = "<group>"; };
+		95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryFileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationMemoryFileTests.swift; sourceTree = "<group>"; };
+		BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationProgressTests.swift; sourceTree = "<group>"; };
+		OBJ_10 /* Archive+Writing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Writing.swift"; sourceTree = "<group>"; };
+		OBJ_11 /* Archive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Archive.swift; sourceTree = "<group>"; };
+		OBJ_12 /* Data+Compression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Compression.swift"; sourceTree = "<group>"; };
+		OBJ_13 /* Data+Serialization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Serialization.swift"; sourceTree = "<group>"; };
+		OBJ_14 /* Entry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entry.swift; sourceTree = "<group>"; };
+		OBJ_15 /* FileManager+ZIP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileManager+ZIP.swift"; sourceTree = "<group>"; };
+		OBJ_18 /* ZIPFoundationDataSerializationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationDataSerializationTests.swift; sourceTree = "<group>"; };
+		OBJ_19 /* ZIPFoundationEntryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationEntryTests.swift; sourceTree = "<group>"; };
+		OBJ_20 /* ZIPFoundationFileManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationFileManagerTests.swift; sourceTree = "<group>"; };
+		OBJ_21 /* ZIPFoundationPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationPerformanceTests.swift; sourceTree = "<group>"; };
+		OBJ_22 /* ZIPFoundationReadingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationReadingTests.swift; sourceTree = "<group>"; };
+		OBJ_23 /* ZIPFoundationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationTests.swift; sourceTree = "<group>"; };
+		OBJ_24 /* ZIPFoundationWritingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationWritingTests.swift; sourceTree = "<group>"; };
 		OBJ_6 /* Package.swift */ = {isa = PBXFileReference; explicitFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
-		OBJ_9 /* funopen_compat.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = funopen_compat.c; sourceTree = "<group>"; };
-		"ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ZIPFoundation.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		"ZIPFoundation::ZIPFoundationCompat::Product" /* ZIPFoundationCompat.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = ZIPFoundationCompat.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		"ZIPFoundation::ZIPFoundationTests::Product" /* ZIPFoundationTests.xctest */ = {isa = PBXFileReference; lastKnownFileType = file; path = ZIPFoundationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		OBJ_9 /* Archive+Reading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Reading.swift"; sourceTree = "<group>"; };
+		"ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = ZIPFoundation.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		"ZIPFoundation::ZIPFoundationTests::Product" /* ZIPFoundationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = ZIPFoundationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		OBJ_51 /* Frameworks */ = {
+		OBJ_40 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 0;
 			files = (
-				OBJ_52 /* ZIPFoundationCompat.framework in Frameworks */,
+				OBJ_41 /* ZIPFoundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		OBJ_60 /* Frameworks */ = {
+		OBJ_55 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 0;
 			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		OBJ_86 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 0;
-			files = (
-				OBJ_87 /* ZIPFoundation.framework in Frameworks */,
-				OBJ_88 /* ZIPFoundationCompat.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		OBJ_10 /* include */ = {
+		OBJ_16 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_11 /* funopen_compat.h */,
-				OBJ_12 /* module.modulemap */,
-			);
-			path = include;
-			sourceTree = "<group>";
-		};
-		OBJ_13 /* ZIPFoundation */ = {
-			isa = PBXGroup;
-			children = (
-				OBJ_14 /* Archive+Reading.swift */,
-				OBJ_15 /* Archive+Writing.swift */,
-				OBJ_16 /* Archive.swift */,
-				OBJ_17 /* Data+Compression.swift */,
-				OBJ_18 /* Data+Serialization.swift */,
-				OBJ_19 /* Entry.swift */,
-				OBJ_20 /* FileManager+ZIP.swift */,
-				OBJ_21 /* MemoryFile.swift */,
-			);
-			name = ZIPFoundation;
-			path = Sources/ZIPFoundation;
-			sourceTree = SOURCE_ROOT;
-		};
-		OBJ_22 /* Tests */ = {
-			isa = PBXGroup;
-			children = (
-				OBJ_23 /* ZIPFoundationTests */,
+				OBJ_17 /* ZIPFoundationTests */,
 			);
 			name = Tests;
 			sourceTree = SOURCE_ROOT;
 		};
-		OBJ_23 /* ZIPFoundationTests */ = {
+		OBJ_17 /* ZIPFoundationTests */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_24 /* ZIPFoundationDataSerializationTests.swift */,
-				OBJ_25 /* ZIPFoundationEntryTests.swift */,
-				OBJ_26 /* ZIPFoundationFileManagerTests.swift */,
-				OBJ_27 /* ZIPFoundationMemoryFileTests.swift */,
-				OBJ_28 /* ZIPFoundationPerformanceTests.swift */,
-				OBJ_29 /* ZIPFoundationProgressTests.swift */,
-				OBJ_30 /* ZIPFoundationReadingTests.swift */,
-				OBJ_31 /* ZIPFoundationTests.swift */,
-				OBJ_32 /* ZIPFoundationWritingTests.swift */,
+				OBJ_23 /* ZIPFoundationTests.swift */,
+				OBJ_22 /* ZIPFoundationReadingTests.swift */,
+				OBJ_24 /* ZIPFoundationWritingTests.swift */,
+				OBJ_19 /* ZIPFoundationEntryTests.swift */,
+				OBJ_18 /* ZIPFoundationDataSerializationTests.swift */,
+				OBJ_20 /* ZIPFoundationFileManagerTests.swift */,
+				OBJ_21 /* ZIPFoundationPerformanceTests.swift */,
+				BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */,
+				95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryFileTests.swift */,
 			);
 			name = ZIPFoundationTests;
 			path = Tests/ZIPFoundationTests;
 			sourceTree = SOURCE_ROOT;
 		};
-		OBJ_34 /* Products */ = {
+		OBJ_25 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				"ZIPFoundation::ZIPFoundationTests::Product" /* ZIPFoundationTests.xctest */,
-				"ZIPFoundation::ZIPFoundationCompat::Product" /* ZIPFoundationCompat.framework */,
 				"ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */,
 			);
 			name = Products;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		OBJ_5 /*  */ = {
+		OBJ_5 = {
 			isa = PBXGroup;
 			children = (
 				OBJ_6 /* Package.swift */,
 				OBJ_7 /* Sources */,
-				OBJ_22 /* Tests */,
-				OBJ_33 /* ZIPFoundationCompat */,
-				OBJ_34 /* Products */,
+				OBJ_16 /* Tests */,
+				OBJ_25 /* Products */,
 			);
-			name = "";
 			sourceTree = "<group>";
 		};
 		OBJ_7 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_8 /* ZIPFoundationCompat */,
-				OBJ_13 /* ZIPFoundation */,
+				OBJ_8 /* ZIPFoundation */,
 			);
 			name = Sources;
 			sourceTree = SOURCE_ROOT;
 		};
-		OBJ_8 /* ZIPFoundationCompat */ = {
+		OBJ_8 /* ZIPFoundation */ = {
 			isa = PBXGroup;
 			children = (
-				OBJ_9 /* funopen_compat.c */,
-				OBJ_10 /* include */,
+				OBJ_11 /* Archive.swift */,
+				OBJ_9 /* Archive+Reading.swift */,
+				OBJ_10 /* Archive+Writing.swift */,
+				OBJ_14 /* Entry.swift */,
+				OBJ_12 /* Data+Compression.swift */,
+				OBJ_13 /* Data+Serialization.swift */,
+				OBJ_15 /* FileManager+ZIP.swift */,
+				95B5A3D32366731B00D4D8FD /* MemoryFile.swift */,
 			);
-			name = ZIPFoundationCompat;
-			path = Sources/ZIPFoundationCompat;
+			name = ZIPFoundation;
+			path = Sources/ZIPFoundation;
 			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		"ZIPFoundation::SwiftPMPackageDescription" /* ZIPFoundationPackageDescription */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = OBJ_62 /* Build configuration list for PBXNativeTarget "ZIPFoundationPackageDescription" */;
-			buildPhases = (
-				OBJ_65 /* Sources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = ZIPFoundationPackageDescription;
-			productName = ZIPFoundationPackageDescription;
-			productType = "com.apple.product-type.framework";
-		};
 		"ZIPFoundation::ZIPFoundation" /* ZIPFoundation */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = OBJ_39 /* Build configuration list for PBXNativeTarget "ZIPFoundation" */;
+			buildConfigurationList = OBJ_44 /* Build configuration list for PBXNativeTarget "ZIPFoundation" */;
 			buildPhases = (
-				OBJ_42 /* Sources */,
-				OBJ_51 /* Frameworks */,
+				OBJ_47 /* Sources */,
+				OBJ_55 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				OBJ_53 /* PBXTargetDependency */,
 			);
 			name = ZIPFoundation;
 			productName = ZIPFoundation;
 			productReference = "ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */;
 			productType = "com.apple.product-type.framework";
 		};
-		"ZIPFoundation::ZIPFoundationCompat" /* ZIPFoundationCompat */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = OBJ_55 /* Build configuration list for PBXNativeTarget "ZIPFoundationCompat" */;
-			buildPhases = (
-				OBJ_58 /* Sources */,
-				OBJ_60 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = ZIPFoundationCompat;
-			productName = ZIPFoundationCompat;
-			productReference = "ZIPFoundation::ZIPFoundationCompat::Product" /* ZIPFoundationCompat.framework */;
-			productType = "com.apple.product-type.framework";
-		};
 		"ZIPFoundation::ZIPFoundationTests" /* ZIPFoundationTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = OBJ_73 /* Build configuration list for PBXNativeTarget "ZIPFoundationTests" */;
+			buildConfigurationList = OBJ_29 /* Build configuration list for PBXNativeTarget "ZIPFoundationTests" */;
 			buildPhases = (
-				OBJ_76 /* Sources */,
-				OBJ_86 /* Frameworks */,
+				OBJ_32 /* Sources */,
+				OBJ_40 /* Frameworks */,
+				BAEFCCFB1EFD233800AFB154 /* ShellScript */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				OBJ_89 /* PBXTargetDependency */,
-				OBJ_90 /* PBXTargetDependency */,
+				OBJ_42 /* PBXTargetDependency */,
 			);
 			name = ZIPFoundationTests;
 			productName = ZIPFoundationTests;
@@ -297,100 +190,90 @@
 		OBJ_1 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 9999;
+				LastUpgradeCheck = 1020;
+				TargetAttributes = {
+					"ZIPFoundation::ZIPFoundation" = {
+						LastSwiftMigration = 1020;
+					};
+					"ZIPFoundation::ZIPFoundationTests" = {
+						LastSwiftMigration = 1020;
+					};
+				};
 			};
 			buildConfigurationList = OBJ_2 /* Build configuration list for PBXProject "ZIPFoundation" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				English,
 				en,
+				Base,
 			);
-			mainGroup = OBJ_5 /*  */;
-			productRefGroup = OBJ_34 /* Products */;
+			mainGroup = OBJ_5;
+			productRefGroup = OBJ_25 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				"ZIPFoundation::ZIPFoundation" /* ZIPFoundation */,
-				"ZIPFoundation::ZIPFoundationCompat" /* ZIPFoundationCompat */,
-				"ZIPFoundation::SwiftPMPackageDescription" /* ZIPFoundationPackageDescription */,
-				"ZIPFoundation::ZIPFoundationPackageTests::ProductTarget" /* ZIPFoundationPackageTests */,
 				"ZIPFoundation::ZIPFoundationTests" /* ZIPFoundationTests */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		BAEFCCFB1EFD233800AFB154 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if which swiftlint >/dev/null; then\nswiftlint\nelse\necho \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
-		OBJ_42 /* Sources */ = {
+		OBJ_32 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				OBJ_43 /* Archive+Reading.swift in Sources */,
-				OBJ_44 /* Archive+Writing.swift in Sources */,
-				OBJ_45 /* Archive.swift in Sources */,
-				OBJ_46 /* Data+Compression.swift in Sources */,
-				OBJ_47 /* Data+Serialization.swift in Sources */,
-				OBJ_48 /* Entry.swift in Sources */,
-				OBJ_49 /* FileManager+ZIP.swift in Sources */,
-				OBJ_50 /* MemoryFile.swift in Sources */,
+				OBJ_33 /* ZIPFoundationDataSerializationTests.swift in Sources */,
+				OBJ_34 /* ZIPFoundationEntryTests.swift in Sources */,
+				BA3716AB21F0A238006E54E6 /* ZIPFoundationProgressTests.swift in Sources */,
+				OBJ_35 /* ZIPFoundationFileManagerTests.swift in Sources */,
+				OBJ_36 /* ZIPFoundationPerformanceTests.swift in Sources */,
+				OBJ_37 /* ZIPFoundationReadingTests.swift in Sources */,
+				95B5A3D72367999900D4D8FD /* ZIPFoundationMemoryFileTests.swift in Sources */,
+				OBJ_38 /* ZIPFoundationTests.swift in Sources */,
+				OBJ_39 /* ZIPFoundationWritingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		OBJ_58 /* Sources */ = {
+		OBJ_47 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 0;
 			files = (
-				OBJ_59 /* funopen_compat.c in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		OBJ_65 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 0;
-			files = (
-				OBJ_66 /* Package.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		OBJ_76 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 0;
-			files = (
-				OBJ_77 /* ZIPFoundationDataSerializationTests.swift in Sources */,
-				OBJ_78 /* ZIPFoundationEntryTests.swift in Sources */,
-				OBJ_79 /* ZIPFoundationFileManagerTests.swift in Sources */,
-				OBJ_80 /* ZIPFoundationMemoryFileTests.swift in Sources */,
-				OBJ_81 /* ZIPFoundationPerformanceTests.swift in Sources */,
-				OBJ_82 /* ZIPFoundationProgressTests.swift in Sources */,
-				OBJ_83 /* ZIPFoundationReadingTests.swift in Sources */,
-				OBJ_84 /* ZIPFoundationTests.swift in Sources */,
-				OBJ_85 /* ZIPFoundationWritingTests.swift in Sources */,
+				OBJ_48 /* Archive+Reading.swift in Sources */,
+				OBJ_49 /* Archive+Writing.swift in Sources */,
+				OBJ_50 /* Archive.swift in Sources */,
+				OBJ_51 /* Data+Compression.swift in Sources */,
+				95B5A3D42366731B00D4D8FD /* MemoryFile.swift in Sources */,
+				OBJ_52 /* Data+Serialization.swift in Sources */,
+				OBJ_53 /* Entry.swift in Sources */,
+				OBJ_54 /* FileManager+ZIP.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		OBJ_53 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = "ZIPFoundation::ZIPFoundationCompat" /* ZIPFoundationCompat */;
-			targetProxy = 95992FA9236FB2B4008FEE69 /* PBXContainerItemProxy */;
-		};
-		OBJ_71 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = "ZIPFoundation::ZIPFoundationTests" /* ZIPFoundationTests */;
-			targetProxy = 95992FAC236FB35A008FEE69 /* PBXContainerItemProxy */;
-		};
-		OBJ_89 /* PBXTargetDependency */ = {
+		OBJ_42 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = "ZIPFoundation::ZIPFoundation" /* ZIPFoundation */;
-			targetProxy = 95992FAA236FB2B4008FEE69 /* PBXContainerItemProxy */;
-		};
-		OBJ_90 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = "ZIPFoundation::ZIPFoundationCompat" /* ZIPFoundationCompat */;
-			targetProxy = 95992FAB236FB2B4008FEE69 /* PBXContainerItemProxy */;
+			targetProxy = BAEFCCF91EFD201600AFB154 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -398,236 +281,188 @@
 		OBJ_3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
 				ENABLE_NS_ASSERTIONS = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
+				SDKROOT = "";
 				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "SWIFT_PACKAGE DEBUG";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				TVOS_DEPLOYMENT_TARGET = 12.1;
+				SWIFT_VERSION = 4.0;
+				TVOS_DEPLOYMENT_TARGET = 9.0;
 				USE_HEADERMAP = NO;
-				WATCHOS_DEPLOYMENT_TARGET = 5.1;
+				WATCHOS_DEPLOYMENT_TARGET = 2.0;
 			};
 			name = Debug;
+		};
+		OBJ_30 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
+				);
+				HEADER_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundationTests_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @loader_path/Frameworks";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				TARGET_NAME = ZIPFoundationTests;
+			};
+			name = Debug;
+		};
+		OBJ_31 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
+				);
+				GCC_OPTIMIZATION_LEVEL = fast;
+				HEADER_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundationTests_Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @loader_path/Frameworks";
+				OTHER_LDFLAGS = "$(inherited)";
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				TARGET_NAME = ZIPFoundationTests;
+			};
+			name = Release;
 		};
 		OBJ_4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = s;
-				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx;
+				SDKROOT = "";
 				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = SWIFT_PACKAGE;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
-				TVOS_DEPLOYMENT_TARGET = 12.1;
+				SWIFT_VERSION = 4.0;
+				TVOS_DEPLOYMENT_TARGET = 9.0;
 				USE_HEADERMAP = NO;
-				WATCHOS_DEPLOYMENT_TARGET = 5.1;
+				WATCHOS_DEPLOYMENT_TARGET = 2.0;
 			};
 			name = Release;
 		};
-		OBJ_40 /* Debug */ = {
+		OBJ_45 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CURRENT_PROJECT_VERSION = 0.9.9;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_TESTABILITY = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/Sources/ZIPFoundationCompat/include",
-					"$(SRCROOT)/ZIPFoundation.xcodeproj/GeneratedModuleMap/ZIPFoundationCompat",
-				);
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundation_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) $(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
-				OTHER_CFLAGS = "$(inherited)";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited)";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=appletvos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=iphoneos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=watchos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(SRCROOT)/ZIPFoundation.xcodeproj/GeneratedModuleMap/ZIPFoundationCompat/module.modulemap";
-				PRODUCT_BUNDLE_IDENTIFIER = ZIPFoundation;
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.peakstep.ZIPFoundation;
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
-				SWIFT_VERSION = 4.2;
 				TARGET_NAME = ZIPFoundation;
 			};
 			name = Debug;
 		};
-		OBJ_41 /* Release */ = {
+		OBJ_46 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CURRENT_PROJECT_VERSION = 0.9.9;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_TESTABILITY = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/Sources/ZIPFoundationCompat/include",
-					"$(SRCROOT)/ZIPFoundation.xcodeproj/GeneratedModuleMap/ZIPFoundationCompat",
-				);
+				GCC_OPTIMIZATION_LEVEL = fast;
+				HEADER_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundation_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) $(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
-				OTHER_CFLAGS = "$(inherited)";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited)";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=appletvos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=iphoneos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=watchos*]" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(SRCROOT)/ZIPFoundation.xcodeproj/GeneratedModuleMap/ZIPFoundationCompat/module.modulemap";
-				PRODUCT_BUNDLE_IDENTIFIER = ZIPFoundation;
+				OTHER_SWIFT_FLAGS = "$(inherited)";
+				PRODUCT_BUNDLE_IDENTIFIER = com.peakstep.ZIPFoundation;
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
-				SWIFT_VERSION = 4.2;
 				TARGET_NAME = ZIPFoundation;
-			};
-			name = Release;
-		};
-		OBJ_56 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ENABLE_TESTABILITY = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/Sources/ZIPFoundationCompat/include",
-				);
-				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundationCompat_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) $(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
-				OTHER_CFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = ZIPFoundationCompat;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
-				TARGET_NAME = ZIPFoundationCompat;
-			};
-			name = Debug;
-		};
-		OBJ_57 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ENABLE_TESTABILITY = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/Sources/ZIPFoundationCompat/include",
-				);
-				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundationCompat_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) $(TOOLCHAIN_DIR)/usr/lib/swift/macosx";
-				OTHER_CFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = ZIPFoundationCompat;
-				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
-				TARGET_NAME = ZIPFoundationCompat;
-			};
-			name = Release;
-		};
-		OBJ_63 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				LD = /usr/bin/true;
-				OTHER_SWIFT_FLAGS = "-swift-version 4.2 -I $(TOOLCHAIN_DIR)/usr/lib/swift/pm/4_2 -target x86_64-apple-macosx10.10 -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk";
-				SWIFT_VERSION = 4.2;
-			};
-			name = Debug;
-		};
-		OBJ_64 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				LD = /usr/bin/true;
-				OTHER_SWIFT_FLAGS = "-swift-version 4.2 -I $(TOOLCHAIN_DIR)/usr/lib/swift/pm/4_2 -target x86_64-apple-macosx10.10 -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk";
-				SWIFT_VERSION = 4.2;
-			};
-			name = Release;
-		};
-		OBJ_69 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-			};
-			name = Debug;
-		};
-		OBJ_70 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-			};
-			name = Release;
-		};
-		OBJ_74 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_MODULES = YES;
-				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/Sources/ZIPFoundationCompat/include",
-					"$(SRCROOT)/ZIPFoundation.xcodeproj/GeneratedModuleMap/ZIPFoundationCompat",
-				);
-				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundationTests_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @loader_path/../Frameworks @loader_path/Frameworks";
-				OTHER_CFLAGS = "$(inherited)";
-				OTHER_LDFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(SRCROOT)/ZIPFoundation.xcodeproj/GeneratedModuleMap/ZIPFoundationCompat/module.modulemap";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
-				SWIFT_VERSION = 4.2;
-				TARGET_NAME = ZIPFoundationTests;
-			};
-			name = Debug;
-		};
-		OBJ_75 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ENABLE_MODULES = YES;
-				EMBEDDED_CONTENT_CONTAINS_SWIFT = YES;
-				FRAMEWORK_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(PLATFORM_DIR)/Developer/Library/Frameworks",
-				);
-				HEADER_SEARCH_PATHS = (
-					"$(inherited)",
-					"$(SRCROOT)/Sources/ZIPFoundationCompat/include",
-					"$(SRCROOT)/ZIPFoundation.xcodeproj/GeneratedModuleMap/ZIPFoundationCompat",
-				);
-				INFOPLIST_FILE = ZIPFoundation.xcodeproj/ZIPFoundationTests_Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @loader_path/../Frameworks @loader_path/Frameworks";
-				OTHER_CFLAGS = "$(inherited)";
-				OTHER_LDFLAGS = "$(inherited)";
-				OTHER_SWIFT_FLAGS = "$(inherited) -Xcc -fmodule-map-file=$(SRCROOT)/ZIPFoundation.xcodeproj/GeneratedModuleMap/ZIPFoundationCompat/module.modulemap";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
-				SWIFT_VERSION = 4.2;
-				TARGET_NAME = ZIPFoundationTests;
 			};
 			name = Release;
 		};
@@ -643,47 +478,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		OBJ_39 /* Build configuration list for PBXNativeTarget "ZIPFoundation" */ = {
+		OBJ_29 /* Build configuration list for PBXNativeTarget "ZIPFoundationTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				OBJ_40 /* Debug */,
-				OBJ_41 /* Release */,
+				OBJ_30 /* Debug */,
+				OBJ_31 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		OBJ_55 /* Build configuration list for PBXNativeTarget "ZIPFoundationCompat" */ = {
+		OBJ_44 /* Build configuration list for PBXNativeTarget "ZIPFoundation" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				OBJ_56 /* Debug */,
-				OBJ_57 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		OBJ_62 /* Build configuration list for PBXNativeTarget "ZIPFoundationPackageDescription" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				OBJ_63 /* Debug */,
-				OBJ_64 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		OBJ_68 /* Build configuration list for PBXAggregateTarget "ZIPFoundationPackageTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				OBJ_69 /* Debug */,
-				OBJ_70 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		OBJ_73 /* Build configuration list for PBXNativeTarget "ZIPFoundationTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				OBJ_74 /* Debug */,
-				OBJ_75 /* Release */,
+				OBJ_45 /* Debug */,
+				OBJ_46 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

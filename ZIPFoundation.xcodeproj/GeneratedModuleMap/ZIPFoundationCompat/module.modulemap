@@ -1,4 +1,0 @@
-module ZIPFoundationCompat {
-    umbrella "/Users/neeri/Development/ZIPFoundation/Sources/ZIPFoundationCompat/include"
-    export *
-}

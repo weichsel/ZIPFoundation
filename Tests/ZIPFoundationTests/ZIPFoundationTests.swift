@@ -27,7 +27,7 @@ class ZIPFoundationTests: XCTestCase {
         tempZipDirectory.appendPathComponent("ZipTempDirectory")
         // We use a unique path to support parallel test runs via
         // "swift test --parallel"
-        // When using --parallel, setUp() and tearDown() are called
+        // When using --parallel, setUp() and tearDown() are called 
         // multiple times.
         tempZipDirectory.appendPathComponent(processInfo.globallyUniqueString)
         return tempZipDirectory
@@ -269,6 +269,7 @@ extension ZIPFoundationTests {
 
     static var allTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
         return [
+            ("testAppendFile", testAppendFile),
             ("testArchiveAddEntryErrorConditions", testArchiveAddEntryErrorConditions),
             ("testArchiveCreateErrorConditions", testArchiveCreateErrorConditions),
             ("testArchiveInvalidDataErrorConditions", testArchiveInvalidDataErrorConditions),
@@ -320,6 +321,9 @@ extension ZIPFoundationTests {
             ("testPerformanceWriteUncompressed", testPerformanceWriteUncompressed),
             ("testPOSIXPermissions", testPOSIXPermissions),
             ("testProgressHelpers", testProgressHelpers),
+            ("testReadOnlyFile", testReadOnlyFile),
+            ("testReadOnlySlicedFile", testReadOnlySlicedFile),
+            ("testReadWriteFile", testReadWriteFile),
             ("testRemoveCompressedEntry", testRemoveCompressedEntry),
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
@@ -329,23 +333,10 @@ extension ZIPFoundationTests {
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
+            ("testWriteOnlyFile", testWriteOnlyFile),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
-        ] + memoryFileTests + darwinOnlyTests
-    }
-
-    static var memoryFileTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
-    	#if swift(>=4.1)
-	return [
-            ("testAppendFile", testAppendFile),
-            ("testReadOnlyFile", testReadOnlyFile),
-            ("testReadOnlySlicedFile", testReadOnlySlicedFile),
-            ("testReadWriteFile", testReadWriteFile),
-            ("testWriteOnlyFile", testWriteOnlyFile),
-	]
-	#else
-	return []
-	#endif
+        ] + darwinOnlyTests
     }
 
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {

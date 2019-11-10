@@ -87,7 +87,7 @@ extension ZIPFoundationTests {
         }
     }
 
-    func testExtractCompressedFolderEntriesFromMemory() {
+     func testExtractCompressedFolderEntriesFromMemory() {
         let archive = self.memoryArchive(for: #function, mode: .read)
         for entry in archive {
             do {
@@ -208,7 +208,7 @@ extension ZIPFoundationTests {
 
         do {
             fseek(destinationFile, 64, SEEK_SET)
-            // We have to inject a large enough zeroes block to guarantee that libcompression
+            // We have to inject a large enough zeroes block to guarantee that libcompression 
             // detects the failure when reading the stream
             _ = try Data.write(chunk: Data(count: 512*1024), to: destinationFile)
             fclose(destinationFile)
