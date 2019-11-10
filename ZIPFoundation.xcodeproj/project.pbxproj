@@ -138,10 +138,10 @@
 				OBJ_9 /* Archive+Reading.swift */,
 				OBJ_10 /* Archive+Writing.swift */,
 				OBJ_14 /* Entry.swift */,
+				95B5A3D32366731B00D4D8FD /* MemoryFile.swift */,
 				OBJ_12 /* Data+Compression.swift */,
 				OBJ_13 /* Data+Serialization.swift */,
 				OBJ_15 /* FileManager+ZIP.swift */,
-				95B5A3D32366731B00D4D8FD /* MemoryFile.swift */,
 			);
 			name = ZIPFoundation;
 			path = Sources/ZIPFoundation;
