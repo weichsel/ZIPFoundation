@@ -76,7 +76,7 @@ jobs:
         sdk: 'iphonesimulator'
         destinationPlatformOption: 'iOS'
         destinationTypeOption: 'simulators'
-        destinationSimulators: 'iPhone X'
+        destinationSimulators: 'iPhone 11'
         useXcpretty: true
         publishJUnitResults: true
     - task: PublishTestResults@2
