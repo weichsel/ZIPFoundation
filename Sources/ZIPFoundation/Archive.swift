@@ -141,7 +141,7 @@ public final class Archive: Sequence {
         let fileManager = FileManager()
         switch mode {
         case .read:
-            guard fileManager.fileExists(atPath: url.path) else { return nil }
+            guard FileManager.fileOrSymbolicLinkExists(at: url) else { return nil }
             guard fileManager.isReadableFile(atPath: url.path) else { return nil }
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             guard let archiveFile = fopen(fileSystemRepresentation, "rb"),
@@ -151,7 +151,7 @@ public final class Archive: Sequence {
             self.archiveFile = archiveFile
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         case .create:
-            guard !fileManager.fileExists(atPath: url.path) else { return nil }
+            guard !FileManager.fileOrSymbolicLinkExists(at: url) else { return nil }
             let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
                                                                           totalNumberOfEntriesOnDisk: 0,
                                                                           totalNumberOfEntriesInCentralDirectory: 0,
