@@ -183,18 +183,13 @@ public final class Archive: Sequence {
         self.preferredEncoding = preferredEncoding
         let posixMode: String
         switch mode {
-        case .read:
-            posixMode = "rb"
-        case .create:
-            posixMode = "wb+"
-        case .update:
-            posixMode = "rb+"
+        case .read: posixMode = "rb"
+        case .create: posixMode = "wb+"
+        case .update: posixMode = "rb+"
         }
         self.memoryFile = MemoryFile(data: data)
-        guard let archiveFile = memoryFile?.open(mode: posixMode)
-            else {
-                return nil
-        }
+        guard let archiveFile = memoryFile?.open(mode: posixMode) else { return nil }
+
         self.archiveFile = archiveFile
         if mode == .create {
             let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
