@@ -10,6 +10,36 @@
 
 import Foundation
 
+extension Archive {
+    public var data: Data? { return memoryFile?.data }
+
+    static func configureMemoryBacking(for data: Data, mode: Archive.AccessMode)
+        -> (UnsafeMutablePointer<FILE>, MemoryFile)? {
+            let posixMode: String
+            switch mode {
+            case .read: posixMode = "rb"
+            case .create: posixMode = "wb+"
+            case .update: posixMode = "rb+"
+            }
+            let memoryFile = MemoryFile(data: data)
+            guard let archiveFile = memoryFile.open(mode: posixMode) else { return nil }
+
+            if mode == .create {
+                let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
+                                                                              totalNumberOfEntriesOnDisk: 0,
+                                                                              totalNumberOfEntriesInCentralDirectory: 0,
+                                                                              sizeOfCentralDirectory: 0,
+                                                                              offsetToStartOfCentralDirectory: 0,
+                                                                              zipFileCommentLength: 0,
+                                                                              zipFileCommentData: Data())
+                _ = endOfCentralDirectoryRecord.data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
+                    fwrite(buffer.baseAddress, buffer.count, 1, archiveFile) // Errors caught on read below
+                }
+            }
+            return (archiveFile, memoryFile)
+    }
+}
+
 class MemoryFile {
     public private(set) var data: Data
     private var offset  = 0

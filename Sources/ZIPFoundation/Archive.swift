@@ -107,13 +107,12 @@ public final class Archive: Sequence {
     }
 
     private var preferredEncoding: String.Encoding?
-    private var memoryFile: MemoryFile?
     /// URL of an Archive's backing file.
     public let url: URL
     /// Access mode for an archive file.
     public let accessMode: AccessMode
-    public var data: Data? { return memoryFile?.data }
     var archiveFile: UnsafeMutablePointer<FILE>
+    var memoryFile: MemoryFile?
     var endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
 
     /// Initializes a new ZIP `Archive`.
@@ -140,70 +139,26 @@ public final class Archive: Sequence {
         self.url = url
         self.accessMode = mode
         self.preferredEncoding = preferredEncoding
-        let fileManager = FileManager()
-        switch mode {
-        case .read:
-            let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            guard let archiveFile = fopen(fileSystemRepresentation, "rb"),
-                let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
-            }
-            self.archiveFile = archiveFile
-            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
-        case .create:
-            let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
-                                                                          totalNumberOfEntriesOnDisk: 0,
-                                                                          totalNumberOfEntriesInCentralDirectory: 0,
-                                                                          sizeOfCentralDirectory: 0,
-                                                                          offsetToStartOfCentralDirectory: 0,
-                                                                          zipFileCommentLength: 0,
-                                                                          zipFileCommentData: Data())
-            do {
-                try endOfCentralDirectoryRecord.data.write(to: url, options: .withoutOverwriting)
-            } catch {
-                return nil
-            }
-            fallthrough
-        case .update:
-            let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            guard let archiveFile = fopen(fileSystemRepresentation, "rb+"),
-                let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
-            }
-            self.archiveFile = archiveFile
-            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
-            fseek(self.archiveFile, 0, SEEK_SET)
+        guard let (archiveFile, endOfCentralDirectoryRecord) = Archive.configureFileBacking(for: url, mode: mode) else {
+            return nil
         }
+        self.archiveFile = archiveFile
+        self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
     public init?(data: Data = Data(), accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
-        self.url = URL(string: "memory:")!
+        guard let url = URL(string: "memory:"),
+            let (archiveFile, memoryFile) = Archive.configureMemoryBacking(for: data, mode: mode) else {
+            return nil
+        }
+
+        self.url = url
         self.accessMode = mode
         self.preferredEncoding = preferredEncoding
-        let posixMode: String
-        switch mode {
-        case .read: posixMode = "rb"
-        case .create: posixMode = "wb+"
-        case .update: posixMode = "rb+"
-        }
-        self.memoryFile = MemoryFile(data: data)
-        guard let archiveFile = memoryFile?.open(mode: posixMode) else { return nil }
-
         self.archiveFile = archiveFile
-        if mode == .create {
-            let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
-                                                                          totalNumberOfEntriesOnDisk: 0,
-                                                                          totalNumberOfEntriesInCentralDirectory: 0,
-                                                                          sizeOfCentralDirectory: 0,
-                                                                          offsetToStartOfCentralDirectory: 0,
-                                                                          zipFileCommentLength: 0,
-                                                                          zipFileCommentData: Data())
-            _ = endOfCentralDirectoryRecord.data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
-                fwrite(buffer.baseAddress, buffer.count, 1, archiveFile) // Errors caught on read below
-            }
-        }
-        guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: self.archiveFile)
+        self.memoryFile = memoryFile
+        guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile)
             else {
                 return nil
         }
@@ -263,6 +218,40 @@ public final class Archive: Sequence {
     }
 
     // MARK: - Helpers
+
+    private static func configureFileBacking(for url: URL, mode: Archive.AccessMode)
+        -> (UnsafeMutablePointer<FILE>, EndOfCentralDirectoryRecord)? {
+        let fileManager = FileManager()
+        switch mode {
+        case .read:
+            let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
+            guard let archiveFile = fopen(fileSystemRepresentation, "rb"),
+                let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+                    return nil
+            }
+            return (archiveFile, endOfCentralDirectoryRecord)
+        case .create:
+            let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
+                                                                          totalNumberOfEntriesOnDisk: 0,
+                                                                          totalNumberOfEntriesInCentralDirectory: 0,
+                                                                          sizeOfCentralDirectory: 0,
+                                                                          offsetToStartOfCentralDirectory: 0,
+                                                                          zipFileCommentLength: 0,
+                                                                          zipFileCommentData: Data())
+            do {
+                try endOfCentralDirectoryRecord.data.write(to: url, options: .withoutOverwriting)
+            } catch { return nil }
+            fallthrough
+        case .update:
+            let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
+            guard let archiveFile = fopen(fileSystemRepresentation, "rb+"),
+                let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+                    return nil
+            }
+            fseek(archiveFile, 0, SEEK_SET)
+            return (archiveFile, endOfCentralDirectoryRecord)
+        }
+    }
 
     private static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
         -> EndOfCentralDirectoryRecord? {
