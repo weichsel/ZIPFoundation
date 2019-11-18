@@ -25,7 +25,7 @@ extension ZIPFoundationTests {
                 checksum = try archive.extract(entry, to: fileURL)
                 XCTAssert(entry.checksum == checksum)
                 let fileManager = FileManager()
-                XCTAssertTrue(fileManager.fileExists(atPath: fileURL.path))
+                XCTAssertTrue(fileManager.itemExists(at: fileURL))
                 if entry.type == .file {
                     let fileData = try Data(contentsOf: fileURL)
                     let checksum = fileData.crc32(checksum: 0)
@@ -50,7 +50,7 @@ extension ZIPFoundationTests {
                 checksum = try archive.extract(entry, to: fileURL)
                 XCTAssert(entry.checksum == checksum)
                 let fileManager = FileManager()
-                XCTAssertTrue(fileManager.fileExists(atPath: fileURL.path))
+                XCTAssertTrue(fileManager.itemExists(at: fileURL))
                 if entry.type != .directory {
                     let fileData = try Data(contentsOf: fileURL)
                     let checksum = fileData.crc32(checksum: 0)

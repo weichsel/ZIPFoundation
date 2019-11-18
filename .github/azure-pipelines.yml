@@ -35,11 +35,11 @@ jobs:
     - script: swift test -c release -Xswiftc -enable-testing
       displayName: Linux Swift 4.0
 
-- job: macOS_10_13
+- job: macOS_10_14
   pool:
-    vmImage: 'macOS 10.13'
+    vmImage: 'macOS 10.14'
   variables:
-    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+    DEVELOPER_DIR: /Applications/Xcode_11.2.app
   steps:
     - task: Xcode@5
       inputs:
@@ -61,9 +61,9 @@ jobs:
 
 - job: iOS_12_1
   pool:
-    vmImage: 'macOS 10.13'
+    vmImage: 'macOS 10.14'
   variables:
-    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+    DEVELOPER_DIR: /Applications/Xcode_11.2.app
   steps:
     - task: Xcode@5
       inputs:
@@ -76,7 +76,7 @@ jobs:
         sdk: 'iphonesimulator'
         destinationPlatformOption: 'iOS'
         destinationTypeOption: 'simulators'
-        destinationSimulators: 'iPhone X'
+        destinationSimulators: 'iPhone 11'
         useXcpretty: true
         publishJUnitResults: true
     - task: PublishTestResults@2
@@ -87,9 +87,9 @@ jobs:
 
 - job: watchOS_5_1
   pool:
-    vmImage: 'macOS 10.13'
+    vmImage: 'macOS 10.14'
   variables:
-    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+    DEVELOPER_DIR: /Applications/Xcode_11.2.app
   steps:
     # We currently only perform a build-only script for watchOS (xcodebuild test is unable to find the XCTest module)
     - task: Xcode@5
@@ -107,9 +107,9 @@ jobs:
 
 - job: tvOS_12_1
   pool:
-    vmImage: 'macOS 10.13'
+    vmImage: 'macOS 10.14'
   variables:
-    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+    DEVELOPER_DIR: /Applications/Xcode_11.2.app
   steps:
     - task: Xcode@5
       inputs:
@@ -133,9 +133,9 @@ jobs:
 
 - job: SwiftLint
   pool:
-    vmImage: 'macOS 10.13'
+    vmImage: 'macOS 10.14'
   variables:
-    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+    DEVELOPER_DIR: /Applications/Xcode_11.2.app
   steps:
     - script: xcodebuild -scheme ZIPFoundation clean build-for-testing > xcodebuild.log
       displayName: Generate xcodebuild.log
@@ -156,11 +156,11 @@ jobs:
 
 - job: CodeCoverage
   pool:
-    vmImage: 'macOS 10.13'
+    vmImage: 'macOS 10.14'
   variables:
-    DEVELOPER_DIR: /Applications/Xcode_10.1.app
+    DEVELOPER_DIR: /Applications/Xcode_11.2.app
   steps:
     - script: xcodebuild test -destination 'platform=macOS,arch=x86_64' -scheme "ZIPFoundation" -derivedDataPath Build/ 
       displayName: Generate xccovreport
-    - script: (xcrun xccov view --only-targets Build/Logs/Test/*.xcresult/*_Test/action.xccovreport | grep -Eq  "ZIPFoundation.*100\.00%") && { exit 0; } || { echo '##vso[task.logissue type=error;]Please make sure that the test suite covers all framework code paths.'; exit 1; }
+    - script: (xcrun xccov view --only-targets --report Build/Logs/Test/*.xcresult | grep -Eq  "ZIPFoundation.*100\.00%") && { exit 0; } || { echo '##vso[task.logissue type=error;]Please make sure that the test suite covers all framework code paths.'; exit 1; }
       displayName: Check for full line coverage

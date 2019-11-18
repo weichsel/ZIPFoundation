@@ -31,10 +31,11 @@ extension FileManager {
     public func zipItem(at sourceURL: URL, to destinationURL: URL,
                         shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
                         progress: Progress? = nil) throws {
-        guard self.fileExists(atPath: sourceURL.path) else {
+        let fileManager = FileManager()
+        guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
-        guard !self.fileExists(atPath: destinationURL.path) else {
+        guard !fileManager.itemExists(at: destinationURL) else {
             throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: destinationURL.path])
         }
         guard let archive = Archive(url: destinationURL, accessMode: .create) else {
@@ -88,7 +89,8 @@ extension FileManager {
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
                           progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
-        guard self.fileExists(atPath: sourceURL.path) else {
+        let fileManager = FileManager()
+        guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
         guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: preferredEncoding) else {
@@ -128,6 +130,16 @@ extension FileManager {
     }
 
     // MARK: - Helpers
+
+    func itemExists(at url: URL) -> Bool {
+        // Use `URL.checkResourceIsReachable()` instead of `FileManager.fileExists()` here
+        // because we don't want implicit symlink resolution.
+        // As per documentation, `FileManager.fileExists()` traverses symlinks and therefore a broken symlink
+        // would throw a `.fileReadNoSuchFile` false positive error.
+        // For ZIP files it may be intended to archive "broken" symlinks because they might be
+        // resolvable again when extracting the archive to a different destination.
+        return (try? url.checkResourceIsReachable()) == true
+    }
 
     func createParentDirectoryStructure(for url: URL) throws {
         let parentDirectoryURL = url.deletingLastPathComponent()
@@ -192,7 +204,7 @@ extension FileManager {
 
     class func fileModificationDateTimeForItem(at url: URL) throws -> Date {
         let fileManager = FileManager()
-        guard fileManager.fileExists(atPath: url.path) else {
+        guard fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
@@ -211,7 +223,7 @@ extension FileManager {
 
     class func fileSizeForItem(at url: URL) throws -> UInt32 {
         let fileManager = FileManager()
-        guard fileManager.fileExists(atPath: url.path) else {
+        guard fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
@@ -222,7 +234,7 @@ extension FileManager {
 
     class func typeForItem(at url: URL) throws -> Entry.EntryType {
         let fileManager = FileManager()
-        guard url.isFileURL, fileManager.fileExists(atPath: url.path) else {
+        guard url.isFileURL, fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)

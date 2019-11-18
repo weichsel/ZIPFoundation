@@ -27,7 +27,7 @@ extension Archive {
         var checksum = CRC32(0)
         switch entry.type {
         case .file:
-            guard !fileManager.fileExists(atPath: url.path) else {
+            guard !fileManager.itemExists(at: url) else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
             try fileManager.createParentDirectoryStructure(for: url)
@@ -46,7 +46,7 @@ extension Archive {
             checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                         progress: progress, consumer: consumer)
         case .symlink:
-            guard !fileManager.fileExists(atPath: url.path) else {
+            guard !fileManager.itemExists(at: url) else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
             let consumer = { (data: Data) in

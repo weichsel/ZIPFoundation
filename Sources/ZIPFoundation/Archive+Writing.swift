@@ -30,13 +30,14 @@ extension Archive {
                          bufferSize: UInt32 = defaultWriteChunkSize, progress: Progress? = nil) throws {
         let fileManager = FileManager()
         let entryURL = baseURL.appendingPathComponent(path)
-        guard fileManager.fileExists(atPath: entryURL.path) else {
+        guard fileManager.itemExists(at: entryURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: entryURL.path])
         }
-        guard fileManager.isReadableFile(atPath: entryURL.path) else {
+        let type = try FileManager.typeForItem(at: entryURL)
+        // symlinks do not need to be readable
+        guard type == .symlink || fileManager.isReadableFile(atPath: entryURL.path) else {
             throw CocoaError(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: url.path])
         }
-        let type = try FileManager.typeForItem(at: entryURL)
         let modDate = try FileManager.fileModificationDateTimeForItem(at: entryURL)
         let uncompressedSize = type == .directory ? 0 : try FileManager.fileSizeForItem(at: entryURL)
         let permissions = try FileManager.permissionsForItem(at: entryURL)

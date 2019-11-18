@@ -170,7 +170,7 @@ extension ZIPFoundationTests {
             var itemsExist = false
             for entry in archive {
                 let directoryURL = destinationURL.appendingPathComponent(entry.path)
-                itemsExist = fileManager.fileExists(atPath: directoryURL.path)
+                itemsExist = fileManager.itemExists(at: directoryURL)
                 if !itemsExist { break }
             }
             XCTAssert(itemsExist)
