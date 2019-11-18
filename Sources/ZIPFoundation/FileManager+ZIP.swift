@@ -231,8 +231,7 @@ extension FileManager {
         return Entry.EntryType(mode: fileStat.st_mode)
     }
 
-    class func fileOrSymbolicLinkExists(at url : URL) -> Bool
-    {
+    class func fileOrSymbolicLinkExists(at url: URL) -> Bool {
         // A broken symlink would throw a .fileReadNoSuchFile false positive
         // Error using a FileManager.fileExists() check, as stated in Apple
         // documentation. Using checkResourceIsReachable() instead
