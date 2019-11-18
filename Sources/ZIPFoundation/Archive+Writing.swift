@@ -30,7 +30,7 @@ extension Archive {
                          bufferSize: UInt32 = defaultWriteChunkSize, progress: Progress? = nil) throws {
         let fileManager = FileManager()
         let entryURL = baseURL.appendingPathComponent(path)
-        guard FileManager.fileOrSymbolicLinkExists(at: entryURL) else {
+        guard fileManager.itemExists(at: entryURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: entryURL.path])
         }
         let type = try FileManager.typeForItem(at: entryURL)

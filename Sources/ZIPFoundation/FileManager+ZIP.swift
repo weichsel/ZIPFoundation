@@ -31,10 +31,11 @@ extension FileManager {
     public func zipItem(at sourceURL: URL, to destinationURL: URL,
                         shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
                         progress: Progress? = nil) throws {
-        guard FileManager.fileOrSymbolicLinkExists(at: sourceURL) else {
+        let fileManager = FileManager()
+        guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
-        guard !FileManager.fileOrSymbolicLinkExists(at: destinationURL) else {
+        guard !fileManager.itemExists(at: destinationURL) else {
             throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: destinationURL.path])
         }
         guard let archive = Archive(url: destinationURL, accessMode: .create) else {
@@ -88,7 +89,8 @@ extension FileManager {
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
                           progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
-        guard FileManager.fileOrSymbolicLinkExists(at: sourceURL) else {
+        let fileManager = FileManager()
+        guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
         guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: preferredEncoding) else {
@@ -128,6 +130,13 @@ extension FileManager {
     }
 
     // MARK: - Helpers
+
+    func itemExists(at url: URL) -> Bool {
+        // A broken symlink would throw a .fileReadNoSuchFile false positive
+        // Error using a FileManager.fileExists() check, as stated in Apple
+        // documentation. Using checkResourceIsReachable() instead
+        return (try? url.checkResourceIsReachable()) == true
+    }
 
     func createParentDirectoryStructure(for url: URL) throws {
         let parentDirectoryURL = url.deletingLastPathComponent()
@@ -192,7 +201,7 @@ extension FileManager {
 
     class func fileModificationDateTimeForItem(at url: URL) throws -> Date {
         let fileManager = FileManager()
-        guard FileManager.fileOrSymbolicLinkExists(at: url) else {
+        guard fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
@@ -211,7 +220,7 @@ extension FileManager {
 
     class func fileSizeForItem(at url: URL) throws -> UInt32 {
         let fileManager = FileManager()
-        guard FileManager.fileOrSymbolicLinkExists(at: url) else {
+        guard fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
@@ -221,21 +230,14 @@ extension FileManager {
     }
 
     class func typeForItem(at url: URL) throws -> Entry.EntryType {
-        guard url.isFileURL, fileOrSymbolicLinkExists(at: url) else {
+        let fileManager = FileManager()
+        guard url.isFileURL, fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
-        let fileManager = FileManager()
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
         return Entry.EntryType(mode: fileStat.st_mode)
-    }
-
-    class func fileOrSymbolicLinkExists(at url: URL) -> Bool {
-        // A broken symlink would throw a .fileReadNoSuchFile false positive
-        // Error using a FileManager.fileExists() check, as stated in Apple
-        // documentation. Using checkResourceIsReachable() instead
-        return (try? url.checkResourceIsReachable()) == true
     }
 }
 

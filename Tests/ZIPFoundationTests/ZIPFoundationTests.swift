@@ -44,7 +44,7 @@ class ZIPFoundationTests: XCTestCase {
         super.setUp()
         do {
             let fileManager = FileManager()
-            if FileManager.fileOrSymbolicLinkExists(at: tempZipDirectoryURL) {
+            if fileManager.itemExists(at: tempZipDirectoryURL) {
                 try fileManager.removeItem(at: tempZipDirectoryURL)
             }
             try fileManager.createDirectory(at: tempZipDirectoryURL,
