@@ -132,9 +132,12 @@ extension FileManager {
     // MARK: - Helpers
 
     func itemExists(at url: URL) -> Bool {
-        // A broken symlink would throw a .fileReadNoSuchFile false positive
-        // Error using a FileManager.fileExists() check, as stated in Apple
-        // documentation. Using checkResourceIsReachable() instead
+        // Use `URL.checkResourceIsReachable()` instead of `FileManager.fileExists()` here
+        // because we don't want implicit symlink resolution.
+        // As per documentation, `FileManager.fileExists()` traverses symlinks and therefore a broken symlink
+        // would throw a `.fileReadNoSuchFile` false positive error.
+        // For ZIP files it may be intended to archive "broken" symlinks because they might be
+        // resolvable again when extracting the archive to a different destination.
         return (try? url.checkResourceIsReachable()) == true
     }
 
