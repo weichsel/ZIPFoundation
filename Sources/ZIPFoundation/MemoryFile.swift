@@ -10,6 +10,8 @@
 
 import Foundation
 
+#if swift(>=5.0)
+
 extension Archive {
     public var data: Data? { return memoryFile?.data }
 
@@ -172,4 +174,5 @@ private func seekStub(_ cookie: UnsafeMutableRawPointer?,
         return -1
     }
 }
+#endif
 #endif

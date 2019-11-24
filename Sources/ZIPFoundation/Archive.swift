@@ -112,7 +112,6 @@ public final class Archive: Sequence {
     /// Access mode for an archive file.
     public let accessMode: AccessMode
     var archiveFile: UnsafeMutablePointer<FILE>
-    var memoryFile: MemoryFile?
     var endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
 
     /// Initializes a new ZIP `Archive`.
@@ -147,6 +146,8 @@ public final class Archive: Sequence {
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
+    #if swift(>=5.0)
+    var memoryFile: MemoryFile?
     public init?(data: Data = Data(), accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
         guard let url = URL(string: "memory:"),
             let (archiveFile, memoryFile) = Archive.configureMemoryBacking(for: data, mode: mode) else {
@@ -164,6 +165,7 @@ public final class Archive: Sequence {
         }
         self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
     }
+    #endif
 
     deinit {
         fclose(self.archiveFile)

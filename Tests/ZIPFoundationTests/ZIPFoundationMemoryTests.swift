@@ -10,6 +10,8 @@ import Foundation
 import XCTest
 @testable import ZIPFoundation
 
+#if swift(>=5.0)
+
 extension ZIPFoundationTests {
     func testExtractUncompressedFolderEntriesFromMemory() {
         let archive = self.memoryArchive(for: #function, mode: .read)
@@ -147,3 +149,28 @@ extension ZIPFoundationTests {
         XCTAssertEqual(mem.data, "anticipation".data(using: .utf8))
     }
 }
+
+// MARK: - Helpers
+
+extension ZIPFoundationTests {
+    func memoryArchive(for testFunction: String, mode: Archive.AccessMode,
+                       preferredEncoding: String.Encoding? = nil) -> Archive {
+        var sourceArchiveURL = ZIPFoundationTests.resourceDirectoryURL
+        sourceArchiveURL.appendPathComponent(testFunction.replacingOccurrences(of: "()", with: ""))
+        sourceArchiveURL.appendPathExtension("zip")
+        do {
+            let data = mode == .create ? Data() : try Data(contentsOf: sourceArchiveURL)
+            guard let archive = Archive(data: data, accessMode: mode,
+                                        preferredEncoding: preferredEncoding) else {
+                throw Archive.ArchiveError.unreadableArchive
+            }
+            return archive
+        } catch {
+            XCTFail("Failed to open memory archive for '\(sourceArchiveURL.lastPathComponent)'")
+            type(of: self).tearDown()
+            preconditionFailure()
+        }
+    }
+}
+
+#endif

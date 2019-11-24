@@ -195,25 +195,6 @@ class ZIPFoundationTests: XCTestCase {
         }
     }
 
-    func memoryArchive(for testFunction: String, mode: Archive.AccessMode,
-                       preferredEncoding: String.Encoding? = nil) -> Archive {
-        var sourceArchiveURL = ZIPFoundationTests.resourceDirectoryURL
-        sourceArchiveURL.appendPathComponent(testFunction.replacingOccurrences(of: "()", with: ""))
-        sourceArchiveURL.appendPathExtension("zip")
-        do {
-            let data = mode == .create ? Data() : try Data(contentsOf: sourceArchiveURL)
-            guard let archive = Archive(data: data, accessMode: mode,
-                                        preferredEncoding: preferredEncoding) else {
-                throw Archive.ArchiveError.unreadableArchive
-            }
-            return archive
-        } catch {
-            XCTFail("Failed to open memory archive for '\(sourceArchiveURL.lastPathComponent)'")
-            type(of: self).tearDown()
-            preconditionFailure()
-        }
-    }
-
     func pathComponent(for testFunction: String) -> String {
         return testFunction.replacingOccurrences(of: "()", with: "")
     }
@@ -269,7 +250,6 @@ extension ZIPFoundationTests {
 
     static var allTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
         return [
-            ("testAppendFile", testAppendFile),
             ("testArchiveAddEntryErrorConditions", testArchiveAddEntryErrorConditions),
             ("testArchiveCreateErrorConditions", testArchiveCreateErrorConditions),
             ("testArchiveInvalidDataErrorConditions", testArchiveInvalidDataErrorConditions),
@@ -288,8 +268,6 @@ extension ZIPFoundationTests {
             ("testCreateArchiveAddSymbolicLink", testCreateArchiveAddSymbolicLink),
             ("testCreateArchiveAddTooLargeUncompressedEntry", testCreateArchiveAddTooLargeUncompressedEntry),
             ("testCreateArchiveAddUncompressedEntry", testCreateArchiveAddUncompressedEntry),
-            ("testCreateArchiveAddUncompressedEntryToMemory", testCreateArchiveAddUncompressedEntryToMemory),
-            ("testCreateArchiveAddCompressedEntryToMemory", testCreateArchiveAddCompressedEntryToMemory),
             ("testDirectoryCreationHelperMethods", testDirectoryCreationHelperMethods),
             ("testEntryInvalidAdditionalDataErrorConditions", testEntryInvalidAdditionalDataErrorConditions),
             ("testEntryInvalidPathEncodingErrorConditions", testEntryInvalidPathEncodingErrorConditions),
@@ -308,8 +286,6 @@ extension ZIPFoundationTests {
             ("testExtractUncompressedDataDescriptorArchive", testExtractUncompressedDataDescriptorArchive),
             ("testExtractUncompressedFolderEntries", testExtractUncompressedFolderEntries),
             ("testExtractZIP64ArchiveErrorConditions", testExtractZIP64ArchiveErrorConditions),
-            ("testExtractCompressedFolderEntriesFromMemory", testExtractCompressedFolderEntriesFromMemory),
-            ("testExtractUncompressedFolderEntriesFromMemory", testExtractUncompressedFolderEntriesFromMemory),
             ("testFileAttributeHelperMethods", testFileAttributeHelperMethods),
             ("testFilePermissionHelperMethods", testFilePermissionHelperMethods),
             ("testFileSizeHelperMethods", testFileSizeHelperMethods),
@@ -321,9 +297,6 @@ extension ZIPFoundationTests {
             ("testPerformanceWriteUncompressed", testPerformanceWriteUncompressed),
             ("testPOSIXPermissions", testPOSIXPermissions),
             ("testProgressHelpers", testProgressHelpers),
-            ("testReadOnlyFile", testReadOnlyFile),
-            ("testReadOnlySlicedFile", testReadOnlySlicedFile),
-            ("testReadWriteFile", testReadWriteFile),
             ("testRemoveCompressedEntry", testRemoveCompressedEntry),
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
@@ -333,10 +306,9 @@ extension ZIPFoundationTests {
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
-            ("testWriteOnlyFile", testWriteOnlyFile),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
-        ] + darwinOnlyTests
+        ] + darwinOnlyTests + swift5OnlyTests
     }
 
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
@@ -357,6 +329,24 @@ extension ZIPFoundationTests {
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
             ("testZipItemErrorConditions", testZipItemErrorConditions)
+        ]
+        #else
+        return []
+        #endif
+    }
+
+    static var swift5OnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
+        #if swift(>=5.0)
+        return [
+            ("testAppendFile", testAppendFile),
+            ("testCreateArchiveAddUncompressedEntryToMemory", testCreateArchiveAddUncompressedEntryToMemory),
+            ("testCreateArchiveAddCompressedEntryToMemory", testCreateArchiveAddCompressedEntryToMemory),
+            ("testExtractCompressedFolderEntriesFromMemory", testExtractCompressedFolderEntriesFromMemory),
+            ("testExtractUncompressedFolderEntriesFromMemory", testExtractUncompressedFolderEntriesFromMemory),
+            ("testWriteOnlyFile", testWriteOnlyFile),
+            ("testReadOnlyFile", testReadOnlyFile),
+            ("testReadOnlySlicedFile", testReadOnlySlicedFile),
+            ("testReadWriteFile", testReadWriteFile)
         ]
         #else
         return []
