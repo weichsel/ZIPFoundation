@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.10](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.10)
+
+### Added
+ - Optional `skipCRC32` parameter to speed up entry reading
+ 
+### Updated
+ - Fixed a race condition during archive creation or extraction
+ - Fixed an error when trying to add broken symlinks to an archive
+ - Fixed an App Store submission issue by updating the product identifier to use reverse DNS notation
+ - Improved CRC32 calculation performance
+ - Improved entry replacement performance on separate volumes
+ - Improved documentation for closure-based writing
+
 ## [0.9.9](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.9)
 
 ### Added
