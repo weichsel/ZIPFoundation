@@ -86,7 +86,7 @@ extension Data {
         case corruptedData
     }
 
-    /// Calculates the `CRC32` checksum of the receiver.
+    /// Calculate the `CRC32` checksum of the receiver.
     ///
     /// - Parameter checksum: The starting seed.
     /// - Returns: The checksum calcualted from the bytes of the receiver and the starting seed.
@@ -125,6 +125,13 @@ extension Data {
         return result ^ mask
     }
 
+    /// Compress the output of `provider` and pass it to `consumer`.
+    /// - Parameters:
+    ///   - size: The full, uncompressed size of the data to be compressed.
+    ///   - bufferSize: The maximum size of the compression buffer (if needed).
+    ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
+    ///   - consumer: A closure that processes the result of the compress operation.
+    /// - Returns: The checksum of the processed content.
     public static func compress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_ENCODE, size: size, bufferSize: bufferSize,
