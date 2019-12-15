@@ -127,8 +127,8 @@ extension Data {
 
     /// Compress the output of `provider` and pass it to `consumer`.
     /// - Parameters:
-    ///   - size: The full, uncompressed size of the data to be compressed.
-    ///   - bufferSize: The maximum size of the compression buffer (if needed).
+    ///   - size: The uncompressed size of the data to be compressed.
+    ///   - bufferSize: The maximum size of the compression buffer.
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
     ///   - consumer: A closure that processes the result of the compress operation.
     /// - Returns: The checksum of the processed content.
@@ -141,6 +141,14 @@ extension Data {
         #endif
     }
 
+    /// Decompress the output of `provider` and pass it to `consumer`.
+    /// - Parameters:
+    ///   - size: The compressed size of the data to be compressed.
+    ///   - bufferSize: The maximum size of the decompression buffer.
+    ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
+    ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
+    ///   - consumer: A closure that processes the result of the decompress operation.
+    /// - Returns: The checksum of the processed content.
     public static func decompress(size: Int, bufferSize: Int, skipCRC32: Bool,
                                   provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
