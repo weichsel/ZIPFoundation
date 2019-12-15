@@ -36,6 +36,7 @@ extension ZIPFoundationTests {
                 XCTFail("Failed to unzip uncompressed folder entries")
             }
         }
+        XCTAssert(archive.data != nil)
     }
 
     func testExtractCompressedFolderEntriesFromMemory() {

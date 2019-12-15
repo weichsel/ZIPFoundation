@@ -13,6 +13,7 @@ import Foundation
 #if swift(>=5.0)
 
 extension Archive {
+    /// Returns an `Data` object containing a representation of the receiver.
     public var data: Data? { return memoryFile?.data }
 
     static func configureMemoryBacking(for data: Data, mode: Archive.AccessMode)
