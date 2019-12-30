@@ -92,6 +92,12 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
+    func testMemoryArchiveErrorConditions() {
+        let data = Data.makeRandomData(size: 1024)
+        let archive = Archive(data: data, accessMode: .read)
+        XCTAssertNil(archive)
+    }
+
     func testReadOnlyFile() {
         let file = MemoryFile(data: "ABCDEabcde".data(using: .utf8)!).open(mode: "r")
         var chars: [UInt8] = [0, 0, 0]
