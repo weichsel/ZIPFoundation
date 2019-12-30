@@ -16,7 +16,7 @@ extension Archive {
     /// Returns an `Data` object containing a representation of the receiver.
     public var data: Data? { return memoryFile?.data }
 
-    static func configureMemoryBacking(for data: Data, mode: Archive.AccessMode)
+    static func configureMemoryBacking(for data: Data, mode: AccessMode)
         -> (UnsafeMutablePointer<FILE>, MemoryFile)? {
             let posixMode: String
             switch mode {

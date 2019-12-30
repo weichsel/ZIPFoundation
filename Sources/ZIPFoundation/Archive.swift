@@ -221,7 +221,7 @@ public final class Archive: Sequence {
 
     // MARK: - Helpers
 
-    private static func configureFileBacking(for url: URL, mode: Archive.AccessMode)
+    private static func configureFileBacking(for url: URL, mode: AccessMode)
         -> (UnsafeMutablePointer<FILE>, EndOfCentralDirectoryRecord)? {
         let fileManager = FileManager()
         switch mode {
