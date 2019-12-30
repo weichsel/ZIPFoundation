@@ -94,8 +94,14 @@ extension ZIPFoundationTests {
 
     func testMemoryArchiveErrorConditions() {
         let data = Data.makeRandomData(size: 1024)
-        let archive = Archive(data: data, accessMode: .read)
-        XCTAssertNil(archive)
+        let invalidArchive = Archive(data: data, accessMode: .read)
+        XCTAssertNil(invalidArchive)
+        // Trigger the code path that is taken if funopen() fails
+        let systemAllocator = CFAllocatorGetDefault().takeUnretainedValue()
+        CFAllocatorSetDefault(kCFAllocatorNull)
+        let unallocatableArchive = Archive(data: data, accessMode: .read)
+        CFAllocatorSetDefault(systemAllocator)
+        XCTAssertNil(unallocatableArchive)
     }
 
     func testReadOnlyFile() {
