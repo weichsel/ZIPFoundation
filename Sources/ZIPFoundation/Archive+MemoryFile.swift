@@ -1,5 +1,5 @@
 //
-//  MemoryFile.swift
+//  Archive+MemoryFile.swift
 //  ZIPFoundation
 //
 //  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.

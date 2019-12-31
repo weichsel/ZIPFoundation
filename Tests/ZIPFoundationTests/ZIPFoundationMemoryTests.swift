@@ -1,8 +1,11 @@
 //
-//  ZIPFoundationMemoryFileTests.swift
+//  ZIPFoundationMemoryTests.swift
 //  ZIPFoundation
 //
-//  Created by Matthias Neeracher on 28.10.19.
+//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Released under the MIT License.
+//
+//  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
 //
 
 import Foundation

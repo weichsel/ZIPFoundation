@@ -2,9 +2,11 @@
 //  ZIPFoundationProgressTests.swift
 //  ZIPFoundation
 //
-//  Created by Thomas Zoechling on 17.01.19.
+//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Released under the MIT License.
 //
-
+//  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
+//
 import XCTest
 @testable import ZIPFoundation
 
