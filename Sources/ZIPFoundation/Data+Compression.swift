@@ -2,7 +2,7 @@
 //  Data+Compression.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2019 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -86,7 +86,7 @@ extension Data {
         case corruptedData
     }
 
-    /// Calculates the `CRC32` checksum of the receiver.
+    /// Calculate the `CRC32` checksum of the receiver.
     ///
     /// - Parameter checksum: The starting seed.
     /// - Returns: The checksum calcualted from the bytes of the receiver and the starting seed.
@@ -125,7 +125,14 @@ extension Data {
         return result ^ mask
     }
 
-    static func compress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
+    /// Compress the output of `provider` and pass it to `consumer`.
+    /// - Parameters:
+    ///   - size: The uncompressed size of the data to be compressed.
+    ///   - bufferSize: The maximum size of the compression buffer.
+    ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
+    ///   - consumer: A closure that processes the result of the compress operation.
+    /// - Returns: The checksum of the processed content.
+    public static func compress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_ENCODE, size: size, bufferSize: bufferSize,
                                 provider: provider, consumer: consumer)
@@ -134,8 +141,16 @@ extension Data {
         #endif
     }
 
-    static func decompress(size: Int, bufferSize: Int, skipCRC32: Bool,
-                           provider: Provider, consumer: Consumer) throws -> CRC32 {
+    /// Decompress the output of `provider` and pass it to `consumer`.
+    /// - Parameters:
+    ///   - size: The compressed size of the data to be compressed.
+    ///   - bufferSize: The maximum size of the decompression buffer.
+    ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
+    ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
+    ///   - consumer: A closure that processes the result of the decompress operation.
+    /// - Returns: The checksum of the processed content.
+    public static func decompress(size: Int, bufferSize: Int, skipCRC32: Bool,
+                                  provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize,
                                 skipCRC32: skipCRC32, provider: provider, consumer: consumer)

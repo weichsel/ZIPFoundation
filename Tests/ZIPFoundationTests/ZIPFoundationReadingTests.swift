@@ -2,7 +2,7 @@
 //  ZIPFoundationReadingTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2019 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -16,10 +16,10 @@ extension ZIPFoundationTests {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
             do {
-                //Test extracting to memory
+                // Test extracting to memory
                 var checksum = try archive.extract(entry, bufferSize: 32, consumer: { _ in })
                 XCTAssert(entry.checksum == checksum)
-                //Test extracting to file
+                // Test extracting to file
                 var fileURL = self.createDirectory(for: #function)
                 fileURL.appendPathComponent(entry.path)
                 checksum = try archive.extract(entry, to: fileURL)

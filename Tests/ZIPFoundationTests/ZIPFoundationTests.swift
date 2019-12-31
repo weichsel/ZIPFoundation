@@ -2,7 +2,7 @@
 //  ZIPFoundationTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2019 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -308,7 +308,7 @@ extension ZIPFoundationTests {
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
-        ] + darwinOnlyTests
+        ] + darwinOnlyTests + swift5OnlyTests
     }
 
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
@@ -329,6 +329,25 @@ extension ZIPFoundationTests {
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
             ("testZipItemErrorConditions", testZipItemErrorConditions)
+        ]
+        #else
+        return []
+        #endif
+    }
+
+    static var swift5OnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
+        #if swift(>=5.0)
+        return [
+            ("testAppendFile", testAppendFile),
+            ("testCreateArchiveAddUncompressedEntryToMemory", testCreateArchiveAddUncompressedEntryToMemory),
+            ("testCreateArchiveAddCompressedEntryToMemory", testCreateArchiveAddCompressedEntryToMemory),
+            ("testExtractCompressedFolderEntriesFromMemory", testExtractCompressedFolderEntriesFromMemory),
+            ("testExtractUncompressedFolderEntriesFromMemory", testExtractUncompressedFolderEntriesFromMemory),
+            ("testMemoryArchiveErrorConditions", testMemoryArchiveErrorConditions),
+            ("testWriteOnlyFile", testWriteOnlyFile),
+            ("testReadOnlyFile", testReadOnlyFile),
+            ("testReadOnlySlicedFile", testReadOnlySlicedFile),
+            ("testReadWriteFile", testReadWriteFile)
         ]
         #else
         return []

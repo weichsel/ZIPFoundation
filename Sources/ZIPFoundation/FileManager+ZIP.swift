@@ -2,7 +2,7 @@
 //  FileManager+ZIP.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2019 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -84,7 +84,7 @@ extension FileManager {
     /// - Parameters:
     ///   - sourceURL: The file URL pointing to an existing ZIP file.
     ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
-    ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to speed up performance.
+    ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
