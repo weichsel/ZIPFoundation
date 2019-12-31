@@ -36,7 +36,7 @@ extension Archive {
                                                                               zipFileCommentLength: 0,
                                                                               zipFileCommentData: Data())
                 _ = endOfCentralDirectoryRecord.data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
-                    fwrite(buffer.baseAddress, buffer.count, 1, archiveFile) // Errors caught on read below
+                    fwrite(buffer.baseAddress, buffer.count, 1, archiveFile) // Errors handled during read
                 }
             }
             return (archiveFile, memoryFile)
@@ -44,7 +44,7 @@ extension Archive {
 }
 
 class MemoryFile {
-    public private(set) var data: Data
+    private(set) var data: Data
     private var offset  = 0
 
     init(data: Data = Data()) {
