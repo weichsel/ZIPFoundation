@@ -123,14 +123,13 @@ public final class Archive: Sequence {
     /// To create a new ZIP file, pass in a non-existing file URL and `AccessMode.create`.
     ///
     /// To update an existing ZIP file, pass in an existing file URL and `AccessMode.update`.
-    ///
     /// - Parameters:
     ///   - url: File URL to the receivers backing file.
     ///   - mode: Access mode of the receiver.
     ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
-    ///
     /// - Returns: An archive initialized with a backing file at the passed in file URL and the given access mode
     ///   or `nil` if the following criteria are not met:
+    /// - Note:
     ///   - The file URL _must_ point to an existing file for `AccessMode.read`
     ///   - The file URL _must_ point to a non-existing file for `AccessMode.write`
     ///   - The file URL _must_ point to an existing file for `AccessMode.update`
@@ -148,6 +147,21 @@ public final class Archive: Sequence {
 
     #if swift(>=5.0)
     var memoryFile: MemoryFile?
+
+    /// Initializes a new in-memory ZIP `Archive`.
+    ///
+    /// You can use this initalizer to create new in-memory archive files or to read and update existing ones.
+    ///
+    /// - Parameters:
+    ///   - data: `Data` object used as backing for in-memory archives.
+    ///   - mode: Access mode of the receiver.
+    ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
+    ///
+    /// - Returns: An in-memory archive initialized with passed in backing data.
+    /// - Note:
+    ///   - The file URL _must_ point to an existing file for `AccessMode.read`
+    ///   - The file URL _must_ point to a non-existing file for `AccessMode.write`
+    ///   - The file URL _must_ point to an existing file for `AccessMode.update`
     public init?(data: Data = Data(), accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
         guard let url = URL(string: "memory:"),
             let (archiveFile, memoryFile) = Archive.configureMemoryBacking(for: data, mode: mode) else {
