@@ -97,11 +97,14 @@ extension ZIPFoundationTests {
         let invalidArchive = Archive(data: data, accessMode: .read)
         XCTAssertNil(invalidArchive)
         // Trigger the code path that is taken if funopen() fails
+        // We can only do this on Apple platforms
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
         let systemAllocator = CFAllocatorGetDefault().takeUnretainedValue()
         CFAllocatorSetDefault(kCFAllocatorNull)
         let unallocatableArchive = Archive(data: data, accessMode: .read)
         CFAllocatorSetDefault(systemAllocator)
         XCTAssertNil(unallocatableArchive)
+        #endif
     }
 
     func testReadOnlyFile() {
@@ -175,7 +178,7 @@ extension ZIPFoundationTests {
             let data = mode == .create ? Data() : try Data(contentsOf: sourceArchiveURL)
             guard let archive = Archive(data: data, accessMode: mode,
                                         preferredEncoding: preferredEncoding) else {
-                throw Archive.ArchiveError.unreadableArchive
+                                            throw Archive.ArchiveError.unreadableArchive
             }
             return archive
         } catch {
