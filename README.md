@@ -21,7 +21,8 @@ To learn more about the performance characteristics of the framework, you can re
     - [Creating Archives](#creating-archives)
     - [Adding and Removing Entries](#adding-and-removing-entries)
     - [Closure based Reading and Writing](#closure-based-reading-and-writing)
-	- [Progress Tracking and Cancellation](#progress-tracking-and-cancellation)
+    - [In-Memory Archives](#in-memory-archives)    
+    - [Progress Tracking and Cancellation](#progress-tracking-and-cancellation)
 - [Credits](#credits)
 - [License](#license)
 
