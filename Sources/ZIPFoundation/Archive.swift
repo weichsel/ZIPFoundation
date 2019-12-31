@@ -130,9 +130,9 @@ public final class Archive: Sequence {
     /// - Returns: An archive initialized with a backing file at the passed in file URL and the given access mode
     ///   or `nil` if the following criteria are not met:
     /// - Note:
-    ///   - The file URL _must_ point to an existing file for `AccessMode.read`
-    ///   - The file URL _must_ point to a non-existing file for `AccessMode.write`
-    ///   - The file URL _must_ point to an existing file for `AccessMode.update`
+    ///   - The file URL _must_ point to an existing file for `AccessMode.read`.
+    ///   - The file URL _must_ point to a non-existing file for `AccessMode.create`.
+    ///   - The file URL _must_ point to an existing file for `AccessMode.update`.
     public init?(url: URL, accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
         self.url = url
         self.accessMode = mode
@@ -159,9 +159,8 @@ public final class Archive: Sequence {
     ///
     /// - Returns: An in-memory archive initialized with passed in backing data.
     /// - Note:
-    ///   - The file URL _must_ point to an existing file for `AccessMode.read`
-    ///   - The file URL _must_ point to a non-existing file for `AccessMode.write`
-    ///   - The file URL _must_ point to an existing file for `AccessMode.update`
+    ///   - The backing `data` _must_ contain a valid ZIP archive for `AccessMode.read` and `AccessMode.update`.
+    ///   - The backing `data` _must_ be empty (or omitted) for `AccessMode.create`.
     public init?(data: Data = Data(), accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
         guard let url = URL(string: "memory:"),
             let (archiveFile, memoryFile) = Archive.configureMemoryBacking(for: data, mode: mode) else {
