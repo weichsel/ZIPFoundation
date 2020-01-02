@@ -7,7 +7,7 @@ Pod::Spec.new do |s|
   s.social_media_url = 'http://twitter.com/weichsel'
   s.authors = { 'Thomas Zoechling' => 'thomas@peakstep.com' }
   s.source = { :git => 'https://github.com/weichsel/ZIPFoundation.git', :tag => s.version }
-  s.swift_version = '4.0'
+  s.swift_versions = ['4.0', '5.0']
 
   s.ios.deployment_target = '9.0'
   s.osx.deployment_target = '10.11'
