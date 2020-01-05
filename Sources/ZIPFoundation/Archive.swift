@@ -174,6 +174,7 @@ public final class Archive: Sequence {
         self.memoryFile = memoryFile
         guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile)
             else {
+                fclose(self.archiveFile)
                 return nil
         }
         self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
