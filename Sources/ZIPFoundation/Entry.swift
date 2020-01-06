@@ -11,7 +11,7 @@
 import Foundation
 import CoreFoundation
 
-/// A value that represents a file, a direcotry or a symbolic link within a ZIP `Archive`.
+/// A value that represents a file, a directory or a symbolic link within a ZIP `Archive`.
 ///
 /// You can retrieve instances of `Entry` from an `Archive` via subscripting or iteration.
 /// Entries are identified by their `path`.
