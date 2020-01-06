@@ -97,16 +97,15 @@ private extension MemoryFile {
     }
 
     func seek(offset: Int, whence: Int32) -> Int {
-        switch whence {
-        case SEEK_SET:
-            self.offset = offset
-        case SEEK_CUR:
-            self.offset += offset
-        case SEEK_END:
-            self.offset = data.count+offset
-        default:
-            assertionFailure("Unknown seek whence \(whence)")
+        var result = -1
+        if whence == SEEK_SET {
+            result = offset
+        } else if whence == SEEK_CUR {
+            result = self.offset + offset
+        } else if whence == SEEK_END {
+            result = data.count + offset
         }
+        self.offset = result
         return self.offset
     }
 }
