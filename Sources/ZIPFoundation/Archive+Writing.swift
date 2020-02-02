@@ -23,7 +23,7 @@ extension Archive {
     ///   - baseURL: The base URL of the `Entry` to add.
     ///              The `baseURL` combined with `path` must form a fully qualified file URL.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied to `Entry`.
-    ///                        By default no compression will be applied.
+    ///                        By default, no compression will be applied.
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
     ///   - progress: A progress object that can be used to track or cancel the add operation.
     /// - Throws: An error if the source file cannot be read or the receiver is not writable.
@@ -88,7 +88,7 @@ extension Archive {
     ///   - permissions: POSIX file permissions for the `Entry`.
     ///                  Default is `0`o`644` for files and symlinks and `0`o`755` for directories.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied to `Entry`.
-    ///                        By default no compression will be applied.
+    ///                        By default, no compression will be applied.
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
     ///   - progress: A progress object that can be used to track or cancel the add operation.
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.

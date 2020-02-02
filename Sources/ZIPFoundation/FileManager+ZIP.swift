@@ -26,7 +26,7 @@ extension FileManager {
     ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element
     ///                       within the archive. Default is `true`.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied.
-    ///                        By default `zipItem` will create uncompressed archives.
+    ///                        By default, `zipItem` will create uncompressed archives.
     ///   - progress: A progress object that can be used to track or cancel the zip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func zipItem(at sourceURL: URL, to destinationURL: URL,
