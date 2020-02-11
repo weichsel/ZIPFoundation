@@ -236,31 +236,33 @@ extension Data {
         repeat {
             let readSize = Swift.min((size - position), bufferSize)
             var inputChunk = try provider(position, readSize)
-            stream.avail_in = UInt32(inputChunk.count)
-            inputChunk.withUnsafeMutableBytes { (rawBufferPointer) in
-                if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
-                    let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
-                    stream.next_in = pointer
-                }
-            }
             zipCRC32 = inputChunk.crc32(checksum: zipCRC32)
-            flush = position + bufferSize >= size ? Z_FINISH : Z_NO_FLUSH
-            var outputChunk = Data(count: bufferSize)
-            repeat {
-                stream.avail_out = UInt32(bufferSize)
-                outputChunk.withUnsafeMutableBytes { (rawBufferPointer) in
-                    if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
-                        let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
-                        stream.next_out = pointer
-                    }
-                }
-                result = deflate(&stream, flush)
-                guard result >= Z_OK  else {
+            stream.avail_in = UInt32(inputChunk.count)
+            try inputChunk.withUnsafeMutableBytes { (rawBufferPointer) in
+                guard let baseAddress = rawBufferPointer.baseAddress else {
                     throw CompressionError.corruptedData
                 }
-                outputChunk.count = bufferSize - Int(stream.avail_out)
-                try consumer(outputChunk)
-            } while stream.avail_out == 0
+                let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+                stream.next_in = pointer
+                flush = position + bufferSize >= size ? Z_FINISH : Z_NO_FLUSH
+                var outputChunk = Data(count: bufferSize)
+                repeat {
+                    stream.avail_out = UInt32(bufferSize)
+                    try outputChunk.withUnsafeMutableBytes { (rawBufferPointer) in
+                        guard let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 else {
+                            throw CompressionError.corruptedData
+                        }
+                        let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+                        stream.next_out = pointer
+                        result = deflate(&stream, flush)
+                    }
+                    guard result >= Z_OK  else {
+                        throw CompressionError.corruptedData
+                    }
+                    outputChunk.count = bufferSize - Int(stream.avail_out)
+                    try consumer(outputChunk)
+                } while stream.avail_out == 0
+            }
             position += readSize
         } while flush != Z_FINISH
         return zipCRC32
