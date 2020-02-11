@@ -61,7 +61,7 @@ extension ZIPFoundationTests {
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
         let file: UnsafeMutablePointer<FILE> = fopen(fileSystemRepresentation, "rb")
-        // Close the file to exercice the error path during writeChunk that deals with
+        // Close the file to exercise the error path during writeChunk that deals with
         // unwritable files.
         fclose(file)
         do {
