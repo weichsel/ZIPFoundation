@@ -111,6 +111,55 @@ Afterwards, run the following command:
 $ pod install
 ```
 
+### Buck
+[Buck](https://buck.build/) - A fast build system that encourages the creation of small, reusable modules
+You can integrate ZIP Foundation into your Buck project using `BUCK` file.
+
+**[!]** _This guide provided by a [contributor](https://github.com/Kylmakalle), do not treat instructions below as official/recommended by project owner._
+
+- Obtain sources
+```bash
+cd your-project
+git pull https://github.com/weichsel/ZIPFoundation.git
+cd ZIPFoundation
+```
+
+- Create `BUCK` file in `ZIPFoundation` folder with sample config
+```python
+load("//Config:buck_rule_macros.bzl", "static_library")
+
+static_library(
+    name = "ZIPFoundation",
+    exported_headers = glob([
+        "Sources/CZLib/*.h",
+    ]),
+    srcs = glob([
+        "Sources/ZIPFoundation/*.swift"
+    ]),
+    frameworks = [
+        "$SDKROOT/System/Library/Frameworks/Foundation.framework"
+    ]
+)
+```
+
+- Add `ZIPFoundation` as dependences to required targets
+```python
+load("//Config:buck_rule_macros.bzl", "static_library")
+
+static_library(
+    name = "Target-That-Requires-ZIPFoundation",
+    # srcs = ...
+    deps = [
+    	    "//path/to/ZIPFoundation:ZIPFoundation"
+    ]
+)
+
+```
+- Regenerate project with buck and `import ZIPFoundation` :)
+
+You also can use `apple_third_party_lib` instead of `static_library`, which is based on your project requirements.
+For more info please check out official [BuckSample](https://github.com/airbnb/BuckSample/blob/master/Pods/BUCK) repo.
+
 ## Usage
 ZIP Foundation provides two high level methods to zip and unzip items. Both are implemented as extension of `FileManager`.  
 The functionality of those methods is modeled after the behavior of the Archive Utility in macOS.  
