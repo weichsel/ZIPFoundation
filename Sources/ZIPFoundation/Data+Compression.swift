@@ -143,7 +143,7 @@ extension Data {
 
     /// Decompress the output of `provider` and pass it to `consumer`.
     /// - Parameters:
-    ///   - size: The compressed size of the data to be compressed.
+    ///   - size: The compressed size of the data to be decompressed.
     ///   - bufferSize: The maximum size of the decompression buffer.
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
