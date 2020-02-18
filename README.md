@@ -132,7 +132,7 @@ do {
 }
 ```
 
-By default, archives are created without any compression. To create compressed ZIP archives, the optional `compressionMethod` parameter has to be set to `.deflate`.
+By default, archives are created without any compression. To create compressed ZIP archives, the optional `compressionMethod` parameter has to be set to `.deflate`.  
 The same method also accepts URLs that represent directory items. In that case, `zipItem` adds the directory content of `sourceURL` to the archive.  
 By default, a root directory entry named after the `lastPathComponent` of the `sourceURL` is added to the destination archive.  If you don't want to preserve the parent directory of the source in your archive, you can pass `shouldKeepParent: false`.
 
