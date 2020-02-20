@@ -87,6 +87,7 @@ extension FileManager {
     ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
+    ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
                           progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
