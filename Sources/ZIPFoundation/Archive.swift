@@ -117,16 +117,13 @@ public final class Archive: Sequence {
     /// Initializes a new ZIP `Archive`.
     ///
     /// You can use this initalizer to create new archive files or to read and update existing ones.
-    ///
-    /// To read existing ZIP files, pass in an existing file URL and `AccessMode.read`.
-    ///
-    /// To create a new ZIP file, pass in a non-existing file URL and `AccessMode.create`.
-    ///
-    /// To update an existing ZIP file, pass in an existing file URL and `AccessMode.update`.
+    /// The `mode` parameter indicates the intended usage of the archive: `.read`, `.create` or `.update`.
     /// - Parameters:
     ///   - url: File URL to the receivers backing file.
     ///   - mode: Access mode of the receiver.
     ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
+    ///                        This encoding is only used when _decoding_ paths from the receiver.
+    ///                        Paths of entries added with `addEntry` are always UTF-8 encoded.
     /// - Returns: An archive initialized with a backing file at the passed in file URL and the given access mode
     ///   or `nil` if the following criteria are not met:
     /// - Note:
@@ -156,7 +153,8 @@ public final class Archive: Sequence {
     ///   - data: `Data` object used as backing for in-memory archives.
     ///   - mode: Access mode of the receiver.
     ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
-    ///
+    ///                        This encoding is only used when _decoding_ paths from the receiver.
+    ///                        Paths of entries added with `addEntry` are always UTF-8 encoded.
     /// - Returns: An in-memory archive initialized with passed in backing data.
     /// - Note:
     ///   - The backing `data` _must_ contain a valid ZIP archive for `AccessMode.read` and `AccessMode.update`.

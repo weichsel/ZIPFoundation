@@ -93,8 +93,9 @@ public struct Entry: Equatable {
         let extraFieldData: Data
         let fileCommentData: Data
         var usesDataDescriptor: Bool { return (self.generalPurposeBitFlag & (1 << 3 )) != 0 }
-        var isZIP64: Bool { return self.versionNeededToExtract >= 45 }
+        var usesUTF8PathEncoding: Bool { return (self.generalPurposeBitFlag & (1 << 11 )) != 0 }
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
+        var isZIP64: Bool { return self.versionNeededToExtract >= 45 }
     }
     /// Returns the `path` of the receiver within a ZIP `Archive` using a given encoding.
     ///
@@ -109,8 +110,7 @@ public struct Entry: Equatable {
         let dosLatinUSEncoding = CFStringEncoding(dosLatinUS)
         let dosLatinUSStringEncoding = CFStringConvertEncodingToNSStringEncoding(dosLatinUSEncoding)
         let codepage437 = String.Encoding(rawValue: dosLatinUSStringEncoding)
-        let isUTF8 = ((self.centralDirectoryStructure.generalPurposeBitFlag >> 11) & 1) != 0
-        let encoding = isUTF8 ? String.Encoding.utf8 : codepage437
+        let encoding = self.centralDirectoryStructure.usesUTF8PathEncoding ? .utf8 : codepage437
         return self.path(using: encoding)
     }
     /// The file attributes of the receiver as key/value pairs.
