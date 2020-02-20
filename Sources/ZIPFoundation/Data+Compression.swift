@@ -239,12 +239,16 @@ extension Data {
             zipCRC32 = inputChunk.crc32(checksum: zipCRC32)
             stream.avail_in = UInt32(inputChunk.count)
             try inputChunk.withUnsafeMutableBytes { (rawBufferPointer) in
-                guard let baseAddress = rawBufferPointer.baseAddress else {
+                if let baseAddress = rawBufferPointer.baseAddress {
+                    let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+                    stream.next_in = pointer
+                    flush = position + bufferSize >= size ? Z_FINISH : Z_NO_FLUSH
+                } else if rawBufferPointer.count > 0 {
                     throw CompressionError.corruptedData
+                } else {
+                    stream.next_in = nil
+                    flush = Z_FINISH
                 }
-                let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
-                stream.next_in = pointer
-                flush = position + bufferSize >= size ? Z_FINISH : Z_NO_FLUSH
                 var outputChunk = Data(count: bufferSize)
                 repeat {
                     stream.avail_out = UInt32(bufferSize)
