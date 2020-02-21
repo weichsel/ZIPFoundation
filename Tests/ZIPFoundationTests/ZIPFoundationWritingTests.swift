@@ -215,7 +215,7 @@ extension ZIPFoundationTests {
         do {
             try archive.addEntry(with: fileName, type: .file, uncompressedSize: UINT32_MAX,
                                  provider: { (_, chunkSize) -> Data in
-                return Data.makeRandomData(size: chunkSize)
+                return Data(count: chunkSize)
             })
         } catch let error as Archive.ArchiveError {
             XCTAssertNotNil(error == .invalidStartOfCentralDirectoryOffset)
