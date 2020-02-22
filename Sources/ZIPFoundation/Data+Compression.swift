@@ -281,37 +281,37 @@ extension Data {
         var unzipCRC32 = CRC32(0)
         var position = 0
         repeat {
-            let inputBytes = malloc(bufferSize)
-            defer { free(inputBytes) }
             stream.avail_in = UInt32(bufferSize)
             var chunk = try provider(position, bufferSize)
             position += chunk.count
-            chunk.withUnsafeMutableBytes { (rawBufferPointer) in
+            try chunk.withUnsafeMutableBytes { (rawBufferPointer) in
                 if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
                     let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
                     stream.next_in = pointer
+                    repeat {
+                        var outputData = Data(count: bufferSize)
+                        stream.avail_out = UInt32(bufferSize)
+                        try outputData.withUnsafeMutableBytes { (rawBufferPointer) in
+                            if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
+                                let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+                                stream.next_out = pointer
+                            } else {
+                                throw CompressionError.corruptedData
+                            }
+                            result = inflate(&stream, Z_NO_FLUSH)
+                            guard result != Z_NEED_DICT &&
+                                result != Z_DATA_ERROR &&
+                                result != Z_MEM_ERROR else {
+                                    throw CompressionError.corruptedData
+                            }
+                        }
+                        let remainingLength = UInt32(bufferSize) - stream.avail_out
+                        outputData.count = Int(remainingLength)
+                        try consumer(outputData)
+                        if !skipCRC32 { unzipCRC32 = outputData.crc32(checksum: unzipCRC32) }
+                    } while stream.avail_out == 0
                 }
             }
-            repeat {
-                var outputData = Data(count: bufferSize)
-                stream.avail_out = UInt32(bufferSize)
-                outputData.withUnsafeMutableBytes { (rawBufferPointer) in
-                    if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
-                        let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
-                        stream.next_out = pointer
-                    }
-                }
-                result = inflate(&stream, Z_NO_FLUSH)
-                guard result != Z_NEED_DICT &&
-                    result != Z_DATA_ERROR &&
-                    result != Z_MEM_ERROR else {
-                        throw CompressionError.corruptedData
-                }
-                let remainingLength = UInt32(bufferSize) - stream.avail_out
-                outputData.count = Int(remainingLength)
-                try consumer(outputData)
-                if !skipCRC32 { unzipCRC32 = outputData.crc32(checksum: unzipCRC32) }
-            } while stream.avail_out == 0
         } while result != Z_STREAM_END
         return unzipCRC32
     }
