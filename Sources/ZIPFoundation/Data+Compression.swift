@@ -260,9 +260,8 @@ extension Data {
                         stream.next_out = pointer
                         result = deflate(&stream, flush)
                     }
-                    guard result >= Z_OK  else {
-                        throw CompressionError.corruptedData
-                    }
+                    guard result >= Z_OK else { throw CompressionError.corruptedData }
+
                     outputChunk.count = bufferSize - Int(stream.avail_out)
                     try consumer(outputChunk)
                 } while stream.avail_out == 0
