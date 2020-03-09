@@ -46,7 +46,7 @@ To learn more about the performance characteristics of the framework, you can re
 ## Installation
 
 ### Swift Package Manager
-Swift Package Manager is a dependency manager currently under active development. To learn how to use the Swift Package Manager for your project, please read the [official documentation](https://github.com/apple/swift-package-manager/blob/master/Documentation/Usage.md).  
+The Swift Package Manager is a dependency manager integrated with the Swift build system. To learn how to use the Swift Package Manager for your project, please read the [official documentation](https://github.com/apple/swift-package-manager/blob/master/Documentation/Usage.md).  
 To add ZIP Foundation as a dependency, you have to add it to the `dependencies` of your `Package.swift` file and refer to that dependency in your `target`.
 
 ```swift
