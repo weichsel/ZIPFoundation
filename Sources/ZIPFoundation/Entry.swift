@@ -151,8 +151,7 @@ public struct Entry: Equatable {
             }
         case .msdos:
             isDirectory = isDirectory || ((centralDirectoryStructure.externalFileAttributes >> 4) == 0x01)
-            fallthrough
-        // For all other OSes we can only guess based on the directory suffix char
+            fallthrough // For all other OSes we can only guess based on the directory suffix char
         default: return isDirectory ? .directory : .file
         }
     }
@@ -218,17 +217,18 @@ extension Entry.LocalFileHeader {
         var uncompressedSize = self.uncompressedSize
         var fileNameLength = self.fileNameLength
         var extraFieldLength = self.extraFieldLength
-        var data = Data(buffer: UnsafeBufferPointer(start: &localFileHeaderSignature, count: 1))
-        data.append(UnsafeBufferPointer(start: &versionNeededToExtract, count: 1))
-        data.append(UnsafeBufferPointer(start: &generalPurposeBitFlag, count: 1))
-        data.append(UnsafeBufferPointer(start: &compressionMethod, count: 1))
-        data.append(UnsafeBufferPointer(start: &lastModFileTime, count: 1))
-        data.append(UnsafeBufferPointer(start: &lastModFileDate, count: 1))
-        data.append(UnsafeBufferPointer(start: &crc32, count: 1))
-        data.append(UnsafeBufferPointer(start: &compressedSize, count: 1))
-        data.append(UnsafeBufferPointer(start: &uncompressedSize, count: 1))
-        data.append(UnsafeBufferPointer(start: &fileNameLength, count: 1))
-        data.append(UnsafeBufferPointer(start: &extraFieldLength, count: 1))
+        var data = Data()
+        withUnsafePointer(to: &localFileHeaderSignature, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &versionNeededToExtract, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &generalPurposeBitFlag, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &compressionMethod, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &lastModFileTime, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &lastModFileDate, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &crc32, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &compressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &uncompressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &fileNameLength, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &extraFieldLength, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         data.append(self.fileNameData)
         data.append(self.extraFieldData)
         return data
