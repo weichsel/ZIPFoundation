@@ -345,22 +345,23 @@ extension Archive {
 
 extension Archive.EndOfCentralDirectoryRecord {
     var data: Data {
-        var endOfCentralDirectorySignature = self.endOfCentralDirectorySignature
+        var endOfCDSignature = self.endOfCentralDirectorySignature
         var numberOfDisk = self.numberOfDisk
         var numberOfDiskStart = self.numberOfDiskStart
         var totalNumberOfEntriesOnDisk = self.totalNumberOfEntriesOnDisk
-        var totalNumberOfEntriesInCentralDirectory = self.totalNumberOfEntriesInCentralDirectory
+        var totalNumberOfEntriesInCD = self.totalNumberOfEntriesInCentralDirectory
         var sizeOfCentralDirectory = self.sizeOfCentralDirectory
-        var offsetToStartOfCentralDirectory = self.offsetToStartOfCentralDirectory
+        var offsetToStartOfCD = self.offsetToStartOfCentralDirectory
         var zipFileCommentLength = self.zipFileCommentLength
-        var data = Data(buffer: UnsafeBufferPointer(start: &endOfCentralDirectorySignature, count: 1))
-        data.append(UnsafeBufferPointer(start: &numberOfDisk, count: 1))
-        data.append(UnsafeBufferPointer(start: &numberOfDiskStart, count: 1))
-        data.append(UnsafeBufferPointer(start: &totalNumberOfEntriesOnDisk, count: 1))
-        data.append(UnsafeBufferPointer(start: &totalNumberOfEntriesInCentralDirectory, count: 1))
-        data.append(UnsafeBufferPointer(start: &sizeOfCentralDirectory, count: 1))
-        data.append(UnsafeBufferPointer(start: &offsetToStartOfCentralDirectory, count: 1))
-        data.append(UnsafeBufferPointer(start: &zipFileCommentLength, count: 1))
+        var data = Data()
+        withUnsafePointer(to: &endOfCDSignature, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &numberOfDisk, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &numberOfDiskStart, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &totalNumberOfEntriesOnDisk, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &totalNumberOfEntriesInCD, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &sizeOfCentralDirectory, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &offsetToStartOfCD, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &zipFileCommentLength, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         data.append(self.zipFileCommentData)
         return data
     }
