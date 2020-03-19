@@ -278,23 +278,24 @@ extension Entry.CentralDirectoryStructure {
         var internalFileAttributes = self.internalFileAttributes
         var externalFileAttributes = self.externalFileAttributes
         var relativeOffsetOfLocalHeader = self.relativeOffsetOfLocalHeader
-        var data = Data(buffer: UnsafeBufferPointer(start: &centralDirectorySignature, count: 1))
-        data.append(UnsafeBufferPointer(start: &versionMadeBy, count: 1))
-        data.append(UnsafeBufferPointer(start: &versionNeededToExtract, count: 1))
-        data.append(UnsafeBufferPointer(start: &generalPurposeBitFlag, count: 1))
-        data.append(UnsafeBufferPointer(start: &compressionMethod, count: 1))
-        data.append(UnsafeBufferPointer(start: &lastModFileTime, count: 1))
-        data.append(UnsafeBufferPointer(start: &lastModFileDate, count: 1))
-        data.append(UnsafeBufferPointer(start: &crc32, count: 1))
-        data.append(UnsafeBufferPointer(start: &compressedSize, count: 1))
-        data.append(UnsafeBufferPointer(start: &uncompressedSize, count: 1))
-        data.append(UnsafeBufferPointer(start: &fileNameLength, count: 1))
-        data.append(UnsafeBufferPointer(start: &extraFieldLength, count: 1))
-        data.append(UnsafeBufferPointer(start: &fileCommentLength, count: 1))
-        data.append(UnsafeBufferPointer(start: &diskNumberStart, count: 1))
-        data.append(UnsafeBufferPointer(start: &internalFileAttributes, count: 1))
-        data.append(UnsafeBufferPointer(start: &externalFileAttributes, count: 1))
-        data.append(UnsafeBufferPointer(start: &relativeOffsetOfLocalHeader, count: 1))
+        var data = Data()
+        withUnsafePointer(to: &centralDirectorySignature, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &versionMadeBy, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &versionNeededToExtract, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &generalPurposeBitFlag, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &compressionMethod, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &lastModFileTime, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &lastModFileDate, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &crc32, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &compressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &uncompressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &fileNameLength, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &extraFieldLength, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &fileCommentLength, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &diskNumberStart, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &internalFileAttributes, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &externalFileAttributes, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &relativeOffsetOfLocalHeader, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         data.append(self.fileNameData)
         data.append(self.extraFieldData)
         data.append(self.fileCommentData)
@@ -384,8 +385,7 @@ extension Entry.DataDescriptor {
     init?(data: Data, additionalDataProvider provider: (Int) throws -> Data) {
         guard data.count == Entry.DataDescriptor.size else { return nil }
         let signature: UInt32 = data.scanValue(start: 0)
-        // The DataDescriptor signature is not mandatory so we have to re-arrange
-        // the input data if it is missing
+        // The DataDescriptor signature is not mandatory so we have to re-arrange the input data if it is missing.
         var readOffset = 0
         if signature == self.dataDescriptorSignature { readOffset = 4 }
         self.crc32 = data.scanValue(start: readOffset + 0)
