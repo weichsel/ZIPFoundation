@@ -99,6 +99,57 @@ extension ZIPFoundationTests {
             XCTFail("Unexpected error while trying to zip via fileManager.")
         }
     }
+	
+	func testZipItemToArchive() {
+		let fileManager = FileManager()
+		let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+		let archive = self.archive(for: #function, mode: .create)
+		do {
+			try fileManager.zipItem(at: assetURL, to: archive)
+		} catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
+		XCTAssertNotNil(archive[assetURL.lastPathComponent])
+		XCTAssert(archive.checkIntegrity())
+		var directoryURL = ZIPFoundationTests.tempZipDirectoryURL
+		directoryURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
+		let newAssetURL = directoryURL.appendingPathComponent(assetURL.lastPathComponent)
+		do {
+			try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
+			try fileManager.createDirectory(at: directoryURL.appendingPathComponent("nested"),
+											withIntermediateDirectories: true, attributes: nil)
+			try fileManager.copyItem(at: assetURL, to: newAssetURL)
+			try fileManager.createSymbolicLink(at: directoryURL.appendingPathComponent("link"),
+											   withDestinationURL: newAssetURL)
+			try fileManager.zipItem(at: directoryURL, to: archive)
+		} catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
+	}
+	
+	func testZipItemToArchiveErrorConditions() {
+		let fileManager = FileManager()
+		let archive = self.archive(for: #function, mode: .create)
+		do {
+			try fileManager.zipItem(at: URL(fileURLWithPath: "/nothing"), to: archive)
+			XCTFail("Error when zipping non-existant archive not raised")
+		} catch let error as CocoaError { XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
+		} catch {
+			XCTFail("Unexpected error while trying to zip via fileManager.")
+		}
+		var unreadableFileURL = ZIPFoundationTests.tempZipDirectoryURL
+		let pathComponent = self.pathComponent(for: #function) + "Directory"
+		do {
+			unreadableFileURL.appendPathComponent(pathComponent)
+			unreadableFileURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
+			try fileManager.createParentDirectoryStructure(for: unreadableFileURL)
+			let noPermissionAttributes = [FileAttributeKey.posixPermissions: Int16(0o000)]
+			let result = fileManager.createFile(atPath: unreadableFileURL.path, contents: nil,
+												attributes: noPermissionAttributes)
+			XCTAssert(result == true)
+			try fileManager.zipItem(at: unreadableFileURL.deletingLastPathComponent(), to: archive)
+		} catch let error as CocoaError {
+			XCTAssert(error.code == CocoaError.fileReadNoPermission)
+		} catch {
+			XCTFail("Unexpected error while trying to zip via fileManager.")
+		}
+	}
 
     func testUnzipItem() {
         let fileManager = FileManager()

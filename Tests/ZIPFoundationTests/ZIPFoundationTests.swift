@@ -310,6 +310,7 @@ extension ZIPFoundationTests {
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testZipItem", testZipItem),
+			("testZipItemToArchive", testZipItemToArchive),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
         ] + darwinOnlyTests + swift5OnlyTests
     }
@@ -332,7 +333,8 @@ extension ZIPFoundationTests {
             ("testReadChunkErrorConditions", testReadChunkErrorConditions),
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
-            ("testZipItemErrorConditions", testZipItemErrorConditions)
+            ("testZipItemErrorConditions", testZipItemErrorConditions),
+			("testZipItemToArchiveErrorConditions", testZipItemToArchiveErrorConditions)
         ]
         #else
         return []
