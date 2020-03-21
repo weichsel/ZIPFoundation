@@ -33,51 +33,13 @@ extension FileManager {
                         shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
                         progress: Progress? = nil) throws {
         let fileManager = FileManager()
-        guard fileManager.itemExists(at: sourceURL) else {
-            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
-        }
         guard !fileManager.itemExists(at: destinationURL) else {
             throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: destinationURL.path])
         }
         guard let archive = Archive(url: destinationURL, accessMode: .create) else {
             throw Archive.ArchiveError.unwritableArchive
         }
-        let isDirectory = try FileManager.typeForItem(at: sourceURL) == .directory
-        if isDirectory {
-            let subPaths = try self.subpathsOfDirectory(atPath: sourceURL.path)
-            var totalUnitCount = Int64(0)
-            if let progress = progress {
-                totalUnitCount = subPaths.reduce(Int64(0), {
-                    let itemURL = sourceURL.appendingPathComponent($1)
-                    let itemSize = archive.totalUnitCountForAddingItem(at: itemURL)
-                    return $0 + itemSize
-                })
-                progress.totalUnitCount = totalUnitCount
-            }
-
-            // If the caller wants to keep the parent directory, we use the lastPathComponent of the source URL
-            // as common base for all entries (similar to macOS' Archive Utility.app)
-            let directoryPrefix = sourceURL.lastPathComponent
-            for entryPath in subPaths {
-                let finalEntryPath = shouldKeepParent ? directoryPrefix + "/" + entryPath : entryPath
-                let finalBaseURL = shouldKeepParent ? sourceURL.deletingLastPathComponent() : sourceURL
-                if let progress = progress {
-                    let itemURL = sourceURL.appendingPathComponent(entryPath)
-                    let entryProgress = archive.makeProgressForAddingItem(at: itemURL)
-                    progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
-                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL,
-                                         compressionMethod: compressionMethod, progress: entryProgress)
-                } else {
-                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL,
-                                         compressionMethod: compressionMethod)
-                }
-            }
-        } else {
-            progress?.totalUnitCount = archive.totalUnitCountForAddingItem(at: sourceURL)
-            let baseURL = sourceURL.deletingLastPathComponent()
-            try archive.addEntry(with: sourceURL.lastPathComponent, relativeTo: baseURL,
-                                 compressionMethod: compressionMethod, progress: progress)
-        }
+        try zipItem(at: sourceURL, to: archive, shouldKeepParent: shouldKeepParent, compressionMethod: compressionMethod, progress: progress)
     }
     
     /// Zips the file or direcory contents at the specified source URL to the given archive.
@@ -114,7 +76,6 @@ extension FileManager {
                 })
                 progress.totalUnitCount = totalUnitCount
             }
-            
             // If the caller wants to keep the parent directory, we use the lastPathComponent of the source URL
             // as common base for all entries (similar to macOS' Archive Utility.app)
             let directoryPrefix = sourceURL.lastPathComponent
