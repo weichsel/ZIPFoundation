@@ -130,6 +130,48 @@ extension FileManager {
             }
         }
     }
+    
+    /// Unzips the contents of the specified archive to the destination URL.
+    ///
+    /// - Parameters:
+    ///   - sourceURL: The archive to be unzipped.
+    ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
+    ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
+    ///   - progress: A progress object that can be used to track or cancel the unzip operation.
+    /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
+    public func unzip(_ archive: Archive, to destinationURL: URL, skipCRC32: Bool = false,
+                      progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
+        // Defer extraction of symlinks until all files & directories have been created.
+        // This is necessary because we can't create links to files that haven't been created yet.
+        let sortedEntries = archive.sorted { (left, right) -> Bool in
+            switch (left.type, right.type) {
+            case (.directory, .file): return true
+            case (.directory, .symlink): return true
+            case (.file, .symlink): return true
+            default: return false
+            }
+        }
+        var totalUnitCount = Int64(0)
+        if let progress = progress {
+            totalUnitCount = sortedEntries.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
+            progress.totalUnitCount = totalUnitCount
+        }
+        for entry in sortedEntries {
+            let path = preferredEncoding == nil ? entry.path : entry.path(using: preferredEncoding!)
+            let destinationEntryURL = destinationURL.appendingPathComponent(path)
+            guard destinationEntryURL.isContained(in: destinationURL) else {
+                throw CocoaError(.fileReadInvalidFileName,
+                                 userInfo: [NSFilePathErrorKey: destinationEntryURL.path])
+            }
+            if let progress = progress {
+                let entryProgress = archive.makeProgressForReading(entry)
+                progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
+                _ = try archive.extract(entry, to: destinationEntryURL, skipCRC32: skipCRC32, progress: entryProgress)
+            } else {
+                _ = try archive.extract(entry, to: destinationEntryURL, skipCRC32: skipCRC32)
+            }
+        }
+    }
 
     // MARK: - Helpers
 
