@@ -303,11 +303,12 @@ extension ZIPFoundationTests {
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
             ("testUniqueTemporaryDirectoryURL", testUniqueTemporaryDirectoryURL),
             ("testTraversalAttack", testTraversalAttack),
+			("testUnzipArchive", testUnzipArchive),
+			("testUnzipArchiveWithPreferredEncoding", testUnzipArchiveWithPreferredEncoding),
+			("testUnzipArchiveErrorConditions", testUnzipArchiveErrorConditions),
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
-			("testUnzipArchive", testUnzipArchive),
-			("testUnzipArchiveWithPreferredEncoding", testUnzipArchiveWithPreferredEncoding),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
         ] + darwinOnlyTests + swift5OnlyTests

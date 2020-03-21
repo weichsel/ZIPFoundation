@@ -207,6 +207,31 @@ extension ZIPFoundationTests {
 		}
 		XCTAssert(itemsExist)
 	}
+	
+	func testUnzipArchiveErrorConditions() {
+		let archive = self.archive(for: #function, mode: .read)
+		let destinationURL = ZIPFoundationTests.tempZipDirectoryURL
+		var existingURL = destinationURL
+		existingURL.appendPathComponent("test")
+		existingURL.appendPathComponent("faust.txt")
+		let fileManager = FileManager()
+		do {
+			try fileManager.createParentDirectoryStructure(for: existingURL)
+			fileManager.createFile(atPath: existingURL.path, contents: Data(), attributes: nil)
+			try fileManager.unzip(archive, to: destinationURL)
+			XCTFail("Error when unzipping archive to existing destination not raised.")
+		} catch let error as CocoaError {
+			XCTAssertTrue(error.code == CocoaError.fileWriteFileExists)
+		} catch {
+			XCTFail("Unexpected error while trying to unzip via fileManager."); return
+		}
+		do {
+			let unwritableURL = URL(fileURLWithPath: "/test.zip")
+			try fileManager.unzip(archive, to: unwritableURL)
+			XCTFail("Error when unzipping to unwritable destination not raised.")
+		} catch let error as Archive.ArchiveError { XCTAssert(error == .unwritableArchive)
+		} catch { XCTFail("Unexpected error while trying to unzip via fileManager.") }
+	}
 
     func testDirectoryCreationHelperMethods() {
         let processInfo = ProcessInfo.processInfo
