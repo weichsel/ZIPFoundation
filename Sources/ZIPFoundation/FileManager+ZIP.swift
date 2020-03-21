@@ -111,6 +111,10 @@ extension FileManager {
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func unzip(_ archive: Archive, to destinationURL: URL, skipCRC32: Bool = false,
                       progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
+        let fileManager = FileManager()
+        guard !fileManager.itemExists(at: destinationURL) else {
+            throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: destinationURL.path])
+        }
         // Defer extraction of symlinks until all files & directories have been created.
         // This is necessary because we can't create links to files that haven't been created yet.
         let sortedEntries = archive.sorted { (left, right) -> Bool in
