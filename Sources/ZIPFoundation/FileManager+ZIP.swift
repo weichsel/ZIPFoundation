@@ -55,6 +55,7 @@ extension FileManager {
     ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element
     ///                       within the archive. Default is `true`.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied.
+    ///                        By default, `zipItem` will create uncompressed archives.
     ///   - progress: A progress object that can be used to track or cancel the zip operation.
     /// - Throws: Throws an error if the source item does not exist.
     public func zipItem(at sourceURL: URL, to archive: Archive,
@@ -129,6 +130,7 @@ extension FileManager {
     ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
+    ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     /// - Throws: Throws an error if destination URL is not writable.
     public func unzip(_ archive: Archive, to destinationURL: URL, skipCRC32: Bool = false,
                       progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
