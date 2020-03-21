@@ -79,6 +79,66 @@ extension FileManager {
                                  compressionMethod: compressionMethod, progress: progress)
         }
     }
+    
+    /// Zips the file or direcory contents at the specified source URL to the given archive.
+    ///
+    /// If the item at the source URL is a directory, the directory itself will be
+    /// represented within the ZIP `Archive`. Calling this method with a directory URL
+    /// `file:///path/directory/` will create an archive with a `directory/` entry at the root level.
+    /// You can override this behavior by passing `false` for `shouldKeepParent`. In that case, the contents
+    /// of the source directory will be placed at the root of the archive.
+    /// - Parameters:
+    ///   - sourceURL: The file URL pointing to an existing file or directory.
+    ///   - archive: The file URL that identifies the destination of the zip operation.
+    ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element
+    ///                       within the archive. Default is `true`.
+    ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied.
+    ///   - progress: A progress object that can be used to track or cancel the zip operation.
+    /// - Throws: Throws an error if the source item does not exist.
+    public func zipItem(at sourceURL: URL, to archive: Archive,
+                        shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
+                        progress: Progress? = nil) throws {
+        let fileManager = FileManager()
+        guard fileManager.itemExists(at: sourceURL) else {
+            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
+        }
+        let isDirectory = try FileManager.typeForItem(at: sourceURL) == .directory
+        if isDirectory {
+            let subPaths = try self.subpathsOfDirectory(atPath: sourceURL.path)
+            var totalUnitCount = Int64(0)
+            if let progress = progress {
+                totalUnitCount = subPaths.reduce(Int64(0), {
+                    let itemURL = sourceURL.appendingPathComponent($1)
+                    let itemSize = archive.totalUnitCountForAddingItem(at: itemURL)
+                    return $0 + itemSize
+                })
+                progress.totalUnitCount = totalUnitCount
+            }
+            
+            // If the caller wants to keep the parent directory, we use the lastPathComponent of the source URL
+            // as common base for all entries (similar to macOS' Archive Utility.app)
+            let directoryPrefix = sourceURL.lastPathComponent
+            for entryPath in subPaths {
+                let finalEntryPath = shouldKeepParent ? directoryPrefix + "/" + entryPath : entryPath
+                let finalBaseURL = shouldKeepParent ? sourceURL.deletingLastPathComponent() : sourceURL
+                if let progress = progress {
+                    let itemURL = sourceURL.appendingPathComponent(entryPath)
+                    let entryProgress = archive.makeProgressForAddingItem(at: itemURL)
+                    progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
+                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL,
+                                         compressionMethod: compressionMethod, progress: entryProgress)
+                } else {
+                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL,
+                                         compressionMethod: compressionMethod)
+                }
+            }
+        } else {
+            progress?.totalUnitCount = archive.totalUnitCountForAddingItem(at: sourceURL)
+            let baseURL = sourceURL.deletingLastPathComponent()
+            try archive.addEntry(with: sourceURL.lastPathComponent, relativeTo: baseURL,
+                                 compressionMethod: compressionMethod, progress: progress)
+        }
+    }
 
     /// Unzips the contents at the specified source URL to the destination URL.
     ///
