@@ -353,7 +353,9 @@ extension ZIPFoundationTests {
             ("testWriteOnlyFile", testWriteOnlyFile),
             ("testReadOnlyFile", testReadOnlyFile),
             ("testReadOnlySlicedFile", testReadOnlySlicedFile),
-            ("testReadWriteFile", testReadWriteFile)
+            ("testReadWriteFile", testReadWriteFile),
+			("testZipItemAndReturnArchive", testZipItemAndReturnArchive),
+			("testZipItemAndReturnArchiveErrorConditions", testZipItemAndReturnArchiveErrorConditions)
         ]
         #else
         return []
