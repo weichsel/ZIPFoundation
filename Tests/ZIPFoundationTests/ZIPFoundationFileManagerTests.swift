@@ -281,6 +281,7 @@ extension ZIPFoundationTests {
 			try fileManager.unzip(archive, to: unwritableURL)
 			XCTFail("Error when unzipping to unwritable destination not raised.")
 		} catch let error as Archive.ArchiveError { XCTAssert(error == .unwritableArchive)
+		} catch CocoaError.fileWriteNoPermission {
 		} catch { XCTFail("Unexpected error while trying to unzip via fileManager.") }
 	}
 
