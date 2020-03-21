@@ -135,8 +135,8 @@ extension FileManager {
     public func unzip(_ archive: Archive, to destinationURL: URL, skipCRC32: Bool = false,
                       progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
         let fileManager = FileManager()
-        guard !fileManager.itemExists(at: destinationURL) else {
-            throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: destinationURL.path])
+        guard fileManager.isWritableFile(atPath: destinationURL.path) else {
+            throw CocoaError(.fileWriteNoPermission, userInfo: [NSFilePathErrorKey: destinationURL.path])
         }
         // Defer extraction of symlinks until all files & directories have been created.
         // This is necessary because we can't create links to files that haven't been created yet.
