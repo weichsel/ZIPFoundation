@@ -306,6 +306,8 @@ extension ZIPFoundationTests {
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
+			("testUnzipArchive", testUnzipArchive),
+			("testUnzipArchiveWithPreferredEncoding", testUnzipArchiveWithPreferredEncoding),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
         ] + darwinOnlyTests + swift5OnlyTests
@@ -318,6 +320,7 @@ extension ZIPFoundationTests {
             ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
             ("testZipItemProgress", testZipItemProgress),
             ("testUnzipItemProgress", testUnzipItemProgress),
+			("testUnzipArchiveProgress", testUnzipArchiveProgress),
             ("testRemoveEntryProgress", testRemoveEntryProgress),
             ("testReplaceCurrentArchiveWithArchiveCrossLink", testReplaceCurrentArchiveWithArchiveCrossLink),
             ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),

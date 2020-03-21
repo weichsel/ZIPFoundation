@@ -179,5 +179,30 @@ extension ZIPFoundationTests {
         }
         self.wait(for: [expectation], timeout: 10.0)
     }
+	
+	func testUnzipArchiveProgress() {
+		let fileManager = FileManager()
+		let archive = self.archive(for: #function, mode: .read)
+		let destinationURL = self.createDirectory(for: #function)
+		let progress = Progress()
+		let expectation = self.keyValueObservingExpectation(for: progress,
+															keyPath: #keyPath(Progress.fractionCompleted),
+															expectedValue: 1.0)
+		DispatchQueue.global().async {
+			do {
+				try fileManager.unzip(archive, to: destinationURL, progress: progress)
+			} catch {
+				XCTFail("Failed to extract item."); return
+			}
+			var itemsExist = false
+			for entry in archive {
+				let directoryURL = destinationURL.appendingPathComponent(entry.path)
+				itemsExist = fileManager.itemExists(at: directoryURL)
+				if !itemsExist { break }
+			}
+			XCTAssert(itemsExist)
+		}
+		self.wait(for: [expectation], timeout: 10.0)
+	}
 }
 #endif

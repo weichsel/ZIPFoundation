@@ -170,6 +170,43 @@ extension ZIPFoundationTests {
             XCTAssertTrue(error == .unreadableArchive)
         } catch { XCTFail("Unexpected error while trying to unzip via fileManager."); return }
     }
+	
+	func testUnzipArchive() {
+		let fileManager = FileManager()
+		let archive = self.archive(for: #function, mode: .read)
+		let destinationURL = self.createDirectory(for: #function)
+		do {
+			try fileManager.unzip(archive, to: destinationURL)
+		} catch {
+			XCTFail("Failed to extract item."); return
+		}
+		var itemsExist = false
+		for entry in archive {
+			let directoryURL = destinationURL.appendingPathComponent(entry.path)
+			itemsExist = fileManager.itemExists(at: directoryURL)
+			if !itemsExist { break }
+		}
+		XCTAssert(itemsExist)
+	}
+	
+	func testUnzipArchiveWithPreferredEncoding() {
+		let fileManager = FileManager()
+		let encoding = String.Encoding.utf8
+		let archive = self.archive(for: #function, mode: .read, preferredEncoding: encoding)
+		let destinationURL = self.createDirectory(for: #function)
+		do {
+			try fileManager.unzip(archive, to: destinationURL, preferredEncoding: encoding)
+		} catch {
+			XCTFail("Failed to extract item."); return
+		}
+		var itemsExist = false
+		for entry in archive {
+			let directoryURL = destinationURL.appendingPathComponent(entry.path(using: encoding))
+			itemsExist = fileManager.itemExists(at: directoryURL)
+			if !itemsExist { break }
+		}
+		XCTAssert(itemsExist)
+	}
 
     func testDirectoryCreationHelperMethods() {
         let processInfo = ProcessInfo.processInfo
