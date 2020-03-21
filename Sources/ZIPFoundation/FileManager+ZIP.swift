@@ -33,6 +33,10 @@ extension FileManager {
                         shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
                         progress: Progress? = nil) throws {
         let fileManager = FileManager()
+        //  FIXME: Somehow testZipItemErrorConditions() fails, if the method doesn't check for source's existance here.
+        guard fileManager.itemExists(at: sourceURL) else {
+            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
+        }
         guard !fileManager.itemExists(at: destinationURL) else {
             throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: destinationURL.path])
         }
