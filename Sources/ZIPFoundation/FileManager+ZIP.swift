@@ -105,6 +105,31 @@ extension FileManager {
                                  compressionMethod: compressionMethod, progress: progress)
         }
     }
+    
+    #if swift(>=5)
+    /// Zips the file or direcory contents at the specified source URL and returns an archive containing them.
+    ///
+    /// If the item at the source URL is a directory, the directory itself will be
+    /// represented within the ZIP `Archive`. Calling this method with a directory URL
+    /// `file:///path/directory/` will create an archive with a `directory/` entry at the root level.
+    /// You can override this behavior by passing `false` for `shouldKeepParent`. In that case, the contents
+    /// of the source directory will be placed at the root of the archive.
+    /// - Parameters:
+    ///   - sourceURL: The file URL pointing to an existing file or directory.
+    ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element
+    ///                       within the archive. Default is `true`.
+    ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied.
+    ///                        By default, `zipItem` will create uncompressed archives.
+    ///   - progress: A progress object that can be used to track or cancel the zip operation.
+    /// - Throws: Throws an error if the source item does not exist.
+    public func itemZipped(from sourceURL: URL,
+                        shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
+                        progress: Progress? = nil) throws -> Archive{
+        let archive = Archive(accessMode: .create)
+        zipItem(at: sourceURL, to: archive, shouldKeepParent: shouldKeepParent, compressionMethod: compressionMethod, progress: progress)
+        return archive
+    }
+    #endif
 
     /// Unzips the contents at the specified source URL to the destination URL.
     ///
