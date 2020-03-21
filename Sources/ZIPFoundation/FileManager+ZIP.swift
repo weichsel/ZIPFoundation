@@ -104,11 +104,11 @@ extension FileManager {
     /// Unzips the contents of the specified archive to the destination URL.
     ///
     /// - Parameters:
-    ///   - sourceURL: The archive to be unzipped.
+    ///   - archive: The archive to be unzipped.
     ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
-    /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
+    /// - Throws: Throws an error if destination URL is not writable.
     public func unzip(_ archive: Archive, to destinationURL: URL, skipCRC32: Bool = false,
                       progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
         let fileManager = FileManager()
