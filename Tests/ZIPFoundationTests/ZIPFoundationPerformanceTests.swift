@@ -20,13 +20,8 @@ extension ZIPFoundationTests {
         measure {
             do {
                 try archive.addEntry(with: entryName, type: .file,
-                                     uncompressedSize: UInt32(size),
                                      compressionMethod: .none,
-                                     provider: { (position, bufferSize) -> Data in
-                                        let upperBound = Swift.min(size, position + bufferSize)
-                                        let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
-                                        return data.subdata(in: range)
-                })
+                                     provider: data)
             } catch {
                 XCTFail("Failed to add large entry to uncompressed archive with error : \(error)")
             }
@@ -40,13 +35,8 @@ extension ZIPFoundationTests {
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
             try archive.addEntry(with: entryName, type: .file,
-                                 uncompressedSize: UInt32(size),
                                  compressionMethod: .none,
-                                 provider: { (position, bufferSize) -> Data in
-                                    let upperBound = Swift.min(size, position + bufferSize)
-                                    let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
-                                    return data.subdata(in: range)
-            })
+                                 provider: data)
         } catch {
             XCTFail("Failed to add large entry to uncompressed archive with error : \(error)")
         }
@@ -71,13 +61,8 @@ extension ZIPFoundationTests {
         measure {
             do {
                 try archive.addEntry(with: entryName, type: .file,
-                                     uncompressedSize: UInt32(size),
                                      compressionMethod: .deflate,
-                                     provider: { (position, bufferSize) -> Data in
-                                        let upperBound = Swift.min(size, position + bufferSize)
-                                        let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
-                                        return data.subdata(in: range)
-                })
+                                     provider: data)
             } catch {
                 XCTFail("Failed to add large entry to compressed archive with error : \(error)")
             }
@@ -91,13 +76,8 @@ extension ZIPFoundationTests {
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
             try archive.addEntry(with: entryName, type: .file,
-                                 uncompressedSize: UInt32(size),
                                  compressionMethod: .deflate,
-                                 provider: { (position, bufferSize) -> Data in
-                                    let upperBound = Swift.min(size, position + bufferSize)
-                                    let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
-                                    return data.subdata(in: range)
-            })
+                                 provider: data)
         } catch {
             XCTFail("Failed to add large entry to compressed archive with error : \(error)")
         }

@@ -11,6 +11,20 @@
 import XCTest
 @testable import ZIPFoundation
 
+class HugeFile: Provider {
+    typealias SubSequence = Data
+
+    var count: Int {
+        get {
+            return Int(UINT32_MAX)
+        }
+    }
+
+    func readData(position: Int, ofLength: Int) throws -> SubSequence {
+        return Data(count: ofLength)
+    }
+}
+
 extension ZIPFoundationTests {
     func testCreateArchiveAddUncompressedEntry() {
         let archive = self.archive(for: #function, mode: .create)
@@ -40,11 +54,25 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
+    func testCreateArchiveAddStringEntry() {
+        let archive = self.archive(for: #function, mode: .create)
+        do {
+            var str = String("hi there 😂")
+            try str.withUTF8 { pointer in
+                try archive.addEntry(with: "lol.txt", type: .file, compressionMethod: .deflate, provider: pointer)
+            }
+        } catch {
+            XCTFail("Failed to add compressed entry folder archive : \(error)")
+        }
+        let entry = archive["lol.txt"]
+        XCTAssertNotNil(entry)
+        XCTAssert(archive.checkIntegrity())
+    }
+
     func testCreateArchiveAddDirectory() {
         let archive = self.archive(for: #function, mode: .create)
         do {
-            try archive.addEntry(with: "Test", type: .directory,
-                                 uncompressedSize: 0, provider: { _, _ in return Data()})
+            try archive.addEntry(with: "Test", type: .directory, provider: Data())
         } catch {
             XCTFail("Failed to add directory entry without file system representation to archive.")
         }
@@ -85,9 +113,7 @@ extension ZIPFoundationTests {
         XCTAssertNotNil(entry)
         XCTAssert(archive.checkIntegrity())
         do {
-            try archive.addEntry(with: "link", type: .symlink, uncompressedSize: 10, provider: { (_, count) -> Data in
-                return Data(count: count)
-            })
+            try archive.addEntry(with: "link", type: .symlink, provider: Data(count: 10))
         } catch {
             XCTFail("Failed to add symbolic link to archive")
         }
@@ -119,8 +145,7 @@ extension ZIPFoundationTests {
         var didCatchExpectedError = false
         let readonlyArchive = self.archive(for: #function, mode: .read)
         do {
-            try readonlyArchive.addEntry(with: "Test", type: .directory,
-                                         uncompressedSize: 0, provider: { _, _ in return Data()})
+            try readonlyArchive.addEntry(with: "Test", type: .directory, provider: Data())
         } catch let error as Archive.ArchiveError {
             XCTAssert(error == .unwritableArchive)
             didCatchExpectedError = true
@@ -166,12 +191,7 @@ extension ZIPFoundationTests {
         let data = Data.makeRandomData(size: size)
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
-            try archive.addEntry(with: entryName, type: .file,
-                                 uncompressedSize: UInt32(size), provider: { (position, bufferSize) -> Data in
-                                    let upperBound = Swift.min(size, position + bufferSize)
-                                    let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
-                                    return data.subdata(in: range)
-            })
+            try archive.addEntry(with: entryName, type: .file, provider: data)
         } catch {
             XCTFail("Failed to add large entry to uncompressed archive with error : \(error)")
         }
@@ -189,13 +209,8 @@ extension ZIPFoundationTests {
         let data = Data.makeRandomData(size: size)
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
-            try archive.addEntry(with: entryName, type: .file, uncompressedSize: UInt32(size),
-                                 compressionMethod: .deflate,
-                                 provider: { (position, bufferSize) -> Data in
-                                    let upperBound = Swift.min(size, position + bufferSize)
-                                    let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
-                                    return data.subdata(in: range)
-            })
+            try archive.addEntry(with: entryName, type: .file, compressionMethod: .deflate,
+                                 provider: data)
         } catch {
             XCTFail("Failed to add large entry to compressed archive with error : \(error)")
         }
@@ -212,11 +227,9 @@ extension ZIPFoundationTests {
         let archive = self.archive(for: #function, mode: .create)
         let fileName = ProcessInfo.processInfo.globallyUniqueString
         var didCatchExpectedError = false
+        let data = HugeFile()
         do {
-            try archive.addEntry(with: fileName, type: .file, uncompressedSize: UINT32_MAX,
-                                 provider: { (_, chunkSize) -> Data in
-                return Data(count: chunkSize)
-            })
+            try archive.addEntry(with: fileName, type: .file, provider: data)
         } catch let error as Archive.ArchiveError {
             XCTAssertNotNil(error == .invalidStartOfCentralDirectoryOffset)
             didCatchExpectedError = true

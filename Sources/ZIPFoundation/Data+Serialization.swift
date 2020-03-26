@@ -42,8 +42,9 @@ extension Data {
         return structure
     }
 
-    static func consumePart(of size: Int, chunkSize: Int, skipCRC32: Bool = false,
-                            provider: Provider, consumer: Consumer) throws -> CRC32 {
+    static func consumePart<P: Provider>(chunkSize: Int, skipCRC32: Bool = false,
+                                         provider: P, consumer: Consumer<P.SubSequence>) throws -> CRC32 {
+        let size = provider.count
         let readInOneChunk = (size < chunkSize)
         var chunkSize = readInOneChunk ? size : chunkSize
         var checksum = CRC32(0)
@@ -51,7 +52,7 @@ extension Data {
         while bytesRead < size {
             let remainingSize = size - bytesRead
             chunkSize = remainingSize < chunkSize ? remainingSize : chunkSize
-            let data = try provider(bytesRead, chunkSize)
+            let data = try provider.readData(position: bytesRead, ofLength: chunkSize)
             try consumer(data)
             if !skipCRC32 {
                 checksum = data.crc32(checksum: checksum)
@@ -81,12 +82,12 @@ extension Data {
         #endif
     }
 
-    static func write(chunk: Data, to file: UnsafeMutablePointer<FILE>) throws -> Int {
+    static func write<B: ContiguousBytes>(chunk: B, to file: UnsafeMutablePointer<FILE>) throws -> Int {
         var sizeWritten = 0
         chunk.withUnsafeBytes { (rawBufferPointer) in
             if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
                 let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
-                sizeWritten = fwrite(pointer, 1, chunk.count, file)
+                sizeWritten = fwrite(pointer, 1, rawBufferPointer.count, file)
             }
         }
         let error = ferror(file)
