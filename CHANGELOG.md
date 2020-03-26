@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.11](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.11)
+
+### Added
+ - Read/Write support for in-memory archives
+ 
+### Updated
+ - Fixed a memory safety issue during (de)compression
+ - Fixed dangling pointer warnings when serializing ZIP internal structs to `Data`
+ - Fixed missing Swift 5 language version when integrating via CocoaPods
+ - Fixed inconsistent usage of the optional `preferredEncoding` parameter during entry addition
+ - Improved documentation for compression settings
+
 ## [0.9.10](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.10)
 
 ### Added
