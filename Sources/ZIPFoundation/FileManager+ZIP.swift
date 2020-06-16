@@ -29,9 +29,13 @@ extension FileManager {
     ///                        By default, `zipItem` will create uncompressed archives.
     ///   - progress: A progress object that can be used to track or cancel the zip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
-    public func zipItem(at sourceURL: URL, to destinationURL: URL,
-                        shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
-                        progress: Progress? = nil) throws {
+    public func zipItem(
+		at sourceURL: URL,
+		to destinationURL: URL,
+		shouldKeepParent: Bool = true,
+		compressionMethod: CompressionMethod = .none,
+		progress: Progress? = nil
+	) throws {
         let fileManager = FileManager()
         //  FIXME: Somehow testZipItemErrorConditions() fails, if the method doesn't check for source's existance here.
         guard fileManager.itemExists(at: sourceURL) else {
@@ -43,9 +47,16 @@ extension FileManager {
         guard let archive = Archive(url: destinationURL, accessMode: .create) else {
             throw Archive.ArchiveError.unwritableArchive
         }
-        try zipItem(at: sourceURL, to: archive, shouldKeepParent: shouldKeepParent, compressionMethod: compressionMethod, progress: progress)
+        try zipItem(
+			at: sourceURL,
+			to: archive,
+			shouldKeepParent:
+			shouldKeepParent,
+			compressionMethod: compressionMethod,
+			progress: progress
+		)
     }
-    
+
     /// Zips the file or direcory contents at the specified source URL to the given archive.
     ///
     /// If the item at the source URL is a directory, the directory itself will be
@@ -62,9 +73,13 @@ extension FileManager {
     ///                        By default, `zipItem` will create uncompressed archives.
     ///   - progress: A progress object that can be used to track or cancel the zip operation.
     /// - Throws: Throws an error if the source item does not exist.
-    public func zipItem(at sourceURL: URL, to archive: Archive,
-                        shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
-                        progress: Progress? = nil) throws {
+    public func zipItem(
+		at sourceURL: URL,
+		to archive: Archive,
+		shouldKeepParent: Bool = true,
+		compressionMethod: CompressionMethod = .none,
+		progress: Progress? = nil
+	) throws {
         let fileManager = FileManager()
         guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
@@ -81,8 +96,9 @@ extension FileManager {
                 })
                 progress.totalUnitCount = totalUnitCount
             }
-            // If the caller wants to keep the parent directory, we use the lastPathComponent of the source URL
-            // as common base for all entries (similar to macOS' Archive Utility.app)
+            // If the caller wants to keep the parent directory,
+			// we use the lastPathComponent of the source URL as common base for all entries
+			// (similar to macOS' Archive Utility.app)
             let directoryPrefix = sourceURL.lastPathComponent
             for entryPath in subPaths {
                 let finalEntryPath = shouldKeepParent ? directoryPrefix + "/" + entryPath : entryPath
@@ -105,7 +121,7 @@ extension FileManager {
                                  compressionMethod: compressionMethod, progress: progress)
         }
     }
-    
+
     #if swift(>=5)
     /// Zips the file or direcory contents at the specified source URL and returns an archive containing them.
     ///
@@ -123,11 +139,20 @@ extension FileManager {
     ///   - progress: A progress object that can be used to track or cancel the zip operation.
     /// - Returns: An archive containing the zipped file or direcory contents at the specified source URL.
     /// - Throws: Throws an error if the source item does not exist.
-    public func itemZipped(from sourceURL: URL,
-                        shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
-                        progress: Progress? = nil) throws -> Archive{
+    public func itemZipped(
+		from sourceURL: URL,
+		shouldKeepParent: Bool = true,
+		compressionMethod: CompressionMethod = .none,
+		progress: Progress? = nil
+	) throws -> Archive {
         let archive = Archive(accessMode: .create)
-        zipItem(at: sourceURL, to: archive, shouldKeepParent: shouldKeepParent, compressionMethod: compressionMethod, progress: progress)
+        zipItem(
+			at: sourceURL,
+			to: archive,
+			shouldKeepParent: shouldKeepParent,
+			compressionMethod: compressionMethod,
+			progress: progress
+		)
         return archive
     }
     #endif
@@ -141,8 +166,13 @@ extension FileManager {
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
     ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
-    public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
-                          progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
+    public func unzipItem(
+		at sourceURL: URL,
+		to destinationURL: URL,
+		skipCRC32: Bool = false,
+		progress: Progress? = nil,
+		preferredEncoding: String.Encoding? = nil
+	) throws {
         let fileManager = FileManager()
         guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
@@ -150,9 +180,15 @@ extension FileManager {
         guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: preferredEncoding) else {
             throw Archive.ArchiveError.unreadableArchive
         }
-        try unzip(archive, to: destinationURL, skipCRC32: skipCRC32, progress: progress, preferredEncoding: preferredEncoding)
+        try unzip(
+			archive,
+			to: destinationURL,
+			skipCRC32: skipCRC32,
+			progress: progress,
+			preferredEncoding: preferredEncoding
+		)
     }
-    
+
     /// Unzips the contents of the specified archive to the destination URL.
     ///
     /// - Parameters:
