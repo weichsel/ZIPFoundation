@@ -1,21 +1,20 @@
 trigger:
   - master
 
-strategy:
-  matrix:
-    Ubuntu 20.04:
-      imageName: ubuntu-20.04
-    Ubuntu 18.04:
-      imageName: ubuntu-18.04
-    Ubuntu 16.04:
-      imageName: ubuntu-16.04
-
 pool:
   vmImage: $(imageName)
 
 jobs:
 
 - job: Swift_latest
+  strategy:
+    matrix:
+      Ubuntu 20.04:
+        imageName: ubuntu-20.04
+      Ubuntu 18.04:
+        imageName: ubuntu-18.04
+      Ubuntu 16.04:
+        imageName: ubuntu-16.04
   pool:
     vmImage: $(imageName)
   # We currently can't use the official Swift Docker image, because it no longer comes with with zlib dependency
@@ -25,6 +24,14 @@ jobs:
       displayName: Linux Swift latest
 
 - job: Linux_Swift_5_0
+  strategy:
+    matrix:
+      Ubuntu 20.04:
+        imageName: ubuntu-20.04
+      Ubuntu 18.04:
+        imageName: ubuntu-18.04
+      Ubuntu 16.04:
+        imageName: ubuntu-16.04
   pool:
     vmImage: $(imageName)
   # We currently can't use the official Swift Docker image, because it no longer comes with with zlib dependency
@@ -34,6 +41,14 @@ jobs:
       displayName: Linux Swift 5.0
 
 - job: Linux_Swift_4_2
+  strategy:
+    matrix:
+      Ubuntu 20.04:
+        imageName: ubuntu-20.04
+      Ubuntu 18.04:
+        imageName: ubuntu-18.04
+      Ubuntu 16.04:
+        imageName: ubuntu-16.04
   pool:
     vmImage: $(imageName)
   container: swift:4.2
@@ -42,6 +57,14 @@ jobs:
       displayName: Linux Swift 4.2
 
 - job: Linux_Swift_4_1
+  strategy:
+    matrix:
+      Ubuntu 20.04:
+        imageName: ubuntu-20.04
+      Ubuntu 18.04:
+        imageName: ubuntu-18.04
+      Ubuntu 16.04:
+        imageName: ubuntu-16.04
   pool:
     vmImage: $(imageName)
   container: swift:4.1
@@ -50,6 +73,14 @@ jobs:
       displayName: Linux Swift 4.1
 
 - job: Linux_Swift_4_0
+  strategy:
+    matrix:
+      Ubuntu 20.04:
+        imageName: ubuntu-20.04
+      Ubuntu 18.04:
+        imageName: ubuntu-18.04
+      Ubuntu 16.04:
+        imageName: ubuntu-16.04
   pool:
     vmImage: $(imageName)
   container: swift:4.0
