@@ -91,8 +91,8 @@
 		OBJ_17 /* ZIPFoundationTests */ = {
 			isa = PBXGroup;
 			children = (
-				B4E45A2B2498597B009B58A7 /* ZIPFoundation.xctestplan */,
 				OBJ_23 /* ZIPFoundationTests.swift */,
+				B4E45A2B2498597B009B58A7 /* ZIPFoundation.xctestplan */,
 				OBJ_22 /* ZIPFoundationReadingTests.swift */,
 				OBJ_24 /* ZIPFoundationWritingTests.swift */,
 				95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryTests.swift */,
