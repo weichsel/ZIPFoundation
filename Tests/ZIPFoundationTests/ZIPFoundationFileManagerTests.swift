@@ -99,7 +99,7 @@ extension ZIPFoundationTests {
             XCTFail("Unexpected error while trying to zip via fileManager.")
         }
     }
-	
+
 	func testZipItemToArchive() {
 		let fileManager = FileManager()
 		let assetURL = self.resourceURL(for: #function, pathExtension: "png")
@@ -133,7 +133,7 @@ extension ZIPFoundationTests {
 		} catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
 		#endif
 	}
-	
+
 	func testZipItemToArchiveErrorConditions() {
 		let fileManager = FileManager()
 		let archive = self.archive(for: #function, mode: .create)
@@ -185,7 +185,7 @@ extension ZIPFoundationTests {
 		}
 		#endif
 	}
-	
+
 	#if swift(>=5.0)
 	func testZipItemAndReturnArchive() {
 		let fileManager = FileManager()
@@ -210,7 +210,7 @@ extension ZIPFoundationTests {
 		} catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
 	}
 	#endif
-	
+
 	#if swift(>=5.0)
 	func testZipItemAndReturnArchiveErrorConditions() {
 		let fileManager = FileManager()
@@ -311,7 +311,7 @@ extension ZIPFoundationTests {
             XCTAssertTrue(error == .unreadableArchive)
         } catch { XCTFail("Unexpected error while trying to unzip via fileManager."); return }
     }
-	
+
 	func testUnzipArchive() {
 		let fileManager = FileManager()
 		let archive = self.archive(for: #function, mode: .read)
@@ -344,7 +344,7 @@ extension ZIPFoundationTests {
 		XCTAssert(itemsExist)
 		#endif
 	}
-	
+
 	func testUnzipArchiveWithPreferredEncoding() {
 		let fileManager = FileManager()
 		let encoding = String.Encoding.utf8
@@ -378,7 +378,7 @@ extension ZIPFoundationTests {
 		XCTAssert(itemsExist)
 		#endif
 	}
-	
+
 	func testUnzipArchiveErrorConditions() {
 		let archive = self.archive(for: #function, mode: .read)
 		let destinationURL = ZIPFoundationTests.tempZipDirectoryURL

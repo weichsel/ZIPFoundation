@@ -179,7 +179,7 @@ extension ZIPFoundationTests {
         }
         self.wait(for: [expectation], timeout: 10.0)
     }
-	
+
 	func testUnzipArchiveProgress() {
 		let fileManager = FileManager()
 		let archive = self.archive(for: #function, mode: .read)

@@ -125,15 +125,14 @@ extension FileManager {
     #if swift(>=5)
     /// Zips the file or direcory contents at the specified source URL and returns an archive containing them.
     ///
-    /// If the item at the source URL is a directory, the directory itself will be
-    /// represented within the ZIP `Archive`. Calling this method with a directory URL
-    /// `file:///path/directory/` will create an archive with a `directory/` entry at the root level.
-    /// You can override this behavior by passing `false` for `shouldKeepParent`. In that case, the contents
-    /// of the source directory will be placed at the root of the archive.
+    /// If the item at the source URL is a directory, the directory itself will be represented within the ZIP `Archive`.
+	/// Calling this method with a directory URL `file:///path/directory/` will create an archive with a `directory/` entry at the root level.
+    /// You can override this behavior by passing `false` for `shouldKeepParent`.
+	/// In that case, the contents of the source directory will be placed at the root of the archive.
     /// - Parameters:
     ///   - sourceURL: The file URL pointing to an existing file or directory.
-    ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element
-    ///                       within the archive. Default is `true`.
+    ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element within the archive.
+	///                       Default is `true`.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied.
     ///                        By default, `zipItem` will create uncompressed archives.
     ///   - progress: A progress object that can be used to track or cancel the zip operation.
@@ -241,10 +240,10 @@ extension FileManager {
     func itemExists(at url: URL) -> Bool {
         // Use `URL.checkResourceIsReachable()` instead of `FileManager.fileExists()` here
         // because we don't want implicit symlink resolution.
-        // As per documentation, `FileManager.fileExists()` traverses symlinks and therefore a broken symlink
-        // would throw a `.fileReadNoSuchFile` false positive error.
-        // For ZIP files it may be intended to archive "broken" symlinks because they might be
-        // resolvable again when extracting the archive to a different destination.
+        // As per documentation, `FileManager.fileExists()` traverses symlinks
+		// and therefore a broken symlink would throw a `.fileReadNoSuchFile` false positive error.
+        // For ZIP files it may be intended to archive "broken" symlinks
+		// because they might be resolvable again when extracting the archive to a different destination.
         return (try? url.checkResourceIsReachable()) == true
     }
 
