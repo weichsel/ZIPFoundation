@@ -4,16 +4,23 @@
       "id" : "B775DAA9-EC12-48A8-B47B-A8C409B7D633",
       "name" : "Configuration 1",
       "options" : {
-
+        "threadSanitizerEnabled" : false
       }
     }
   ],
   "defaultOptions" : {
+    "addressSanitizer" : {
+      "detectStackUseAfterReturn" : true,
+      "enabled" : true
+    },
     "targetForVariableExpansion" : {
       "containerPath" : "container:ZIPFoundation.xcodeproj",
       "identifier" : "ZIPFoundation::ZIPFoundation",
       "name" : "ZIPFoundation"
-    }
+    },
+    "testExecutionOrdering" : "random",
+    "threadSanitizerEnabled" : true,
+    "undefinedBehaviorSanitizerEnabled" : true
   },
   "testTargets" : [
     {
