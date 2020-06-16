@@ -1,0 +1,29 @@
+{
+  "configurations" : [
+    {
+      "id" : "B775DAA9-EC12-48A8-B47B-A8C409B7D633",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:ZIPFoundation.xcodeproj",
+      "identifier" : "ZIPFoundation::ZIPFoundation",
+      "name" : "ZIPFoundation"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:ZIPFoundation.xcodeproj",
+        "identifier" : "ZIPFoundation::ZIPFoundationTests",
+        "name" : "ZIPFoundationTests"
+      }
+    }
+  ],
+  "version" : 1
+}

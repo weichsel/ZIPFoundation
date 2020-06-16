@@ -40,6 +40,7 @@
 /* Begin PBXFileReference section */
 		95B5A3D32366731B00D4D8FD /* Archive+MemoryFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+MemoryFile.swift"; sourceTree = "<group>"; };
 		95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationMemoryTests.swift; sourceTree = "<group>"; };
+		B4E45A2B2498597B009B58A7 /* ZIPFoundation.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = ZIPFoundation.xctestplan; sourceTree = "<group>"; };
 		BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationProgressTests.swift; sourceTree = "<group>"; };
 		OBJ_10 /* Archive+Writing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Writing.swift"; sourceTree = "<group>"; };
 		OBJ_11 /* Archive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Archive.swift; sourceTree = "<group>"; };
@@ -91,6 +92,7 @@
 			isa = PBXGroup;
 			children = (
 				OBJ_23 /* ZIPFoundationTests.swift */,
+				B4E45A2B2498597B009B58A7 /* ZIPFoundation.xctestplan */,
 				OBJ_22 /* ZIPFoundationReadingTests.swift */,
 				OBJ_24 /* ZIPFoundationWritingTests.swift */,
 				95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryTests.swift */,
