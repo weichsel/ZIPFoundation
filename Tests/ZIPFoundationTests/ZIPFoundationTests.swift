@@ -53,6 +53,8 @@ class ZIPFoundationTests: XCTestCase {
         } catch {
             XCTFail("Unexpected error while trying to set up test resources.")
         }
+		
+		//	TODO: Setup empty in-memory archive for testing here.
     }
 
     override class func tearDown() {

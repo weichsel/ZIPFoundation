@@ -122,7 +122,9 @@ extension ZIPFoundationTests {
 			try fileManager.zipItem(at: directoryURL, to: archive)
 		} catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
 		#if swift(>=5.0)
-		let inMemoryArchive = Archive(accessMode: .create)
+		guard let inMemoryArchive = Archive(accessMode: .create) else {
+			XCTFail("Failed to create an in-memory archive.")
+		}
 		do {
 			try fileManager.zipItem(at: assetURL, to: inMemoryArchive)
 		} catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
@@ -161,7 +163,9 @@ extension ZIPFoundationTests {
 			XCTFail("Unexpected error while trying to zip via fileManager.")
 		}
 		#if swift(>=5.0)
-		let inMemoryArchive = Archive(accessMode: .create)
+		guard let inMemoryArchive = Archive(accessMode: .create) else {
+			XCTFail("Failed to create an in-memory archive.")
+		}
 		do {
 			try fileManager.zipItem(at: URL(fileURLWithPath: "/nothing"), to: inMemoryArchive)
 			XCTFail("Error when zipping non-existant archive not raised")
@@ -192,7 +196,7 @@ extension ZIPFoundationTests {
 		let assetURL = self.resourceURL(for: #function, pathExtension: "png")
 		var archive: Archive
 		do {
-			let archive = try fileManager.itemZipped(from: assetURL)
+			archive = try fileManager.itemZipped(from: assetURL)
 		} catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
 		XCTAssertNotNil(archive[assetURL.lastPathComponent])
 		XCTAssert(archive.checkIntegrity())
@@ -216,7 +220,7 @@ extension ZIPFoundationTests {
 		let fileManager = FileManager()
 		var archive: Archive
 		do {
-			let archive = try fileManager.itemZipped(from: URL(fileURLWithPath: "/nothing"))
+			archive = try fileManager.itemZipped(from: URL(fileURLWithPath: "/nothing"))
 			XCTFail("Error when zipping non-existant archive not raised")
 		} catch let error as CocoaError { XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
 		} catch {
@@ -329,7 +333,9 @@ extension ZIPFoundationTests {
 		}
 		XCTAssert(itemsExist)
 		#if swift(>=5.0)
-		let inMemoryArchive = Archive(accessMode: .create)
+		guard let inMemoryArchive = Archive(accessMode: .create) else {
+			XCTFail("Failed to create an in-memory archive.")
+		}
 		do {
 			try fileManager.unzip(inMemoryArchive, to: destinationURL)
 		} catch {
@@ -363,7 +369,9 @@ extension ZIPFoundationTests {
 		}
 		XCTAssert(itemsExist)
 		#if swift(>=5.0)
-		let inMemoryArchive = Archive(accessMode: .create)
+		guard let inMemoryArchive = Archive(accessMode: .create) else {
+			XCTFail("Failed to create an in-memory archive.")
+		}
 		do {
 			try fileManager.unzip(inMemoryArchive, to: destinationURL, preferredEncoding: encoding)
 		} catch {
@@ -404,7 +412,9 @@ extension ZIPFoundationTests {
 		} catch CocoaError.fileWriteNoPermission {
 		} catch { XCTFail("Unexpected error while trying to unzip via fileManager.") }
 		#if swift(>=5.0)
-		let inMemoryArchive = Archive(accessMode: .create)
+		guard let inMemoryArchive = Archive(accessMode: .create) else {
+			XCTFail("Failed to create an in-memory archive.")
+		}
 		do {
 			try fileManager.unzip(inMemoryArchive, to: destinationURL)
 			XCTFail("Error when unzipping archive to existing destination not raised.")
