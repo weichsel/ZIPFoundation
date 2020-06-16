@@ -196,7 +196,7 @@ extension ZIPFoundationTests {
 		let assetURL = self.resourceURL(for: #function, pathExtension: "png")
 		var archive: Archive
 		do {
-			archive = try fileManager.itemZipped(from: assetURL)
+			archive = try fileManager.itemZipped(from: assetURL)!
 		} catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
 		XCTAssertNotNil(archive[assetURL.lastPathComponent])
 		XCTAssert(archive.checkIntegrity())
@@ -210,7 +210,7 @@ extension ZIPFoundationTests {
 			try fileManager.copyItem(at: assetURL, to: newAssetURL)
 			try fileManager.createSymbolicLink(at: directoryURL.appendingPathComponent("link"),
 											   withDestinationURL: newAssetURL)
-			let archive = try fileManager.itemZipped(from: directoryURL)
+			archive = try fileManager.itemZipped(from: directoryURL)!
 		} catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
 	}
 	#endif
@@ -220,7 +220,7 @@ extension ZIPFoundationTests {
 		let fileManager = FileManager()
 		var archive: Archive
 		do {
-			archive = try fileManager.itemZipped(from: URL(fileURLWithPath: "/nothing"))
+			archive = try fileManager.itemZipped(from: URL(fileURLWithPath: "/nothing"))!
 			XCTFail("Error when zipping non-existant archive not raised")
 		} catch let error as CocoaError { XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
 		} catch {
@@ -236,7 +236,7 @@ extension ZIPFoundationTests {
 			let result = fileManager.createFile(atPath: unreadableFileURL.path, contents: nil,
 												attributes: noPermissionAttributes)
 			XCTAssert(result == true)
-			let archive = try fileManager.itemZipped(from: unreadableFileURL.deletingLastPathComponent())
+			archive = try fileManager.itemZipped(from: unreadableFileURL.deletingLastPathComponent())!
 		} catch let error as CocoaError {
 			XCTAssert(error.code == CocoaError.fileReadNoPermission)
 		} catch {
