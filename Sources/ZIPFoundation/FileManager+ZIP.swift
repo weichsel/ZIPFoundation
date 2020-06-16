@@ -136,16 +136,17 @@ extension FileManager {
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied.
     ///                        By default, `zipItem` will create uncompressed archives.
     ///   - progress: A progress object that can be used to track or cancel the zip operation.
-    /// - Returns: An archive containing the zipped file or direcory contents at the specified source URL.
+    /// - Returns: If successful at creating an in-memory Archive, an archive containing the zipped file or direcory contents at the specified source URL;
+	///            if not, `nil`.
     /// - Throws: Throws an error if the source item does not exist.
     public func itemZipped(
 		from sourceURL: URL,
 		shouldKeepParent: Bool = true,
 		compressionMethod: CompressionMethod = .none,
 		progress: Progress? = nil
-	) throws -> Archive {
-        let archive = Archive(accessMode: .create)
-        zipItem(
+	) throws -> Archive? {
+		guard let archive = Archive(accessMode: .create) else { return nil }
+		try zipItem(
 			at: sourceURL,
 			to: archive,
 			shouldKeepParent: shouldKeepParent,
