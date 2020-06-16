@@ -50,8 +50,7 @@ extension FileManager {
         try zipItem(
 			at: sourceURL,
 			to: archive,
-			shouldKeepParent:
-			shouldKeepParent,
+			shouldKeepParent: shouldKeepParent,
 			compressionMethod: compressionMethod,
 			progress: progress
 		)
