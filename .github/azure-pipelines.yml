@@ -6,7 +6,7 @@ pool:
 
 jobs:
 
-- job: Swift_latest
+- job: Linux_Swift_latest
   strategy:
     matrix:
       Ubuntu 20.04:
