@@ -124,6 +124,7 @@ extension ZIPFoundationTests {
 		#if swift(>=5.0)
 		guard let inMemoryArchive = Archive(accessMode: .create) else {
 			XCTFail("Failed to create an in-memory archive.")
+			return
 		}
 		do {
 			try fileManager.zipItem(at: assetURL, to: inMemoryArchive)
@@ -165,6 +166,7 @@ extension ZIPFoundationTests {
 		#if swift(>=5.0)
 		guard let inMemoryArchive = Archive(accessMode: .create) else {
 			XCTFail("Failed to create an in-memory archive.")
+			return
 		}
 		do {
 			try fileManager.zipItem(at: URL(fileURLWithPath: "/nothing"), to: inMemoryArchive)
@@ -335,6 +337,7 @@ extension ZIPFoundationTests {
 		#if swift(>=5.0)
 		guard let inMemoryArchive = Archive(accessMode: .create) else {
 			XCTFail("Failed to create an in-memory archive.")
+			return
 		}
 		do {
 			try fileManager.unzip(inMemoryArchive, to: destinationURL)
@@ -371,6 +374,7 @@ extension ZIPFoundationTests {
 		#if swift(>=5.0)
 		guard let inMemoryArchive = Archive(accessMode: .create) else {
 			XCTFail("Failed to create an in-memory archive.")
+			return
 		}
 		do {
 			try fileManager.unzip(inMemoryArchive, to: destinationURL, preferredEncoding: encoding)
@@ -414,6 +418,7 @@ extension ZIPFoundationTests {
 		#if swift(>=5.0)
 		guard let inMemoryArchive = Archive(accessMode: .create) else {
 			XCTFail("Failed to create an in-memory archive.")
+			return
 		}
 		do {
 			try fileManager.unzip(inMemoryArchive, to: destinationURL)
