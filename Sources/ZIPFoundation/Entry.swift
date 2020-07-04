@@ -247,7 +247,7 @@ extension Entry.LocalFileHeader {
         self.uncompressedSize = data.scanValue(start: 22)
         self.fileNameLength = data.scanValue(start: 26)
         self.extraFieldLength = data.scanValue(start: 28)
-        let additionalDataLength = Int(self.fileNameLength + self.extraFieldLength)
+        let additionalDataLength = Int(self.fileNameLength) + Int(self.extraFieldLength)
         guard let additionalData = try? provider(additionalDataLength) else { return nil }
         guard additionalData.count == additionalDataLength else { return nil }
         var subRangeStart = 0
@@ -321,7 +321,7 @@ extension Entry.CentralDirectoryStructure {
         self.internalFileAttributes = data.scanValue(start: 36)
         self.externalFileAttributes = data.scanValue(start: 38)
         self.relativeOffsetOfLocalHeader = data.scanValue(start: 42)
-        let additionalDataLength = Int(self.fileNameLength + self.extraFieldLength + self.fileCommentLength)
+        let additionalDataLength = Int(self.fileNameLength) + Int(self.extraFieldLength) + Int(self.fileCommentLength)
         guard let additionalData = try? provider(additionalDataLength) else { return nil }
         guard additionalData.count == additionalDataLength else { return nil }
         var subRangeStart = 0
