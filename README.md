@@ -55,7 +55,7 @@ import PackageDescription
 let package = Package(
     name: "<Your Product Name>",
     dependencies: [
-		.package(url: "https://github.com/weichsel/ZIPFoundation", .upToNextMajor(from: "0.9.0"))
+		.package(url: "https://github.com/weichsel/ZIPFoundation.git", .upToNextMajor(from: "0.9.0"))
     ],
     targets: [
         .target(
