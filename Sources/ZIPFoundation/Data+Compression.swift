@@ -9,6 +9,13 @@
 //
 
 import Foundation
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+import zlib
+
+#else
+import CZlib
+
+#endif
 
 /// An unsigned 32-Bit Integer representing a checksum.
 public typealias CRC32 = UInt32
@@ -91,38 +98,18 @@ extension Data {
     /// - Parameter checksum: The starting seed.
     /// - Returns: The checksum calcualted from the bytes of the receiver and the starting seed.
     public func crc32(checksum: CRC32) -> CRC32 {
-        // The typecast is necessary on 32-bit platforms because of
-        // https://bugs.swift.org/browse/SR-1774
-        let mask = 0xffffffff as UInt32
-        let bufferSize = self.count/MemoryLayout<UInt8>.size
-        var result = checksum ^ mask
-        #if swift(>=5.0)
-        crcTable.withUnsafeBufferPointer { crcTablePointer in
-            self.withUnsafeBytes { bufferPointer in
-                let bytePointer = bufferPointer.bindMemory(to: UInt8.self)
-                for bufferIndex in 0..<bufferSize {
-                    let byte = bytePointer[bufferIndex]
-                    let index = Int((result ^ UInt32(byte)) & 0xff)
-                    result = (result >> 8) ^ crcTablePointer[index]
-                }
-            }
+        let bufferSize = self.count / MemoryLayout<UInt8>.size
+        var result = checksum
+        self.withUnsafeBytes { unsafeRawBufferPointer in
+            let unsafeBufferPointer = unsafeRawBufferPointer.bindMemory(to: UInt8.self)
+            let unsafePointer = unsafeBufferPointer.baseAddress!
+            #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+            result = CRC32(zlib.crc32(uLong(result), unsafePointer, uInt(bufferSize)))
+            #else
+            result = CRC32(CZlib.crc32(uLong(result), unsafePointer, uInt(bufferSize)))
+            #endif
         }
-        #else
-        self.withUnsafeBytes { (bytes) in
-            let bins = stride(from: 0, to: bufferSize, by: 256)
-            for bin in bins {
-                for binIndex in 0..<256 {
-                    let byteIndex = bin + binIndex
-                    guard byteIndex < bufferSize else { break }
-
-                    let byte = bytes[byteIndex]
-                    let index = Int((result ^ UInt32(byte)) & 0xff)
-                    result = (result >> 8) ^ crcTable[index]
-                }
-            }
-        }
-        #endif
-        return result ^ mask
+        return result
     }
 
     /// Compress the output of `provider` and pass it to `consumer`.
@@ -220,7 +207,6 @@ extension Data {
 // MARK: - Linux
 
 #else
-import CZlib
 
 extension Data {
     static func encode(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
