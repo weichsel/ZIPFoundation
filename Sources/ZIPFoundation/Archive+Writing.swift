@@ -98,6 +98,8 @@ extension Archive {
                          compressionMethod: CompressionMethod = .none, bufferSize: UInt32 = defaultWriteChunkSize,
                          progress: Progress? = nil, provider: Provider) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
+        // Directories and symlinks cannot be compressed
+        let compressionMethod = type == .file ? compressionMethod : .none
         progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : Int64(uncompressedSize)
         var endOfCentralDirRecord = self.endOfCentralDirectoryRecord
         var startOfCD = Int(endOfCentralDirRecord.offsetToStartOfCentralDirectory)
