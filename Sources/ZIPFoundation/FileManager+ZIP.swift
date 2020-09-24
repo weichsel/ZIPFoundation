@@ -98,16 +98,7 @@ extension FileManager {
         guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: preferredEncoding) else {
             throw Archive.ArchiveError.unreadableArchive
         }
-        // Defer extraction of symlinks until all files & directories have been created.
-        // This is necessary because we can't create links to files that haven't been created yet.
-        let sortedEntries = archive.sorted { (left, right) -> Bool in
-            switch (left.type, right.type) {
-            case (.directory, .file): return true
-            case (.directory, .symlink): return true
-            case (.file, .symlink): return true
-            default: return false
-            }
-        }
+        let sortedEntries = try archive.sortEntries(Array(archive.makeIterator()))
         var totalUnitCount = Int64(0)
         if let progress = progress {
             totalUnitCount = sortedEntries.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
