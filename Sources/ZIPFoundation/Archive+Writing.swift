@@ -98,13 +98,14 @@ extension Archive {
                          compressionMethod: CompressionMethod = .none, bufferSize: UInt32 = defaultWriteChunkSize,
                          progress: Progress? = nil, provider: Provider) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
+        // Directories and symlinks cannot be compressed
+        let compressionMethod = type == .file ? compressionMethod : .none
         progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : Int64(uncompressedSize)
         var endOfCentralDirRecord = self.endOfCentralDirectoryRecord
         var startOfCD = Int(endOfCentralDirRecord.offsetToStartOfCentralDirectory)
-        var existingCentralDirData = Data()
         fseek(self.archiveFile, startOfCD, SEEK_SET)
-        existingCentralDirData = try Data.readChunk(of: Int(endOfCentralDirRecord.sizeOfCentralDirectory),
-                                                    from: self.archiveFile)
+        let existingCentralDirData = try Data.readChunk(of: Int(endOfCentralDirRecord.sizeOfCentralDirectory),
+                                                        from: self.archiveFile)
         fseek(self.archiveFile, startOfCD, SEEK_SET)
         let localFileHeaderStart = ftell(self.archiveFile)
         let modDateTime = modificationDate.fileModificationDateTime
