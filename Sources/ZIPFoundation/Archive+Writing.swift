@@ -326,8 +326,8 @@ extension Archive {
         var record = self.endOfCentralDirectoryRecord
         let countChange = operation.rawValue
         var dataLength = Int(centralDirectoryStructure.extraFieldLength)
-        dataLength += centralDirectoryStructure.fileNameLength
-        dataLength += centralDirectoryStructure.fileCommentLength
+        dataLength += Int(centralDirectoryStructure.fileNameLength)
+        dataLength += Int(centralDirectoryStructure.fileCommentLength)
         let centralDirectoryDataLengthChange = operation.rawValue * (dataLength + CentralDirectoryStructure.size)
         var updatedSizeOfCentralDirectory = Int(record.sizeOfCentralDirectory)
         updatedSizeOfCentralDirectory += centralDirectoryDataLengthChange
