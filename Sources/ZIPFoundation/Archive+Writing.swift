@@ -326,10 +326,10 @@ extension Archive {
                                             operation: ModifyOperation) throws -> EndOfCentralDirectoryRecord {
         var record = self.endOfCentralDirectoryRecord
         let countChange = operation.rawValue
-        var dataLength = centralDirectoryStructure.extraFieldLength
-        dataLength += centralDirectoryStructure.fileNameLength
-        dataLength += centralDirectoryStructure.fileCommentLength
-        let centralDirectoryDataLengthChange = operation.rawValue * (Int(dataLength) + CentralDirectoryStructure.size)
+        var dataLength = Int(centralDirectoryStructure.extraFieldLength)
+        dataLength += Int(centralDirectoryStructure.fileNameLength)
+        dataLength += Int(centralDirectoryStructure.fileCommentLength)
+        let centralDirectoryDataLengthChange = operation.rawValue * (dataLength + CentralDirectoryStructure.size)
         var updatedSizeOfCentralDirectory = Int(record.sizeOfCentralDirectory)
         updatedSizeOfCentralDirectory += centralDirectoryDataLengthChange
         let numberOfEntriesOnDisk = UInt16(Int(record.totalNumberOfEntriesOnDisk) + countChange)
