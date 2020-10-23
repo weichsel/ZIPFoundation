@@ -269,4 +269,22 @@ extension ZIPFoundationTests {
         let archive = self.archive(for: #function, mode: .update)
         XCTAssert(archive.totalUnitCountForAddingItem(at: nonExistantURL) == -1)
     }
+
+    func testExtractUncompressedEmptyFile() {
+        let expectation = XCTestExpectation(description: "Called extract consumer")
+        let archive = self.archive(for: #function, mode: .read)
+        guard let entry = archive["empty.txt"] else { XCTFail("Failed to extract entry."); return }
+        let progress = archive.makeProgressForReading(entry)
+        do {
+            _ = try archive.extract(entry, progress: progress) { (data) in
+                // Progress does not finished because Progress assumes totalUnitCount > 0
+                // XCTAssertFalse(progress.isFinished)
+                XCTAssertEqual(data.count, 0)
+                expectation.fulfill()
+            }
+        } catch {
+            XCTFail("Unexpected error while trying to extract empty file of uncompressed archive.")
+        }
+        wait(for: [expectation], timeout: 3.0)
+    }
 }

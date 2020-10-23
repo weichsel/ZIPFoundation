@@ -48,6 +48,10 @@ extension Data {
         var chunkSize = readInOneChunk ? size : chunkSize
         var checksum = CRC32(0)
         var bytesRead = 0
+        if size == 0 {
+            try consumer(Data())
+            return checksum
+        }
         while bytesRead < size {
             let remainingSize = size - bytesRead
             chunkSize = remainingSize < chunkSize ? remainingSize : chunkSize
