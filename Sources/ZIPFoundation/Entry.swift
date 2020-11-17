@@ -147,7 +147,7 @@ public struct Entry: Equatable {
             case S_IFLNK:
                 return .symlink
             default:
-                return .file
+                return isDirectory ? .directory : .file
             }
         case .msdos:
             isDirectory = isDirectory || ((centralDirectoryStructure.externalFileAttributes >> 4) == 0x01)
