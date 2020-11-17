@@ -307,7 +307,8 @@ extension ZIPFoundationTests {
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testZipItem", testZipItem),
-            ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
+            ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests),
+            ("testReadingEntryTypes", testReadingEntryTypes)
         ] + darwinOnlyTests + swift5OnlyTests
     }
 
