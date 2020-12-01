@@ -271,7 +271,7 @@ extension ZIPFoundationTests {
         XCTAssert(archive.totalUnitCountForAddingItem(at: nonExistantURL) == -1)
     }
 
-    func testReadingEntryTypes() {
+    func testDetectEntryType() {
         let archive = self.archive(for: #function, mode: .read)
         let expectedData: [String: Entry.EntryType] = [
             "META-INF/": .directory,
