@@ -269,4 +269,29 @@ extension ZIPFoundationTests {
         let archive = self.archive(for: #function, mode: .update)
         XCTAssert(archive.totalUnitCountForAddingItem(at: nonExistantURL) == -1)
     }
+
+    func testReadingEntryTypes() {
+        let archive = self.archive(for: #function, mode: .read)
+        let entryPathsAndTypes = Array(archive)
+            .map { EntryPathAndType(path: $0.path, type: $0.type) }
+            .sorted { $0.path < $1.path }
+
+        let expectedData = [
+            EntryPathAndType(path: "META-INF/", type: .directory),
+            EntryPathAndType(path: "META-INF/container.xml", type: .file)
+        ]
+
+        XCTAssertEqual(entryPathsAndTypes, expectedData)
+    }
+}
+
+private extension ZIPFoundationTests {
+    struct EntryPathAndType: Equatable {
+		static func == (lhs: EntryPathAndType, rhs: EntryPathAndType) -> Bool {
+			return lhs.path == rhs.path && lhs.type == rhs.type
+		}
+
+        let path: String
+        let type: Entry.EntryType
+    }
 }
