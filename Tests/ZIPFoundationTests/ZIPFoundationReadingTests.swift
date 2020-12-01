@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testExtractUncompressedFolderEntries() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
@@ -158,7 +159,7 @@ extension ZIPFoundationTests {
 
         do {
             fseek(destinationFile, 64, SEEK_SET)
-            // We have to inject a large enough zeroes block to guarantee that libcompression 
+            // We have to inject a large enough zeroes block to guarantee that libcompression
             // detects the failure when reading the stream
             _ = try Data.write(chunk: Data(count: 512*1024), to: destinationFile)
             fclose(destinationFile)
@@ -272,26 +273,12 @@ extension ZIPFoundationTests {
 
     func testReadingEntryTypes() {
         let archive = self.archive(for: #function, mode: .read)
-        let entryPathsAndTypes = Array(archive)
-            .map { EntryPathAndType(path: $0.path, type: $0.type) }
-            .sorted { $0.path < $1.path }
-
-        let expectedData = [
-            EntryPathAndType(path: "META-INF/", type: .directory),
-            EntryPathAndType(path: "META-INF/container.xml", type: .file)
+        let expectedData: [String: Entry.EntryType] = [
+            "META-INF/": .directory,
+            "META-INF/container.xml": .file
         ]
-
-        XCTAssertEqual(entryPathsAndTypes, expectedData)
-    }
-}
-
-private extension ZIPFoundationTests {
-    struct EntryPathAndType: Equatable {
-		static func == (lhs: EntryPathAndType, rhs: EntryPathAndType) -> Bool {
-			return lhs.path == rhs.path && lhs.type == rhs.type
-		}
-
-        let path: String
-        let type: Entry.EntryType
+        for entry in archive {
+            XCTAssertEqual(entry.type, expectedData[entry.path])
+        }
     }
 }
