@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testExtractUncompressedFolderEntries() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
@@ -158,7 +159,7 @@ extension ZIPFoundationTests {
 
         do {
             fseek(destinationFile, 64, SEEK_SET)
-            // We have to inject a large enough zeroes block to guarantee that libcompression 
+            // We have to inject a large enough zeroes block to guarantee that libcompression
             // detects the failure when reading the stream
             _ = try Data.write(chunk: Data(count: 512*1024), to: destinationFile)
             fclose(destinationFile)
@@ -286,5 +287,16 @@ extension ZIPFoundationTests {
             XCTFail("Unexpected error while trying to extract empty file of uncompressed archive.")
         }
         wait(for: [expectation], timeout: 3.0)
+    }
+
+    func testDetectEntryType() {
+        let archive = self.archive(for: #function, mode: .read)
+        let expectedData: [String: Entry.EntryType] = [
+            "META-INF/": .directory,
+            "META-INF/container.xml": .file
+        ]
+        for entry in archive {
+            XCTAssertEqual(entry.type, expectedData[entry.path])
+        }
     }
 }

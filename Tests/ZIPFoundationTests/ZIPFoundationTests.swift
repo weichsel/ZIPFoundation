@@ -268,6 +268,7 @@ extension ZIPFoundationTests {
             ("testCreateArchiveAddSymbolicLink", testCreateArchiveAddSymbolicLink),
             ("testCreateArchiveAddTooLargeUncompressedEntry", testCreateArchiveAddTooLargeUncompressedEntry),
             ("testCreateArchiveAddUncompressedEntry", testCreateArchiveAddUncompressedEntry),
+            ("testDetectEntryType", testDetectEntryType),
             ("testDirectoryCreationHelperMethods", testDirectoryCreationHelperMethods),
             ("testEntryInvalidAdditionalDataErrorConditions", testEntryInvalidAdditionalDataErrorConditions),
             ("testEntryInvalidPathEncodingErrorConditions", testEntryInvalidPathEncodingErrorConditions),
