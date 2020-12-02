@@ -44,14 +44,15 @@ extension Data {
 
     static func consumePart(of size: Int, chunkSize: Int, skipCRC32: Bool = false,
                             provider: Provider, consumer: Consumer) throws -> CRC32 {
-        let readInOneChunk = (size < chunkSize)
-        var chunkSize = readInOneChunk ? size : chunkSize
         var checksum = CRC32(0)
-        var bytesRead = 0
-        if size == 0 {
+        guard size > 0 else {
             try consumer(Data())
             return checksum
         }
+
+        let readInOneChunk = (size < chunkSize)
+        var chunkSize = readInOneChunk ? size : chunkSize
+        var bytesRead = 0
         while bytesRead < size {
             let remainingSize = size - bytesRead
             chunkSize = remainingSize < chunkSize ? remainingSize : chunkSize
