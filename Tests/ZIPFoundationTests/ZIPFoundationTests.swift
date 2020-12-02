@@ -286,6 +286,7 @@ extension ZIPFoundationTests {
             ("testExtractMSDOSArchive", testExtractMSDOSArchive),
             ("testExtractUncompressedDataDescriptorArchive", testExtractUncompressedDataDescriptorArchive),
             ("testExtractUncompressedFolderEntries", testExtractUncompressedFolderEntries),
+            ("testExtractUncompressedEmptyFile", testExtractUncompressedEmptyFile),
             ("testExtractZIP64ArchiveErrorConditions", testExtractZIP64ArchiveErrorConditions),
             ("testFileAttributeHelperMethods", testFileAttributeHelperMethods),
             ("testFilePermissionHelperMethods", testFilePermissionHelperMethods),
