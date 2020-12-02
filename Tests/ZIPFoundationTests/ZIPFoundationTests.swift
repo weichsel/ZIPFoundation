@@ -279,7 +279,6 @@ extension ZIPFoundationTests {
             ("testExtractCompressedDataDescriptorArchive", testExtractCompressedDataDescriptorArchive),
             ("testExtractCompressedFolderEntries", testExtractCompressedFolderEntries),
             ("testExtractEncryptedArchiveErrorConditions", testExtractEncryptedArchiveErrorConditions),
-            ("testExtractUncompressedEmptyFile", testExtractUncompressedEmptyFile),
             ("testExtractUncompressedEntryCancelation", testExtractUncompressedEntryCancelation),
             ("testExtractCompressedEntryCancelation", testExtractCompressedEntryCancelation),
             ("testExtractErrorConditions", testExtractErrorConditions),
@@ -324,6 +323,7 @@ extension ZIPFoundationTests {
             ("testReplaceCurrentArchiveWithArchiveCrossLink", testReplaceCurrentArchiveWithArchiveCrossLink),
             ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
             ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress),
+            ("testExtractUncompressedEmptyFile", testExtractUncompressedEmptyFile),
             // The below test cases test error code paths but they lead to undefined behavior and memory
             // corruption on non-Darwin platforms. We disable them for now.
             ("testReadStructureErrorConditions", testReadStructureErrorConditions),
