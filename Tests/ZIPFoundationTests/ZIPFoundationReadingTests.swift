@@ -228,19 +228,21 @@ extension ZIPFoundationTests {
     }
 
     func testExtractUncompressedEmptyFile() {
-        let expectation = XCTestExpectation(description: "Called extract consumer")
+        // We had a logic error, where completion handlers for empty entries were not called
+        // Ensure that this edge case works
+        var didCallCompletion = false
         let archive = self.archive(for: #function, mode: .read)
         guard let entry = archive["empty.txt"] else { XCTFail("Failed to extract entry."); return }
 
         do {
             _ = try archive.extract(entry) { (data) in
                 XCTAssertEqual(data.count, 0)
-                expectation.fulfill()
+                didCallCompletion = true
             }
         } catch {
             XCTFail("Unexpected error while trying to extract empty file of uncompressed archive.")
         }
-        wait(for: [expectation], timeout: 3.0)
+        XCTAssert(didCallCompletion)
     }
 
     func testExtractUncompressedEntryCancelation() {
