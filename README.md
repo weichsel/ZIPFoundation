@@ -249,8 +249,9 @@ The `data` passed into the closure contains chunks of the current entry. You can
 You can also add entries from an in-memory data source. To do this you have to provide a closure of type `Provider` to the `addEntry` method:
 
 ```swift
-guard let data = "abcdefghijkl".data(using: .utf8) else { return }
-try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: 12, bufferSize: 4, provider: { (position, size) -> Data in
+let string = "abcdefghijkl"
+guard let data = string.data(using: .utf8) else { return }
+try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: UInt32(string.count), bufferSize: 4, provider: { (position, size) -> Data in
     // This will be called until `data` is exhausted (3x in this case).
     return data.subdata(in: position..<position+size)
 })
@@ -267,9 +268,10 @@ To _read_ or _update_ an in-memory archive, the passed-in `data` must contain a 
 To _create_ an in-memory archive, the `data` parameter can be omitted:
 
 ```swift
+let string = "Some string!"
 guard let archive = Archive(accessMode: .create),
-        let data = "Some string!".data(using: .utf8) else { return }
-    try? archive.addEntry(with: "inMemory.txt", type: .file, uncompressedSize: 12, bufferSize: 4, provider: { (position, size) -> Data in
+        let data = string.data(using: .utf8) else { return }
+    try? archive.addEntry(with: "inMemory.txt", type: .file, uncompressedSize: UInt32(string.count), bufferSize: 4, provider: { (position, size) -> Data in
         return data.subdata(in: position..<position+size)
     })
 let archiveData = archive.data
