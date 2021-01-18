@@ -27,13 +27,14 @@ extension Archive {
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
     ///   - progress: A progress object that can be used to track or cancel the add operation.
     /// - Throws: An error if the source file cannot be read or the receiver is not writable.
-    public func addEntry(with path: String, relativeTo baseURL: URL, compressionMethod: CompressionMethod = .none,
+    public func addEntry(with path: String, relativeTo baseURL: URL,
+                         compressionMethod: CompressionMethod = .none,
                          bufferSize: UInt32 = defaultWriteChunkSize, progress: Progress? = nil) throws {
         let fileURL = baseURL.appendingPathComponent(path)
 
         try self.addEntry(with: path, fileURL: fileURL, compressionMethod: compressionMethod, bufferSize: bufferSize, progress: progress)
     }
-    
+
     /// Write files, directories or symlinks to the receiver.
     ///
     /// - Parameters:
@@ -44,7 +45,7 @@ extension Archive {
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
     ///   - progress: A progress object that can be used to track or cancel the add operation.
     /// - Throws: An error if the source file cannot be read or the receiver is not writable.
-    public func addEntry(with path: String, fileURL : URL, compressionMethod: CompressionMethod = .none,
+    public func addEntry(with path: String, fileURL: URL, compressionMethod: CompressionMethod = .none,
                          bufferSize: UInt32 = defaultWriteChunkSize, progress: Progress? = nil) throws {
         let fileManager = FileManager()
         let entryURL = fileURL
