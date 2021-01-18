@@ -32,7 +32,8 @@ extension Archive {
                          bufferSize: UInt32 = defaultWriteChunkSize, progress: Progress? = nil) throws {
         let fileURL = baseURL.appendingPathComponent(path)
 
-        try self.addEntry(with: path, fileURL: fileURL, compressionMethod: compressionMethod, bufferSize: bufferSize, progress: progress)
+        try self.addEntry(with: path, fileURL: fileURL, compressionMethod: compressionMethod,
+                          bufferSize: bufferSize, progress: progress)
     }
 
     /// Write files, directories or symlinks to the receiver.
