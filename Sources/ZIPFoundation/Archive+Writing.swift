@@ -264,7 +264,7 @@ extension Archive {
                                                                      progress: progress, provider: provider)
             case .deflate:
                 (sizeWritten, checksum) = try self.writeCompressed(size: localFileHeader.uncompressedSize,
-                                                                   bufferSize: bufferSize,
+                                                                   bufferSize: bufferSize, skipCRC32: skipCRC32,
                                                                    progress: progress, provider: provider)
             }
         case .directory:
@@ -297,11 +297,11 @@ extension Archive {
         return (UInt32(sizeWritten), checksum)
     }
 
-    private func writeCompressed(size: UInt32, bufferSize: UInt32, progress: Progress? = nil,
+    private func writeCompressed(size: UInt32, bufferSize: UInt32, skipCRC32: Bool, progress: Progress? = nil,
                                  provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
         var sizeWritten = 0
         let consumer: Consumer = { data in sizeWritten += try Data.write(chunk: data, to: self.archiveFile) }
-        let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize),
+        let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize), skipCRC32: skipCRC32,
                                          provider: { (position, size) -> Data in
                                             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
                                             let data = try provider(position, size)

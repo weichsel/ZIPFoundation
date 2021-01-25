@@ -132,12 +132,12 @@ extension Data {
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
     ///   - consumer: A closure that processes the result of the compress operation.
     /// - Returns: The checksum of the processed content.
-    public static func compress(size: Int, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
+    public static func compress(size: Int, bufferSize: Int, skipCRC32: Bool, provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        return try self.process(operation: COMPRESSION_STREAM_ENCODE, size: size, bufferSize: bufferSize,
+        return try self.process(operation: COMPRESSION_STREAM_ENCODE, size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                 provider: provider, consumer: consumer)
         #else
-        return try self.encode(size: size, bufferSize: bufferSize, provider: provider, consumer: consumer)
+        return try self.encode(size: size, bufferSize: bufferSize, skipCRC32: skipCRC32, provider: provider, consumer: consumer)
         #endif
     }
 
