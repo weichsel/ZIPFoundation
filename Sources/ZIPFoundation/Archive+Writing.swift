@@ -96,6 +96,7 @@ extension Archive {
     public func addEntry(with path: String, type: Entry.EntryType, uncompressedSize: UInt32,
                          modificationDate: Date = Date(), permissions: UInt16? = nil,
                          compressionMethod: CompressionMethod = .none, bufferSize: UInt32 = defaultWriteChunkSize,
+                         skipCRC32: Bool = false,
                          progress: Progress? = nil, provider: Provider) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
         // Directories and symlinks cannot be compressed
@@ -115,7 +116,9 @@ extension Archive {
                                                                 size: (uncompressedSize, 0), checksum: 0,
                                                                 modificationDateTime: modDateTime)
             let (written, checksum) = try self.writeEntry(localFileHeader: localFileHeader, type: type,
-                                                          compressionMethod: compressionMethod, bufferSize: bufferSize,
+                                                          compressionMethod: compressionMethod,
+                                                          bufferSize: bufferSize,
+                                                          skipCRC32: skipCRC32,
                                                           progress: progress, provider: provider)
             startOfCD = ftell(self.archiveFile)
             fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
@@ -247,7 +250,7 @@ extension Archive {
     }
 
     private func writeEntry(localFileHeader: LocalFileHeader, type: Entry.EntryType,
-                            compressionMethod: CompressionMethod, bufferSize: UInt32, progress: Progress? = nil,
+                            compressionMethod: CompressionMethod, bufferSize: UInt32, skipCRC32: Bool, progress: Progress? = nil,
                             provider: Provider) throws -> (sizeWritten: UInt32, crc32: CRC32) {
         var checksum = CRC32(0)
         var sizeWritten = UInt32(0)
@@ -257,6 +260,7 @@ extension Archive {
             case .none:
                 (sizeWritten, checksum) = try self.writeUncompressed(size: localFileHeader.uncompressedSize,
                                                                      bufferSize: bufferSize,
+                                                                     skipCRC32: skipCRC32,
                                                                      progress: progress, provider: provider)
             case .deflate:
                 (sizeWritten, checksum) = try self.writeCompressed(size: localFileHeader.uncompressedSize,
@@ -274,7 +278,7 @@ extension Archive {
         return (sizeWritten, checksum)
     }
 
-    private func writeUncompressed(size: UInt32, bufferSize: UInt32, progress: Progress? = nil,
+    private func writeUncompressed(size: UInt32, bufferSize: UInt32, skipCRC32: Bool, progress: Progress? = nil,
                                    provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
         var position = 0
         var sizeWritten = 0
@@ -283,7 +287,9 @@ extension Archive {
             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
             let readSize = (Int(size) - position) >= bufferSize ? Int(bufferSize) : (Int(size) - position)
             let entryChunk = try provider(Int(position), Int(readSize))
-            checksum = entryChunk.crc32(checksum: checksum)
+            if !skipCRC32 {
+               checksum = entryChunk.crc32(checksum: checksum)
+            }
             sizeWritten += try Data.write(chunk: entryChunk, to: self.archiveFile)
             position += Int(bufferSize)
             progress?.completedUnitCount = Int64(sizeWritten)
