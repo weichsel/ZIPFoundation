@@ -119,15 +119,12 @@ extension ZIPFoundationTests {
         let fileExpectation = self.keyValueObservingExpectation(for: fileProgress,
                                                                 keyPath: #keyPath(Progress.fractionCompleted),
                                                                 expectedValue: 1.0)
+        var didSucceed = true
         let testQueue = DispatchQueue.global()
         testQueue.async {
             do {
                 try fileManager.zipItem(at: assetURL, to: fileArchiveURL, progress: fileProgress)
-            } catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
-            guard let archive = Archive(url: fileArchiveURL, accessMode: .read) else {
-                XCTFail("Failed to read archive.") ; return
-            }
-            XCTAssert(archive.checkIntegrity())
+            } catch { didSucceed = false }
         }
         var directoryURL = ZIPFoundationTests.tempZipDirectoryURL
         directoryURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
@@ -147,13 +144,16 @@ extension ZIPFoundationTests {
                 try fileManager.createSymbolicLink(at: directoryURL.appendingPathComponent("link"),
                                                    withDestinationURL: newAssetURL)
                 try fileManager.zipItem(at: directoryURL, to: directoryArchiveURL, progress: directoryProgress)
-            } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
-            guard let directoryArchive = Archive(url: directoryArchiveURL, accessMode: .read) else {
-                XCTFail("Failed to read archive."); return
-            }
-            XCTAssert(directoryArchive.checkIntegrity())
+            } catch { didSucceed = false }
         }
         self.wait(for: [fileExpectation, directoryExpectation], timeout: 20.0)
+        guard let archive = Archive(url: fileArchiveURL, accessMode: .read),
+              let directoryArchive = Archive(url: directoryArchiveURL, accessMode: .read) else {
+            XCTFail("Failed to read archive.") ; return
+        }
+        XCTAssert(didSucceed)
+        XCTAssert(archive.checkIntegrity())
+        XCTAssert(directoryArchive.checkIntegrity())
     }
 
     func testUnzipItemProgress() {
