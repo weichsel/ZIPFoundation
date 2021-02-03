@@ -119,7 +119,8 @@ extension ZIPFoundationTests {
         let fileExpectation = self.keyValueObservingExpectation(for: fileProgress,
                                                                 keyPath: #keyPath(Progress.fractionCompleted),
                                                                 expectedValue: 1.0)
-        DispatchQueue.global().async {
+        let testQueue = DispatchQueue.global()
+        testQueue.async {
             do {
                 try fileManager.zipItem(at: assetURL, to: fileArchiveURL, progress: fileProgress)
             } catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
@@ -137,7 +138,7 @@ extension ZIPFoundationTests {
         let directoryExpectation = self.keyValueObservingExpectation(for: directoryProgress,
                                                                      keyPath: #keyPath(Progress.fractionCompleted),
                                                                      expectedValue: 1.0)
-        DispatchQueue.global().async {
+        testQueue.async {
             do {
                 try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
                 try fileManager.createDirectory(at: directoryURL.appendingPathComponent("nested"),
