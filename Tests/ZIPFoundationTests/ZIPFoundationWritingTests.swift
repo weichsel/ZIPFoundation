@@ -336,7 +336,7 @@ extension ZIPFoundationTests {
         do {
             try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true, attributes: nil)
             let volName = "Test_\(UUID().uuidString)"
-            let task = try self.makeVolumeCreationTask(at: tempDir, volumeName: volName)
+            let task = try NSUserScriptTask.makeVolumeCreationTask(at: tempDir, volumeName: volName)
             task.execute { (error) in
                 guard error == nil else {
                     XCTFail("\(String(describing: error))")
@@ -379,21 +379,4 @@ extension ZIPFoundationTests {
         waitForExpectations(timeout: 30.0)
 		#endif
     }
-
-    #if os(macOS)
-    private func makeVolumeCreationTask(at tempDir: URL, volumeName: String) throws -> NSUserScriptTask {
-        let scriptURL = tempDir.appendingPathComponent("createVol.sh", isDirectory: false)
-        let dmgURL = tempDir.appendingPathComponent(volumeName).appendingPathExtension("dmg")
-        let script = """
-        #!/bin/bash
-        hdiutil create -size 5m -fs HFS+ -type SPARSEBUNDLE -ov -volname "\(volumeName)" "\(dmgURL.path)"
-        hdiutil attach -nobrowse "\(dmgURL.appendingPathExtension("sparsebundle").path)"
-
-        """
-        try script.write(to: scriptURL, atomically: false, encoding: .utf8)
-        let permissions = NSNumber(value: Int16(0o770))
-        try FileManager.default.setAttributes([.posixPermissions: permissions], ofItemAtPath: scriptURL.path)
-        return try NSUserScriptTask(url: scriptURL)
-    }
-    #endif
 }
