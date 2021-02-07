@@ -130,6 +130,21 @@ class ZIPFoundationTests: XCTestCase {
         }
         return URL
     }
+
+    func runWithFileDescriptorLimit(_ limit: UInt64, handler: () -> Void) {
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        let fileNoFlag = RLIMIT_NOFILE
+        #else
+        let fileNoFlag = Int32(RLIMIT_NOFILE.rawValue)
+        #endif
+        var storedRlimit = rlimit()
+        getrlimit(fileNoFlag, &storedRlimit)
+        var tempRlimit = storedRlimit
+        tempRlimit.rlim_cur = rlim_t(limit)
+        setrlimit(fileNoFlag, &tempRlimit)
+        defer { setrlimit(fileNoFlag, &storedRlimit) }
+        handler()
+    }
 }
 
 extension ZIPFoundationTests {

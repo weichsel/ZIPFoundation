@@ -113,6 +113,18 @@ extension ZIPFoundationTests {
             XCTFail("Unexpected error while trying to add non-existant file to an archive.")
         }
         XCTAssertTrue(didCatchExpectedError)
+        // Cover the error code path when `fopen` fails during entry addition
+        self.runWithFileDescriptorLimit(0) {
+            let assetURL = self.resourceURL(for: #function, pathExtension: "txt")
+            do {
+                let relativePath = assetURL.lastPathComponent
+                let baseURL = assetURL.deletingLastPathComponent()
+                try archive.addEntry(with: relativePath, relativeTo: baseURL)
+            } catch {
+                didCatchExpectedError = true
+            }
+        }
+        XCTAssertTrue(didCatchExpectedError)
     }
 
     func testArchiveAddEntryErrorConditions() {
@@ -276,25 +288,16 @@ extension ZIPFoundationTests {
         // We don't have access to the temp archive file that Archive.remove
         // uses. To exercise the error code path, we temporarily limit the number of open files for
         // the test process to exercise the error code path here.
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        let fileNoFlag = RLIMIT_NOFILE
-        #else
-        let fileNoFlag = Int32(RLIMIT_NOFILE.rawValue)
-        #endif
-        var storedRlimit = rlimit()
-        getrlimit(fileNoFlag, &storedRlimit)
-        var tempRlimit = storedRlimit
-        tempRlimit.rlim_cur = rlim_t(0)
-        setrlimit(fileNoFlag, &tempRlimit)
-        do {
-            try archive.remove(entryToRemove)
-        } catch let error as Archive.ArchiveError {
-            XCTAssertNotNil(error == .unwritableArchive)
-            didCatchExpectedError = true
-        } catch {
-            XCTFail("Unexpected error while trying to remove entry from unwritable archive.")
+        self.runWithFileDescriptorLimit(0) {
+            do {
+                try archive.remove(entryToRemove)
+            } catch let error as Archive.ArchiveError {
+                XCTAssertNotNil(error == .unwritableArchive)
+                didCatchExpectedError = true
+            } catch {
+                XCTFail("Unexpected error while trying to remove entry from unwritable archive.")
+            }
         }
-        setrlimit(fileNoFlag, &storedRlimit)
         XCTAssertTrue(didCatchExpectedError)
     }
 
