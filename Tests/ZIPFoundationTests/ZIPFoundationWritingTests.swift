@@ -113,7 +113,7 @@ extension ZIPFoundationTests {
             XCTFail("Unexpected error while trying to add non-existant file to an archive.")
         }
         XCTAssertTrue(didCatchExpectedError)
-        // Cover the error code path when `fopen` fails during entry addition
+        // Cover the error code path when `fopen` fails during entry addition.
         self.runWithFileDescriptorLimit(0) {
             let assetURL = self.resourceURL(for: #function, pathExtension: "txt")
             do {
