@@ -362,11 +362,13 @@ extension ZIPFoundationTests {
             tempURLs.insert(tempDir)
         }
 
+        #if swift(>=5.0)
         // Also cover the fallback codepath in the helper method to generate a unique temp URL.
         // In-memory archives have no filesystem representation and therefore don't need a per-volume
         // temp URL.
         let memoryArchive = Archive(data: Data(), accessMode: .create)
         let memoryTempURL = memoryArchive?.uniqueTemporaryDirectoryURL()
         XCTAssertNotNil(memoryTempURL)
+        #endif
     }
 }
