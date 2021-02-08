@@ -150,13 +150,13 @@ extension Archive {
     ///   - progress: A progress object that can be used to track or cancel the remove operation.
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
     public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
-		let manager = FileManager()
+        let manager = FileManager()
         let tempDir = self.uniqueTemporaryDirectoryURL()
         defer { try? manager.removeItem(at: tempDir) }
-		let uniqueString = ProcessInfo.processInfo.globallyUniqueString
-		let tempArchiveURL =  tempDir.appendingPathComponent(uniqueString)
+        let uniqueString = ProcessInfo.processInfo.globallyUniqueString
+        let tempArchiveURL =  tempDir.appendingPathComponent(uniqueString)
         do { try manager.createParentDirectoryStructure(for: tempArchiveURL) } catch {
-			throw ArchiveError.unwritableArchive }
+            throw ArchiveError.unwritableArchive }
         guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
             throw ArchiveError.unwritableArchive
         }
@@ -200,7 +200,8 @@ extension Archive {
 
     func uniqueTemporaryDirectoryURL() -> URL {
         #if swift(>=5.0) || os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        if let tempDir = try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
+        if self.url.isFileURL,
+           let tempDir = try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
                                                 appropriateFor: self.url, create: true) {
             return tempDir
         }
