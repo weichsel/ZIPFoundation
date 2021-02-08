@@ -158,6 +158,9 @@ extension ZIPFoundationTests {
         XCTAssertEqual(fwrite("face", 1, 4, file), 4)
         XCTAssertEqual(fflush(file), 0)
         XCTAssertEqual(mem.data, "watchface".data(using: .utf8))
+        // Also exercise the codepath where we explicitly seek beyond `data.count`
+        XCTAssertEqual(fseek(file, 10, SEEK_SET), 0)
+        XCTAssertEqual(fwrite("x", 1, 1, file), 1)
     }
 
     func testAppendFile() {
