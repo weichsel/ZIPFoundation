@@ -161,6 +161,10 @@ extension ZIPFoundationTests {
         // Also exercise the codepath where we explicitly seek beyond `data.count`
         XCTAssertEqual(fseek(file, 10, SEEK_SET), 0)
         XCTAssertEqual(fwrite("x", 1, 1, file), 1)
+        XCTAssertEqual(fseek(file, 2, SEEK_SET), 0)
+        XCTAssertEqual(fwrite("watchfaces", 10, 1, file), 1)
+        XCTAssertEqual(fseek(file, 2, SEEK_SET), 0)
+        XCTAssertEqual(fclose(file), 0)
     }
 
     func testAppendFile() {
