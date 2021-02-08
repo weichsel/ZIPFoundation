@@ -114,8 +114,8 @@ extension ZIPFoundationTests {
         }
         XCTAssertTrue(didCatchExpectedError)
         // Cover the error code path when `fopen` fails during entry addition.
+        let assetURL = self.resourceURL(for: #function, pathExtension: "txt")
         self.runWithFileDescriptorLimit(0) {
-            let assetURL = self.resourceURL(for: #function, pathExtension: "txt")
             do {
                 let relativePath = assetURL.lastPathComponent
                 let baseURL = assetURL.deletingLastPathComponent()
