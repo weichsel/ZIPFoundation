@@ -45,7 +45,7 @@ extension Archive {
 
 class MemoryFile {
     private(set) var data: Data
-    private var offset  = 0
+    private var offset = 0
 
     init(data: Data = Data()) {
         self.data = data
