@@ -166,6 +166,7 @@ extension Data {
 import Compression
 
 extension Data {
+
     static func process(operation: compression_stream_operation, size: Int, bufferSize: Int, skipCRC32: Bool = false,
                         provider: Provider, consumer: Consumer) throws -> CRC32 {
         var crc32 = CRC32(0)
@@ -186,10 +187,7 @@ extension Data {
             if stream.src_size == 0 {
                 do {
                     sourceData = try provider(position, Swift.min((size - position), bufferSize))
-                    if let sourceData = sourceData {
-                        position += sourceData.count
-                        stream.src_size = sourceData.count
-                    }
+                    position += stream.prepare(for: sourceData)
                 } catch { throw error }
             }
             if let sourceData = sourceData {
@@ -214,6 +212,16 @@ extension Data {
             }
         } while status == COMPRESSION_STATUS_OK
         return crc32
+    }
+}
+
+private extension compression_stream {
+
+    mutating func prepare(for sourceData: Data?) -> Int {
+        guard let sourceData = sourceData else { return 0 }
+
+        self.src_size = sourceData.count
+        return sourceData.count
     }
 }
 
