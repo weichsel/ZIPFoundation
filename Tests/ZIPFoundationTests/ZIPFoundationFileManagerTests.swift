@@ -2,7 +2,7 @@
 //  ZIPFoundationFileManagerTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -90,7 +90,7 @@ extension ZIPFoundationTests {
             try fileManager.createParentDirectoryStructure(for: unreadableFileURL)
             let noPermissionAttributes = [FileAttributeKey.posixPermissions: Int16(0o000)]
             let result = fileManager.createFile(atPath: unreadableFileURL.path, contents: nil,
-                                                        attributes: noPermissionAttributes)
+                                                attributes: noPermissionAttributes)
             XCTAssert(result == true)
             try fileManager.zipItem(at: unreadableFileURL.deletingLastPathComponent(), to: directoryArchiveURL)
         } catch let error as CocoaError {
@@ -195,7 +195,7 @@ extension ZIPFoundationTests {
                                                             }
                                                             XCTAssert(count == pathData.count)
                                                             return pathData
-        }) else {
+                                                        }) else {
             XCTFail("Failed to read central directory structure."); return
         }
         let lfhBytes: [UInt8] = [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x08, 0x08,
@@ -205,7 +205,7 @@ extension ZIPFoundationTests {
         guard let lfh = Entry.LocalFileHeader(data: Data(lfhBytes),
                                               additionalDataProvider: { _ -> Data in
                                                 return Data()
-        }) else {
+                                              }) else {
             XCTFail("Failed to read local file header."); return
         }
         guard let entry = Entry(centralDirectoryStructure: cds, localFileHeader: lfh, dataDescriptor: nil) else {
@@ -361,5 +361,14 @@ extension ZIPFoundationTests {
             XCTAssertFalse(tempURLs.contains(tempDir), "Temp directory URL should be unique. \(tempDir)")
             tempURLs.insert(tempDir)
         }
+
+        #if swift(>=5.0)
+        // Also cover the fallback codepath in the helper method to generate a unique temp URL.
+        // In-memory archives have no filesystem representation and therefore don't need a per-volume
+        // temp URL.
+        let memoryArchive = Archive(data: Data(), accessMode: .create)
+        let memoryTempURL = memoryArchive?.uniqueTemporaryDirectoryURL()
+        XCTAssertNotNil(memoryTempURL)
+        #endif
     }
 }

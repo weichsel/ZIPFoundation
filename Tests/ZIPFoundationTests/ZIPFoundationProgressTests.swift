@@ -2,7 +2,7 @@
 //  ZIPFoundationProgressTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -119,14 +119,12 @@ extension ZIPFoundationTests {
         let fileExpectation = self.keyValueObservingExpectation(for: fileProgress,
                                                                 keyPath: #keyPath(Progress.fractionCompleted),
                                                                 expectedValue: 1.0)
-        DispatchQueue.global().async {
+        var didSucceed = true
+        let testQueue = DispatchQueue.global()
+        testQueue.async {
             do {
                 try fileManager.zipItem(at: assetURL, to: fileArchiveURL, progress: fileProgress)
-            } catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
-            guard let archive = Archive(url: fileArchiveURL, accessMode: .read) else {
-                XCTFail("Failed to read archive.") ; return
-            }
-            XCTAssert(archive.checkIntegrity())
+            } catch { didSucceed = false }
         }
         var directoryURL = ZIPFoundationTests.tempZipDirectoryURL
         directoryURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
@@ -137,7 +135,7 @@ extension ZIPFoundationTests {
         let directoryExpectation = self.keyValueObservingExpectation(for: directoryProgress,
                                                                      keyPath: #keyPath(Progress.fractionCompleted),
                                                                      expectedValue: 1.0)
-        DispatchQueue.global().async {
+        testQueue.async {
             do {
                 try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
                 try fileManager.createDirectory(at: directoryURL.appendingPathComponent("nested"),
@@ -146,13 +144,16 @@ extension ZIPFoundationTests {
                 try fileManager.createSymbolicLink(at: directoryURL.appendingPathComponent("link"),
                                                    withDestinationURL: newAssetURL)
                 try fileManager.zipItem(at: directoryURL, to: directoryArchiveURL, progress: directoryProgress)
-            } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
-            guard let directoryArchive = Archive(url: directoryArchiveURL, accessMode: .read) else {
-                XCTFail("Failed to read archive."); return
-            }
-            XCTAssert(directoryArchive.checkIntegrity())
+            } catch { didSucceed = false }
         }
         self.wait(for: [fileExpectation, directoryExpectation], timeout: 20.0)
+        guard let archive = Archive(url: fileArchiveURL, accessMode: .read),
+              let directoryArchive = Archive(url: directoryArchiveURL, accessMode: .read) else {
+            XCTFail("Failed to read archive.") ; return
+        }
+        XCTAssert(didSucceed)
+        XCTAssert(archive.checkIntegrity())
+        XCTAssert(directoryArchive.checkIntegrity())
     }
 
     func testUnzipItemProgress() {

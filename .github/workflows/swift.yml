@@ -1,0 +1,31 @@
+name: Swift
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [development]
+
+jobs:
+  Xcode:
+    strategy:
+      matrix:
+        xcode_version: ['11.2.1', '11.3.1', '11.4.1', '11.5', '11.6', '11.7', '12.0.1', '12.1', '12.2', '12.3', '12.4']
+    runs-on: macos-latest
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode_version }}.app
+    steps:
+      - uses: actions/checkout@v2
+      - run: swift -version
+      - run: swift test -c release -Xswiftc -enable-testing
+
+  Linux:
+    strategy:
+      matrix:
+        tag: ['5.1', '5.2', '5.3']
+    runs-on: ubuntu-latest
+    container:
+      image: swift:${{ matrix.tag }}
+    steps:
+      - uses: actions/checkout@v2
+      - run: swift test -c release -Xswiftc -enable-testing
