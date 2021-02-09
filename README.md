@@ -40,7 +40,7 @@ To learn more about the performance characteristics of the framework, you can re
 
 - iOS 12.0+ / macOS 10.11+ / tvOS 12.0+ / watchOS 2.0+
 - Or Linux with zlib development package
-- Xcode 10.0
+- Xcode 11.0
 - Swift 4.0
 
 ## Installation
