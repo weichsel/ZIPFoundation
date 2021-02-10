@@ -299,6 +299,17 @@ extension ZIPFoundationTests {
             }
         }
         XCTAssertTrue(didCatchExpectedError)
+        didCatchExpectedError = false
+        let readonlyArchive = self.archive(for: #function, mode: .read)
+        do {
+            try readonlyArchive.remove(entryToRemove)
+        } catch let error as Archive.ArchiveError {
+            XCTAssertNotNil(error == .unwritableArchive)
+            didCatchExpectedError = true
+        } catch {
+            XCTFail("Unexpected error while trying to remove entry from readonly archive.")
+        }
+        XCTAssertTrue(didCatchExpectedError)
     }
 
     func testArchiveCreateErrorConditions() {
