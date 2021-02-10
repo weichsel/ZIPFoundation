@@ -156,8 +156,7 @@ extension Archive {
         defer { try? manager.removeItem(at: tempDir) }
         let uniqueString = ProcessInfo.processInfo.globallyUniqueString
         let tempArchiveURL =  tempDir.appendingPathComponent(uniqueString)
-        do { try manager.createParentDirectoryStructure(for: tempArchiveURL) } catch {
-            throw ArchiveError.unwritableArchive }
+        try manager.createParentDirectoryStructure(for: tempArchiveURL)
         guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
             throw ArchiveError.unwritableArchive
         }
