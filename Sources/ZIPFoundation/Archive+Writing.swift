@@ -150,6 +150,7 @@ extension Archive {
     ///   - progress: A progress object that can be used to track or cancel the remove operation.
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
     public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
+        guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
         let manager = FileManager()
         let tempDir = self.uniqueTemporaryDirectoryURL()
         defer { try? manager.removeItem(at: tempDir) }
