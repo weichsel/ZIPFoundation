@@ -73,7 +73,8 @@ class ZIPFoundationTests: XCTestCase {
         sourceArchiveURL.appendPathComponent(testFunction.replacingOccurrences(of: "()", with: ""))
         sourceArchiveURL.appendPathExtension("zip")
         var destinationArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
-        destinationArchiveURL.appendPathComponent(sourceArchiveURL.lastPathComponent)
+        destinationArchiveURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
+        destinationArchiveURL.appendPathExtension("zip")
         do {
             if mode != .create {
                 let fileManager = FileManager()
