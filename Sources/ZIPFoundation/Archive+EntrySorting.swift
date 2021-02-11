@@ -1,3 +1,13 @@
+//
+//  Archive+EntrySorting.swift
+//  ZIPFoundation
+//
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Released under the MIT License.
+//
+//  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
+//
+
 extension Archive {
     /// Sorts and returns the provided entries in to the order they should be extract in. This will
     /// sort directories first, then files, then symlinks.
