@@ -33,7 +33,7 @@ extension Archive {
                 entry.type == .symlink
             }.map { entry -> (entry: Entry, destination: String) in
                 var destinationPath: String!
-                _ = try extract(entry, bufferSize: defaultReadChunkSize, skipCRC32: true) { data in
+                _ = try self.extract(entry, bufferSize: entry.localFileHeader.compressedSize, skipCRC32: true) { data in
                     guard let linkPath = String(data: data, encoding: .utf8) else {
                         throw ArchiveError.invalidEntryPath
                     }
