@@ -38,9 +38,9 @@ To learn more about the performance characteristics of the framework, you can re
 
 ## Requirements
 
-- iOS 9.0+ / macOS 10.11+ / tvOS 9.0+ / watchOS 2.0+
+- iOS 12.0+ / macOS 10.11+ / tvOS 12.0+ / watchOS 2.0+
 - Or Linux with zlib development package
-- Xcode 10.0
+- Xcode 11.0
 - Swift 4.0
 
 ## Installation
@@ -114,6 +114,9 @@ $ pod install
 ## Usage
 ZIP Foundation provides two high level methods to zip and unzip items. Both are implemented as extension of `FileManager`.  
 The functionality of those methods is modeled after the behavior of the Archive Utility in macOS.  
+
+_Note_: There is a large performance discrepancy between `Debug` and `Release` builds of ZIP Foundation.  
+The main performance bottleneck is the code that calculates `CRC32` checksums. This codepath executes slowly when Swift optimizations are turned off (`-Onone`). To avoid long wait times when debugging code that extracts archives, the `skipCRC32` flag can be set. To learn more about the `skipCRC32` parameter, please refer to the documentation strings of the `Archive.extract` and `FileManager.unzipItem` methods. Skippig CRC32 checks should only be enabled during debugging. 
 
 ### Zipping Files and Directories
 To zip a single file you simply pass a file URL representing the item you want to zip and a destination URL to `FileManager.zipItem(at sourceURL: URL, to destinationURL: URL)`:
@@ -219,6 +222,9 @@ do {
 }
 ```
 
+Alternatively, the `addEntry(with path: String, fileURL: URL)` method can be used to add files that are _not_ sharing a common base directory. 
+The `fileURL` parameter must contain an absolute file URL that points to a file, symlink or directory on an arbitrary file system location.
+
 The `addEntry` method accepts several optional parameters that allow you to control compression, memory consumption and file attributes.  
 You can find detailed information about that parameters in the method's documentation.
 
@@ -249,8 +255,9 @@ The `data` passed into the closure contains chunks of the current entry. You can
 You can also add entries from an in-memory data source. To do this you have to provide a closure of type `Provider` to the `addEntry` method:
 
 ```swift
-guard let data = "abcdefghijkl".data(using: .utf8) else { return }
-try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: 12, bufferSize: 4, provider: { (position, size) -> Data in
+let string = "abcdefghijkl"
+guard let data = string.data(using: .utf8) else { return }
+try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: UInt32(string.count), bufferSize: 4, provider: { (position, size) -> Data in
     // This will be called until `data` is exhausted (3x in this case).
     return data.subdata(in: position..<position+size)
 })
@@ -267,9 +274,10 @@ To _read_ or _update_ an in-memory archive, the passed-in `data` must contain a 
 To _create_ an in-memory archive, the `data` parameter can be omitted:
 
 ```swift
+let string = "Some string!"
 guard let archive = Archive(accessMode: .create),
-        let data = "Some string!".data(using: .utf8) else { return }
-    try? archive.addEntry(with: "inMemory.txt", type: .file, uncompressedSize: 12, bufferSize: 4, provider: { (position, size) -> Data in
+        let data = string.data(using: .utf8) else { return }
+    try? archive.addEntry(with: "inMemory.txt", type: .file, uncompressedSize: UInt32(string.count), bufferSize: 4, provider: { (position, size) -> Data in
         return data.subdata(in: position..<position+size)
     })
 let archiveData = archive.data

@@ -2,7 +2,7 @@
 //  Data+Serialization.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -44,9 +44,14 @@ extension Data {
 
     static func consumePart(of size: Int, chunkSize: Int, skipCRC32: Bool = false,
                             provider: Provider, consumer: Consumer) throws -> CRC32 {
+        var checksum = CRC32(0)
+        guard size > 0 else {
+            try consumer(Data())
+            return checksum
+        }
+
         let readInOneChunk = (size < chunkSize)
         var chunkSize = readInOneChunk ? size : chunkSize
-        var checksum = CRC32(0)
         var bytesRead = 0
         while bytesRead < size {
             let remainingSize = size - bytesRead

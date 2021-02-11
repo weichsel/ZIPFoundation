@@ -2,7 +2,7 @@
 //  ZIPFoundationWritingTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -111,6 +111,18 @@ extension ZIPFoundationTests {
             didCatchExpectedError = true
         } catch {
             XCTFail("Unexpected error while trying to add non-existant file to an archive.")
+        }
+        XCTAssertTrue(didCatchExpectedError)
+        // Cover the error code path when `fopen` fails during entry addition.
+        let assetURL = self.resourceURL(for: #function, pathExtension: "txt")
+        self.runWithFileDescriptorLimit(0) {
+            do {
+                let relativePath = assetURL.lastPathComponent
+                let baseURL = assetURL.deletingLastPathComponent()
+                try archive.addEntry(with: relativePath, relativeTo: baseURL)
+            } catch {
+                didCatchExpectedError = true
+            }
         }
         XCTAssertTrue(didCatchExpectedError)
     }
@@ -276,25 +288,27 @@ extension ZIPFoundationTests {
         // We don't have access to the temp archive file that Archive.remove
         // uses. To exercise the error code path, we temporarily limit the number of open files for
         // the test process to exercise the error code path here.
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        let fileNoFlag = RLIMIT_NOFILE
-        #else
-        let fileNoFlag = Int32(RLIMIT_NOFILE.rawValue)
-        #endif
-        var storedRlimit = rlimit()
-        getrlimit(fileNoFlag, &storedRlimit)
-        var tempRlimit = storedRlimit
-        tempRlimit.rlim_cur = rlim_t(0)
-        setrlimit(fileNoFlag, &tempRlimit)
+        self.runWithFileDescriptorLimit(0) {
+            do {
+                try archive.remove(entryToRemove)
+            } catch let error as Archive.ArchiveError {
+                XCTAssertNotNil(error == .unwritableArchive)
+                didCatchExpectedError = true
+            } catch {
+                XCTFail("Unexpected error while trying to remove entry from unwritable archive.")
+            }
+        }
+        XCTAssertTrue(didCatchExpectedError)
+        didCatchExpectedError = false
+        let readonlyArchive = self.archive(for: #function, mode: .read)
         do {
-            try archive.remove(entryToRemove)
+            try readonlyArchive.remove(entryToRemove)
         } catch let error as Archive.ArchiveError {
             XCTAssertNotNil(error == .unwritableArchive)
             didCatchExpectedError = true
         } catch {
-            XCTFail("Unexpected error while trying to remove entry from unwritable archive.")
+            XCTFail("Unexpected error while trying to remove entry from readonly archive.")
         }
-        setrlimit(fileNoFlag, &storedRlimit)
         XCTAssertTrue(didCatchExpectedError)
     }
 
@@ -336,7 +350,7 @@ extension ZIPFoundationTests {
         do {
             try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true, attributes: nil)
             let volName = "Test_\(UUID().uuidString)"
-            let task = try self.makeVolumeCreationTask(at: tempDir, volumeName: volName)
+            let task = try NSUserScriptTask.makeVolumeCreationTask(at: tempDir, volumeName: volName)
             task.execute { (error) in
                 guard error == nil else {
                     XCTFail("\(String(describing: error))")
@@ -379,21 +393,4 @@ extension ZIPFoundationTests {
         waitForExpectations(timeout: 30.0)
 		#endif
     }
-
-    #if os(macOS)
-    private func makeVolumeCreationTask(at tempDir: URL, volumeName: String) throws -> NSUserScriptTask {
-        let scriptURL = tempDir.appendingPathComponent("createVol.sh", isDirectory: false)
-        let dmgURL = tempDir.appendingPathComponent(volumeName).appendingPathExtension("dmg")
-        let script = """
-        #!/bin/bash
-        hdiutil create -size 5m -fs HFS+ -type SPARSEBUNDLE -ov -volname "\(volumeName)" "\(dmgURL.path)"
-        hdiutil attach -nobrowse "\(dmgURL.appendingPathExtension("sparsebundle").path)"
-
-        """
-        try script.write(to: scriptURL, atomically: false, encoding: .utf8)
-        let permissions = NSNumber(value: Int16(0o770))
-        try FileManager.default.setAttributes([.posixPermissions: permissions], ofItemAtPath: scriptURL.path)
-        return try NSUserScriptTask(url: scriptURL)
-    }
-    #endif
 }

@@ -2,7 +2,7 @@
 //  ZIPFoundationReadingTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testExtractUncompressedFolderEntries() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
@@ -158,7 +159,7 @@ extension ZIPFoundationTests {
 
         do {
             fseek(destinationFile, 64, SEEK_SET)
-            // We have to inject a large enough zeroes block to guarantee that libcompression 
+            // We have to inject a large enough zeroes block to guarantee that libcompression
             // detects the failure when reading the stream
             _ = try Data.write(chunk: Data(count: 512*1024), to: destinationFile)
             fclose(destinationFile)
@@ -226,6 +227,24 @@ extension ZIPFoundationTests {
         XCTAssert(entriesRead == 0)
     }
 
+    func testExtractUncompressedEmptyFile() {
+        // We had a logic error, where completion handlers for empty entries were not called
+        // Ensure that this edge case works
+        var didCallCompletion = false
+        let archive = self.archive(for: #function, mode: .read)
+        guard let entry = archive["empty.txt"] else { XCTFail("Failed to extract entry."); return }
+
+        do {
+            _ = try archive.extract(entry) { (data) in
+                XCTAssertEqual(data.count, 0)
+                didCallCompletion = true
+            }
+        } catch {
+            XCTFail("Unexpected error while trying to extract empty file of uncompressed archive.")
+        }
+        XCTAssert(didCallCompletion)
+    }
+
     func testExtractUncompressedEntryCancelation() {
         let archive = self.archive(for: #function, mode: .read)
         guard let entry = archive["original"] else { XCTFail("Failed to extract entry."); return }
@@ -268,5 +287,16 @@ extension ZIPFoundationTests {
         nonExistantURL.appendPathComponent("invalid.path")
         let archive = self.archive(for: #function, mode: .update)
         XCTAssert(archive.totalUnitCountForAddingItem(at: nonExistantURL) == -1)
+    }
+
+    func testDetectEntryType() {
+        let archive = self.archive(for: #function, mode: .read)
+        let expectedData: [String: Entry.EntryType] = [
+            "META-INF/": .directory,
+            "META-INF/container.xml": .file
+        ]
+        for entry in archive {
+            XCTAssertEqual(entry.type, expectedData[entry.path])
+        }
     }
 }
