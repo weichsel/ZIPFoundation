@@ -2,7 +2,7 @@
 //  Archive+Writing.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -169,13 +169,13 @@ extension Archive {
     ///   - progress: A progress object that can be used to track or cancel the remove operation.
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
     public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
-		let manager = FileManager()
+        guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
+        let manager = FileManager()
         let tempDir = self.uniqueTemporaryDirectoryURL()
         defer { try? manager.removeItem(at: tempDir) }
-		let uniqueString = ProcessInfo.processInfo.globallyUniqueString
-		let tempArchiveURL =  tempDir.appendingPathComponent(uniqueString)
-        do { try manager.createParentDirectoryStructure(for: tempArchiveURL) } catch {
-			throw ArchiveError.unwritableArchive }
+        let uniqueString = ProcessInfo.processInfo.globallyUniqueString
+        let tempArchiveURL =  tempDir.appendingPathComponent(uniqueString)
+        try manager.createParentDirectoryStructure(for: tempArchiveURL)
         guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
             throw ArchiveError.unwritableArchive
         }
@@ -219,7 +219,8 @@ extension Archive {
 
     func uniqueTemporaryDirectoryURL() -> URL {
         #if swift(>=5.0) || os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        if let tempDir = try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
+        if self.url.isFileURL,
+           let tempDir = try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
                                                 appropriateFor: self.url, create: true) {
             return tempDir
         }
