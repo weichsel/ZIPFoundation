@@ -222,6 +222,9 @@ do {
 }
 ```
 
+Alternatively, the `addEntry(with path: String, fileURL: URL)` method can be used to add files that are _not_ sharing a common base directory. 
+The `fileURL` parameter must contain an absolute file URL that points to a file, symlink or directory on an arbitrary file system location.
+
 The `addEntry` method accepts several optional parameters that allow you to control compression, memory consumption and file attributes.  
 You can find detailed information about that parameters in the method's documentation.
 
