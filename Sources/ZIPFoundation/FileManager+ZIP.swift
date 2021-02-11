@@ -98,7 +98,7 @@ extension FileManager {
         guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: preferredEncoding) else {
             throw Archive.ArchiveError.unreadableArchive
         }
-        let sortedEntries = try archive.sortEntries(Array(archive.makeIterator()))
+        let sortedEntries = try archive.sortedEntries()
         var totalUnitCount = Int64(0)
         if let progress = progress {
             totalUnitCount = sortedEntries.reduce(0, { $0 + archive.totalUnitCountForReading($1) })

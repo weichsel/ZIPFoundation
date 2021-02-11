@@ -9,21 +9,22 @@
 //
 
 extension Archive {
-    /// Sorts and returns the provided entries in to the order they should be extract in. This will
-    /// sort directories first, then files, then symlinks.
+    /// Return all `entries` in the receiver sorted in an order that ensures that contained symlinks can be
+    /// restored.
     ///
     /// Directories and files are sorted in the order they are in the archive. Symlinks will be
     /// sorted in the order they need to be extracted.
     ///
-    /// - Parameters:
-    ///   - entries: The entries to sort
     /// - Returns: The sorted entries.
-    /// - Throws: An error if the entry contains malformed content.
-    public func sortEntries(_ entries: [Entry]) throws -> [Entry] {
+    /// - Throws: An error if an entry contains malformed path information.
+    public func sortedEntries() throws -> [Entry] {
+        let entries = Array(self.makeIterator())
         let sortedSymlinks = try sortSymblinks(in: entries)
         let sortedFilesAndDirectories = sortFilesAndDirectories(in: entries)
         return sortedFilesAndDirectories + sortedSymlinks
     }
+
+    // MARK: - Helpers
 
     private func sortSymblinks(in entries: [Entry]) throws -> [Entry] {
         return try entries
