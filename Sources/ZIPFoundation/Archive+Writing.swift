@@ -49,22 +49,21 @@ extension Archive {
     public func addEntry(with path: String, fileURL: URL, compressionMethod: CompressionMethod = .none,
                          bufferSize: UInt32 = defaultWriteChunkSize, progress: Progress? = nil) throws {
         let fileManager = FileManager()
-        let entryURL = fileURL
-        guard fileManager.itemExists(at: entryURL) else {
-            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: entryURL.path])
+        guard fileManager.itemExists(at: fileURL) else {
+            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: fileURL.path])
         }
-        let type = try FileManager.typeForItem(at: entryURL)
+        let type = try FileManager.typeForItem(at: fileURL)
         // symlinks do not need to be readable
-        guard type == .symlink || fileManager.isReadableFile(atPath: entryURL.path) else {
+        guard type == .symlink || fileManager.isReadableFile(atPath: fileURL.path) else {
             throw CocoaError(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: url.path])
         }
-        let modDate = try FileManager.fileModificationDateTimeForItem(at: entryURL)
-        let uncompressedSize = type == .directory ? 0 : try FileManager.fileSizeForItem(at: entryURL)
-        let permissions = try FileManager.permissionsForItem(at: entryURL)
+        let modDate = try FileManager.fileModificationDateTimeForItem(at: fileURL)
+        let uncompressedSize = type == .directory ? 0 : try FileManager.fileSizeForItem(at: fileURL)
+        let permissions = try FileManager.permissionsForItem(at: fileURL)
         var provider: Provider
         switch type {
         case .file:
-            let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: entryURL.path)
+            let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
             guard let entryFile: UnsafeMutablePointer<FILE> = fopen(entryFileSystemRepresentation, "rb") else {
                 throw CocoaError(.fileNoSuchFile)
             }
@@ -83,7 +82,7 @@ extension Archive {
                               progress: progress, provider: provider)
         case .symlink:
             provider = { _, _ -> Data in
-                let linkDestination = try fileManager.destinationOfSymbolicLink(atPath: entryURL.path)
+                let linkDestination = try fileManager.destinationOfSymbolicLink(atPath: fileURL.path)
                 let linkFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: linkDestination)
                 let linkLength = Int(strlen(linkFileSystemRepresentation))
                 let linkBuffer = UnsafeBufferPointer(start: linkFileSystemRepresentation, count: linkLength)
