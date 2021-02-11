@@ -20,7 +20,7 @@ extension Archive {
     ///
     /// - Parameters:
     ///   - path: The path that is used to identify an `Entry` within the `Archive` file.
-    ///   - baseURL: The base URL of the `Entry` to add.
+    ///   - baseURL: The base URL of the resource to add.
     ///              The `baseURL` combined with `path` must form a fully qualified file URL.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied to `Entry`.
     ///                        By default, no compression will be applied.
@@ -40,7 +40,7 @@ extension Archive {
     ///
     /// - Parameters:
     ///   - path: The path that is used to identify an `Entry` within the `Archive` file.
-    ///   - fileURL: The file URL with the full path of the `Entry` to add.
+    ///   - fileURL: An absolute file URL referring to the resource to add.
     ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied to `Entry`.
     ///                        By default, no compression will be applied.
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
