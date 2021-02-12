@@ -13,7 +13,7 @@ import Foundation
 extension FileManager {
     typealias CentralDirectoryStructure = Entry.CentralDirectoryStructure
 
-    /// Zips the file or direcory contents at the specified source URL to the destination URL.
+    /// Zips the file or directory contents at the specified source URL to the destination URL.
     ///
     /// If the item at the source URL is a directory, the directory itself will be
     /// represented within the ZIP `Archive`. Calling this method with a directory URL
