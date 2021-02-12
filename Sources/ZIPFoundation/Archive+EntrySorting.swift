@@ -13,7 +13,8 @@ extension Archive {
     /// restored.
     ///
     /// Directories and files are sorted in the order they are in the archive. Symlinks will be
-    /// sorted in the order they need to be extracted.
+    /// sorted in the order they need to be extracted. Symlink sorting also takes transitive symlinks into account:
+    /// If restoration of a symlink requires prior restoration of another symlink, entries will be sorted accordingly.
     ///
     /// - Returns: The sorted entries.
     /// - Throws: An error if an entry contains malformed path information.
