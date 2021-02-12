@@ -31,29 +31,29 @@ extension Archive {
             .lazy
             .filter { entry in
                 entry.type == .symlink
-            }.map { entry -> (entry: Entry, destination: String) in
-                guard let destinationPath = try self.symlinkDestinationPath(forEntry: entry) else {
+            }.map { entry -> (entry: Entry, destinationPath: String) in
+                guard let destinationPath = try self.symlinkDestinationPath(for: entry) else {
                     throw ArchiveError.invalidSymlinkDestinationPath
                 }
                 return (entry, destinationPath)
-            }.reduce(into: [(entry: Entry, destination: String)]()) { entries, element in
+            }.reduce(into: [(entry: Entry, destinationPath: String)]()) { entries, element in
                 let unsortedPath = element.entry.path
-                let unsortedDestination = element.destination
+                let unsortedDestinationPath = element.destinationPath
 
                 for (index, sortedElement) in entries.enumerated() {
                     let sortedPath = sortedElement.entry.path
-                    let sortedDestination = sortedElement.destination
+                    let sortedDestinationPath = sortedElement.destinationPath
 
-                    if unsortedDestination.hasPrefix(sortedDestination) {
+                    if unsortedDestinationPath.hasPrefix(sortedDestinationPath) {
                         entries.insert(element, at: entries.index(after: index))
                         return
-                    } else if sortedDestination.hasPrefix(unsortedDestination) {
+                    } else if sortedDestinationPath.hasPrefix(unsortedDestinationPath) {
                         entries.insert(element, at: index)
                         return
-                    } else if sortedDestination.hasPrefix(unsortedPath) {
+                    } else if sortedDestinationPath.hasPrefix(unsortedPath) {
                         entries.insert(element, at: index)
                         return
-                    } else if unsortedDestination.hasPrefix(sortedPath) {
+                    } else if unsortedDestinationPath.hasPrefix(sortedPath) {
                         entries.insert(element, at: entries.index(after: index))
                         return
                     }
@@ -63,7 +63,7 @@ extension Archive {
             }.map { $0.entry }
     }
 
-    private func symlinkDestinationPath(forEntry entry: Entry) throws -> String? {
+    private func symlinkDestinationPath(for entry: Entry) throws -> String? {
         var destinationPath: String?
         _ = try self.extract(entry, bufferSize: entry.localFileHeader.compressedSize, skipCRC32: true) { data in
             guard let linkPath = String(data: data, encoding: .utf8) else { return }
