@@ -73,6 +73,8 @@ public final class Archive: Sequence {
         case unwritableArchive
         /// Thrown when the path of an `Entry` cannot be stored in an archive.
         case invalidEntryPath
+        /// Thrown when the destination path of a symlink `Entry` cannot be restored.
+        case invalidSymlinkDestinationPath
         /// Thrown when an `Entry` can't be stored in the archive with the proposed compression method.
         case invalidCompressionMethod
         /// Thrown when the start of the central directory exceeds `UINT32_MAX`

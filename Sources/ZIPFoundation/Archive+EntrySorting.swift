@@ -32,18 +32,8 @@ extension Archive {
             .filter { entry in
                 entry.type == .symlink
             }.map { entry -> (entry: Entry, destination: String) in
-                var destinationPath: String!
-                _ = try self.extract(entry, bufferSize: entry.localFileHeader.compressedSize, skipCRC32: true) { data in
-                    guard let linkPath = String(data: data, encoding: .utf8) else {
-                        throw ArchiveError.invalidEntryPath
-                    }
-                    destinationPath = entry
-                        .path
-                        .split(separator: "/")
-                        .dropLast()
-                        .joined(separator: "/")
-                        + "/"
-                        + linkPath
+                guard let destinationPath = try self.symlinkDestinationPath(forEntry: entry) else {
+                    throw ArchiveError.invalidSymlinkDestinationPath
                 }
                 return (entry, destinationPath)
             }.reduce(into: [(entry: Entry, destination: String)]()) { entries, element in
@@ -71,6 +61,22 @@ extension Archive {
 
                 entries.append(element)
             }.map { $0.entry }
+    }
+
+    private func symlinkDestinationPath(forEntry entry: Entry) throws -> String? {
+        var destinationPath: String?
+        _ = try self.extract(entry, bufferSize: entry.localFileHeader.compressedSize, skipCRC32: true) { data in
+            guard let linkPath = String(data: data, encoding: .utf8) else { return }
+
+            destinationPath = entry
+                .path
+                .split(separator: "/")
+                .dropLast()
+                .joined(separator: "/")
+                + "/"
+                + linkPath
+        }
+        return destinationPath
     }
 
     private func sortFilesAndDirectories(in entries: [Entry]) -> [Entry] {
