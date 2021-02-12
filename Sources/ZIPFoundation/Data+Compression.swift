@@ -89,7 +89,7 @@ extension Data {
     /// Calculate the `CRC32` checksum of the receiver.
     ///
     /// - Parameter checksum: The starting seed.
-    /// - Returns: The checksum calcualted from the bytes of the receiver and the starting seed.
+    /// - Returns: The checksum calculated from the bytes of the receiver and the starting seed.
     public func crc32(checksum: CRC32) -> CRC32 {
         // The typecast is necessary on 32-bit platforms because of
         // https://bugs.swift.org/browse/SR-1774
