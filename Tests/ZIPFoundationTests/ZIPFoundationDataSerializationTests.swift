@@ -22,7 +22,7 @@ extension ZIPFoundationTests {
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
         let file: UnsafeMutablePointer<FILE> = fopen(fileSystemRepresentation, "rb")
-        // Close the file to exercice the error path during readStructure that deals with
+        // Close the file to exercise the error path during readStructure that deals with
         // unreadable file data.
         fclose(file)
         let centralDirectoryStructure: Entry.CentralDirectoryStructure? = Data.readStruct(from: file, at: 0)
@@ -39,7 +39,7 @@ extension ZIPFoundationTests {
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
         let file: UnsafeMutablePointer<FILE> = fopen(fileSystemRepresentation, "rb")
-        // Close the file to exercice the error path during readChunk that deals with
+        // Close the file to exercise the error path during readChunk that deals with
         // unreadable file data.
         fclose(file)
         do {
