@@ -94,7 +94,7 @@ extension Data {
         // The typecast is necessary on 32-bit platforms because of
         // https://bugs.swift.org/browse/SR-1774
         let mask = 0xffffffff as UInt32
-        let bufferSize = self.count/MemoryLayout<UInt8>.size
+        let bufferSize = self.count/MemoryLayout<UInt8>.stride
         var result = checksum ^ mask
         #if swift(>=5.0)
         crcTable.withUnsafeBufferPointer { crcTablePointer in
