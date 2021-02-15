@@ -113,4 +113,12 @@ extension ZIPFoundationTests {
             }
         }
     }
+
+    func testPerformanceCrc32() {
+        let size = 1024*1024*20
+        let data = Data.makeRandomData(size: size)
+        measure {
+            _ = data.crc32(checksum: 0)
+        }
+    }
 }
