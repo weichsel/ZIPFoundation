@@ -99,9 +99,8 @@ extension Data {
         #if swift(>=5.0)
         crcTable.withUnsafeBufferPointer { crcTablePointer in
             self.withUnsafeBytes { bufferPointer in
-                let bytePointer = bufferPointer.bindMemory(to: UInt8.self)
                 for bufferIndex in 0..<bufferSize {
-                    let byte = bytePointer[bufferIndex]
+                    let byte = bufferPointer[bufferIndex]
                     let index = Int((result ^ UInt32(byte)) & 0xff)
                     result = (result >> 8) ^ crcTablePointer[index]
                 }
