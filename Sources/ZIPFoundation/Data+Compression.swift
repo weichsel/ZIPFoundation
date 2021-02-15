@@ -93,7 +93,7 @@ extension Data {
     public func crc32(checksum: CRC32) -> CRC32 {
         // The typecast is necessary on 32-bit platforms because of
         // https://bugs.swift.org/browse/SR-1774
-        let mask = 0xffffffff as UInt32
+        let mask = 0xffffffff as CRC32
         let bufferSize = self.count/MemoryLayout<UInt8>.size
         var result = checksum ^ mask
         #if swift(>=5.0)
