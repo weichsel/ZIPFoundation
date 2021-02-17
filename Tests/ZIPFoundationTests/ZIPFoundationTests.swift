@@ -209,6 +209,7 @@ extension ZIPFoundationTests {
             ("testPerformanceReadUncompressed", testPerformanceReadUncompressed),
             ("testPerformanceWriteCompressed", testPerformanceWriteCompressed),
             ("testPerformanceWriteUncompressed", testPerformanceWriteUncompressed),
+            ("testPerformanceCRC32", testPerformanceCRC32),
             ("testPOSIXPermissions", testPOSIXPermissions),
             ("testProgressHelpers", testProgressHelpers),
             ("testRemoveCompressedEntry", testRemoveCompressedEntry),
