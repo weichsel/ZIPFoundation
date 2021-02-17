@@ -81,7 +81,7 @@ public final class Archive: Sequence {
         case missingEndOfCentralDirectoryRecord
         /// Thrown when an extract, add or remove operation was canceled.
         case cancelledOperation
-        /// Thrown when an extract was called with zero or negative `bufferSize` parameter.
+        /// Thrown when an extract operation was called with zero or negative `bufferSize` parameter.
         case invalidBufferSize
     }
 
