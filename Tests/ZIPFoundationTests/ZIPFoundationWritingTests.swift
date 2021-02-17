@@ -225,7 +225,7 @@ extension ZIPFoundationTests {
         let fileName = ProcessInfo.processInfo.globallyUniqueString
         var didCatchExpectedError = false
         do {
-            try archive.addEntry(with: fileName, type: .file, uncompressedSize: UINT32_MAX,
+            try archive.addEntry(with: fileName, type: .file, uncompressedSize: .max,
                                  provider: { (_, chunkSize) -> Data in
                 return Data(count: chunkSize)
             })
