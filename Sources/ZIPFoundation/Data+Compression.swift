@@ -102,7 +102,7 @@ extension Data {
                 var bufferIndex = 0
                 while bufferIndex < bufferSize {
                     let byte = bufferPointer[bufferIndex]
-                    let index = Int((result ^ UInt32(byte)) & 0xff)
+                    let index = Int((result ^ CRC32(byte)) & 0xff)
                     result = (result >> 8) ^ crcTablePointer[index]
                     bufferIndex += 1
                 }
@@ -117,7 +117,7 @@ extension Data {
                     guard byteIndex < bufferSize else { break }
 
                     let byte = bytes[byteIndex]
-                    let index = Int((result ^ UInt32(byte)) & 0xff)
+                    let index = Int((result ^ CRC32(byte)) & 0xff)
                     result = (result >> 8) ^ crcTable[index]
                 }
             }
