@@ -227,6 +227,15 @@ extension ZIPFoundationTests {
         XCTAssert(entriesRead == 0)
     }
 
+    func testExtractInvalidBufferSizeErrorConditions() {
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = archive["text.txt"]!
+        XCTAssertThrowsError(try archive.extract(entry, to: URL(fileURLWithPath: ""), bufferSize: 0, skipCRC32: true))
+        let archive2 = self.archive(for: #function, mode: .read)
+        let entry2 = archive2["text.txt"]!
+        XCTAssertThrowsError(try archive2.extract(entry2, bufferSize: 0, skipCRC32: true, consumer: { _ in }))
+    }
+
     func testExtractUncompressedEmptyFile() {
         // We had a logic error, where completion handlers for empty entries were not called
         // Ensure that this edge case works
@@ -298,17 +307,5 @@ extension ZIPFoundationTests {
         for entry in archive {
             XCTAssertEqual(entry.type, expectedData[entry.path])
         }
-    }
-
-    func testExtractToURLBufferSize0() {
-        let archive = self.archive(for: #function, mode: .read)
-        let entry = archive["text.txt"]!
-        XCTAssertThrowsError(try archive.extract(entry, to: URL(fileURLWithPath: ""), bufferSize: 0, skipCRC32: true))
-    }
-
-    func testExtractToBufferSize0() {
-        let archive = self.archive(for: #function, mode: .read)
-        let entry = archive["text.txt"]!
-        XCTAssertThrowsError(try archive.extract(entry, bufferSize: 0, skipCRC32: true, consumer: { _ in }))
     }
 }
