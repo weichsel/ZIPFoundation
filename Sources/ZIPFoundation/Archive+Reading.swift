@@ -2,7 +2,7 @@
 //  Archive+Reading.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -23,6 +23,9 @@ extension Archive {
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
     public func extract(_ entry: Entry, to url: URL, bufferSize: UInt32 = defaultReadChunkSize, skipCRC32: Bool = false,
                         progress: Progress? = nil) throws -> CRC32 {
+        guard bufferSize > 0 else {
+            throw ArchiveError.invalidBufferSize
+        }
         let fileManager = FileManager()
         var checksum = CRC32(0)
         switch entry.type {
@@ -74,6 +77,9 @@ extension Archive {
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
     public func extract(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, skipCRC32: Bool = false,
                         progress: Progress? = nil, consumer: Consumer) throws -> CRC32 {
+        guard bufferSize > 0 else {
+            throw ArchiveError.invalidBufferSize
+        }
         var checksum = CRC32(0)
         let localFileHeader = entry.localFileHeader
         fseek(self.archiveFile, entry.dataOffset, SEEK_SET)

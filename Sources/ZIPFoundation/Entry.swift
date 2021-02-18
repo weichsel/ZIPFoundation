@@ -2,7 +2,7 @@
 //  Entry.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -147,7 +147,7 @@ public struct Entry: Equatable {
             case S_IFLNK:
                 return .symlink
             default:
-                return .file
+                return isDirectory ? .directory : .file
             }
         case .msdos:
             isDirectory = isDirectory || ((centralDirectoryStructure.externalFileAttributes >> 4) == 0x01)
@@ -247,7 +247,7 @@ extension Entry.LocalFileHeader {
         self.uncompressedSize = data.scanValue(start: 22)
         self.fileNameLength = data.scanValue(start: 26)
         self.extraFieldLength = data.scanValue(start: 28)
-        let additionalDataLength = Int(self.fileNameLength + self.extraFieldLength)
+        let additionalDataLength = Int(self.fileNameLength) + Int(self.extraFieldLength)
         guard let additionalData = try? provider(additionalDataLength) else { return nil }
         guard additionalData.count == additionalDataLength else { return nil }
         var subRangeStart = 0
@@ -321,7 +321,7 @@ extension Entry.CentralDirectoryStructure {
         self.internalFileAttributes = data.scanValue(start: 36)
         self.externalFileAttributes = data.scanValue(start: 38)
         self.relativeOffsetOfLocalHeader = data.scanValue(start: 42)
-        let additionalDataLength = Int(self.fileNameLength + self.extraFieldLength + self.fileCommentLength)
+        let additionalDataLength = Int(self.fileNameLength) + Int(self.extraFieldLength) + Int(self.fileCommentLength)
         guard let additionalData = try? provider(additionalDataLength) else { return nil }
         guard additionalData.count == additionalDataLength else { return nil }
         var subRangeStart = 0

@@ -2,7 +2,7 @@
 //  ZIPFoundationPerformanceTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -111,6 +111,14 @@ extension ZIPFoundationTests {
             } catch {
                 XCTFail("Failed to read large entry from compressed archive")
             }
+        }
+    }
+
+    func testPerformanceCRC32() {
+        let size = 1024*1024*20
+        let data = Data.makeRandomData(size: size)
+        measure {
+            _ = data.crc32(checksum: 0)
         }
     }
 }

@@ -2,7 +2,7 @@
 //  Archive.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2020 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -75,12 +75,14 @@ public final class Archive: Sequence {
         case invalidEntryPath
         /// Thrown when an `Entry` can't be stored in the archive with the proposed compression method.
         case invalidCompressionMethod
-        /// Thrown when the start of the central directory exceeds `UINT32_MAX`
+        /// Thrown when the start of the central directory exceeds `UInt32.max`
         case invalidStartOfCentralDirectoryOffset
         /// Thrown when an archive does not contain the required End of Central Directory Record.
         case missingEndOfCentralDirectoryRecord
         /// Thrown when an extract, add or remove operation was canceled.
         case cancelledOperation
+        /// Thrown when an extract operation was called with zero or negative `bufferSize` parameter.
+        case invalidBufferSize
     }
 
     /// The access mode for an `Archive`.
@@ -198,7 +200,7 @@ public final class Archive: Sequence {
                                                                          at: offset) else { return nil }
             var dataDescriptor: DataDescriptor?
             if centralDirStruct.usesDataDescriptor {
-                let additionalSize = Int(localFileHeader.fileNameLength + localFileHeader.extraFieldLength)
+                let additionalSize = Int(localFileHeader.fileNameLength) + Int(localFileHeader.extraFieldLength)
                 let isCompressed = centralDirStruct.compressionMethod != CompressionMethod.none.rawValue
                 let dataSize = isCompressed ? centralDirStruct.compressedSize : centralDirStruct.uncompressedSize
                 let descriptorPosition = offset + LocalFileHeader.size + additionalSize + Int(dataSize)
@@ -222,13 +224,13 @@ public final class Archive: Sequence {
     ///   Therefore an archive can contain multiple entries with the same path. This method
     ///   always returns the first `Entry` with the given `path`.
     ///
-    /// - Parameter path: A relative file path identifiying the corresponding `Entry`.
+    /// - Parameter path: A relative file path identifying the corresponding `Entry`.
     /// - Returns: An `Entry` with the given `path`. Otherwise, `nil`.
     public subscript(path: String) -> Entry? {
         if let encoding = preferredEncoding {
-            return self.filter { $0.path(using: encoding) == path }.first
+            return self.first { $0.path(using: encoding) == path }
         }
-        return self.filter { $0.path == path }.first
+        return self.first { $0.path == path }
     }
 
     // MARK: - Helpers
