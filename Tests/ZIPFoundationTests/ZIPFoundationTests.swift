@@ -181,6 +181,8 @@ extension ZIPFoundationTests {
             ("testCreateArchiveAddTooLargeUncompressedEntry", testCreateArchiveAddTooLargeUncompressedEntry),
             ("testCreateArchiveAddUncompressedEntry", testCreateArchiveAddUncompressedEntry),
             ("testDetectEntryType", testDetectEntryType),
+            ("testExtractToURLBufferSize0", testExtractToURLBufferSize0),
+            ("testExtractToBufferSize0", testExtractToBufferSize0),
             ("testDirectoryCreationHelperMethods", testDirectoryCreationHelperMethods),
             ("testEntryInvalidAdditionalDataErrorConditions", testEntryInvalidAdditionalDataErrorConditions),
             ("testEntryInvalidPathEncodingErrorConditions", testEntryInvalidPathEncodingErrorConditions),

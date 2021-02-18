@@ -299,4 +299,16 @@ extension ZIPFoundationTests {
             XCTAssertEqual(entry.type, expectedData[entry.path])
         }
     }
+
+    func testExtractToURLBufferSize0() {
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = archive["text.txt"]!
+        XCTAssertThrowsError(try archive.extract(entry, to: URL(fileURLWithPath:""), bufferSize: 0, skipCRC32: true, progress: nil))
+    }
+
+    func testExtractToBufferSize0() {
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = archive["text.txt"]!
+        XCTAssertThrowsError(try archive.extract(entry, bufferSize: 0, skipCRC32: true, progress: nil, consumer: {_ in } ))
+    }
 }
