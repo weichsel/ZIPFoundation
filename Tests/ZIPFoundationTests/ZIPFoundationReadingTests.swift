@@ -303,12 +303,12 @@ extension ZIPFoundationTests {
     func testExtractToURLBufferSize0() {
         let archive = self.archive(for: #function, mode: .read)
         let entry = archive["text.txt"]!
-        XCTAssertThrowsError(try archive.extract(entry, to: URL(fileURLWithPath:""), bufferSize: 0, skipCRC32: true, progress: nil))
+        XCTAssertThrowsError(try archive.extract(entry, to: URL(fileURLWithPath: ""), bufferSize: 0, skipCRC32: true))
     }
 
     func testExtractToBufferSize0() {
         let archive = self.archive(for: #function, mode: .read)
         let entry = archive["text.txt"]!
-        XCTAssertThrowsError(try archive.extract(entry, bufferSize: 0, skipCRC32: true, progress: nil, consumer: {_ in } ))
+        XCTAssertThrowsError(try archive.extract(entry, bufferSize: 0, skipCRC32: true, consumer: { _ in }))
     }
 }
