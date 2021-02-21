@@ -27,7 +27,7 @@ let dataDescriptorStructSignature = 0x08074b50
 let centralDirectoryStructSignature = 0x02014b50
 
 /// The compression method of an `Entry` in a ZIP `Archive`.
-public enum CompressionMethod: UInt16 {
+@objc public enum CompressionMethod: UInt16 {
     /// Indicates that an `Entry` has no compression applied to its contents.
     case none = 0
     /// Indicates that contents of an `Entry` have been compressed with a zlib compatible Deflate algorithm.

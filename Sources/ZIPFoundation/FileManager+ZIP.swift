@@ -29,7 +29,7 @@ extension FileManager {
     ///                        By default, `zipItem` will create uncompressed archives.
     ///   - progress: A progress object that can be used to track or cancel the zip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
-    public func zipItem(at sourceURL: URL, to destinationURL: URL,
+    @objc public func zipItem(at sourceURL: URL, to destinationURL: URL,
                         shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
                         progress: Progress? = nil) throws {
         let fileManager = FileManager()
@@ -129,6 +129,16 @@ extension FileManager {
                 _ = try archive.extract(entry, to: destinationEntryURL, skipCRC32: skipCRC32)
             }
         }
+    }
+
+    @objc public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
+                                progress: Progress? = nil, preferredEncoding: UInt) throws {
+        try unzipItem(at: sourceURL, to: destinationURL, skipCRC32: skipCRC32, progress: progress, preferredEncoding: String.Encoding(rawValue: preferredEncoding))
+    }
+
+    @objc public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
+                                progress: Progress? = nil) throws {
+        try unzipItem(at: sourceURL, to: destinationURL, skipCRC32: skipCRC32, progress: progress)
     }
 
     // MARK: - Helpers
