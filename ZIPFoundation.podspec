@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'ZIPFoundation'
-  s.version = '0.9.11'
+  s.version = '0.9.12'
   s.license = 'MIT'
   s.summary = 'Effortless ZIP Handling in Swift'
   s.homepage = 'https://github.com/weichsel/ZIPFoundation'

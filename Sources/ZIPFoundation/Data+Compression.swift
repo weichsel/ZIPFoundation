@@ -94,13 +94,12 @@ extension Data {
         // The typecast is necessary on 32-bit platforms because of
         // https://bugs.swift.org/browse/SR-1774
         let mask = 0xffffffff as CRC32
-        let bufferSize = self.count/MemoryLayout<UInt8>.size
         var result = checksum ^ mask
         #if swift(>=5.0)
         crcTable.withUnsafeBufferPointer { crcTablePointer in
             self.withUnsafeBytes { bufferPointer in
                 var bufferIndex = 0
-                while bufferIndex < bufferSize {
+                while bufferIndex < <self.count {
                     let byte = bufferPointer[bufferIndex]
                     let index = Int((result ^ CRC32(byte)) & 0xff)
                     result = (result >> 8) ^ crcTablePointer[index]
@@ -110,11 +109,11 @@ extension Data {
         }
         #else
         self.withUnsafeBytes { (bytes) in
-            let bins = stride(from: 0, to: bufferSize, by: 256)
+            let bins = stride(from: 0, to: self.count, by: 256)
             for bin in bins {
                 for binIndex in 0..<256 {
                     let byteIndex = bin + binIndex
-                    guard byteIndex < bufferSize else { break }
+                    guard byteIndex < self.count else { break }
 
                     let byte = bytes[byteIndex]
                     let index = Int((result ^ CRC32(byte)) & 0xff)
