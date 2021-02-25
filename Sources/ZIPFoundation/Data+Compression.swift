@@ -99,7 +99,7 @@ extension Data {
         crcTable.withUnsafeBufferPointer { crcTablePointer in
             self.withUnsafeBytes { bufferPointer in
                 var bufferIndex = 0
-                while bufferIndex < <self.count {
+                while bufferIndex < self.count {
                     let byte = bufferPointer[bufferIndex]
                     let index = Int((result ^ CRC32(byte)) & 0xff)
                     result = (result >> 8) ^ crcTablePointer[index]
