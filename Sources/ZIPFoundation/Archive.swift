@@ -79,6 +79,10 @@ public final class Archive: Sequence {
         case invalidStartOfCentralDirectoryOffset
         /// Thrown when an archive does not contain the required End of Central Directory Record.
         case missingEndOfCentralDirectoryRecord
+        /// Thrown when number of entries on disk exceeds `UInt16.max`
+        case invalidNumberOfEntriesOnDisk
+        /// Thrown when number of entries in central directory exceeds `UInt16.max`
+        case invalidNumberOfEntriesInCentralDirectory
         /// Thrown when an extract, add or remove operation was canceled.
         case cancelledOperation
         /// Thrown when an extract operation was called with zero or negative `bufferSize` parameter.
