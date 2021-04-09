@@ -26,14 +26,6 @@ let localFileHeaderStructSignature = 0x04034b50
 let dataDescriptorStructSignature = 0x08074b50
 let centralDirectoryStructSignature = 0x02014b50
 
-/// The compression method of an `Entry` in a ZIP `Archive`.
-public enum CompressionMethod: UInt16 {
-    /// Indicates that an `Entry` has no compression applied to its contents.
-    case none = 0
-    /// Indicates that contents of an `Entry` have been compressed with a zlib compatible Deflate algorithm.
-    case deflate = 8
-}
-
 /// A sequence of uncompressed or compressed ZIP entries.
 ///
 /// You use an `Archive` to create, read or update ZIP files.

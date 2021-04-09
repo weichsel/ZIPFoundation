@@ -10,6 +10,14 @@
 
 import Foundation
 
+/// The compression method of an `Entry` in a ZIP `Archive`.
+public enum CompressionMethod: UInt16 {
+    /// Indicates that an `Entry` has no compression applied to its contents.
+    case none = 0
+    /// Indicates that contents of an `Entry` have been compressed with a zlib compatible Deflate algorithm.
+    case deflate = 8
+}
+
 /// An unsigned 32-Bit Integer representing a checksum.
 public typealias CRC32 = UInt32
 /// A custom handler that consumes a `Data` object containing partial entry data.
