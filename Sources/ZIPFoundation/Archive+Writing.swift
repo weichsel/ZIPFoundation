@@ -351,9 +351,21 @@ extension Archive {
         let centralDirectoryDataLengthChange = operation.rawValue * (dataLength + CentralDirectoryStructure.size)
         var updatedSizeOfCentralDirectory = Int(record.sizeOfCentralDirectory)
         updatedSizeOfCentralDirectory += centralDirectoryDataLengthChange
-        let numberOfEntriesOnDisk = UInt16(Int(record.totalNumberOfEntriesOnDisk) + countChange)
-        let numberOfEntriesInCentralDirectory = UInt16(Int(record.totalNumberOfEntriesInCentralDirectory) + countChange)
-        record = EndOfCentralDirectoryRecord(record: record, numberOfEntriesOnDisk: numberOfEntriesOnDisk,
+
+        let numberOfEntriesOnDiskInt = Int(record.totalNumberOfEntriesOnDisk) + countChange
+        guard numberOfEntriesOnDiskInt <= UInt16.max else {
+            throw ArchiveError.invalidNumberOfEntriesOnDisk
+        }
+        let numberOfEntriesOnDisk = UInt16(numberOfEntriesOnDiskInt)
+
+        let numberOfEntriesInCentralDirectoryInt = Int(record.totalNumberOfEntriesInCentralDirectory) + countChange
+        guard numberOfEntriesInCentralDirectoryInt <= UInt16.max else {
+            throw ArchiveError.invalidNumberOfEntriesInCentralDirectory
+        }
+        let numberOfEntriesInCentralDirectory = UInt16(numberOfEntriesInCentralDirectoryInt)
+
+        record = EndOfCentralDirectoryRecord(record: record,
+                                             numberOfEntriesOnDisk: numberOfEntriesOnDisk,
                                              numberOfEntriesInCentralDirectory: numberOfEntriesInCentralDirectory,
                                              updatedSizeOfCentralDirectory: UInt32(updatedSizeOfCentralDirectory),
                                              startOfCentralDirectory: startOfCentralDirectory)
