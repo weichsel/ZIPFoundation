@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		95B5A3D42366731B00D4D8FD /* Archive+MemoryFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B5A3D32366731B00D4D8FD /* Archive+MemoryFile.swift */; };
 		95B5A3D72367999900D4D8FD /* ZIPFoundationMemoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryTests.swift */; };
+		BA012FF52632DDBE00A6D516 /* ZIPFoundationWritingOverflowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA012FF42632DDBE00A6D516 /* ZIPFoundationWritingOverflowTests.swift */; };
 		BA3716AB21F0A238006E54E6 /* ZIPFoundationProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */; };
 		BAAF13DA25CC140300070A95 /* ZIPFoundationErrorConditionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAAF13D925CC140300070A95 /* ZIPFoundationErrorConditionTests.swift */; };
 		OBJ_33 /* ZIPFoundationDataSerializationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_18 /* ZIPFoundationDataSerializationTests.swift */; };
@@ -41,6 +42,7 @@
 /* Begin PBXFileReference section */
 		95B5A3D32366731B00D4D8FD /* Archive+MemoryFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+MemoryFile.swift"; sourceTree = "<group>"; };
 		95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationMemoryTests.swift; sourceTree = "<group>"; };
+		BA012FF42632DDBE00A6D516 /* ZIPFoundationWritingOverflowTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ZIPFoundationWritingOverflowTests.swift; sourceTree = "<group>"; };
 		BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationProgressTests.swift; sourceTree = "<group>"; };
 		BAAF13D925CC140300070A95 /* ZIPFoundationErrorConditionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationErrorConditionTests.swift; sourceTree = "<group>"; };
 		OBJ_10 /* Archive+Writing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Writing.swift"; sourceTree = "<group>"; };
@@ -95,6 +97,7 @@
 				OBJ_23 /* ZIPFoundationTests.swift */,
 				OBJ_22 /* ZIPFoundationReadingTests.swift */,
 				OBJ_24 /* ZIPFoundationWritingTests.swift */,
+				BA012FF42632DDBE00A6D516 /* ZIPFoundationWritingOverflowTests.swift */,
 				95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryTests.swift */,
 				OBJ_19 /* ZIPFoundationEntryTests.swift */,
 				OBJ_18 /* ZIPFoundationDataSerializationTests.swift */,
@@ -249,6 +252,7 @@
 				BA3716AB21F0A238006E54E6 /* ZIPFoundationProgressTests.swift in Sources */,
 				OBJ_35 /* ZIPFoundationFileManagerTests.swift in Sources */,
 				OBJ_36 /* ZIPFoundationPerformanceTests.swift in Sources */,
+				BA012FF52632DDBE00A6D516 /* ZIPFoundationWritingOverflowTests.swift in Sources */,
 				OBJ_37 /* ZIPFoundationReadingTests.swift in Sources */,
 				95B5A3D72367999900D4D8FD /* ZIPFoundationMemoryTests.swift in Sources */,
 				OBJ_38 /* ZIPFoundationTests.swift in Sources */,
