@@ -169,7 +169,8 @@ extension Archive {
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
     public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
-        let tempArchive = try self.makeTempArchive()
+        let (tempArchive, tempDir) = try self.makeTempArchive()
+        defer { tempDir.map { try? FileManager().removeItem(at: $0) } }
         progress?.totalUnitCount = self.totalUnitCountForRemoving(entry)
         var centralDirectoryData = Data()
         var offset = 0
@@ -385,24 +386,23 @@ extension Archive {
         _ = try Data.write(chunk: endOfCentralDirRecord.data, to: self.archiveFile)
     }
 
-    private func makeTempArchive() throws -> Archive {
+    private func makeTempArchive() throws -> (Archive, URL?) {
         if self.url.isFileURL {
             let manager = FileManager()
             let tempDir = self.uniqueTemporaryDirectoryURL()
-            defer { try? manager.removeItem(at: tempDir) }
             let uniqueString = ProcessInfo.processInfo.globallyUniqueString
             let tempArchiveURL =  tempDir.appendingPathComponent(uniqueString)
             try manager.createParentDirectoryStructure(for: tempArchiveURL)
             guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
                 throw ArchiveError.unwritableArchive
             }
-            return tempArchive
+            return (tempArchive, tempDir)
         } else {
             guard let tempArchive = Archive(data: Data(), accessMode: .create, preferredEncoding: self.preferredEncoding) else {
                 throw ArchiveError.unwritableArchive
             }
 
-            return tempArchive
+            return (tempArchive, nil)
         }
     }
 }
