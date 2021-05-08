@@ -14,7 +14,7 @@ import Foundation
 
 extension Archive {
     /// Returns a `Data` object containing a representation of the receiver.
-    public var data: Data? { return memoryFile?.data }
+    public var data: Data? { return self.memoryFile?.data }
 
     static func configureMemoryBacking(for data: Data, mode: AccessMode)
     -> (UnsafeMutablePointer<FILE>, MemoryFile, EndOfCentralDirectoryRecord)? {
