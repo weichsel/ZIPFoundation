@@ -159,7 +159,7 @@ public final class Archive: Sequence {
     ///   - The backing `data` _must_ be empty (or omitted) for `AccessMode.create`.
     public init?(data: Data = Data(), accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
         guard let url = URL(string: "memory:"),
-            let (archiveFile, memoryFile) = Archive.configureMemoryBacking(for: data, mode: mode) else {
+            let (archiveFile, memoryFile, endOfCentralDirectoryRecord) = Archive.configureMemoryBacking(for: data, mode: mode) else {
             return nil
         }
 
@@ -168,11 +168,6 @@ public final class Archive: Sequence {
         self.preferredEncoding = preferredEncoding
         self.archiveFile = archiveFile
         self.memoryFile = memoryFile
-        guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile)
-            else {
-                fclose(self.archiveFile)
-                return nil
-        }
         self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
     }
     #endif
@@ -265,7 +260,7 @@ public final class Archive: Sequence {
         }
     }
 
-    private static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
+    static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
         -> EndOfCentralDirectoryRecord? {
         var directoryEnd = 0
         var index = minDirectoryEndOffset

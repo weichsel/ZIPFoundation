@@ -208,10 +208,11 @@ extension Archive {
         } else {
             fclose(self.archiveFile)
             guard let data = tempArchive.data,
-                  let (archiveFile, memoryFile) = Archive.configureMemoryBacking(for: data, mode: .update) else { throw ArchiveError.unwritableArchive }
+                  let (archiveFile, memoryFile, endOfCentralDirectoryRecord) = Archive.configureMemoryBacking(for: data, mode: .update) else { throw ArchiveError.unwritableArchive }
 
             self.archiveFile = archiveFile
             self.memoryFile = memoryFile
+            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         }
     }
 
