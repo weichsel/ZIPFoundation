@@ -95,6 +95,20 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
+    func testUpdateArchiveRemoveUncompressedEntryFromMemory() {
+        let archive = self.memoryArchive(for: #function, mode: .update)
+        XCTAssert(archive.checkIntegrity())
+        guard let entryToRemove = archive["original"] else {
+            XCTFail("Failed to find entry to remove from memory archive"); return
+        }
+        do {
+            try archive.remove(entryToRemove)
+        } catch {
+            XCTFail("Failed to remove entry from memory archive with error : \(error)")
+        }
+        XCTAssert(archive.checkIntegrity())
+    }
+
     func testMemoryArchiveErrorConditions() {
         let data = Data.makeRandomData(size: 1024)
         let invalidArchive = Archive(data: data, accessMode: .read)

@@ -169,15 +169,7 @@ extension Archive {
     /// - Throws: An error if the `Entry` is malformed or the receiver is not writable.
     public func remove(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, progress: Progress? = nil) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
-        let manager = FileManager()
-        let tempDir = self.uniqueTemporaryDirectoryURL()
-        defer { try? manager.removeItem(at: tempDir) }
-        let uniqueString = ProcessInfo.processInfo.globallyUniqueString
-        let tempArchiveURL =  tempDir.appendingPathComponent(uniqueString)
-        try manager.createParentDirectoryStructure(for: tempArchiveURL)
-        guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
-            throw ArchiveError.unwritableArchive
-        }
+        let tempArchive = try self.makeTempArchive()
         progress?.totalUnitCount = self.totalUnitCountForRemoving(entry)
         var centralDirectoryData = Data()
         var offset = 0
@@ -211,7 +203,16 @@ extension Archive {
         tempArchive.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         fflush(tempArchive.archiveFile)
-        try self.replaceCurrentArchiveWithArchive(at: tempArchive.url)
+        if self.url.isFileURL {
+            try self.replaceCurrentArchiveWithArchive(at: tempArchive.url)
+        } else {
+            fclose(self.archiveFile)
+            guard let data = tempArchive.data,
+                  let (archiveFile, memoryFile) = Archive.configureMemoryBacking(for: data, mode: .update) else { throw ArchiveError.unwritableArchive }
+
+            self.archiveFile = archiveFile
+            self.memoryFile = memoryFile
+        }
     }
 
     // MARK: - Helpers
@@ -381,5 +382,26 @@ extension Archive {
         fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
         _ = try Data.write(chunk: existingCentralDirectoryData, to: self.archiveFile)
         _ = try Data.write(chunk: endOfCentralDirRecord.data, to: self.archiveFile)
+    }
+
+    private func makeTempArchive() throws -> Archive {
+        if self.url.isFileURL {
+            let manager = FileManager()
+            let tempDir = self.uniqueTemporaryDirectoryURL()
+            defer { try? manager.removeItem(at: tempDir) }
+            let uniqueString = ProcessInfo.processInfo.globallyUniqueString
+            let tempArchiveURL =  tempDir.appendingPathComponent(uniqueString)
+            try manager.createParentDirectoryStructure(for: tempArchiveURL)
+            guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
+                throw ArchiveError.unwritableArchive
+            }
+            return tempArchive
+        } else {
+            guard let tempArchive = Archive(data: Data(), accessMode: .create, preferredEncoding: self.preferredEncoding) else {
+                throw ArchiveError.unwritableArchive
+            }
+
+            return tempArchive
+        }
     }
 }

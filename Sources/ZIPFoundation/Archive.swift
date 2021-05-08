@@ -104,13 +104,13 @@ public final class Archive: Sequence {
         static let size = 22
     }
 
-    private var preferredEncoding: String.Encoding?
     /// URL of an Archive's backing file.
     public let url: URL
     /// Access mode for an archive file.
     public let accessMode: AccessMode
     var archiveFile: UnsafeMutablePointer<FILE>
     var endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
+    var preferredEncoding: String.Encoding?
 
     /// Initializes a new ZIP `Archive`.
     ///
