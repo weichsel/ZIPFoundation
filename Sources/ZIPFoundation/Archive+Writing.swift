@@ -223,10 +223,10 @@ extension Archive {
     }
 
     func replaceCurrentArchiveWithArchive(_ archive: Archive) throws {
+        fclose(self.archiveFile)
         if self.isMemoryArchive {
             #if swift(>=5.0)
-            fclose(self.archiveFile)
-            guard let data = tempArchive.data,
+            guard let data = archive.data,
                   let (archiveFile, memoryFile, endOfCentralDirectoryRecord) = Archive.configureMemoryBacking(for: data, mode: .update) else {
                 throw ArchiveError.unwritableArchive
             }
@@ -236,7 +236,6 @@ extension Archive {
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
             #endif
         } else {
-            fclose(self.archiveFile)
             let fileManager = FileManager()
             #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
             do {
