@@ -357,7 +357,7 @@ extension ZIPFoundationTests {
         }
         // We choose 2000 temp directories to test workaround for http://openradar.appspot.com/50553219
         for _ in 1...2000 {
-            let tempDir = archive.uniqueTemporaryDirectoryURL()
+            let tempDir = URL.uniqueTemporaryDirectoryURL(for: archive)
             XCTAssertFalse(tempURLs.contains(tempDir), "Temp directory URL should be unique. \(tempDir)")
             tempURLs.insert(tempDir)
         }
@@ -366,9 +366,13 @@ extension ZIPFoundationTests {
         // Also cover the fallback codepath in the helper method to generate a unique temp URL.
         // In-memory archives have no filesystem representation and therefore don't need a per-volume
         // temp URL.
-        let memoryArchive = Archive(data: Data(), accessMode: .create)
-        let memoryTempURL = memoryArchive?.uniqueTemporaryDirectoryURL()
-        XCTAssertNotNil(memoryTempURL)
+        guard let memoryArchive = Archive(data: Data(), accessMode: .create) else {
+            XCTFail("Temporary memory archive creation failed.")
+            return
+        }
+
+        let memoryTempURL = URL.uniqueTemporaryDirectoryURL(for: memoryArchive)
+        XCTAssertNotNil(memoryTempURL, "Temporary URL creation for in-memory archive failed.")
         #endif
     }
 }

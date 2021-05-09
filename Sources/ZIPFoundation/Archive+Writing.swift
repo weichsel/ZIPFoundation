@@ -209,19 +209,6 @@ extension Archive {
 
     // MARK: - Helpers
 
-    func uniqueTemporaryDirectoryURL() -> URL {
-        #if swift(>=5.0) || os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        if self.url.isFileURL,
-           let tempDir = try? FileManager().url(for: .itemReplacementDirectory, in: .userDomainMask,
-                                                appropriateFor: self.url, create: true) {
-            return tempDir
-        }
-        #endif
-
-        return URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(
-            ProcessInfo.processInfo.globallyUniqueString)
-    }
-
     func replaceCurrentArchiveWithArchive(_ archive: Archive) throws {
         fclose(self.archiveFile)
         if self.isMemoryArchive {
@@ -357,19 +344,16 @@ extension Archive {
         let centralDirectoryDataLengthChange = operation.rawValue * (dataLength + CentralDirectoryStructure.size)
         var updatedSizeOfCentralDirectory = Int(record.sizeOfCentralDirectory)
         updatedSizeOfCentralDirectory += centralDirectoryDataLengthChange
-
         let numberOfEntriesOnDiskInt = Int(record.totalNumberOfEntriesOnDisk) + countChange
         guard numberOfEntriesOnDiskInt <= UInt16.max else {
             throw ArchiveError.invalidNumberOfEntriesOnDisk
         }
         let numberOfEntriesOnDisk = UInt16(numberOfEntriesOnDiskInt)
-
         let numberOfEntriesInCentralDirectoryInt = Int(record.totalNumberOfEntriesInCentralDirectory) + countChange
         guard numberOfEntriesInCentralDirectoryInt <= UInt16.max else {
             throw ArchiveError.invalidNumberOfEntriesInCentralDirectory
         }
         let numberOfEntriesInCentralDirectory = UInt16(numberOfEntriesInCentralDirectoryInt)
-
         record = EndOfCentralDirectoryRecord(record: record,
                                              numberOfEntriesOnDisk: numberOfEntriesOnDisk,
                                              numberOfEntriesInCentralDirectory: numberOfEntriesInCentralDirectory,
@@ -379,8 +363,7 @@ extension Archive {
         return record
     }
 
-    private func rollback(_ localFileHeaderStart: Int,
-                          _ existingCentralDirectoryData: Data,
+    private func rollback(_ localFileHeaderStart: Int, _ existingCentralDirectoryData: Data,
                           _ endOfCentralDirRecord: EndOfCentralDirectoryRecord) throws {
         fflush(self.archiveFile)
         ftruncate(fileno(self.archiveFile), off_t(localFileHeaderStart))
@@ -392,26 +375,23 @@ extension Archive {
     private func makeTempArchive() throws -> (Archive, URL?) {
         if self.isMemoryArchive {
             #if swift(>=5.0)
-            guard let tempArchive = Archive(data: Data(),
-                                            accessMode: .create,
+            guard let tempArchive = Archive(data: Data(), accessMode: .create,
                                             preferredEncoding: self.preferredEncoding) else {
                 throw ArchiveError.unwritableArchive
             }
-
             return (tempArchive, nil)
             #else
             fatalError("Memory archives are unsupported.")
             #endif
         } else {
             let manager = FileManager()
-            let tempDir = self.uniqueTemporaryDirectoryURL()
+            let tempDir = URL.uniqueTemporaryDirectoryURL(for: self)
             let uniqueString = ProcessInfo.processInfo.globallyUniqueString
             let tempArchiveURL =  tempDir.appendingPathComponent(uniqueString)
             try manager.createParentDirectoryStructure(for: tempArchiveURL)
             guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
                 throw ArchiveError.unwritableArchive
             }
-
             return (tempArchive, tempDir)
         }
     }
