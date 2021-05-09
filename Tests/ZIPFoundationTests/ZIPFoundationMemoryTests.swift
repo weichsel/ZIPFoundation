@@ -107,6 +107,29 @@ extension ZIPFoundationTests {
             XCTFail("Failed to remove entry from memory archive with error : \(error)")
         }
         XCTAssert(archive.checkIntegrity())
+        var didCatchExpectedError = false
+        self.runWithoutMemory {
+            do {
+                try archive.remove(entryToRemove)
+            } catch {
+                didCatchExpectedError = true
+            }
+        }
+        XCTAssert(didCatchExpectedError)
+        let emptyArchive = Archive(accessMode: .create)
+        let data = Data.makeRandomData(size: 1024)
+        guard let replacementArchive = Archive(data: data, accessMode: .create) else {
+            XCTFail("Failed to create replacement archive.")
+            return
+        }
+        didCatchExpectedError = false
+        replacementArchive.memoryFile = nil
+        do {
+            try emptyArchive?.replaceCurrentArchiveWithArchive(replacementArchive)
+        } catch {
+            didCatchExpectedError = true
+        }
+        XCTAssert(didCatchExpectedError)
     }
 
     func testMemoryArchiveErrorConditions() {

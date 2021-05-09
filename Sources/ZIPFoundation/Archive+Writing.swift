@@ -241,8 +241,7 @@ extension Archive {
     }
 
     private func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
-                                      size: (uncompressed: UInt32, compressed: UInt32),
-                                      checksum: CRC32,
+                                      size: (uncompressed: UInt32, compressed: UInt32), checksum: CRC32,
                                       modificationDateTime: (UInt16, UInt16)) throws -> LocalFileHeader {
         // We always set Bit 11 in generalPurposeBitFlag, which indicates an UTF-8 encoded path.
         guard let fileNameData = path.data(using: .utf8) else { throw ArchiveError.invalidEntryPath }
@@ -354,8 +353,7 @@ extension Archive {
             throw ArchiveError.invalidNumberOfEntriesInCentralDirectory
         }
         let numberOfEntriesInCentralDirectory = UInt16(numberOfEntriesInCentralDirectoryInt)
-        record = EndOfCentralDirectoryRecord(record: record,
-                                             numberOfEntriesOnDisk: numberOfEntriesOnDisk,
+        record = EndOfCentralDirectoryRecord(record: record, numberOfEntriesOnDisk: numberOfEntriesOnDisk,
                                              numberOfEntriesInCentralDirectory: numberOfEntriesInCentralDirectory,
                                              updatedSizeOfCentralDirectory: UInt32(updatedSizeOfCentralDirectory),
                                              startOfCentralDirectory: startOfCentralDirectory)
@@ -372,14 +370,16 @@ extension Archive {
         _ = try Data.write(chunk: endOfCentralDirRecord.data, to: self.archiveFile)
     }
 
-    private func makeTempArchive() throws -> (Archive, URL?) {
+    func makeTempArchive() throws -> (Archive, URL?) {
+        var archive: Archive
+        var url: URL?
         if self.isMemoryArchive {
             #if swift(>=5.0)
             guard let tempArchive = Archive(data: Data(), accessMode: .create,
                                             preferredEncoding: self.preferredEncoding) else {
                 throw ArchiveError.unwritableArchive
             }
-            return (tempArchive, nil)
+            archive = tempArchive
             #else
             fatalError("Memory archives are unsupported.")
             #endif
@@ -392,7 +392,9 @@ extension Archive {
             guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
                 throw ArchiveError.unwritableArchive
             }
-            return (tempArchive, tempDir)
+            archive = tempArchive
+            url = tempDir
         }
+        return (archive, url)
     }
 }
