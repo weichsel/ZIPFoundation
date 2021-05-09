@@ -108,6 +108,9 @@ extension ZIPFoundationTests {
         }
         XCTAssert(archive.checkIntegrity())
         var didCatchExpectedError = false
+        // Trigger the code path that is taken if funopen() fails
+        // We can only do this on Apple platforms
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
         self.runWithoutMemory {
             do {
                 try archive.remove(entryToRemove)
@@ -116,6 +119,7 @@ extension ZIPFoundationTests {
             }
         }
         XCTAssert(didCatchExpectedError)
+        #endif
         let emptyArchive = Archive(accessMode: .create)
         let data = Data.makeRandomData(size: 1024)
         guard let replacementArchive = Archive(data: data, accessMode: .create) else {

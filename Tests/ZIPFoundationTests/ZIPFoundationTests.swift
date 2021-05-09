@@ -148,10 +148,12 @@ class ZIPFoundationTests: XCTestCase {
     }
 
     func runWithoutMemory(handler: () -> Void) {
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
         let systemAllocator = CFAllocatorGetDefault().takeUnretainedValue()
         CFAllocatorSetDefault(kCFAllocatorNull)
         defer { CFAllocatorSetDefault(systemAllocator) }
         handler()
+        #endif
     }
 }
 
