@@ -25,7 +25,8 @@ let endOfCentralDirectoryStructSignature = 0x06054b50
 let localFileHeaderStructSignature = 0x04034b50
 let dataDescriptorStructSignature = 0x08074b50
 let centralDirectoryStructSignature = 0x02014b50
-let memoryURLScheme = "memory:"
+let memoryURLScheme = "memory"
+let memoryURL = URL(string: "\(memoryURLScheme)://")
 
 /// A sequence of uncompressed or compressed ZIP entries.
 ///
@@ -159,7 +160,7 @@ public final class Archive: Sequence {
     ///   - The backing `data` _must_ contain a valid ZIP archive for `AccessMode.read` and `AccessMode.update`.
     ///   - The backing `data` _must_ be empty (or omitted) for `AccessMode.create`.
     public init?(data: Data = Data(), accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
-        guard let url = URL(string: memoryURLScheme),
+        guard let url = memoryURL,
             let config = Archive.configureMemoryBacking(for: data, mode: mode) else {
             return nil
         }
