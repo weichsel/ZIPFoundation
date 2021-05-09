@@ -233,7 +233,7 @@ extension Archive {
             }
             #else
             _ = try fileManager.removeItem(at: self.url)
-            _ = try fileManager.moveItem(at: URL, to: self.url)
+            _ = try fileManager.moveItem(at: archive.url, to: self.url)
             #endif
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: self.url.path)
             self.archiveFile = fopen(fileSystemRepresentation, "rb+")
