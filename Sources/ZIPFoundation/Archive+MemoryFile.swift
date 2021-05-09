@@ -10,6 +10,10 @@
 
 import Foundation
 
+extension Archive {
+    var isMemoryArchive: Bool { return self.url.scheme == memoryURLScheme }
+}
+
 #if swift(>=5.0)
 
 extension Archive {
@@ -29,7 +33,9 @@ extension Archive {
 
         switch mode {
         case .read:
-            guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else { return nil }
+            guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+                return nil
+            }
 
             return (archiveFile, memoryFile, endOfCentralDirectoryRecord)
         case .create:

@@ -204,17 +204,7 @@ extension Archive {
         tempArchive.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         fflush(tempArchive.archiveFile)
-        if self.url.isFileURL {
-            try self.replaceCurrentArchiveWithArchive(at: tempArchive.url)
-        } else {
-            fclose(self.archiveFile)
-            guard let data = tempArchive.data,
-                  let (archiveFile, memoryFile, endOfCentralDirectoryRecord) = Archive.configureMemoryBacking(for: data, mode: .update) else { throw ArchiveError.unwritableArchive }
-
-            self.archiveFile = archiveFile
-            self.memoryFile = memoryFile
-            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
-        }
+        try self.replaceCurrentArchiveWithArchive(tempArchive)
     }
 
     // MARK: - Helpers
@@ -232,22 +222,36 @@ extension Archive {
             ProcessInfo.processInfo.globallyUniqueString)
     }
 
-    func replaceCurrentArchiveWithArchive(at URL: URL) throws {
-        fclose(self.archiveFile)
-        let fileManager = FileManager()
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        do {
-            _ = try fileManager.replaceItemAt(self.url, withItemAt: URL)
-        } catch {
+    func replaceCurrentArchiveWithArchive(_ archive: Archive) throws {
+        if self.isMemoryArchive {
+            #if swift(>=5.0)
+            fclose(self.archiveFile)
+            guard let data = tempArchive.data,
+                  let (archiveFile, memoryFile, endOfCentralDirectoryRecord) = Archive.configureMemoryBacking(for: data, mode: .update) else {
+                throw ArchiveError.unwritableArchive
+            }
+
+            self.archiveFile = archiveFile
+            self.memoryFile = memoryFile
+            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+            #endif
+        } else {
+            fclose(self.archiveFile)
+            let fileManager = FileManager()
+            #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+            do {
+                _ = try fileManager.replaceItemAt(self.url, withItemAt: archive.url)
+            } catch {
+                _ = try fileManager.removeItem(at: self.url)
+                _ = try fileManager.moveItem(at: archive.url, to: self.url)
+            }
+            #else
             _ = try fileManager.removeItem(at: self.url)
             _ = try fileManager.moveItem(at: URL, to: self.url)
+            #endif
+            let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: self.url.path)
+            self.archiveFile = fopen(fileSystemRepresentation, "rb+")
         }
-        #else
-        _ = try fileManager.removeItem(at: self.url)
-        _ = try fileManager.moveItem(at: URL, to: self.url)
-        #endif
-        let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: self.url.path)
-        self.archiveFile = fopen(fileSystemRepresentation, "rb+")
     }
 
     private func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
@@ -387,7 +391,17 @@ extension Archive {
     }
 
     private func makeTempArchive() throws -> (Archive, URL?) {
-        if self.url.isFileURL {
+        if self.isMemoryArchive {
+            #if swift(>=5.0)
+            guard let tempArchive = Archive(data: Data(), accessMode: .create, preferredEncoding: self.preferredEncoding) else {
+                throw ArchiveError.unwritableArchive
+            }
+
+            return (tempArchive, nil)
+            #else
+            fatalError("Memory archives are unsupported.")
+            #endif
+        } else {
             let manager = FileManager()
             let tempDir = self.uniqueTemporaryDirectoryURL()
             let uniqueString = ProcessInfo.processInfo.globallyUniqueString
@@ -396,13 +410,8 @@ extension Archive {
             guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
                 throw ArchiveError.unwritableArchive
             }
-            return (tempArchive, tempDir)
-        } else {
-            guard let tempArchive = Archive(data: Data(), accessMode: .create, preferredEncoding: self.preferredEncoding) else {
-                throw ArchiveError.unwritableArchive
-            }
 
-            return (tempArchive, nil)
+            return (tempArchive, tempDir)
         }
     }
 }

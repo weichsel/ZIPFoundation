@@ -377,7 +377,7 @@ extension ZIPFoundationTests {
                 }
 
                 do {
-                    try vol1Archive.replaceCurrentArchiveWithArchive(at: vol2Archive.url)
+                    try vol1Archive.replaceCurrentArchiveWithArchive(vol2Archive)
                 } catch {
                     XCTFail("\(String(describing: error))")
                     return
