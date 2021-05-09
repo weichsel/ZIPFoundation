@@ -387,7 +387,7 @@ extension Archive {
             let manager = FileManager()
             let tempDir = URL.temporaryReplacementDirectoryURL(for: self)
             let uniqueString = ProcessInfo.processInfo.globallyUniqueString
-            let tempArchiveURL =  tempDir.appendingPathComponent(uniqueString)
+            let tempArchiveURL = tempDir.appendingPathComponent(uniqueString)
             try manager.createParentDirectoryStructure(for: tempArchiveURL)
             guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
                 throw ArchiveError.unwritableArchive
