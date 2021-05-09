@@ -21,7 +21,7 @@ extension Archive {
     public var data: Data? { return self.memoryFile?.data }
 
     static func configureMemoryBacking(for data: Data, mode: AccessMode)
-    -> (UnsafeMutablePointer<FILE>, MemoryFile, EndOfCentralDirectoryRecord)? {
+    -> BackingConfiguration? {
         let posixMode: String
         switch mode {
         case .read: posixMode = "rb"
@@ -37,7 +37,9 @@ extension Archive {
                 return nil
             }
 
-            return (archiveFile, memoryFile, endOfCentralDirectoryRecord)
+            return BackingConfiguration(file: archiveFile,
+                                        endOfCentralDirectoryRecord: endOfCentralDirectoryRecord,
+                                        memoryFile: memoryFile)
         case .create:
             let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
                                                                           totalNumberOfEntriesOnDisk: 0,
@@ -51,10 +53,14 @@ extension Archive {
             }
             fallthrough
         case .update:
-            guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else { return nil }
+            guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+                return nil
+            }
 
             fseek(archiveFile, 0, SEEK_SET)
-            return (archiveFile, memoryFile, endOfCentralDirectoryRecord)
+            return BackingConfiguration(file: archiveFile,
+                                        endOfCentralDirectoryRecord: endOfCentralDirectoryRecord,
+                                        memoryFile: memoryFile)
         }
     }
 }

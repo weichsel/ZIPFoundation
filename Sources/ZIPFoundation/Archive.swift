@@ -133,11 +133,11 @@ public final class Archive: Sequence {
         self.url = url
         self.accessMode = mode
         self.preferredEncoding = preferredEncoding
-        guard let (archiveFile, endOfCentralDirectoryRecord) = Archive.configureFileBacking(for: url, mode: mode) else {
+        guard let config = Archive.configureFileBacking(for: url, mode: mode) else {
             return nil
         }
-        self.archiveFile = archiveFile
-        self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+        self.archiveFile = config.file
+        self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
@@ -160,16 +160,16 @@ public final class Archive: Sequence {
     ///   - The backing `data` _must_ be empty (or omitted) for `AccessMode.create`.
     public init?(data: Data = Data(), accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
         guard let url = URL(string: memoryURLScheme),
-            let (archiveFile, memoryFile, endOfCentralDirectoryRecord) = Archive.configureMemoryBacking(for: data, mode: mode) else {
+            let config = Archive.configureMemoryBacking(for: data, mode: mode) else {
             return nil
         }
 
         self.url = url
         self.accessMode = mode
         self.preferredEncoding = preferredEncoding
-        self.archiveFile = archiveFile
-        self.memoryFile = memoryFile
-        self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+        self.archiveFile = config.file
+        self.memoryFile = config.memoryFile
+        self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
     }
     #endif
 
@@ -227,8 +227,30 @@ public final class Archive: Sequence {
 
     // MARK: - Helpers
 
+    struct BackingConfiguration {
+        let file: UnsafeMutablePointer<FILE>
+        let endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
+        #if swift(>=5.0)
+        let memoryFile: MemoryFile?
+
+        init(file: UnsafeMutablePointer<FILE>,
+             endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
+             memoryFile: MemoryFile? = nil) {
+            self.file = file
+            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+            self.memoryFile = memoryFile
+        }
+        #else
+
+        init(file: UnsafeMutablePointer<FILE>, endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord) {
+            self.file = file
+            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+        }
+        #endif
+    }
+
     private static func configureFileBacking(for url: URL, mode: AccessMode)
-        -> (UnsafeMutablePointer<FILE>, EndOfCentralDirectoryRecord)? {
+        -> BackingConfiguration? {
         let fileManager = FileManager()
         switch mode {
         case .read:
@@ -237,7 +259,7 @@ public final class Archive: Sequence {
                 let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
                     return nil
             }
-            return (archiveFile, endOfCentralDirectoryRecord)
+            return BackingConfiguration(file: archiveFile, endOfCentralDirectoryRecord: endOfCentralDirectoryRecord)
         case .create:
             let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
                                                                           totalNumberOfEntriesOnDisk: 0,
@@ -257,7 +279,7 @@ public final class Archive: Sequence {
                     return nil
             }
             fseek(archiveFile, 0, SEEK_SET)
-            return (archiveFile, endOfCentralDirectoryRecord)
+            return BackingConfiguration(file: archiveFile, endOfCentralDirectoryRecord: endOfCentralDirectoryRecord)
         }
     }
 

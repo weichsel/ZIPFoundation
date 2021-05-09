@@ -227,13 +227,13 @@ extension Archive {
         if self.isMemoryArchive {
             #if swift(>=5.0)
             guard let data = archive.data,
-                  let (archiveFile, memoryFile, endOfCentralDirectoryRecord) = Archive.configureMemoryBacking(for: data, mode: .update) else {
+                  let config = Archive.configureMemoryBacking(for: data, mode: .update) else {
                 throw ArchiveError.unwritableArchive
             }
 
-            self.archiveFile = archiveFile
-            self.memoryFile = memoryFile
-            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+            self.archiveFile = config.file
+            self.memoryFile = config.memoryFile
+            self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
             #endif
         } else {
             let fileManager = FileManager()
@@ -392,7 +392,9 @@ extension Archive {
     private func makeTempArchive() throws -> (Archive, URL?) {
         if self.isMemoryArchive {
             #if swift(>=5.0)
-            guard let tempArchive = Archive(data: Data(), accessMode: .create, preferredEncoding: self.preferredEncoding) else {
+            guard let tempArchive = Archive(data: Data(),
+                                            accessMode: .create,
+                                            preferredEncoding: self.preferredEncoding) else {
                 throw ArchiveError.unwritableArchive
             }
 
