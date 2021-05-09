@@ -146,6 +146,13 @@ class ZIPFoundationTests: XCTestCase {
         defer { setrlimit(fileNoFlag, &storedRlimit) }
         handler()
     }
+
+    func runWithoutMemory(handler: () -> Void) {
+        let systemAllocator = CFAllocatorGetDefault().takeUnretainedValue()
+        CFAllocatorSetDefault(kCFAllocatorNull)
+        defer { CFAllocatorSetDefault(systemAllocator) }
+        handler()
+    }
 }
 
 extension ZIPFoundationTests {
