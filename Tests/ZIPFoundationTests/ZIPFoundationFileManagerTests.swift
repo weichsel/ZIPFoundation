@@ -347,7 +347,7 @@ extension ZIPFoundationTests {
         XCTFail("Extraction should fail")
     }
 
-    func testUniqueTemporaryDirectoryURL() {
+    func testtemporaryReplacementDirectoryURL() {
         let archive = self.archive(for: #function, mode: .create)
         var tempURLs = Set<URL>()
         defer {
@@ -357,7 +357,7 @@ extension ZIPFoundationTests {
         }
         // We choose 2000 temp directories to test workaround for http://openradar.appspot.com/50553219
         for _ in 1...2000 {
-            let tempDir = URL.uniqueTemporaryDirectoryURL(for: archive)
+            let tempDir = URL.temporaryReplacementDirectoryURL(for: archive)
             XCTAssertFalse(tempURLs.contains(tempDir), "Temp directory URL should be unique. \(tempDir)")
             tempURLs.insert(tempDir)
         }
@@ -371,7 +371,7 @@ extension ZIPFoundationTests {
             return
         }
 
-        let memoryTempURL = URL.uniqueTemporaryDirectoryURL(for: memoryArchive)
+        let memoryTempURL = URL.temporaryReplacementDirectoryURL(for: memoryArchive)
         XCTAssertNotNil(memoryTempURL, "Temporary URL creation for in-memory archive failed.")
         #endif
     }
