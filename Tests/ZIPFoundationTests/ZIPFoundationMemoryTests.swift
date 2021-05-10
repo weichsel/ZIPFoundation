@@ -119,7 +119,6 @@ extension ZIPFoundationTests {
             }
         }
         XCTAssert(didCatchExpectedError)
-        #endif
         let emptyArchive = Archive(accessMode: .create)
         let data = Data.makeRandomData(size: 1024)
         guard let replacementArchive = Archive(data: data, accessMode: .create) else {
@@ -127,6 +126,8 @@ extension ZIPFoundationTests {
             return
         }
         didCatchExpectedError = false
+        // Trigger the error code path that is taken when no temporary archive
+        // can be created during replacement
         replacementArchive.memoryFile = nil
         do {
             try emptyArchive?.replaceCurrentArchiveWithArchive(replacementArchive)
@@ -134,6 +135,7 @@ extension ZIPFoundationTests {
             didCatchExpectedError = true
         }
         XCTAssert(didCatchExpectedError)
+        #endif
     }
 
     func testMemoryArchiveErrorConditions() {
