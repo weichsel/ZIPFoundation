@@ -130,7 +130,7 @@ extension ZIPFoundationTests {
         // can be created during replacement
         replacementArchive.memoryFile = nil
         do {
-            try emptyArchive?.replaceCurrentArchiveWithArchive(replacementArchive)
+            try emptyArchive?.replaceCurrentArchive(with: replacementArchive)
         } catch {
             didCatchExpectedError = true
         }

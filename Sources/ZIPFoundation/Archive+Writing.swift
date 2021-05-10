@@ -204,12 +204,12 @@ extension Archive {
         tempArchive.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
         fflush(tempArchive.archiveFile)
-        try self.replaceCurrentArchiveWithArchive(tempArchive)
+        try self.replaceCurrentArchive(with: tempArchive)
     }
 
     // MARK: - Helpers
 
-    func replaceCurrentArchiveWithArchive(_ archive: Archive) throws {
+    func replaceCurrentArchive(with archive: Archive) throws {
         fclose(self.archiveFile)
         if self.isMemoryArchive {
             #if swift(>=5.0)
