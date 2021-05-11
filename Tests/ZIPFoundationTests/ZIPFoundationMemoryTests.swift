@@ -95,6 +95,49 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
+    func testUpdateArchiveRemoveUncompressedEntryFromMemory() {
+        let archive = self.memoryArchive(for: #function, mode: .update)
+        XCTAssert(archive.checkIntegrity())
+        guard let entryToRemove = archive["original"] else {
+            XCTFail("Failed to find entry to remove from memory archive"); return
+        }
+        do {
+            try archive.remove(entryToRemove)
+        } catch {
+            XCTFail("Failed to remove entry from memory archive with error : \(error)")
+        }
+        XCTAssert(archive.checkIntegrity())
+        var didCatchExpectedError = false
+        // Trigger the code path that is taken if funopen() fails
+        // We can only do this on Apple platforms
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        self.runWithoutMemory {
+            do {
+                try archive.remove(entryToRemove)
+            } catch {
+                didCatchExpectedError = true
+            }
+        }
+        XCTAssert(didCatchExpectedError)
+        let emptyArchive = Archive(accessMode: .create)
+        let data = Data.makeRandomData(size: 1024)
+        guard let replacementArchive = Archive(data: data, accessMode: .create) else {
+            XCTFail("Failed to create replacement archive.")
+            return
+        }
+        didCatchExpectedError = false
+        // Trigger the error code path that is taken when no temporary archive
+        // can be created during replacement
+        replacementArchive.memoryFile = nil
+        do {
+            try emptyArchive?.replaceCurrentArchive(with: replacementArchive)
+        } catch {
+            didCatchExpectedError = true
+        }
+        XCTAssert(didCatchExpectedError)
+        #endif
+    }
+
     func testMemoryArchiveErrorConditions() {
         let data = Data.makeRandomData(size: 1024)
         let invalidArchive = Archive(data: data, accessMode: .read)
@@ -102,10 +145,10 @@ extension ZIPFoundationTests {
         // Trigger the code path that is taken if funopen() fails
         // We can only do this on Apple platforms
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
-        let systemAllocator = CFAllocatorGetDefault().takeUnretainedValue()
-        CFAllocatorSetDefault(kCFAllocatorNull)
-        let unallocatableArchive = Archive(data: data, accessMode: .read)
-        CFAllocatorSetDefault(systemAllocator)
+        var unallocatableArchive: Archive?
+        self.runWithoutMemory {
+            unallocatableArchive = Archive(data: data, accessMode: .read)
+        }
         XCTAssertNil(unallocatableArchive)
         #endif
     }
@@ -139,7 +182,7 @@ extension ZIPFoundationTests {
     }
 
     func testWriteOnlyFile() {
-        let mem  = MemoryFile()
+        let mem = MemoryFile()
         let file = mem.open(mode: "w")
         XCTAssertEqual(fwrite("01234", 1, 5, file), 5)
         XCTAssertEqual(fseek(file, -2, SEEK_END), 0)
@@ -150,7 +193,7 @@ extension ZIPFoundationTests {
     }
 
     func testReadWriteFile() {
-        let mem  = MemoryFile(data: "witch".data(using: .utf8)!)
+        let mem = MemoryFile(data: "witch".data(using: .utf8)!)
         let file = mem.open(mode: "r+")
         XCTAssertEqual(fseek(file, 1, SEEK_CUR), 0)
         XCTAssertEqual(fwrite("a", 1, 1, file), 1)
@@ -168,7 +211,7 @@ extension ZIPFoundationTests {
     }
 
     func testAppendFile() {
-        let mem  = MemoryFile(data: "anti".data(using: .utf8)!)
+        let mem = MemoryFile(data: "anti".data(using: .utf8)!)
         let file = mem.open(mode: "a+")
         XCTAssertEqual(fwrite("cipation", 1, 8, file), 8)
         XCTAssertEqual(fflush(file), 0)

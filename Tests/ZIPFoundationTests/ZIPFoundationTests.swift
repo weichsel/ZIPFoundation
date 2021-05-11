@@ -146,6 +146,15 @@ class ZIPFoundationTests: XCTestCase {
         defer { setrlimit(fileNoFlag, &storedRlimit) }
         handler()
     }
+
+    func runWithoutMemory(handler: () -> Void) {
+        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        let systemAllocator = CFAllocatorGetDefault().takeUnretainedValue()
+        CFAllocatorSetDefault(kCFAllocatorNull)
+        defer { CFAllocatorSetDefault(systemAllocator) }
+        handler()
+        #endif
+    }
 }
 
 extension ZIPFoundationTests {
@@ -219,7 +228,7 @@ extension ZIPFoundationTests {
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
-            ("testUniqueTemporaryDirectoryURL", testUniqueTemporaryDirectoryURL),
+            ("testTemporaryReplacementDirectoryURL", testTemporaryReplacementDirectoryURL),
             ("testTraversalAttack", testTraversalAttack),
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
@@ -259,6 +268,7 @@ extension ZIPFoundationTests {
             ("testAppendFile", testAppendFile),
             ("testCreateArchiveAddUncompressedEntryToMemory", testCreateArchiveAddUncompressedEntryToMemory),
             ("testCreateArchiveAddCompressedEntryToMemory", testCreateArchiveAddCompressedEntryToMemory),
+            ("testUpdateArchiveRemoveUncompressedEntryFromMemory", testUpdateArchiveRemoveUncompressedEntryFromMemory),
             ("testExtractCompressedFolderEntriesFromMemory", testExtractCompressedFolderEntriesFromMemory),
             ("testExtractUncompressedFolderEntriesFromMemory", testExtractUncompressedFolderEntriesFromMemory),
             ("testMemoryArchiveErrorConditions", testMemoryArchiveErrorConditions),

@@ -25,6 +25,7 @@ let endOfCentralDirectoryStructSignature = 0x06054b50
 let localFileHeaderStructSignature = 0x04034b50
 let dataDescriptorStructSignature = 0x08074b50
 let centralDirectoryStructSignature = 0x02014b50
+let memoryURLScheme = "memory"
 
 /// A sequence of uncompressed or compressed ZIP entries.
 ///
@@ -104,13 +105,13 @@ public final class Archive: Sequence {
         static let size = 22
     }
 
-    private var preferredEncoding: String.Encoding?
     /// URL of an Archive's backing file.
     public let url: URL
     /// Access mode for an archive file.
     public let accessMode: AccessMode
     var archiveFile: UnsafeMutablePointer<FILE>
     var endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
+    var preferredEncoding: String.Encoding?
 
     /// Initializes a new ZIP `Archive`.
     ///
@@ -132,11 +133,11 @@ public final class Archive: Sequence {
         self.url = url
         self.accessMode = mode
         self.preferredEncoding = preferredEncoding
-        guard let (archiveFile, endOfCentralDirectoryRecord) = Archive.configureFileBacking(for: url, mode: mode) else {
+        guard let config = Archive.configureFileBacking(for: url, mode: mode) else {
             return nil
         }
-        self.archiveFile = archiveFile
-        self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+        self.archiveFile = config.file
+        self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
@@ -158,22 +159,17 @@ public final class Archive: Sequence {
     ///   - The backing `data` _must_ contain a valid ZIP archive for `AccessMode.read` and `AccessMode.update`.
     ///   - The backing `data` _must_ be empty (or omitted) for `AccessMode.create`.
     public init?(data: Data = Data(), accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
-        guard let url = URL(string: "memory:"),
-            let (archiveFile, memoryFile) = Archive.configureMemoryBacking(for: data, mode: mode) else {
+        guard let url = URL(string: "\(memoryURLScheme)://"),
+            let config = Archive.configureMemoryBacking(for: data, mode: mode) else {
             return nil
         }
 
         self.url = url
         self.accessMode = mode
         self.preferredEncoding = preferredEncoding
-        self.archiveFile = archiveFile
-        self.memoryFile = memoryFile
-        guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile)
-            else {
-                fclose(self.archiveFile)
-                return nil
-        }
-        self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+        self.archiveFile = config.file
+        self.memoryFile = config.memoryFile
+        self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
     }
     #endif
 
@@ -231,8 +227,30 @@ public final class Archive: Sequence {
 
     // MARK: - Helpers
 
+    struct BackingConfiguration {
+        let file: UnsafeMutablePointer<FILE>
+        let endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
+        #if swift(>=5.0)
+        let memoryFile: MemoryFile?
+
+        init(file: UnsafeMutablePointer<FILE>,
+             endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
+             memoryFile: MemoryFile? = nil) {
+            self.file = file
+            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+            self.memoryFile = memoryFile
+        }
+        #else
+
+        init(file: UnsafeMutablePointer<FILE>, endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord) {
+            self.file = file
+            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+        }
+        #endif
+    }
+
     private static func configureFileBacking(for url: URL, mode: AccessMode)
-        -> (UnsafeMutablePointer<FILE>, EndOfCentralDirectoryRecord)? {
+        -> BackingConfiguration? {
         let fileManager = FileManager()
         switch mode {
         case .read:
@@ -241,7 +259,7 @@ public final class Archive: Sequence {
                 let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
                     return nil
             }
-            return (archiveFile, endOfCentralDirectoryRecord)
+            return BackingConfiguration(file: archiveFile, endOfCentralDirectoryRecord: endOfCentralDirectoryRecord)
         case .create:
             let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
                                                                           totalNumberOfEntriesOnDisk: 0,
@@ -261,11 +279,11 @@ public final class Archive: Sequence {
                     return nil
             }
             fseek(archiveFile, 0, SEEK_SET)
-            return (archiveFile, endOfCentralDirectoryRecord)
+            return BackingConfiguration(file: archiveFile, endOfCentralDirectoryRecord: endOfCentralDirectoryRecord)
         }
     }
 
-    private static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
+    static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
         -> EndOfCentralDirectoryRecord? {
         var directoryEnd = 0
         var index = minDirectoryEndOffset
@@ -282,62 +300,6 @@ public final class Archive: Sequence {
             index += 1
         }
         return nil
-    }
-}
-
-extension Archive {
-    /// The number of the work units that have to be performed when
-    /// removing `entry` from the receiver.
-    ///
-    /// - Parameter entry: The entry that will be removed.
-    /// - Returns: The number of the work units.
-    public func totalUnitCountForRemoving(_ entry: Entry) -> Int64 {
-        return Int64(self.endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory
-                   - UInt32(entry.localSize))
-    }
-
-    func makeProgressForRemoving(_ entry: Entry) -> Progress {
-        return Progress(totalUnitCount: self.totalUnitCountForRemoving(entry))
-    }
-
-    /// The number of the work units that have to be performed when
-    /// reading `entry` from the receiver.
-    ///
-    /// - Parameter entry: The entry that will be read.
-    /// - Returns: The number of the work units.
-    public func totalUnitCountForReading(_ entry: Entry) -> Int64 {
-        switch entry.type {
-        case .file, .symlink:
-            return Int64(entry.uncompressedSize)
-        case .directory:
-            return defaultDirectoryUnitCount
-        }
-    }
-
-    func makeProgressForReading(_ entry: Entry) -> Progress {
-        return Progress(totalUnitCount: self.totalUnitCountForReading(entry))
-    }
-
-    /// The number of the work units that have to be performed when
-    /// adding the file at `url` to the receiver.
-    /// - Parameter entry: The entry that will be removed.
-    /// - Returns: The number of the work units.
-    public func totalUnitCountForAddingItem(at url: URL) -> Int64 {
-        var count = Int64(0)
-        do {
-            let type = try FileManager.typeForItem(at: url)
-            switch type {
-            case .file, .symlink:
-                count = Int64(try FileManager.fileSizeForItem(at: url))
-            case .directory:
-                count = defaultDirectoryUnitCount
-            }
-        } catch { count = -1 }
-        return count
-    }
-
-    func makeProgressForAddingItem(at url: URL) -> Progress {
-        return Progress(totalUnitCount: self.totalUnitCountForAddingItem(at: url))
     }
 }
 
