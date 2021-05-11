@@ -100,6 +100,153 @@ extension ZIPFoundationTests {
         }
     }
 
+	func testZipItemToArchive() {
+		let fileManager = FileManager()
+		let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+		let archive = self.archive(for: #function, mode: .create)
+		do {
+			try fileManager.zipItem(at: assetURL, to: archive)
+		} catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
+		XCTAssertNotNil(archive[assetURL.lastPathComponent])
+		XCTAssert(archive.checkIntegrity())
+		var directoryURL = ZIPFoundationTests.tempZipDirectoryURL
+		directoryURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
+		let newAssetURL = directoryURL.appendingPathComponent(assetURL.lastPathComponent)
+		do {
+			try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
+			try fileManager.createDirectory(at: directoryURL.appendingPathComponent("nested"),
+											withIntermediateDirectories: true, attributes: nil)
+			try fileManager.copyItem(at: assetURL, to: newAssetURL)
+			try fileManager.createSymbolicLink(at: directoryURL.appendingPathComponent("link"),
+											   withDestinationURL: newAssetURL)
+			try fileManager.zipItem(at: directoryURL, to: archive)
+		} catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
+		#if swift(>=5.0)
+		guard let inMemoryArchive = Archive(accessMode: .create) else {
+			XCTFail("Failed to create an in-memory archive.")
+			return
+		}
+		do {
+			try fileManager.zipItem(at: assetURL, to: inMemoryArchive)
+		} catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
+		XCTAssertNotNil(inMemoryArchive[assetURL.lastPathComponent])
+		XCTAssert(inMemoryArchive.checkIntegrity())
+		do {
+			try fileManager.zipItem(at: directoryURL, to: inMemoryArchive)
+		} catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
+		#endif
+	}
+
+	func testZipItemToArchiveErrorConditions() {
+		let fileManager = FileManager()
+		let archive = self.archive(for: #function, mode: .create)
+		do {
+			try fileManager.zipItem(at: URL(fileURLWithPath: "/nothing"), to: archive)
+			XCTFail("Error when zipping non-existant archive not raised")
+		} catch let error as CocoaError { XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
+		} catch {
+			XCTFail("Unexpected error while trying to zip via fileManager.")
+		}
+		var unreadableFileURL = ZIPFoundationTests.tempZipDirectoryURL
+		let pathComponent = self.pathComponent(for: #function) + "Directory"
+		do {
+			unreadableFileURL.appendPathComponent(pathComponent)
+			unreadableFileURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
+			try fileManager.createParentDirectoryStructure(for: unreadableFileURL)
+			let noPermissionAttributes = [FileAttributeKey.posixPermissions: Int16(0o000)]
+			let result = fileManager.createFile(atPath: unreadableFileURL.path, contents: nil,
+												attributes: noPermissionAttributes)
+			XCTAssert(result == true)
+			try fileManager.zipItem(at: unreadableFileURL.deletingLastPathComponent(), to: archive)
+		} catch let error as CocoaError {
+			XCTAssert(error.code == CocoaError.fileReadNoPermission)
+		} catch {
+			XCTFail("Unexpected error while trying to zip via fileManager.")
+		}
+		#if swift(>=5.0)
+		guard let inMemoryArchive = Archive(accessMode: .create) else {
+			XCTFail("Failed to create an in-memory archive.")
+			return
+		}
+		do {
+			try fileManager.zipItem(at: URL(fileURLWithPath: "/nothing"), to: inMemoryArchive)
+			XCTFail("Error when zipping non-existant archive not raised")
+		} catch let error as CocoaError { XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
+		} catch {
+			XCTFail("Unexpected error while trying to zip via fileManager.")
+		}
+		do {
+			unreadableFileURL.appendPathComponent(pathComponent)
+			unreadableFileURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
+			try fileManager.createParentDirectoryStructure(for: unreadableFileURL)
+			let noPermissionAttributes = [FileAttributeKey.posixPermissions: Int16(0o000)]
+			let result = fileManager.createFile(atPath: unreadableFileURL.path, contents: nil,
+												attributes: noPermissionAttributes)
+			XCTAssert(result == true)
+			try fileManager.zipItem(at: unreadableFileURL.deletingLastPathComponent(), to: inMemoryArchive)
+		} catch let error as CocoaError {
+			XCTAssert(error.code == CocoaError.fileReadNoPermission)
+		} catch {
+			XCTFail("Unexpected error while trying to zip via fileManager.")
+		}
+		#endif
+	}
+
+	#if swift(>=5.0)
+	func testZipItemAndReturnArchive() {
+		let fileManager = FileManager()
+		let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+		var archive: Archive
+		do {
+			archive = try fileManager.itemZipped(from: assetURL)!
+		} catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
+		XCTAssertNotNil(archive[assetURL.lastPathComponent])
+		XCTAssert(archive.checkIntegrity())
+		var directoryURL = ZIPFoundationTests.tempZipDirectoryURL
+		directoryURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
+		let newAssetURL = directoryURL.appendingPathComponent(assetURL.lastPathComponent)
+		do {
+			try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true, attributes: nil)
+			try fileManager.createDirectory(at: directoryURL.appendingPathComponent("nested"),
+											withIntermediateDirectories: true, attributes: nil)
+			try fileManager.copyItem(at: assetURL, to: newAssetURL)
+			try fileManager.createSymbolicLink(at: directoryURL.appendingPathComponent("link"),
+											   withDestinationURL: newAssetURL)
+			archive = try fileManager.itemZipped(from: directoryURL)!
+		} catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
+	}
+	#endif
+
+	#if swift(>=5.0)
+	func testZipItemAndReturnArchiveErrorConditions() {
+		let fileManager = FileManager()
+		var archive: Archive
+		do {
+			archive = try fileManager.itemZipped(from: URL(fileURLWithPath: "/nothing"))!
+			XCTFail("Error when zipping non-existant archive not raised")
+		} catch let error as CocoaError { XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
+		} catch {
+			XCTFail("Unexpected error while trying to zip via fileManager.")
+		}
+		var unreadableFileURL = ZIPFoundationTests.tempZipDirectoryURL
+		let pathComponent = self.pathComponent(for: #function) + "Directory"
+		do {
+			unreadableFileURL.appendPathComponent(pathComponent)
+			unreadableFileURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
+			try fileManager.createParentDirectoryStructure(for: unreadableFileURL)
+			let noPermissionAttributes = [FileAttributeKey.posixPermissions: Int16(0o000)]
+			let result = fileManager.createFile(atPath: unreadableFileURL.path, contents: nil,
+												attributes: noPermissionAttributes)
+			XCTAssert(result == true)
+			archive = try fileManager.itemZipped(from: unreadableFileURL.deletingLastPathComponent())!
+		} catch let error as CocoaError {
+			XCTAssert(error.code == CocoaError.fileReadNoPermission)
+		} catch {
+			XCTFail("Unexpected error while trying to zip via fileManager.")
+		}
+	}
+	#endif
+
     func testUnzipItem() {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)
@@ -170,6 +317,126 @@ extension ZIPFoundationTests {
             XCTAssertTrue(error == .unreadableArchive)
         } catch { XCTFail("Unexpected error while trying to unzip via fileManager."); return }
     }
+
+	func testUnzipArchive() {
+		let fileManager = FileManager()
+		let archive = self.archive(for: #function, mode: .read)
+		let destinationURL = self.createDirectory(for: #function)
+		do {
+			try fileManager.unzip(archive, to: destinationURL)
+		} catch {
+			XCTFail("Failed to extract item."); return
+		}
+		var itemsExist = false
+		for entry in archive {
+			let directoryURL = destinationURL.appendingPathComponent(entry.path)
+			itemsExist = fileManager.itemExists(at: directoryURL)
+			if !itemsExist { break }
+		}
+		XCTAssert(itemsExist)
+		#if swift(>=5.0)
+		guard let inMemoryArchive = Archive(accessMode: .create) else {
+			XCTFail("Failed to create an in-memory archive.")
+			return
+		}
+		do {
+			try fileManager.unzip(inMemoryArchive, to: destinationURL)
+		} catch {
+			XCTFail("Failed to extract item."); return
+		}
+		itemsExist = false
+		for entry in inMemoryArchive {
+			let directoryURL = destinationURL.appendingPathComponent(entry.path)
+			itemsExist = fileManager.itemExists(at: directoryURL)
+			if !itemsExist { break }
+		}
+		XCTAssert(itemsExist)
+		#endif
+	}
+
+	func testUnzipArchiveWithPreferredEncoding() {
+		let fileManager = FileManager()
+		let encoding = String.Encoding.utf8
+		let archive = self.archive(for: #function, mode: .read, preferredEncoding: encoding)
+		let destinationURL = self.createDirectory(for: #function)
+		do {
+			try fileManager.unzip(archive, to: destinationURL, preferredEncoding: encoding)
+		} catch {
+			XCTFail("Failed to extract item."); return
+		}
+		var itemsExist = false
+		for entry in archive {
+			let directoryURL = destinationURL.appendingPathComponent(entry.path(using: encoding))
+			itemsExist = fileManager.itemExists(at: directoryURL)
+			if !itemsExist { break }
+		}
+		XCTAssert(itemsExist)
+		#if swift(>=5.0)
+		guard let inMemoryArchive = Archive(accessMode: .create) else {
+			XCTFail("Failed to create an in-memory archive.")
+			return
+		}
+		do {
+			try fileManager.unzip(inMemoryArchive, to: destinationURL, preferredEncoding: encoding)
+		} catch {
+			XCTFail("Failed to extract item."); return
+		}
+		itemsExist = false
+		for entry in inMemoryArchive {
+			let directoryURL = destinationURL.appendingPathComponent(entry.path(using: encoding))
+			itemsExist = fileManager.itemExists(at: directoryURL)
+			if !itemsExist { break }
+		}
+		XCTAssert(itemsExist)
+		#endif
+	}
+
+	func testUnzipArchiveErrorConditions() {
+		let archive = self.archive(for: #function, mode: .read)
+		let destinationURL = ZIPFoundationTests.tempZipDirectoryURL
+		var existingURL = destinationURL
+		existingURL.appendPathComponent("test")
+		existingURL.appendPathComponent("faust.txt")
+		let fileManager = FileManager()
+		do {
+			try fileManager.createParentDirectoryStructure(for: existingURL)
+			fileManager.createFile(atPath: existingURL.path, contents: Data(), attributes: nil)
+			try fileManager.unzip(archive, to: destinationURL)
+			XCTFail("Error when unzipping archive to existing destination not raised.")
+		} catch let error as CocoaError {
+			XCTAssertTrue(error.code == CocoaError.fileWriteFileExists)
+		} catch {
+			XCTFail("Unexpected error while trying to unzip via fileManager."); return
+		}
+		do {
+			let unwritableURL = URL(fileURLWithPath: "/test.zip")
+			try fileManager.unzip(archive, to: unwritableURL)
+			XCTFail("Error when unzipping to unwritable destination not raised.")
+		} catch let error as Archive.ArchiveError { XCTAssert(error == .unwritableArchive)
+		} catch CocoaError.fileWriteNoPermission {
+		} catch { XCTFail("Unexpected error while trying to unzip via fileManager.") }
+		#if swift(>=5.0)
+		guard let inMemoryArchive = Archive(accessMode: .create) else {
+			XCTFail("Failed to create an in-memory archive.")
+			return
+		}
+		do {
+			try fileManager.unzip(inMemoryArchive, to: destinationURL)
+			XCTFail("Error when unzipping archive to existing destination not raised.")
+		} catch let error as CocoaError {
+			XCTAssertTrue(error.code == CocoaError.fileWriteFileExists)
+		} catch {
+			XCTFail("Unexpected error while trying to unzip via fileManager."); return
+		}
+		do {
+			let unwritableURL = URL(fileURLWithPath: "/test.zip")
+			try fileManager.unzip(inMemoryArchive, to: unwritableURL)
+			XCTFail("Error when unzipping to unwritable destination not raised.")
+		} catch let error as Archive.ArchiveError { XCTAssert(error == .unwritableArchive)
+		} catch CocoaError.fileWriteNoPermission {
+		} catch { XCTFail("Unexpected error while trying to unzip via fileManager.") }
+		#endif
+	}
 
     func testDirectoryCreationHelperMethods() {
         let processInfo = ProcessInfo.processInfo
