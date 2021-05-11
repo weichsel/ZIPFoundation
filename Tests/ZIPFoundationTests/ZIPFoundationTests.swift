@@ -228,7 +228,7 @@ extension ZIPFoundationTests {
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
-            ("testtemporaryReplacementDirectoryURL", testtemporaryReplacementDirectoryURL),
+            ("testTemporaryReplacementDirectoryURL", testTemporaryReplacementDirectoryURL),
             ("testTraversalAttack", testTraversalAttack),
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),

@@ -347,7 +347,7 @@ extension ZIPFoundationTests {
         XCTFail("Extraction should fail")
     }
 
-    func testtemporaryReplacementDirectoryURL() {
+    func testTemporaryReplacementDirectoryURL() {
         let archive = self.archive(for: #function, mode: .create)
         var tempURLs = Set<URL>()
         defer {
