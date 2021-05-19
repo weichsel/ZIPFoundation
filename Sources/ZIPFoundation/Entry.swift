@@ -70,6 +70,15 @@ public struct Entry: Equatable {
         static let size = 16
     }
 
+    struct Zip64ExtendedInformation {
+        let headerID: UInt16
+        let dataSize: UInt16
+        let uncompressedSize: UInt
+        let compressedSize: UInt
+        let relativeOffsetOfLocalHeader: UInt
+        let diskNumberStart: UInt32
+    }
+
     struct CentralDirectoryStructure: DataSerializable {
         let centralDirectorySignature = UInt32(centralDirectoryStructSignature)
         let versionMadeBy: UInt16

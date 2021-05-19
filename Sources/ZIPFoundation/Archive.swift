@@ -25,6 +25,8 @@ let endOfCentralDirectoryStructSignature = 0x06054b50
 let localFileHeaderStructSignature = 0x04034b50
 let dataDescriptorStructSignature = 0x08074b50
 let centralDirectoryStructSignature = 0x02014b50
+let zip64EndOfCentralDirectoryRecordStructSignature = 0x06064b50
+let zip64EndOfCentralDirectoryLocatorStructSignature = 0x07064b50
 let memoryURLScheme = "memory"
 
 /// A sequence of uncompressed or compressed ZIP entries.
@@ -103,6 +105,27 @@ public final class Archive: Sequence {
         let zipFileCommentLength: UInt16
         let zipFileCommentData: Data
         static let size = 22
+    }
+
+    struct Zip64EndOfCentralDirectoryRecord {
+        let zip64EndOfCentralDirectorySignature = UInt32(zip64EndOfCentralDirectoryRecordStructSignature)
+        let sizeOfZip64EndOfCentralDirectoryRecord: UInt
+        let versionMadeBy: UInt16
+        let versionNeededToExtract: UInt16
+        let numberOfDisk: UInt32
+        let numberOfDiskStart: UInt32
+        let totalNumberOfEntriesOnDisk: UInt
+        let totalNumberOfEntriesInCentralDirectory: UInt
+        let sizeOfCentralDirectory: UInt
+        let offsetToStartOfCentralDirectory: UInt
+        let zip64ExtensibleDataSector: Data
+    }
+
+    struct Zip64EndOfCentralDirectoryLocator {
+        let zip64EndOfCentralDirectoryLocatorSignature = UInt32(zip64EndOfCentralDirectoryLocatorStructSignature)
+        let numberOfDiskWithZip64EOCDRecordStart: UInt32
+        let relativeOffsetOfZip64EOCDRecord: UInt
+        let totalNumberOfDisk: UInt32
     }
 
     /// URL of an Archive's backing file.
