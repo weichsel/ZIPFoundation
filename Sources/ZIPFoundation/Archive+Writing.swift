@@ -127,40 +127,20 @@ extension Archive {
         fseek(self.archiveFile, startOfCD, SEEK_SET)
         let localFileHeaderStart = ftell(self.archiveFile)
         let modDateTime = modificationDate.fileModificationDateTime
-        var uncompressedSizeOfLFH = UInt32(0)
-        var compressedSizeOfLFH = UInt32(0)
-        var lfhZip64ExtendedInformation: Entry.Zip64ExtendedInformation?
-        var extraFieldLength = UInt16(0)
         defer { fflush(self.archiveFile) }
         do {
             let (written, checksum) = try self.writeEntry(uncompressedSize: uncompressedSize, type: type,
                                                           compressionMethod: compressionMethod, bufferSize: bufferSize,
                                                           progress: progress, provider: provider)
-            // This entry in the Local header MUST include BOTH original compressed file size fields.
-            if uncompressedSize >= maxUncompressedSize || written >= maxCompressedSize {
-                uncompressedSizeOfLFH = UInt32.max
-                compressedSizeOfLFH = UInt32.max
-                extraFieldLength = UInt16(20)
-                lfhZip64ExtendedInformation = Entry.Zip64ExtendedInformation(headerID: UInt16(1), dataSize: UInt16(16),
-                                                                             uncompressedSize: uncompressedSize,
-                                                                             compressedSize: written,
-                                                                             relativeOffsetOfLocalHeader: 0,
-                                                                             diskNumberStart: 0)
-            } else {
-                uncompressedSizeOfLFH = UInt32(uncompressedSize)
-                compressedSizeOfLFH = UInt32(written)
-            }
             fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
             // Write the local file header with compressedSize (if applicable) and a valid checksum.
             let localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
-                                                            size: (uncompressedSizeOfLFH, compressedSizeOfLFH),
-                                                            checksum: checksum, modificationDateTime: modDateTime,
-                                                            extraFieldLength: extraFieldLength,
-                                                            extraFieldData: lfhZip64ExtendedInformation?.data ?? Data())
+                                                            size: (uncompressedSize, written),
+                                                            checksum: checksum, modificationDateTime: modDateTime)
             startOfCD = ftell(self.archiveFile)
             fseek(self.archiveFile, startOfCD, SEEK_SET)
             _ = try Data.write(chunk: existingCentralDirData, to: self.archiveFile)
-            let permissions = permissions ?? (type == .directory ? defaultDirectoryPermissions :defaultFilePermissions)
+            let permissions = permissions ?? (type == .directory ? defaultDirectoryPermissions : defaultFilePermissions)
             let externalAttributes = FileManager.externalFileAttributesForEntry(of: type, permissions: permissions)
             let offset = UInt32(localFileHeaderStart)
             let centralDir = try self.writeCentralDirectoryStructure(localFileHeader: localFileHeader,
@@ -258,20 +238,39 @@ extension Archive {
     }
 
     private func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
-                                      size: (uncompressed: UInt32, compressed: UInt32), checksum: CRC32,
-                                      modificationDateTime: (UInt16, UInt16),
-                                      extraFieldLength: UInt16, extraFieldData: Data) throws -> LocalFileHeader {
+                                      size: (uncompressed: UInt, compressed: UInt), checksum: CRC32,
+                                      modificationDateTime: (UInt16, UInt16)) throws -> LocalFileHeader {
         // We always set Bit 11 in generalPurposeBitFlag, which indicates an UTF-8 encoded path.
         guard let fileNameData = path.data(using: .utf8) else { throw ArchiveError.invalidEntryPath }
+
+        var uncompressedSizeOfLFH = UInt32(0)
+        var compressedSizeOfLFH = UInt32(0)
+        var extraFieldLength = UInt16(0)
+        var lfhZip64ExtendedInformation: Entry.Zip64ExtendedInformation?
+        // Zip64 Extended Information in the Local header MUST include BOTH original compressed file size fields.
+        if size.uncompressed >= maxUncompressedSize || size.compressed >= maxCompressedSize {
+            uncompressedSizeOfLFH = UInt32.max
+            compressedSizeOfLFH = UInt32.max
+            extraFieldLength = UInt16(20)
+            lfhZip64ExtendedInformation = Entry.Zip64ExtendedInformation(headerID: UInt16(1), dataSize: UInt16(16),
+                                                                         uncompressedSize: size.uncompressed,
+                                                                         compressedSize: size.compressed,
+                                                                         relativeOffsetOfLocalHeader: 0,
+                                                                         diskNumberStart: 0)
+        } else {
+            uncompressedSizeOfLFH = UInt32(size.uncompressed)
+            compressedSizeOfLFH = UInt32(size.compressed)
+        }
 
         let localFileHeader = LocalFileHeader(versionNeededToExtract: UInt16(20), generalPurposeBitFlag: UInt16(2048),
                                               compressionMethod: compressionMethod.rawValue,
                                               lastModFileTime: modificationDateTime.1,
                                               lastModFileDate: modificationDateTime.0, crc32: checksum,
-                                              compressedSize: size.compressed, uncompressedSize: size.uncompressed,
+                                              compressedSize: compressedSizeOfLFH,
+                                              uncompressedSize: uncompressedSizeOfLFH,
                                               fileNameLength: UInt16(fileNameData.count),
-                                              extraFieldLength: extraFieldLength,
-                                              fileNameData: fileNameData, extraFieldData: extraFieldData)
+                                              extraFieldLength: extraFieldLength, fileNameData: fileNameData,
+                                              extraFieldData: lfhZip64ExtendedInformation?.data ?? Data())
         _ = try Data.write(chunk: localFileHeader.data, to: self.archiveFile)
         return localFileHeader
     }
