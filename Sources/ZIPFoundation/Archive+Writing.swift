@@ -142,9 +142,11 @@ extension Archive {
             _ = try Data.write(chunk: existingCentralDirData, to: self.archiveFile)
             let permissions = permissions ?? (type == .directory ? defaultDirectoryPermissions : defaultFilePermissions)
             let externalAttributes = FileManager.externalFileAttributesForEntry(of: type, permissions: permissions)
-            let offset = UInt32(localFileHeaderStart)
+            let offset = UInt(localFileHeaderStart)
             let centralDir = try self.writeCentralDirectoryStructure(localFileHeader: localFileHeader,
                                                                      relativeOffset: offset,
+                                                                     uncompressedSize: uncompressedSize,
+                                                                     compressedSize: written,
                                                                      externalFileAttributes: externalAttributes)
             if startOfCD > UInt32.max { throw ArchiveError.invalidStartOfCentralDirectoryOffset }
             endOfCentralDirRecord = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDir,
@@ -246,17 +248,18 @@ extension Archive {
         var uncompressedSizeOfLFH = UInt32(0)
         var compressedSizeOfLFH = UInt32(0)
         var extraFieldLength = UInt16(0)
-        var lfhZip64ExtendedInformation: Entry.Zip64ExtendedInformation?
+        var zip64ExtendedInformation: Entry.Zip64ExtendedInformation?
         // Zip64 Extended Information in the Local header MUST include BOTH original compressed file size fields.
         if size.uncompressed >= maxUncompressedSize || size.compressed >= maxCompressedSize {
             uncompressedSizeOfLFH = UInt32.max
             compressedSizeOfLFH = UInt32.max
-            extraFieldLength = UInt16(20)
-            lfhZip64ExtendedInformation = Entry.Zip64ExtendedInformation(headerID: UInt16(1), dataSize: UInt16(16),
-                                                                         uncompressedSize: size.uncompressed,
-                                                                         compressedSize: size.compressed,
-                                                                         relativeOffsetOfLocalHeader: 0,
-                                                                         diskNumberStart: 0)
+            extraFieldLength = UInt16(20) // 2 + 2 + 8 + 8
+            zip64ExtendedInformation = Entry.Zip64ExtendedInformation(headerID: UInt16(1),
+                                                                      dataSize: extraFieldLength - 4,
+                                                                      uncompressedSize: size.uncompressed,
+                                                                      compressedSize: size.compressed,
+                                                                      relativeOffsetOfLocalHeader: 0,
+                                                                      diskNumberStart: 0)
         } else {
             uncompressedSizeOfLFH = UInt32(size.uncompressed)
             compressedSizeOfLFH = UInt32(size.compressed)
@@ -270,7 +273,7 @@ extension Archive {
                                               uncompressedSize: uncompressedSizeOfLFH,
                                               fileNameLength: UInt16(fileNameData.count),
                                               extraFieldLength: extraFieldLength, fileNameData: fileNameData,
-                                              extraFieldData: lfhZip64ExtendedInformation?.data ?? Data())
+                                              extraFieldData: zip64ExtendedInformation?.data ?? Data())
         _ = try Data.write(chunk: localFileHeader.data, to: self.archiveFile)
         return localFileHeader
     }
@@ -341,11 +344,40 @@ extension Archive {
         return (UInt(sizeWritten), checksum)
     }
 
-    private func writeCentralDirectoryStructure(localFileHeader: LocalFileHeader, relativeOffset: UInt32,
+    private func writeCentralDirectoryStructure(localFileHeader: LocalFileHeader, relativeOffset: UInt,
+                                                uncompressedSize: UInt, compressedSize: UInt,
                                                 externalFileAttributes: UInt32) throws -> CentralDirectoryStructure {
+        var extraUncompressedSize: UInt?
+        var extraCompressedSize: UInt?
+        var extraRelativeOffset: UInt?
+        var relativeOffsetOfCD = UInt32(0)
+        var extraFieldLength = UInt16(0)
+        var zip64ExtendedInformation: Entry.Zip64ExtendedInformation?
+        if uncompressedSize >= maxUncompressedSize || compressedSize >= maxCompressedSize {
+            extraUncompressedSize = uncompressedSize
+            extraCompressedSize = compressedSize
+            extraFieldLength += UInt16(16)
+        }
+        if relativeOffset >= maxOffsetOfLocalFileHeader {
+            extraRelativeOffset = relativeOffset
+            relativeOffsetOfCD = UInt32.max
+            extraFieldLength += UInt16(8)
+        } else {
+            relativeOffsetOfCD = UInt32(relativeOffset)
+        }
+        if [extraUncompressedSize, extraCompressedSize, extraRelativeOffset].contains(where: { $0 != nil }) {
+            extraFieldLength += 4
+            zip64ExtendedInformation = Entry.Zip64ExtendedInformation(headerID: UInt16(1), dataSize: extraFieldLength - 4,
+                                                                      uncompressedSize: extraUncompressedSize ?? 0,
+                                                                      compressedSize: extraCompressedSize ?? 0,
+                                                                      relativeOffsetOfLocalHeader: extraRelativeOffset ?? 0,
+                                                                      diskNumberStart: 0)
+        }
         let centralDirectory = CentralDirectoryStructure(localFileHeader: localFileHeader,
                                                          fileAttributes: externalFileAttributes,
-                                                         relativeOffset: relativeOffset)
+                                                         relativeOffset: relativeOffsetOfCD,
+                                                         extraField: (extraFieldLength,
+                                                                      zip64ExtendedInformation?.data ?? Data()))
         _ = try Data.write(chunk: centralDirectory.data, to: self.archiveFile)
         return centralDirectory
     }

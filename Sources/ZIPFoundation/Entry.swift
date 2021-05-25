@@ -363,7 +363,8 @@ extension Entry.CentralDirectoryStructure {
         self.fileCommentData = additionalData.subdata(in: subRangeStart..<subRangeEnd)
     }
 
-    init(localFileHeader: Entry.LocalFileHeader, fileAttributes: UInt32, relativeOffset: UInt32) {
+    init(localFileHeader: Entry.LocalFileHeader, fileAttributes: UInt32, relativeOffset: UInt32,
+         extraField: (length: UInt16, data: Data)) {
         versionMadeBy = UInt16(789)
         versionNeededToExtract = localFileHeader.versionNeededToExtract
         generalPurposeBitFlag = localFileHeader.generalPurposeBitFlag
@@ -374,14 +375,14 @@ extension Entry.CentralDirectoryStructure {
         compressedSize = localFileHeader.compressedSize
         uncompressedSize = localFileHeader.uncompressedSize
         fileNameLength = localFileHeader.fileNameLength
-        extraFieldLength = UInt16(0)
+        extraFieldLength = extraField.length
         fileCommentLength = UInt16(0)
         diskNumberStart = UInt16(0)
         internalFileAttributes = UInt16(0)
         externalFileAttributes = fileAttributes
         relativeOffsetOfLocalHeader = relativeOffset
         fileNameData = localFileHeader.fileNameData
-        extraFieldData = Data()
+        extraFieldData = extraField.data
         fileCommentData = Data()
     }
 
