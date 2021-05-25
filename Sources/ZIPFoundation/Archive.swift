@@ -29,6 +29,28 @@ let zip64EndOfCentralDirectoryRecordStructSignature = 0x06064b50
 let zip64EndOfCentralDirectoryLocatorStructSignature = 0x07064b50
 let memoryURLScheme = "memory"
 
+let maxUInt32: UInt32 = {
+    #if DEBUG
+    return UInt32(1024)
+    #else
+    return .max
+    #endif
+}()
+
+let maxUInt16: UInt16 = {
+    #if DEBUG
+    return UInt16(512)
+    #else
+    return .max
+    #endif
+}()
+
+let maxCompressedSize = maxUInt32
+let maxUncompressedSize = maxUInt32
+let maxOffsetOfLocalFileHeader = maxUInt32
+let maxOffsetOfCentralDirectory = maxUInt32
+let maxTotalNumberOfEntries = maxUInt16
+
 /// A sequence of uncompressed or compressed ZIP entries.
 ///
 /// You use an `Archive` to create, read or update ZIP files.

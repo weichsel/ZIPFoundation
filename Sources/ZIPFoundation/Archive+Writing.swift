@@ -111,7 +111,7 @@ extension Archive {
     ///   - progress: A progress object that can be used to track or cancel the add operation.
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
     /// - Throws: An error if the source data is invalid or the receiver is not writable.
-    public func addEntry(with path: String, type: Entry.EntryType, uncompressedSize: UInt32,
+    public func addEntry(with path: String, type: Entry.EntryType, uncompressedSize: UInt,
                          modificationDate: Date = Date(), permissions: UInt16? = nil,
                          compressionMethod: CompressionMethod = .none, bufferSize: UInt32 = defaultWriteChunkSize,
                          progress: Progress? = nil, provider: Provider) throws {
@@ -127,20 +127,37 @@ extension Archive {
         fseek(self.archiveFile, startOfCD, SEEK_SET)
         let localFileHeaderStart = ftell(self.archiveFile)
         let modDateTime = modificationDate.fileModificationDateTime
+        var uncompressedSizeOfLFH = UInt32(0)
+        var compressedSizeOfLFH = UInt32(0)
+        var lfhZip64ExtendedInformation: Entry.Zip64ExtendedInformation?
+        var extraFieldLength = UInt16(0)
         defer { fflush(self.archiveFile) }
         do {
-            var localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
-                                                                size: (uncompressedSize, 0), checksum: 0,
-                                                                modificationDateTime: modDateTime)
-            let (written, checksum) = try self.writeEntry(localFileHeader: localFileHeader, type: type,
+            let (written, checksum) = try self.writeEntry(uncompressedSize: uncompressedSize, type: type,
                                                           compressionMethod: compressionMethod, bufferSize: bufferSize,
                                                           progress: progress, provider: provider)
-            startOfCD = ftell(self.archiveFile)
+            // This entry in the Local header MUST include BOTH original compressed file size fields.
+            if uncompressedSize >= maxUncompressedSize || written >= maxCompressedSize {
+                uncompressedSizeOfLFH = UInt32.max
+                compressedSizeOfLFH = UInt32.max
+                extraFieldLength = UInt16(20)
+                lfhZip64ExtendedInformation = Entry.Zip64ExtendedInformation(headerID: UInt16(1), dataSize: UInt16(16),
+                                                                             uncompressedSize: uncompressedSize,
+                                                                             compressedSize: written,
+                                                                             relativeOffsetOfLocalHeader: 0,
+                                                                             diskNumberStart: 0)
+            } else {
+                uncompressedSizeOfLFH = UInt32(uncompressedSize)
+                compressedSizeOfLFH = UInt32(written)
+            }
             fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
-            // Write the local file header a second time. Now with compressedSize (if applicable) and a valid checksum.
-            localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
-                                                            size: (uncompressedSize, written),
-                                                            checksum: checksum, modificationDateTime: modDateTime)
+            // Write the local file header with compressedSize (if applicable) and a valid checksum.
+            let localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
+                                                            size: (uncompressedSizeOfLFH, compressedSizeOfLFH),
+                                                            checksum: checksum, modificationDateTime: modDateTime,
+                                                            extraFieldLength: extraFieldLength,
+                                                            extraFieldData: lfhZip64ExtendedInformation?.data ?? Data())
+            startOfCD = ftell(self.archiveFile)
             fseek(self.archiveFile, startOfCD, SEEK_SET)
             _ = try Data.write(chunk: existingCentralDirData, to: self.archiveFile)
             let permissions = permissions ?? (type == .directory ? defaultDirectoryPermissions :defaultFilePermissions)
@@ -242,7 +259,8 @@ extension Archive {
 
     private func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
                                       size: (uncompressed: UInt32, compressed: UInt32), checksum: CRC32,
-                                      modificationDateTime: (UInt16, UInt16)) throws -> LocalFileHeader {
+                                      modificationDateTime: (UInt16, UInt16),
+                                      extraFieldLength: UInt16, extraFieldData: Data) throws -> LocalFileHeader {
         // We always set Bit 11 in generalPurposeBitFlag, which indicates an UTF-8 encoded path.
         guard let fileNameData = path.data(using: .utf8) else { throw ArchiveError.invalidEntryPath }
 
@@ -251,26 +269,27 @@ extension Archive {
                                               lastModFileTime: modificationDateTime.1,
                                               lastModFileDate: modificationDateTime.0, crc32: checksum,
                                               compressedSize: size.compressed, uncompressedSize: size.uncompressed,
-                                              fileNameLength: UInt16(fileNameData.count), extraFieldLength: UInt16(0),
-                                              fileNameData: fileNameData, extraFieldData: Data())
+                                              fileNameLength: UInt16(fileNameData.count),
+                                              extraFieldLength: extraFieldLength,
+                                              fileNameData: fileNameData, extraFieldData: extraFieldData)
         _ = try Data.write(chunk: localFileHeader.data, to: self.archiveFile)
         return localFileHeader
     }
 
-    private func writeEntry(localFileHeader: LocalFileHeader, type: Entry.EntryType,
+    private func writeEntry(uncompressedSize: UInt, type: Entry.EntryType,
                             compressionMethod: CompressionMethod, bufferSize: UInt32, progress: Progress? = nil,
-                            provider: Provider) throws -> (sizeWritten: UInt32, crc32: CRC32) {
+                            provider: Provider) throws -> (sizeWritten: UInt, crc32: CRC32) {
         var checksum = CRC32(0)
-        var sizeWritten = UInt32(0)
+        var sizeWritten = UInt(0)
         switch type {
         case .file:
             switch compressionMethod {
             case .none:
-                (sizeWritten, checksum) = try self.writeUncompressed(size: localFileHeader.uncompressedSize,
+                (sizeWritten, checksum) = try self.writeUncompressed(size: uncompressedSize,
                                                                      bufferSize: bufferSize,
                                                                      progress: progress, provider: provider)
             case .deflate:
-                (sizeWritten, checksum) = try self.writeCompressed(size: localFileHeader.uncompressedSize,
+                (sizeWritten, checksum) = try self.writeCompressed(size: uncompressedSize,
                                                                    bufferSize: bufferSize,
                                                                    progress: progress, provider: provider)
             }
@@ -278,15 +297,15 @@ extension Archive {
             _ = try provider(0, 0)
             if let progress = progress { progress.completedUnitCount = progress.totalUnitCount }
         case .symlink:
-            (sizeWritten, checksum) = try self.writeSymbolicLink(size: localFileHeader.uncompressedSize,
+            (sizeWritten, checksum) = try self.writeSymbolicLink(size: uncompressedSize,
                                                                  provider: provider)
             if let progress = progress { progress.completedUnitCount = progress.totalUnitCount }
         }
         return (sizeWritten, checksum)
     }
 
-    private func writeUncompressed(size: UInt32, bufferSize: UInt32, progress: Progress? = nil,
-                                   provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
+    private func writeUncompressed(size: UInt, bufferSize: UInt32, progress: Progress? = nil,
+                                   provider: Provider) throws -> (sizeWritten: UInt, checksum: CRC32) {
         var position = 0
         var sizeWritten = 0
         var checksum = CRC32(0)
@@ -299,11 +318,11 @@ extension Archive {
             position += Int(bufferSize)
             progress?.completedUnitCount = Int64(sizeWritten)
         }
-        return (UInt32(sizeWritten), checksum)
+        return (UInt(sizeWritten), checksum)
     }
 
-    private func writeCompressed(size: UInt32, bufferSize: UInt32, progress: Progress? = nil,
-                                 provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
+    private func writeCompressed(size: UInt, bufferSize: UInt32, progress: Progress? = nil,
+                                 provider: Provider) throws -> (sizeWritten: UInt, checksum: CRC32) {
         var sizeWritten = 0
         let consumer: Consumer = { data in sizeWritten += try Data.write(chunk: data, to: self.archiveFile) }
         let checksum = try Data.compress(size: Int(size), bufferSize: Int(bufferSize),
@@ -313,14 +332,14 @@ extension Archive {
                                             progress?.completedUnitCount += Int64(data.count)
                                             return data
                                          }, consumer: consumer)
-        return(UInt32(sizeWritten), checksum)
+        return(UInt(sizeWritten), checksum)
     }
 
-    private func writeSymbolicLink(size: UInt32, provider: Provider) throws -> (sizeWritten: UInt32, checksum: CRC32) {
+    private func writeSymbolicLink(size: UInt, provider: Provider) throws -> (sizeWritten: UInt, checksum: CRC32) {
         let linkData = try provider(0, Int(size))
         let checksum = linkData.crc32(checksum: 0)
         let sizeWritten = try Data.write(chunk: linkData, to: self.archiveFile)
-        return (UInt32(sizeWritten), checksum)
+        return (UInt(sizeWritten), checksum)
     }
 
     private func writeCentralDirectoryStructure(localFileHeader: LocalFileHeader, relativeOffset: UInt32,

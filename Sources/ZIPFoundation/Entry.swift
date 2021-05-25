@@ -268,6 +268,25 @@ extension Entry.LocalFileHeader {
     }
 }
 
+extension Entry.Zip64ExtendedInformation {
+    var data: Data {
+        var headerID = self.headerID
+        var dataSize = self.dataSize
+        var uncompressedSize = self.uncompressedSize
+        var compressedSize = self.compressedSize
+        var relativeOffsetOfLocalHeader = self.relativeOffsetOfLocalHeader
+        var diskNumberStart = self.diskNumberStart
+        var data = Data()
+        withUnsafePointer(to: &headerID, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &dataSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &uncompressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &compressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &relativeOffsetOfLocalHeader, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &diskNumberStart, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        return data
+    }
+}
+
 extension Entry.CentralDirectoryStructure {
     var data: Data {
         var centralDirectorySignature = self.centralDirectorySignature
