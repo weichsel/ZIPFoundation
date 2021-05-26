@@ -254,8 +254,7 @@ extension Archive {
             uncompressedSizeOfLFH = UInt32.max
             compressedSizeOfLFH = UInt32.max
             extraFieldLength = UInt16(20) // 2 + 2 + 8 + 8
-            zip64ExtendedInformation = Entry.Zip64ExtendedInformation(headerID: UInt16(1),
-                                                                      dataSize: extraFieldLength - 4,
+            zip64ExtendedInformation = Entry.Zip64ExtendedInformation(dataSize: extraFieldLength - 4,
                                                                       uncompressedSize: size.uncompressed,
                                                                       compressedSize: size.compressed,
                                                                       relativeOffsetOfLocalHeader: 0,
@@ -345,7 +344,6 @@ extension Archive {
     }
 
     private func writeCentralDirectoryStructure(localFileHeader: LocalFileHeader, relativeOffset: UInt,
-                                                uncompressedSize: UInt, compressedSize: UInt,
                                                 externalFileAttributes: UInt32) throws -> CentralDirectoryStructure {
         var extraUncompressedSize: UInt?
         var extraCompressedSize: UInt?
@@ -353,9 +351,11 @@ extension Archive {
         var relativeOffsetOfCD = UInt32(0)
         var extraFieldLength = UInt16(0)
         var zip64ExtendedInformation: Entry.Zip64ExtendedInformation?
-        if uncompressedSize >= maxUncompressedSize || compressedSize >= maxCompressedSize {
-            extraUncompressedSize = uncompressedSize
-            extraCompressedSize = compressedSize
+        if localFileHeader.uncompressedSize == UInt.max || localFileHeader.compressedSize == UInt.max {
+            let extraField = Entry.Zip64ExtendedInformation(data: localFileHeader.extraFieldData,
+                                                            fields: [.uncompressedSize, .compressedSize])
+            extraUncompressedSize = extraField?.uncompressedSize
+            extraCompressedSize = extraField?.compressedSize
             extraFieldLength += UInt16(16)
         }
         if relativeOffset >= maxOffsetOfLocalFileHeader {
@@ -365,9 +365,12 @@ extension Archive {
         } else {
             relativeOffsetOfCD = UInt32(relativeOffset)
         }
-        if [extraUncompressedSize, extraCompressedSize, extraRelativeOffset].contains(where: { $0 != nil }) {
+        extraFieldLength = [extraUncompressedSize, extraCompressedSize, extraRelativeOffset]
+            .compactMap { $0 }
+            .reduce(UInt16(0), { $0 + UInt16(MemoryLayout.size(ofValue: $1)) })
+        if extraFieldLength > 0 {
             extraFieldLength += 4
-            zip64ExtendedInformation = Entry.Zip64ExtendedInformation(headerID: UInt16(1), dataSize: extraFieldLength - 4,
+            zip64ExtendedInformation = Entry.Zip64ExtendedInformation(dataSize: extraFieldLength - 4,
                                                                       uncompressedSize: extraUncompressedSize ?? 0,
                                                                       compressedSize: extraCompressedSize ?? 0,
                                                                       relativeOffsetOfLocalHeader: extraRelativeOffset ?? 0,

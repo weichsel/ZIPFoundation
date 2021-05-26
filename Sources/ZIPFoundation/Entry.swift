@@ -70,15 +70,6 @@ public struct Entry: Equatable {
         static let size = 16
     }
 
-    struct Zip64ExtendedInformation {
-        let headerID: UInt16
-        let dataSize: UInt16
-        let uncompressedSize: UInt
-        let compressedSize: UInt
-        let relativeOffsetOfLocalHeader: UInt
-        let diskNumberStart: UInt32
-    }
-
     struct CentralDirectoryStructure: DataSerializable {
         let centralDirectorySignature = UInt32(centralDirectoryStructSignature)
         let versionMadeBy: UInt16
@@ -106,6 +97,16 @@ public struct Entry: Equatable {
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
         var isZIP64: Bool { return UInt8(truncatingIfNeeded: self.versionNeededToExtract) >= 45 }
     }
+
+    struct Zip64ExtendedInformation {
+        let headerID = ExtraFieldHeaderID.zip64ExtendedInformation
+        let dataSize: UInt16
+        let uncompressedSize: UInt
+        let compressedSize: UInt
+        let relativeOffsetOfLocalHeader: UInt
+        let diskNumberStart: UInt32
+    }
+
     /// Returns the `path` of the receiver within a ZIP `Archive` using a given encoding.
     ///
     /// - Parameters:
@@ -268,25 +269,6 @@ extension Entry.LocalFileHeader {
     }
 }
 
-extension Entry.Zip64ExtendedInformation {
-    var data: Data {
-        var headerID = self.headerID
-        var dataSize = self.dataSize
-        var uncompressedSize = self.uncompressedSize
-        var compressedSize = self.compressedSize
-        var relativeOffsetOfLocalHeader = self.relativeOffsetOfLocalHeader
-        var diskNumberStart = self.diskNumberStart
-        var data = Data()
-        withUnsafePointer(to: &headerID, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
-        withUnsafePointer(to: &dataSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
-        withUnsafePointer(to: &uncompressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
-        withUnsafePointer(to: &compressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
-        withUnsafePointer(to: &relativeOffsetOfLocalHeader, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
-        withUnsafePointer(to: &diskNumberStart, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
-        return data
-    }
-}
-
 extension Entry.CentralDirectoryStructure {
     var data: Data {
         var centralDirectorySignature = self.centralDirectorySignature
@@ -427,3 +409,67 @@ extension Entry.DataDescriptor {
         self.data = Data()
     }
 }
+
+extension Entry.Zip64ExtendedInformation {
+    enum Field {
+        case uncompressedSize
+        case compressedSize
+        case relativeOffsetOfLocalHeader
+        case diskNumberStart
+    }
+
+    var data: Data {
+        var headerID = self.headerID
+        var dataSize = self.dataSize
+        var uncompressedSize = self.uncompressedSize
+        var compressedSize = self.compressedSize
+        var relativeOffsetOfLocalHeader = self.relativeOffsetOfLocalHeader
+        var diskNumberStart = self.diskNumberStart
+        var data = Data()
+        withUnsafePointer(to: &headerID, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &dataSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &uncompressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &compressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &relativeOffsetOfLocalHeader, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &diskNumberStart, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        return data
+    }
+
+    init?(data: Data, fields: [Field]) {
+        var readOffset = 4
+        func value<T>(of field: Field) -> T where T: UnsignedInteger {
+            if fields.contains(field) {
+                defer {
+                    readOffset += MemoryLayout<T>.size
+                }
+                return data.scanValue(start: readOffset)
+            } else {
+                return 0
+            }
+        }
+        
+        dataSize = data.scanValue(start: 2)
+        uncompressedSize = value(of: .uncompressedSize)
+        compressedSize = value(of: .compressedSize)
+        relativeOffsetOfLocalHeader = value(of: .relativeOffsetOfLocalHeader)
+        diskNumberStart = value(of: .diskNumberStart)
+    }
+
+    static func scanForZip64ExtendedInformation(in data: Data, fields: [Field]) -> Entry.Zip64ExtendedInformation? {
+        guard !data.isEmpty else { return nil }
+        var offset = 0
+        var headerID: ExtraFieldHeaderID
+        var dataSize: UInt16
+        while offset < data.count {
+            headerID = data.scanValue(start: offset)
+            dataSize = data.scanValue(start: offset + 2)
+            let nextOffset = offset + 4 + Int(dataSize)
+            if headerID == .zip64ExtendedInformation {
+                return Entry.Zip64ExtendedInformation(data: data.subdata(in: offset..<nextOffset), fields: fields)
+            }
+            offset = nextOffset
+        }
+        return nil
+    }
+}
+

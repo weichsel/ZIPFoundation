@@ -29,6 +29,10 @@ let zip64EndOfCentralDirectoryRecordStructSignature = 0x06064b50
 let zip64EndOfCentralDirectoryLocatorStructSignature = 0x07064b50
 let memoryURLScheme = "memory"
 
+enum ExtraFieldHeaderID: UInt16 {
+    case zip64ExtendedInformation = 0x0001
+}
+
 let maxUInt32: UInt32 = {
     #if DEBUG
     return UInt32(1024)
