@@ -447,7 +447,7 @@ extension Entry.Zip64ExtendedInformation {
                 return 0
             }
         }
-        
+
         dataSize = data.scanValue(start: 2)
         uncompressedSize = value(of: .uncompressedSize)
         compressedSize = value(of: .compressedSize)

@@ -53,6 +53,7 @@ let maxCompressedSize = maxUInt32
 let maxUncompressedSize = maxUInt32
 let maxOffsetOfLocalFileHeader = maxUInt32
 let maxOffsetOfCentralDirectory = maxUInt32
+let maxSizeOfCentralDirectory = maxUInt32
 let maxTotalNumberOfEntries = maxUInt16
 
 /// A sequence of uncompressed or compressed ZIP entries.
@@ -133,7 +134,7 @@ public final class Archive: Sequence {
         static let size = 22
     }
 
-    struct Zip64EndOfCentralDirectoryRecord {
+    struct Zip64EndOfCentralDirectoryRecord: DataSerializable {
         let zip64EndOfCentralDirectorySignature = UInt32(zip64EndOfCentralDirectoryRecordStructSignature)
         let sizeOfZip64EndOfCentralDirectoryRecord: UInt
         let versionMadeBy: UInt16
@@ -145,13 +146,20 @@ public final class Archive: Sequence {
         let sizeOfCentralDirectory: UInt
         let offsetToStartOfCentralDirectory: UInt
         let zip64ExtensibleDataSector: Data
+        static let size = 44
     }
 
-    struct Zip64EndOfCentralDirectoryLocator {
+    struct Zip64EndOfCentralDirectoryLocator: DataSerializable {
         let zip64EndOfCentralDirectoryLocatorSignature = UInt32(zip64EndOfCentralDirectoryLocatorStructSignature)
         let numberOfDiskWithZip64EOCDRecordStart: UInt32
         let relativeOffsetOfZip64EOCDRecord: UInt
         let totalNumberOfDisk: UInt32
+        static let size = 20
+    }
+
+    struct Zip64EndOfCentralDirectory {
+        let record: Zip64EndOfCentralDirectoryRecord
+        let locator: Zip64EndOfCentralDirectoryLocator
     }
 
     /// URL of an Archive's backing file.
@@ -160,6 +168,7 @@ public final class Archive: Sequence {
     public let accessMode: AccessMode
     var archiveFile: UnsafeMutablePointer<FILE>
     var endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
+    var zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?
     var preferredEncoding: String.Encoding?
 
     /// Initializes a new ZIP `Archive`.
@@ -404,4 +413,80 @@ extension Archive.EndOfCentralDirectoryRecord {
         zipFileCommentLength = record.zipFileCommentLength
         zipFileCommentData = record.zipFileCommentData
     }
+}
+
+extension Archive.Zip64EndOfCentralDirectoryRecord {
+    var data: Data {
+        var zip64EOCDSignature = self.zip64EndOfCentralDirectorySignature
+        var sizeOfZip64EOCDRecord = self.sizeOfZip64EndOfCentralDirectoryRecord
+        var versionMadeBy = self.versionMadeBy
+        var versionNeededToExtract = self.versionMadeBy
+        var numberOfDisk = self.numberOfDisk
+        var numberOfDiskStart = self.numberOfDiskStart
+        var totalNumberOfEntriesOnDisk = self.totalNumberOfEntriesOnDisk
+        var totalNumberOfEntriesInCD = self.totalNumberOfEntriesInCentralDirectory
+        var sizeOfCD = self.sizeOfCentralDirectory
+        var offsetToStartOfCD = self.offsetToStartOfCentralDirectory
+        var data = Data()
+        withUnsafePointer(to: &zip64EOCDSignature, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &sizeOfZip64EOCDRecord, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &versionMadeBy, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &versionNeededToExtract, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &numberOfDisk, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &numberOfDiskStart, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &totalNumberOfEntriesOnDisk, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &totalNumberOfEntriesInCD, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &sizeOfCD, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &offsetToStartOfCD, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        data.append(self.zip64ExtensibleDataSector)
+        return data
+    }
+
+    init?(data: Data, additionalDataProvider: (Int) throws -> Data) {
+        return nil
+    }
+
+    init(record: Archive.Zip64EndOfCentralDirectoryRecord,
+         numberOfEntriesOnDisk: UInt,
+         numberOfEntriesInCentralDirectory: UInt,
+         sizeOfCentralDirectory: UInt,
+         offsetToStartOfCentralDirectory: UInt) {
+        self.sizeOfZip64EndOfCentralDirectoryRecord = record.sizeOfZip64EndOfCentralDirectoryRecord
+        self.versionMadeBy = record.versionMadeBy
+        self.versionNeededToExtract = record.versionNeededToExtract
+        self.numberOfDisk = record.numberOfDisk
+        self.numberOfDiskStart = record.numberOfDiskStart
+        self.totalNumberOfEntriesOnDisk = numberOfEntriesOnDisk
+        self.totalNumberOfEntriesInCentralDirectory = numberOfEntriesInCentralDirectory
+        self.sizeOfCentralDirectory = sizeOfCentralDirectory
+        self.offsetToStartOfCentralDirectory = offsetToStartOfCentralDirectory
+        self.zip64ExtensibleDataSector = record.zip64ExtensibleDataSector
+    }
+}
+
+extension Archive.Zip64EndOfCentralDirectoryLocator {
+    var data: Data {
+        var numberOfDiskWithZip64EOCD = self.numberOfDiskWithZip64EOCDRecordStart
+        var offsetOfZip64EOCDRecord = self.relativeOffsetOfZip64EOCDRecord
+        var totalNumberOfDisk = self.totalNumberOfDisk
+        var data = Data()
+        withUnsafePointer(to: &numberOfDiskWithZip64EOCD, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &offsetOfZip64EOCDRecord, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &totalNumberOfDisk, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        return data
+    }
+
+    init?(data: Data, additionalDataProvider: (Int) throws -> Data) {
+        return nil
+    }
+
+    init(locator: Archive.Zip64EndOfCentralDirectoryLocator, offsetOfZip64EOCDRecord: UInt) {
+        self.numberOfDiskWithZip64EOCDRecordStart = locator.numberOfDiskWithZip64EOCDRecordStart
+        self.relativeOffsetOfZip64EOCDRecord = offsetOfZip64EOCDRecord
+        self.totalNumberOfDisk = locator.totalNumberOfDisk
+    }
+}
+
+extension Archive.Zip64EndOfCentralDirectory {
+    var data: Data { record.data + locator.data }
 }
