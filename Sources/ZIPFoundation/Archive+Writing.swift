@@ -270,11 +270,13 @@ extension Archive {
         var compressedSizeOfLFH = UInt32(0)
         var extraFieldLength = UInt16(0)
         var zip64ExtendedInformation: Entry.Zip64ExtendedInformation?
+        var versionNeededToExtract = UInt16(20)
         // Zip64 Extended Information in the Local header MUST include BOTH original compressed file size fields.
         if size.uncompressed >= maxUncompressedSize || size.compressed >= maxCompressedSize {
             uncompressedSizeOfLFH = UInt32.max
             compressedSizeOfLFH = UInt32.max
             extraFieldLength = UInt16(20) // 2 + 2 + 8 + 8
+            versionNeededToExtract = UInt16(45)
             zip64ExtendedInformation = Entry.Zip64ExtendedInformation(dataSize: extraFieldLength - 4,
                                                                       uncompressedSize: size.uncompressed,
                                                                       compressedSize: size.compressed,
@@ -285,7 +287,8 @@ extension Archive {
             compressedSizeOfLFH = UInt32(size.compressed)
         }
 
-        let localFileHeader = LocalFileHeader(versionNeededToExtract: UInt16(20), generalPurposeBitFlag: UInt16(2048),
+        let localFileHeader = LocalFileHeader(versionNeededToExtract: versionNeededToExtract,
+                                              generalPurposeBitFlag: UInt16(2048),
                                               compressionMethod: compressionMethod.rawValue,
                                               lastModFileTime: modificationDateTime.1,
                                               lastModFileDate: modificationDateTime.0, crc32: checksum,
@@ -372,11 +375,11 @@ extension Archive {
         var relativeOffsetOfCD = UInt32(0)
         var extraFieldLength = UInt16(0)
         var zip64ExtendedInformation: Entry.Zip64ExtendedInformation?
-        if localFileHeader.uncompressedSize == UInt.max || localFileHeader.compressedSize == UInt.max {
-            let extraField = Entry.Zip64ExtendedInformation(data: localFileHeader.extraFieldData,
-                                                            fields: [.uncompressedSize, .compressedSize])
-            extraUncompressedSize = extraField?.uncompressedSize
-            extraCompressedSize = extraField?.compressedSize
+        if localFileHeader.uncompressedSize == UInt32.max || localFileHeader.compressedSize == UInt32.max {
+            let zip64Field = Entry.Zip64ExtendedInformation.scanForZip64Field(in: localFileHeader.extraFieldData,
+                                                                              fields: [.uncompressedSize, .compressedSize])
+            extraUncompressedSize = zip64Field?.uncompressedSize
+            extraCompressedSize = zip64Field?.compressedSize
             extraFieldLength += UInt16(16)
         }
         if relativeOffset >= maxOffsetOfLocalFileHeader {
@@ -474,7 +477,6 @@ extension Archive {
                                                              numberOfEntriesInCentralDirectory: UInt(totalNumberOfEntries),
                                                              sizeOfCentralDirectory: UInt(sizeOfCentralDirectory),
                                                              offsetToStartOfCentralDirectory: UInt(offsetOfCentralDirectory))
-
         let updatedLocator = Zip64EndOfCentralDirectoryLocator(locator: zip64EOCD.locator,
                                                                offsetOfZip64EOCDRecord: UInt(offsetOfEndOfCentralDirectory))
         zip64EOCD = Zip64EndOfCentralDirectory(record: updatedRecord, locator: updatedLocator)

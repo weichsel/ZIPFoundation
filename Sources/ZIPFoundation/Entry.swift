@@ -99,7 +99,7 @@ public struct Entry: Equatable {
     }
 
     struct Zip64ExtendedInformation {
-        let headerID = ExtraFieldHeaderID.zip64ExtendedInformation
+        let headerID: UInt16 = ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
         let dataSize: UInt16
         let uncompressedSize: UInt
         let compressedSize: UInt
@@ -428,10 +428,16 @@ extension Entry.Zip64ExtendedInformation {
         var data = Data()
         withUnsafePointer(to: &headerID, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         withUnsafePointer(to: &dataSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
-        withUnsafePointer(to: &uncompressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
-        withUnsafePointer(to: &compressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
-        withUnsafePointer(to: &relativeOffsetOfLocalHeader, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
-        withUnsafePointer(to: &diskNumberStart, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        if uncompressedSize != 0 || compressedSize != 0 {
+            withUnsafePointer(to: &uncompressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+            withUnsafePointer(to: &compressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        }
+        if relativeOffsetOfLocalHeader != 0 {
+            withUnsafePointer(to: &relativeOffsetOfLocalHeader, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        }
+        if diskNumberStart != 0 {
+            withUnsafePointer(to: &diskNumberStart, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        }
         return data
     }
 
@@ -455,7 +461,7 @@ extension Entry.Zip64ExtendedInformation {
         diskNumberStart = value(of: .diskNumberStart)
     }
 
-    static func scanForZip64ExtendedInformation(in data: Data, fields: [Field]) -> Entry.Zip64ExtendedInformation? {
+    static func scanForZip64Field(in data: Data, fields: [Field]) -> Entry.Zip64ExtendedInformation? {
         guard !data.isEmpty else { return nil }
         var offset = 0
         var headerID: ExtraFieldHeaderID
@@ -473,3 +479,8 @@ extension Entry.Zip64ExtendedInformation {
     }
 }
 
+extension Data {
+    var hexDescription: String {
+        return reduce("") {$0 + String(format: "%02x", $1)}
+    }
+}

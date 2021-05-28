@@ -408,10 +408,10 @@ extension Archive.EndOfCentralDirectoryRecord {
 
 extension Archive.Zip64EndOfCentralDirectoryRecord {
     var data: Data {
-        var zip64EOCDSignature = self.zip64EndOfCentralDirectorySignature
+        var zip64EOCDRecordSignature = self.zip64EndOfCentralDirectorySignature
         var sizeOfZip64EOCDRecord = self.sizeOfZip64EndOfCentralDirectoryRecord
         var versionMadeBy = self.versionMadeBy
-        var versionNeededToExtract = self.versionMadeBy
+        var versionNeededToExtract = self.versionNeededToExtract
         var numberOfDisk = self.numberOfDisk
         var numberOfDiskStart = self.numberOfDiskStart
         var totalNumberOfEntriesOnDisk = self.totalNumberOfEntriesOnDisk
@@ -419,7 +419,7 @@ extension Archive.Zip64EndOfCentralDirectoryRecord {
         var sizeOfCD = self.sizeOfCentralDirectory
         var offsetToStartOfCD = self.offsetToStartOfCentralDirectory
         var data = Data()
-        withUnsafePointer(to: &zip64EOCDSignature, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &zip64EOCDRecordSignature, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         withUnsafePointer(to: &sizeOfZip64EOCDRecord, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         withUnsafePointer(to: &versionMadeBy, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         withUnsafePointer(to: &versionNeededToExtract, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
@@ -468,10 +468,12 @@ extension Archive.Zip64EndOfCentralDirectoryRecord {
 
 extension Archive.Zip64EndOfCentralDirectoryLocator {
     var data: Data {
+        var zip64EOCDLocatorSignature = self.zip64EndOfCentralDirectoryLocatorSignature
         var numberOfDiskWithZip64EOCD = self.numberOfDiskWithZip64EOCDRecordStart
         var offsetOfZip64EOCDRecord = self.relativeOffsetOfZip64EOCDRecord
         var totalNumberOfDisk = self.totalNumberOfDisk
         var data = Data()
+        withUnsafePointer(to: &zip64EOCDLocatorSignature, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         withUnsafePointer(to: &numberOfDiskWithZip64EOCD, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         withUnsafePointer(to: &offsetOfZip64EOCDRecord, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         withUnsafePointer(to: &totalNumberOfDisk, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
