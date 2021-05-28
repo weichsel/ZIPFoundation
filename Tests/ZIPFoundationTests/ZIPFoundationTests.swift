@@ -56,12 +56,12 @@ class ZIPFoundationTests: XCTestCase {
     }
 
     override class func tearDown() {
-        do {
-            let fileManager = FileManager()
-            try fileManager.removeItem(at: tempZipDirectoryURL)
-        } catch {
-            XCTFail("Unexpected error while trying to clean up test resources.")
-        }
+//        do {
+//            let fileManager = FileManager()
+//            try fileManager.removeItem(at: tempZipDirectoryURL)
+//        } catch {
+//            XCTFail("Unexpected error while trying to clean up test resources.")
+//        }
         super.tearDown()
     }
 
@@ -188,8 +188,6 @@ extension ZIPFoundationTests {
             ("testCreateArchiveAddLargeUncompressedEntry", testCreateArchiveAddLargeUncompressedEntry),
             ("testCreateArchiveAddSymbolicLink", testCreateArchiveAddSymbolicLink),
             ("testCreateArchiveAddTooLargeUncompressedEntry", testCreateArchiveAddTooLargeUncompressedEntry),
-            ("testCreateArchiveWithTooManyEntriesOnDisk", testCreateArchiveWithTooManyEntriesOnDisk),
-            ("testCreateArchiveWithTooManyDirectories", testCreateArchiveWithTooManyEntriesInCD),
             ("testCreateArchiveAddUncompressedEntry", testCreateArchiveAddUncompressedEntry),
             ("testDetectEntryType", testDetectEntryType),
             ("testExtractInvalidBufferSizeErrorConditions", testExtractInvalidBufferSizeErrorConditions),

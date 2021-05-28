@@ -12,16 +12,16 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
-    func testCreateZip64ArchiveAddUncompressedEntry() {
-        let archive = self.archive(for: #function, mode: .create)
-        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
-        do {
-            let relativePath = assetURL.lastPathComponent
-            let baseURL = assetURL.deletingLastPathComponent()
-            try archive.addEntry(with: relativePath, relativeTo: baseURL)
-        } catch {
-            XCTFail("Failed to add uncompressed entry archive with error : \(error)")
-        }
-        XCTAssert(archive.checkIntegrity())
-    }
+//    func testCreateZip64ArchiveAddUncompressedEntry() {
+//        let archive = self.archive(for: #function, mode: .create)
+//        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+//        do {
+//            let relativePath = assetURL.lastPathComponent
+//            let baseURL = assetURL.deletingLastPathComponent()
+//            try archive.addEntry(with: relativePath, relativeTo: baseURL)
+//        } catch {
+//            XCTFail("Failed to add uncompressed entry archive with error : \(error)")
+//        }
+//        XCTAssert(archive.checkIntegrity())
+//    }
 }

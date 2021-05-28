@@ -33,21 +33,8 @@ enum ExtraFieldHeaderID: UInt16 {
     case zip64ExtendedInformation = 0x0001
 }
 
-let maxUInt32: UInt32 = {
-    #if DEBUG
-    return UInt32(1024)
-    #else
-    return .max
-    #endif
-}()
-
-let maxUInt16: UInt16 = {
-    #if DEBUG
-    return UInt16(512)
-    #else
-    return .max
-    #endif
-}()
+var maxUInt32 = UInt32.max
+var maxUInt16 = UInt16.max
 
 let maxCompressedSize = maxUInt32
 let maxUncompressedSize = maxUInt32
@@ -97,6 +84,10 @@ public final class Archive: Sequence {
         case invalidEntryPath
         /// Thrown when an `Entry` can't be stored in the archive with the proposed compression method.
         case invalidCompressionMethod
+        /// Thrown when the uncompressed size exceeds `Int64.max`
+        case invalidUncompressedSize
+        /// Thrown when the size of central directory exceeds `Int.max`
+        case invalidSizeOfCentralDirectory
         /// Thrown when the start of the central directory exceeds `UInt32.max`
         case invalidStartOfCentralDirectoryOffset
         /// Thrown when an archive does not contain the required End of Central Directory Record.
@@ -146,7 +137,7 @@ public final class Archive: Sequence {
         let sizeOfCentralDirectory: UInt
         let offsetToStartOfCentralDirectory: UInt
         let zip64ExtensibleDataSector: Data
-        static let size = 44
+        static let size = 56
     }
 
     struct Zip64EndOfCentralDirectoryLocator: DataSerializable {
@@ -442,8 +433,19 @@ extension Archive.Zip64EndOfCentralDirectoryRecord {
         return data
     }
 
-    init?(data: Data, additionalDataProvider: (Int) throws -> Data) {
-        return nil
+    init?(data: Data, additionalDataProvider provider: (Int) throws -> Data) {
+        guard data.count == Archive.Zip64EndOfCentralDirectoryRecord.size else { return nil }
+        guard data.scanValue(start: 0) == zip64EndOfCentralDirectorySignature else { return nil }
+        self.sizeOfZip64EndOfCentralDirectoryRecord = data.scanValue(start: 4)
+        self.versionMadeBy = data.scanValue(start: 12)
+        self.versionNeededToExtract = data.scanValue(start: 14)
+        self.numberOfDisk = data.scanValue(start: 16)
+        self.numberOfDiskStart = data.scanValue(start: 20)
+        self.totalNumberOfEntriesOnDisk = data.scanValue(start: 24)
+        self.totalNumberOfEntriesInCentralDirectory = data.scanValue(start: 32)
+        self.sizeOfCentralDirectory = data.scanValue(start: 40)
+        self.offsetToStartOfCentralDirectory = data.scanValue(start: 48)
+        self.zip64ExtensibleDataSector = Data()
     }
 
     init(record: Archive.Zip64EndOfCentralDirectoryRecord,
@@ -476,8 +478,12 @@ extension Archive.Zip64EndOfCentralDirectoryLocator {
         return data
     }
 
-    init?(data: Data, additionalDataProvider: (Int) throws -> Data) {
-        return nil
+    init?(data: Data, additionalDataProvider provider: (Int) throws -> Data) {
+        guard data.count == Archive.Zip64EndOfCentralDirectoryLocator.size else { return nil }
+        guard data.scanValue(start: 0) == zip64EndOfCentralDirectoryLocatorSignature else { return nil }
+        self.numberOfDiskWithZip64EOCDRecordStart = data.scanValue(start: 4)
+        self.relativeOffsetOfZip64EOCDRecord = data.scanValue(start: 8)
+        self.totalNumberOfDisk = data.scanValue(start: 16)
     }
 
     init(locator: Archive.Zip64EndOfCentralDirectoryLocator, offsetOfZip64EOCDRecord: UInt) {
