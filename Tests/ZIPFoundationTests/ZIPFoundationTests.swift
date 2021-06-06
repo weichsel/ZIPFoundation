@@ -56,6 +56,7 @@ class ZIPFoundationTests: XCTestCase {
     }
 
     override class func tearDown() {
+        resetIntMaxValues()
 //        do {
 //            let fileManager = FileManager()
 //            try fileManager.removeItem(at: tempZipDirectoryURL)
@@ -233,7 +234,19 @@ extension ZIPFoundationTests {
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
-        ] + darwinOnlyTests + swift5OnlyTests
+        ] + zip64Tests + darwinOnlyTests + swift5OnlyTests
+    }
+
+    static var zip64Tests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
+        return [
+            ("testEntryZip64FieldOnlyHasUncompressedSize", testEntryZip64FieldOnlyHasUncompressedSize),
+            ("testEntryZip64ExtraField", testEntryZip64ExtraField),
+            ("testEntryInvalidZip64ExtraFieldErrorConditions", testEntryInvalidZip64ExtraFieldErrorConditions),
+            ("testEntryScanForZip64Field", testEntryScanForZip64Field),
+            ("testEntryScanForZip64FieldErrorConditions", testEntryScanForZip64FieldErrorConditions),
+            ("testCreateZip64ArchiveWithLargeSize", testCreateZip64ArchiveWithLargeSize),
+            ("testCreateZip64ArchiveWithTooManyEntries", testCreateZip64ArchiveWithTooManyEntries)
+        ]
     }
 
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {

@@ -44,6 +44,10 @@ public struct Entry: Equatable {
         case unused = 20
     }
 
+    enum EntryError: Error {
+        case invalidDataError
+    }
+
     struct LocalFileHeader: DataSerializable {
         let localFileHeaderSignature = UInt32(localFileHeaderStructSignature)
         let versionNeededToExtract: UInt16
@@ -416,6 +420,15 @@ extension Entry.Zip64ExtendedInformation {
         case compressedSize
         case relativeOffsetOfLocalHeader
         case diskNumberStart
+
+        var dataSize: Int {
+            switch self {
+            case .uncompressedSize, .compressedSize, .relativeOffsetOfLocalHeader:
+                return 8
+            case .diskNumberStart:
+                return 4
+            }
+        }
     }
 
     var data: Data {
@@ -423,7 +436,7 @@ extension Entry.Zip64ExtendedInformation {
         var dataSize = self.dataSize
         var uncompressedSize = self.uncompressedSize
         var compressedSize = self.compressedSize
-        var relativeOffsetOfLocalHeader = self.relativeOffsetOfLocalHeader
+        var relativeOffsetOfLFH = self.relativeOffsetOfLocalHeader
         var diskNumberStart = self.diskNumberStart
         var data = Data()
         withUnsafePointer(to: &headerID, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
@@ -433,7 +446,7 @@ extension Entry.Zip64ExtendedInformation {
             withUnsafePointer(to: &compressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         }
         if relativeOffsetOfLocalHeader != 0 {
-            withUnsafePointer(to: &relativeOffsetOfLocalHeader, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+            withUnsafePointer(to: &relativeOffsetOfLFH, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
         }
         if diskNumberStart != 0 {
             withUnsafePointer(to: &diskNumberStart, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
@@ -442,35 +455,44 @@ extension Entry.Zip64ExtendedInformation {
     }
 
     init?(data: Data, fields: [Field]) {
-        var readOffset = 4
-        func value<T>(of field: Field) -> T where T: UnsignedInteger {
+        let headerLength = 4
+        guard fields.reduce(0, { $0 + $1.dataSize }) + headerLength == data.count else { return nil }
+        var readOffset = headerLength
+        func value<T>(of field: Field) throws -> T where T: UnsignedInteger {
             if fields.contains(field) {
                 defer {
                     readOffset += MemoryLayout<T>.size
+                }
+                guard readOffset + field.dataSize < data.count + 1 else {
+                    throw Entry.EntryError.invalidDataError
                 }
                 return data.scanValue(start: readOffset)
             } else {
                 return 0
             }
         }
-
-        dataSize = data.scanValue(start: 2)
-        uncompressedSize = value(of: .uncompressedSize)
-        compressedSize = value(of: .compressedSize)
-        relativeOffsetOfLocalHeader = value(of: .relativeOffsetOfLocalHeader)
-        diskNumberStart = value(of: .diskNumberStart)
+        do {
+            dataSize = data.scanValue(start: 2)
+            uncompressedSize = try value(of: .uncompressedSize)
+            compressedSize = try value(of: .compressedSize)
+            relativeOffsetOfLocalHeader = try value(of: .relativeOffsetOfLocalHeader)
+            diskNumberStart = try value(of: .diskNumberStart)
+        } catch {
+            return nil
+        }
     }
 
     static func scanForZip64Field(in data: Data, fields: [Field]) -> Entry.Zip64ExtendedInformation? {
         guard !data.isEmpty else { return nil }
         var offset = 0
-        var headerID: ExtraFieldHeaderID
+        var headerID: UInt16
         var dataSize: UInt16
-        while offset < data.count {
+        while offset + 4 < data.count {
             headerID = data.scanValue(start: offset)
             dataSize = data.scanValue(start: offset + 2)
             let nextOffset = offset + 4 + Int(dataSize)
-            if headerID == .zip64ExtendedInformation {
+            guard nextOffset < data.count + 1 else { return nil }
+            if headerID == ExtraFieldHeaderID.zip64ExtendedInformation.rawValue {
                 return Entry.Zip64ExtendedInformation(data: data.subdata(in: offset..<nextOffset), fields: fields)
             }
             offset = nextOffset
@@ -478,6 +500,8 @@ extension Entry.Zip64ExtendedInformation {
         return nil
     }
 }
+
+// MARK: - Debug
 
 extension Data {
     var hexDescription: String {
