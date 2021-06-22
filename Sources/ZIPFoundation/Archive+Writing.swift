@@ -276,7 +276,7 @@ extension Archive {
             uncompressedSizeOfLFH = UInt32.max
             compressedSizeOfLFH = UInt32.max
             extraFieldLength = UInt16(20) // 2 + 2 + 8 + 8
-            versionNeededToExtract = UInt16(45)
+            versionNeededToExtract = zip64Version
             zip64ExtendedInformation = Entry.Zip64ExtendedInformation(dataSize: extraFieldLength - 4,
                                                                       uncompressedSize: size.uncompressed,
                                                                       compressedSize: size.compressed,
@@ -459,7 +459,8 @@ extension Archive {
                                                  offsetOfEndOfCentralDirectory: Int) throws -> Zip64EndOfCentralDirectory {
         var zip64EOCD: Zip64EndOfCentralDirectory = self.zip64EndOfCentralDirectory ?? {
             let record = Zip64EndOfCentralDirectoryRecord(sizeOfZip64EndOfCentralDirectoryRecord: UInt(44),
-                                                          versionMadeBy: UInt16(789), versionNeededToExtract: UInt16(45),
+                                                          versionMadeBy: UInt16(789),
+                                                          versionNeededToExtract: zip64Version,
                                                           numberOfDisk: 0, numberOfDiskStart: 0,
                                                           totalNumberOfEntriesOnDisk: 0,
                                                           totalNumberOfEntriesInCentralDirectory: 0,

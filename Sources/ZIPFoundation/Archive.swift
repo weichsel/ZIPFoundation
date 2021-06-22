@@ -17,6 +17,8 @@ public let defaultWriteChunkSize = defaultReadChunkSize
 /// The default permissions for newly added entries.
 public let defaultFilePermissions = UInt16(0o644)
 public let defaultDirectoryPermissions = UInt16(0o755)
+/// The minimum version of zip64 format
+public let zip64Version = UInt16(45)
 let defaultPOSIXBufferSize = defaultReadChunkSize
 let defaultDirectoryUnitCount = Int64(1)
 let minDirectoryEndOffset = 22
@@ -439,6 +441,7 @@ extension Archive.Zip64EndOfCentralDirectoryRecord {
         self.sizeOfZip64EndOfCentralDirectoryRecord = data.scanValue(start: 4)
         self.versionMadeBy = data.scanValue(start: 12)
         self.versionNeededToExtract = data.scanValue(start: 14)
+        guard self.versionNeededToExtract >= zip64Version else { return nil }
         self.numberOfDisk = data.scanValue(start: 16)
         self.numberOfDiskStart = data.scanValue(start: 20)
         self.totalNumberOfEntriesOnDisk = data.scanValue(start: 24)

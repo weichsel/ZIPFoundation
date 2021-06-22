@@ -49,7 +49,7 @@ extension ZIPFoundationTests {
             let lfhExtraFieldOffset = 30 + entryName.count
             let lfhSize = lfhExtraFieldOffset + 20
             let lfhData = try Data.readChunk(of: lfhSize, from: archiveFile)
-            XCTAssertEqual(lfhData.scanValue(start: 4), UInt16(45))
+            XCTAssertEqual(lfhData.scanValue(start: 4), zip64Version)
             XCTAssertEqual(lfhData.scanValue(start: 18), UInt32.max)
             XCTAssertEqual(lfhData.scanValue(start: 22), UInt32.max)
             XCTAssertEqual(lfhData.scanValue(start: lfhExtraFieldOffset), UInt16(1))
@@ -63,7 +63,7 @@ extension ZIPFoundationTests {
             let cdSize = relativeCDExtraFieldOffset + 20
             fseek(archiveFile, cdOffset, SEEK_SET)
             let cdData = try Data.readChunk(of: cdSize, from: archiveFile)
-            XCTAssertEqual(cdData.scanValue(start: 6), UInt16(45))
+            XCTAssertEqual(cdData.scanValue(start: 6), zip64Version)
             XCTAssertEqual(cdData.scanValue(start: 20), UInt32.max)
             XCTAssertEqual(cdData.scanValue(start: 24), UInt32.max)
             XCTAssertEqual(cdData.scanValue(start: relativeCDExtraFieldOffset), UInt16(1))
@@ -78,7 +78,7 @@ extension ZIPFoundationTests {
             XCTAssertEqual(zip64EOCDData.scanValue(start: 0), UInt32(zip64EndOfCentralDirectoryRecordStructSignature))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 4), UInt(44))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 12), UInt16(789))
-            XCTAssertEqual(zip64EOCDData.scanValue(start: 14), UInt16(45))
+            XCTAssertEqual(zip64EOCDData.scanValue(start: 14), zip64Version)
             XCTAssertEqual(zip64EOCDData.scanValue(start: 16), UInt32(0))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 20), UInt32(0))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 24), UInt(1))
