@@ -16,6 +16,8 @@ extension Archive {
         case add = 1
     }
 
+    typealias EndOfCentralDirectoryStructure = (EndOfCentralDirectoryRecord, Zip64EndOfCentralDirectory?)
+
     // MARK: - Helpers
 
     func replaceCurrentArchive(with archive: Archive) throws {
@@ -50,8 +52,8 @@ extension Archive {
     }
 
     func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
-                                      size: (uncompressed: UInt, compressed: UInt), checksum: CRC32,
-                                      modificationDateTime: (UInt16, UInt16)) throws -> LocalFileHeader {
+                              size: (uncompressed: UInt, compressed: UInt), checksum: CRC32,
+                              modificationDateTime: (UInt16, UInt16)) throws -> LocalFileHeader {
         // We always set Bit 11 in generalPurposeBitFlag, which indicates an UTF-8 encoded path.
         guard let fileNameData = path.data(using: .utf8) else { throw ArchiveError.invalidEntryPath }
 
@@ -161,9 +163,9 @@ extension Archive {
     }
 
     func writeEndOfCentralDirectory(centralDirectoryStructure: CentralDirectoryStructure,
-                                            startOfCentralDirectory: Int,
-                                            startOfEndOfCentralDirectory: Int,
-                                            operation: ModifyOperation) throws -> EndOfCentralDirectoryRecord {
+                                    startOfCentralDirectory: Int,
+                                    startOfEndOfCentralDirectory: Int,
+                                    operation: ModifyOperation) throws -> EndOfCentralDirectoryStructure {
         var record = self.endOfCentralDirectoryRecord
         let zip64Record = self.zip64EndOfCentralDirectory?.record
 
@@ -188,28 +190,32 @@ extension Archive {
             ? UInt32.max
             : UInt32(startOfCentralDirectory)
         // Zip64 End of Central Directory
-        if self.zip64EndOfCentralDirectory != nil || numberOfTotalEntriesForEOCD == UInt16.max
-            || offsetOfCDForEOCD == UInt32.max || sizeOfCDForEOCD == UInt32.max {
-            let zip64eocd = try self.writeZip64EOCD(totalNumberOfEntries: updatedNumberOfEntries,
-                                                    sizeOfCentralDirectory: updatedSizeOfCD,
-                                                    offsetOfCentralDirectory: startOfCentralDirectory,
-                                                    offsetOfEndOfCentralDirectory: startOfEndOfCentralDirectory)
-            self.zip64EndOfCentralDirectory = zip64eocd
+        var zip64eocd: Zip64EndOfCentralDirectory?
+        if numberOfTotalEntriesForEOCD == UInt16.max || offsetOfCDForEOCD == UInt32.max
+            || sizeOfCDForEOCD == UInt32.max {
+            zip64eocd = try self.writeZip64EOCD(totalNumberOfEntries: updatedNumberOfEntries,
+                                                sizeOfCentralDirectory: updatedSizeOfCD,
+                                                offsetOfCentralDirectory: startOfCentralDirectory,
+                                                offsetOfEndOfCentralDirectory: startOfEndOfCentralDirectory)
         }
         record = EndOfCentralDirectoryRecord(record: record, numberOfEntriesOnDisk: numberOfTotalEntriesForEOCD,
                                              numberOfEntriesInCentralDirectory: numberOfTotalEntriesForEOCD,
                                              updatedSizeOfCentralDirectory: sizeOfCDForEOCD,
                                              startOfCentralDirectory: offsetOfCDForEOCD)
         _ = try Data.write(chunk: record.data, to: self.archiveFile)
-        return record
+        return (record, zip64eocd)
     }
 
     func rollback(_ localFileHeaderStart: Int, _ existingCentralDirectoryData: Data,
-                          _ endOfCentralDirRecord: EndOfCentralDirectoryRecord) throws {
+                  _ endOfCentralDirRecord: EndOfCentralDirectoryRecord,
+                  _ zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?) throws {
         fflush(self.archiveFile)
         ftruncate(fileno(self.archiveFile), off_t(localFileHeaderStart))
         fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
         _ = try Data.write(chunk: existingCentralDirectoryData, to: self.archiveFile)
+        if let zip64EOCD = zip64EndOfCentralDirectory {
+            _ = try Data.write(chunk: zip64EOCD.data, to: self.archiveFile)
+        }
         _ = try Data.write(chunk: endOfCentralDirRecord.data, to: self.archiveFile)
     }
 

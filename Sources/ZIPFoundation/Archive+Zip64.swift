@@ -22,12 +22,12 @@ enum ExtraFieldHeaderID: UInt16 {
 var maxUInt32 = UInt32.max
 var maxUInt16 = UInt16.max
 
-let maxCompressedSize = maxUInt32
-let maxUncompressedSize = maxUInt32
-let maxOffsetOfLocalFileHeader = maxUInt32
-let maxOffsetOfCentralDirectory = maxUInt32
-let maxSizeOfCentralDirectory = maxUInt32
-let maxTotalNumberOfEntries = maxUInt16
+var maxCompressedSize: UInt32 { maxUInt32 }
+var maxUncompressedSize: UInt32 { maxUInt32 }
+var maxOffsetOfLocalFileHeader: UInt32 { maxUInt32 }
+var maxOffsetOfCentralDirectory: UInt32 { maxUInt32 }
+var maxSizeOfCentralDirectory: UInt32 { maxUInt32 }
+var maxTotalNumberOfEntries: UInt16 { maxUInt16 }
 
 extension Archive {
     struct Zip64EndOfCentralDirectory {

@@ -1,5 +1,5 @@
 //
-//  ZIPFoundationZip64WritingTests.swift
+//  ZIPFoundationWritingTests+Zip64.swift
 //  ZIPFoundation
 //
 //  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
@@ -98,17 +98,18 @@ extension ZIPFoundationTests {
         } catch {
             XCTFail("Unexpected error while reading chunk from archive file.")
         }
-//        guard let entry = archive[entryName] else {
-//            XCTFail("Failed to add large entry to uncompressed archive")
-//            return
-//        }
-//        XCTAssert(entry.checksum == data.crc32(checksum: 0))
+        guard let entry = archive[entryName] else {
+            XCTFail("Failed to add large entry to uncompressed archive")
+            return
+        }
+        XCTAssert(entry.checksum == data.crc32(checksum: 0))
+        // TODO: Fix extract()
 //        XCTAssert(archive.checkIntegrity())
     }
 
-    func testCreateZip64ArchiveWithTooManyEntries() {
+    func testCreateZip64ArchiveWithZip64LFHOffset() {
         /// Target fields:
-        /// Extra Field, Zip64 End of Central Directory
+        /// Relative Offset of Local Header
         ///
         /// Expected structure:
         /// 4 + 2 [Version Needed to Extract] + 12 + 4 [Uncompressed Size: 0xffffffff]
@@ -117,7 +118,25 @@ extension ZIPFoundationTests {
         /// + [Uncompressed Size: 0xffffffff] + 4 [Compressed Size: 0xffffffff] + 18 + n [File Name]
         /// + (2 [Header ID] + 2 [Field Length] + 8 [Uncompressed Size] + 8 [Compressed Size])
         mockIntMaxValues()
-        
+
+    }
+
+    func testCreateZip64ArchiveWithTooManyEntries() {
+        /// Target fields:
+        /// Total Number of Entries in Central Directory, Size of Central Directory
+        ///
+        /// Expected structure:
+        /// 4 + 2 [Version Needed to Extract] + 12 + 4 [Uncompressed Size: 0xffffffff]
+        /// + 4 [Compressed Size: 0xffffffff] + 4 + n [File Name] + (2 [Header ID] + 2 [Field Length]
+        /// + 8 [Uncompressed Size] + 8 [Compressed Size]) + n [File Data] + 20
+        /// + [Uncompressed Size: 0xffffffff] + 4 [Compressed Size: 0xffffffff] + 18 + n [File Name]
+        /// + (2 [Header ID] + 2 [Field Length] + 8 [Uncompressed Size] + 8 [Compressed Size])
+        mockIntMaxValues()
+    }
+
+    func testRemoveEntryFromZip64Archive() {
+        // case 1:
+        // case 2:
     }
 
     // MARK: - Helpers

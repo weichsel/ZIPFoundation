@@ -207,16 +207,6 @@ extension ZIPFoundationTests {
         }
     }
 
-    func testExtractZIP64ArchiveErrorConditions() {
-        let archive = self.archive(for: #function, mode: .read)
-        var entriesRead = 0
-        for _ in archive {
-            entriesRead += 1
-        }
-        // We currently don't support ZIP64 so we expect failed initialization for entry objects.
-        XCTAssert(entriesRead == 0)
-    }
-
     func testExtractEncryptedArchiveErrorConditions() {
         let archive = self.archive(for: #function, mode: .read)
         var entriesRead = 0

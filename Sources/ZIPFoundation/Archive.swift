@@ -118,6 +118,19 @@ public final class Archive: Sequence {
     var zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?
     var preferredEncoding: String.Encoding?
 
+    var totalNumberOfEntriesInCentralDirectory: UInt {
+        zip64EndOfCentralDirectory?.record.totalNumberOfEntriesInCentralDirectory
+            ?? UInt(endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory)
+    }
+    var sizeOfCentralDirectory: UInt {
+        zip64EndOfCentralDirectory?.record.sizeOfCentralDirectory
+            ?? UInt(endOfCentralDirectoryRecord.sizeOfCentralDirectory)
+    }
+    var offsetToStartOfCentralDirectory: UInt {
+        zip64EndOfCentralDirectory?.record.offsetToStartOfCentralDirectory
+            ?? UInt(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
+    }
+
     /// Initializes a new ZIP `Archive`.
     ///
     /// You can use this initalizer to create new archive files or to read and update existing ones.
@@ -183,11 +196,11 @@ public final class Archive: Sequence {
     }
 
     public func makeIterator() -> AnyIterator<Entry> {
-        let endOfCentralDirectoryRecord = self.endOfCentralDirectoryRecord
-        var directoryIndex = Int(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
+        let totalNumberOfEntriesInCD = Int(self.totalNumberOfEntriesInCentralDirectory)
+        var directoryIndex = Int(self.offsetToStartOfCentralDirectory)
         var index = 0
         return AnyIterator {
-            guard index < Int(endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory) else { return nil }
+            guard index < totalNumberOfEntriesInCD else { return nil }
             guard let centralDirStruct: CentralDirectoryStructure = Data.readStruct(from: self.archiveFile,
                                                                                     at: directoryIndex) else {
                                                                                         return nil

@@ -57,12 +57,12 @@ class ZIPFoundationTests: XCTestCase {
 
     override class func tearDown() {
         resetIntMaxValues()
-//        do {
-//            let fileManager = FileManager()
-//            try fileManager.removeItem(at: tempZipDirectoryURL)
-//        } catch {
-//            XCTFail("Unexpected error while trying to clean up test resources.")
-//        }
+        do {
+            let fileManager = FileManager()
+            try fileManager.removeItem(at: tempZipDirectoryURL)
+        } catch {
+            XCTFail("Unexpected error while trying to clean up test resources.")
+        }
         super.tearDown()
     }
 
@@ -210,7 +210,6 @@ extension ZIPFoundationTests {
             ("testExtractUncompressedDataDescriptorArchive", testExtractUncompressedDataDescriptorArchive),
             ("testExtractUncompressedFolderEntries", testExtractUncompressedFolderEntries),
             ("testExtractUncompressedEmptyFile", testExtractUncompressedEmptyFile),
-            ("testExtractZIP64ArchiveErrorConditions", testExtractZIP64ArchiveErrorConditions),
             ("testFileAttributeHelperMethods", testFileAttributeHelperMethods),
             ("testFilePermissionHelperMethods", testFilePermissionHelperMethods),
             ("testFileSizeHelperMethods", testFileSizeHelperMethods),
@@ -249,7 +248,9 @@ extension ZIPFoundationTests {
             ("testArchieveZip64EOCDLocator", testArchieveZip64EOCDLocator),
             ("testArchieveInvalidZip64EOCDLocatorConditions", testArchieveInvalidZip64EOCDLocatorConditions),
             ("testCreateZip64ArchiveWithLargeSize", testCreateZip64ArchiveWithLargeSize),
-            ("testCreateZip64ArchiveWithTooManyEntries", testCreateZip64ArchiveWithTooManyEntries)
+            ("testCreateZip64ArchiveWithTooManyEntries", testCreateZip64ArchiveWithTooManyEntries),
+            ("testCreateZip64ArchiveWithZip64LFHOffset", testCreateZip64ArchiveWithZip64LFHOffset),
+            ("testRemoveEntryFromZip64Archive", testRemoveEntryFromZip64Archive)
         ]
     }
 

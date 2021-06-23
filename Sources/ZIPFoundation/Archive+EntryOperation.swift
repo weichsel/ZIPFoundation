@@ -117,7 +117,7 @@ extension Archive {
             throw ArchiveError.invalidUncompressedSize
         }
         progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : Int64(uncompressedSize)
-        var endOfCentralDirRecord = self.endOfCentralDirectoryRecord
+        let endOfCentralDirRecord = self.endOfCentralDirectoryRecord
         let zip64EOCD = self.zip64EndOfCentralDirectory
         let existingStartOfCD = zip64EOCD?.record.offsetToStartOfCentralDirectory
             ?? UInt(endOfCentralDirRecord.offsetToStartOfCentralDirectory)
@@ -162,13 +162,13 @@ extension Archive {
                                                                      externalFileAttributes: externalAttributes)
             // End of Central Directory Record (including Zip64 End of Central Directory Record/Locator)
             let startOfEOCDInt = ftell(self.archiveFile)
-            endOfCentralDirRecord = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDir,
+            let eocdStructure = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDir,
                                                                         startOfCentralDirectory: startOfCDInt,
                                                                         startOfEndOfCentralDirectory: startOfEOCDInt,
                                                                         operation: .add)
-            self.endOfCentralDirectoryRecord = endOfCentralDirRecord
+            (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory) = eocdStructure
         } catch ArchiveError.cancelledOperation {
-            try rollback(localFileHeaderStart, existingCentralDirData, endOfCentralDirRecord)
+            try rollback(localFileHeaderStart, existingCentralDirData, endOfCentralDirRecord, zip64EOCD)
             throw ArchiveError.cancelledOperation
         }
     }
@@ -211,13 +211,14 @@ extension Archive {
         _ = try Data.write(chunk: centralDirectoryData, to: tempArchive.archiveFile)
         let startOfEndOfCentralDirectory = ftell(tempArchive.archiveFile)
         tempArchive.endOfCentralDirectoryRecord = self.endOfCentralDirectoryRecord
-        let endOfCentralDirectoryRecord = try
+        tempArchive.zip64EndOfCentralDirectory = self.zip64EndOfCentralDirectory
+        let ecodStructure = try
             tempArchive.writeEndOfCentralDirectory(centralDirectoryStructure: entry.centralDirectoryStructure,
                                                    startOfCentralDirectory: startOfCentralDirectory,
                                                    startOfEndOfCentralDirectory: startOfEndOfCentralDirectory,
                                                    operation: .remove)
-        tempArchive.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
-        self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+        (tempArchive.endOfCentralDirectoryRecord, tempArchive.zip64EndOfCentralDirectory) = ecodStructure
+        (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory) = ecodStructure
         fflush(tempArchive.archiveFile)
         try self.replaceCurrentArchive(with: tempArchive)
     }
