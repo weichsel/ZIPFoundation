@@ -10,6 +10,10 @@
 
 import Foundation
 
+#if canImport(zlib)
+import zlib
+#endif
+
 /// The compression method of an `Entry` in a ZIP `Archive`.
 public enum CompressionMethod: UInt16 {
     /// Indicates that an `Entry` has no compression applied to its contents.
@@ -99,6 +103,11 @@ extension Data {
     /// - Parameter checksum: The starting seed.
     /// - Returns: The checksum calculated from the bytes of the receiver and the starting seed.
     public func crc32(checksum: CRC32) -> CRC32 {
+        #if swift(>=5.0) && canImport(zlib)
+        withUnsafeBytes { bufferPointer in
+            CRC32(zlib.crc32(UInt(checksum), bufferPointer.bindMemory(to: UInt8.self).baseAddress, UInt32(count)))
+        }
+        #else
         // The typecast is necessary on 32-bit platforms because of
         // https://bugs.swift.org/browse/SR-1774
         let mask = 0xffffffff as CRC32
@@ -131,6 +140,7 @@ extension Data {
         }
         #endif
         return result ^ mask
+        #endif
     }
 
     /// Compress the output of `provider` and pass it to `consumer`.
