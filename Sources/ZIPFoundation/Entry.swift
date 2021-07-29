@@ -95,7 +95,6 @@ public struct Entry: Equatable {
         var usesDataDescriptor: Bool { return (self.generalPurposeBitFlag & (1 << 3 )) != 0 }
         var usesUTF8PathEncoding: Bool { return (self.generalPurposeBitFlag & (1 << 11 )) != 0 }
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
-        var isZIP64: Bool { return UInt8(truncatingIfNeeded: self.versionNeededToExtract) >= 45 }
     }
     /// Returns the `path` of the receiver within a ZIP `Archive` using a given encoding.
     ///

@@ -119,8 +119,7 @@ extension Archive {
         progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : Int64(uncompressedSize)
         let endOfCentralDirRecord = self.endOfCentralDirectoryRecord
         let zip64EOCD = self.zip64EndOfCentralDirectory
-        let existingStartOfCD = zip64EOCD?.record.offsetToStartOfCentralDirectory
-            ?? UInt(endOfCentralDirRecord.offsetToStartOfCentralDirectory)
+        let existingStartOfCD = self.offsetToStartOfCentralDirectory
         guard existingStartOfCD <= Int.max else {
             throw ArchiveError.invalidStartOfCentralDirectoryOffset
         }

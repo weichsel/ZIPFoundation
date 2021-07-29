@@ -14,7 +14,7 @@ extension Entry {
     enum EntryError: Error {
         case invalidDataError
     }
-    
+
     struct Zip64ExtendedInformation {
         let headerID: UInt16 = ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
         let dataSize: UInt16

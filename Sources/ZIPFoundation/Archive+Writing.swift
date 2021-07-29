@@ -93,8 +93,8 @@ extension Archive {
     }
 
     func writeEntry(uncompressedSize: UInt, type: Entry.EntryType,
-                            compressionMethod: CompressionMethod, bufferSize: UInt32, progress: Progress? = nil,
-                            provider: Provider) throws -> (sizeWritten: UInt, crc32: CRC32) {
+                    compressionMethod: CompressionMethod, bufferSize: UInt32, progress: Progress? = nil,
+                    provider: Provider) throws -> (sizeWritten: UInt, crc32: CRC32) {
         var checksum = CRC32(0)
         var sizeWritten = UInt(0)
         switch type {
@@ -121,7 +121,7 @@ extension Archive {
     }
 
     func writeCentralDirectoryStructure(localFileHeader: LocalFileHeader, relativeOffset: UInt,
-                                                externalFileAttributes: UInt32) throws -> CentralDirectoryStructure {
+                                        externalFileAttributes: UInt32) throws -> CentralDirectoryStructure {
         var extraUncompressedSize: UInt?
         var extraCompressedSize: UInt?
         var extraOffset: UInt?

@@ -58,8 +58,8 @@ class ZIPFoundationTests: XCTestCase {
     override class func tearDown() {
         resetIntMaxValues()
         do {
-            let fileManager = FileManager()
-            try fileManager.removeItem(at: tempZipDirectoryURL)
+//            let fileManager = FileManager()
+//            try fileManager.removeItem(at: tempZipDirectoryURL)
         } catch {
             XCTFail("Unexpected error while trying to clean up test resources.")
         }
@@ -249,7 +249,8 @@ extension ZIPFoundationTests {
             ("testArchieveInvalidZip64EOCDLocatorConditions", testArchieveInvalidZip64EOCDLocatorConditions),
             ("testCreateZip64ArchiveWithLargeSize", testCreateZip64ArchiveWithLargeSize),
             ("testCreateZip64ArchiveWithTooManyEntries", testCreateZip64ArchiveWithTooManyEntries),
-            ("testCreateZip64ArchiveWithZip64LFHOffset", testCreateZip64ArchiveWithZip64LFHOffset),
+            ("testUpdateZip64ArchiveWithZip64LFHOffset", testUpdateZip64ArchiveWithZip64LFHOffset),
+            ("testCreateZip64ArchiveWithLargeSizeOfCD", testCreateZip64ArchiveWithLargeSizeOfCD),
             ("testRemoveEntryFromZip64Archive", testRemoveEntryFromZip64Archive)
         ]
     }
