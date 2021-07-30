@@ -32,6 +32,7 @@ extension Archive {
             self.archiveFile = config.file
             self.memoryFile = config.memoryFile
             self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
+            self.zip64EndOfCentralDirectory = config.zip64EndOfCentralDirectory
             #endif
         } else {
             let fileManager = FileManager()

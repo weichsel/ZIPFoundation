@@ -156,6 +156,7 @@ public final class Archive: Sequence {
         }
         self.archiveFile = config.file
         self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
+        self.zip64EndOfCentralDirectory = config.zip64EndOfCentralDirectory
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
@@ -188,6 +189,7 @@ public final class Archive: Sequence {
         self.archiveFile = config.file
         self.memoryFile = config.memoryFile
         self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
+        self.zip64EndOfCentralDirectory = config.zip64EndOfCentralDirectory
     }
     #endif
 
@@ -248,21 +250,27 @@ public final class Archive: Sequence {
     struct BackingConfiguration {
         let file: UnsafeMutablePointer<FILE>
         let endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
+        let zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?
         #if swift(>=5.0)
         let memoryFile: MemoryFile?
 
         init(file: UnsafeMutablePointer<FILE>,
              endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
+             zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory? = nil,
              memoryFile: MemoryFile? = nil) {
             self.file = file
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+            self.zip64EndOfCentralDirectory = zip64EndOfCentralDirectory
             self.memoryFile = memoryFile
         }
         #else
 
-        init(file: UnsafeMutablePointer<FILE>, endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord) {
+        init(file: UnsafeMutablePointer<FILE>,
+             endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
+             zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?) {
             self.file = file
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+            self.zip64EndOfCentralDirectory = zip64EndOfCentralDirectory
         }
         #endif
     }
@@ -274,10 +282,12 @@ public final class Archive: Sequence {
         case .read:
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             guard let archiveFile = fopen(fileSystemRepresentation, "rb"),
-                let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                    return nil
+                  let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+                return nil
             }
-            return BackingConfiguration(file: archiveFile, endOfCentralDirectoryRecord: endOfCentralDirectoryRecord)
+            return BackingConfiguration(file: archiveFile,
+                                        endOfCentralDirectoryRecord: eocdRecord,
+                                        zip64EndOfCentralDirectory: zip64EOCD)
         case .create:
             let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
                                                                           totalNumberOfEntriesOnDisk: 0,
@@ -293,31 +303,49 @@ public final class Archive: Sequence {
         case .update:
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             guard let archiveFile = fopen(fileSystemRepresentation, "rb+"),
-                let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                    return nil
+                  let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+                return nil
             }
             fseek(archiveFile, 0, SEEK_SET)
-            return BackingConfiguration(file: archiveFile, endOfCentralDirectoryRecord: endOfCentralDirectoryRecord)
+            return BackingConfiguration(file: archiveFile,
+                                        endOfCentralDirectoryRecord: eocdRecord,
+                                        zip64EndOfCentralDirectory: zip64EOCD)
         }
     }
 
     static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
-        -> EndOfCentralDirectoryRecord? {
-        var directoryEnd = 0
+        -> EndOfCentralDirectoryStructure? {
+        var eocdOffset = 0
         var index = minDirectoryEndOffset
         fseek(file, 0, SEEK_END)
         let archiveLength = ftell(file)
-        while directoryEnd == 0 && index < maxDirectoryEndOffset && index <= archiveLength {
+        while eocdOffset == 0 && index < maxDirectoryEndOffset && index <= archiveLength {
             fseek(file, archiveLength - index, SEEK_SET)
             var potentialDirectoryEndTag: UInt32 = UInt32()
             fread(&potentialDirectoryEndTag, 1, MemoryLayout<UInt32>.size, file)
             if potentialDirectoryEndTag == UInt32(endOfCentralDirectoryStructSignature) {
-                directoryEnd = archiveLength - index
-                return Data.readStruct(from: file, at: directoryEnd)
+                eocdOffset = archiveLength - index
+                guard let eocd: EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: eocdOffset) else {
+                    return nil
+                }
+                let zip64EOCD = scanForZip64EndOfCentralDirectory(in: file, eocdOffset: eocdOffset)
+                return (eocd, zip64EOCD)
             }
             index += 1
         }
         return nil
+    }
+
+    private static func scanForZip64EndOfCentralDirectory(in file: UnsafeMutablePointer<FILE>, eocdOffset: Int)
+        -> Zip64EndOfCentralDirectory? {
+        let locatorOffset = eocdOffset - Zip64EndOfCentralDirectoryLocator.size
+        let recordOffset = locatorOffset - Zip64EndOfCentralDirectoryRecord.size
+        guard recordOffset > 0,
+              let locator: Zip64EndOfCentralDirectoryLocator = Data.readStruct(from: file, at: locatorOffset),
+              let record: Zip64EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: recordOffset) else {
+            return nil
+        }
+        return Zip64EndOfCentralDirectory(record: record, locator: locator)
     }
 }
 

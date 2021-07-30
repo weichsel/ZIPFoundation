@@ -242,20 +242,48 @@ extension ZIPFoundationTests {
         XCTAssertLessThan(0, archive.zip64EndOfCentralDirectory?.record.sizeOfCentralDirectory ?? 0)
     }
 
-    func testRemoveEntryFromZip64Archive() {
+    func testRemoveEntryFromArchiveWithZip64EOCD() {
         /*
          File structure:
-         zip/
-         ├─ data1.random
-         ├─ data2.random
+         testRemoveEntryFromZip64Archive.zip/
+           ├─ data1.random (size: 64)
+           ├─ data2.random (size: 64 * 64)
          */
         mockIntMaxValues()
+
         let archive = self.archive(for: #function, mode: .update)
         guard let entry = archive["data1.random"] else {
             XCTFail("Failed to add zip64 format entry to archive"); return
         }
-        // Case 1: should keep zip64 ecod
+        // should keep zip64 ecod
+        do {
+            try archive.remove(entry)
+        } catch {
+            XCTFail("Failed to remove entry from archive with error : \(error)")
+        }
+        XCTAssertNotNil(archive.zip64EndOfCentralDirectory)
+    }
+
+    func testRemoveZip64EntryFromArchiveWithZip64EOCD() {
+        /*
+         File structure:
+         testRemoveEntryFromZip64Archive.zip/
+           ├─ data1.random (size: 64)
+           ├─ data2.random (size: 64 * 64)
+         */
+        mockIntMaxValues()
+
+        let archive = self.archive(for: #function, mode: .update)
+        guard let entry = archive["data2.random"] else {
+            XCTFail("Failed to add zip64 format entry to archive"); return
+        }
         // Case 2: should remove zip64 eocd at the same time
+        do {
+            try archive.remove(entry)
+        } catch {
+            XCTFail("Failed to remove entry from archive with error : \(error)")
+        }
+        XCTAssertNil(archive.zip64EndOfCentralDirectory)
     }
 
     // MARK: - Helpers

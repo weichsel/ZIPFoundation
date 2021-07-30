@@ -251,7 +251,8 @@ extension ZIPFoundationTests {
             ("testCreateZip64ArchiveWithTooManyEntries", testCreateZip64ArchiveWithTooManyEntries),
             ("testUpdateZip64ArchiveWithZip64LFHOffset", testUpdateZip64ArchiveWithZip64LFHOffset),
             ("testCreateZip64ArchiveWithLargeSizeOfCD", testCreateZip64ArchiveWithLargeSizeOfCD),
-            ("testRemoveEntryFromZip64Archive", testRemoveEntryFromZip64Archive)
+            ("testRemoveEntryFromArchiveWithZip64EOCD", testRemoveEntryFromArchiveWithZip64EOCD),
+            ("testRemoveZip64EntryFromArchiveWithZip64EOCD", testRemoveZip64EntryFromArchiveWithZip64EOCD)
         ]
     }
 

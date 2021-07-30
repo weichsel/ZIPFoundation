@@ -33,12 +33,13 @@ extension Archive {
 
         switch mode {
         case .read:
-            guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+            guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
                 return nil
             }
 
             return BackingConfiguration(file: archiveFile,
-                                        endOfCentralDirectoryRecord: endOfCentralDirectoryRecord,
+                                        endOfCentralDirectoryRecord: eocdRecord,
+                                        zip64EndOfCentralDirectory: zip64EOCD,
                                         memoryFile: memoryFile)
         case .create:
             let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
@@ -53,13 +54,14 @@ extension Archive {
             }
             fallthrough
         case .update:
-            guard let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+            guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
                 return nil
             }
 
             fseek(archiveFile, 0, SEEK_SET)
             return BackingConfiguration(file: archiveFile,
-                                        endOfCentralDirectoryRecord: endOfCentralDirectoryRecord,
+                                        endOfCentralDirectoryRecord: eocdRecord,
+                                        zip64EndOfCentralDirectory: zip64EOCD,
                                         memoryFile: memoryFile)
         }
     }
