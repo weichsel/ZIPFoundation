@@ -223,7 +223,7 @@ extension FileManager {
         return modDate
     }
 
-    class func fileSizeForItem(at url: URL) throws -> UInt {
+    class func fileSizeForItem(at url: URL) throws -> Int {
         let fileManager = FileManager()
         guard fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
@@ -231,12 +231,9 @@ extension FileManager {
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
-        let fileSize = fileStat.st_size
         // `st_size` is a signed int value
-        guard fileSize < UInt.max else {
-            throw CocoaError(.fileReadTooLarge, userInfo: [NSFilePathErrorKey: url.path])
-        }
-        return UInt(fileSize)
+        let fileSize = fileStat.st_size
+        return Int(fileSize)
     }
 
     class func typeForItem(at url: URL) throws -> Entry.EntryType {

@@ -1,0 +1,92 @@
+//
+//  ZIPFoundationProgressTests.swift
+//  ZIPFoundation
+//
+//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Released under the MIT License.
+//
+//  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
+//
+
+import XCTest
+@testable import ZIPFoundation
+
+extension ZIPFoundationTests {
+    func testWriteEOCDWithTooLargeSizeOfCentralDirectory() {
+        let archive = self.archive(for: #function, mode: .create)
+        var didCatchExpectedError = false
+        archive.zip64EndOfCentralDirectory = makeMockZip64EndOfCentralDirectory(sizeOfCentralDirectory: .max,
+                                                                                numberOfEntries: 0)
+        do {
+            _ = try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
+                                               startOfCentralDirectory: 0,
+                                               startOfEndOfCentralDirectory: 0,
+                                               operation: .add)
+        } catch let error as Archive.ArchiveError {
+            XCTAssertNotNil(error == .invalidSizeOfCentralDirectory)
+            didCatchExpectedError = true
+        } catch {
+            XCTFail("Unexpected error while trying to add an entry exceeding maximum size.")
+        }
+        XCTAssert(didCatchExpectedError)
+    }
+
+    func testWriteEOCDWithTooLargeCentralDirectoryOffset() {
+        let archive = self.archive(for: #function, mode: .create)
+        var didCatchExpectedError = false
+        archive.zip64EndOfCentralDirectory = makeMockZip64EndOfCentralDirectory(sizeOfCentralDirectory: 0,
+                                                                                numberOfEntries: .max)
+        do {
+            _ = try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
+                                               startOfCentralDirectory: 0,
+                                               startOfEndOfCentralDirectory: 0,
+                                               operation: .add)
+        } catch let error as Archive.ArchiveError {
+            XCTAssertNotNil(error == .invalidNumberOfEntriesInCentralDirectory)
+            didCatchExpectedError = true
+        } catch {
+            XCTFail("Unexpected error while trying to add an entry exceeding maximum size.")
+        }
+        XCTAssert(didCatchExpectedError)
+    }
+
+    // MARK: - Helper
+
+    private func makeMockZip64EndOfCentralDirectory(sizeOfCentralDirectory: Int, numberOfEntries: UInt)
+    -> Archive.Zip64EndOfCentralDirectory {
+        let record = Archive.Zip64EndOfCentralDirectoryRecord(sizeOfZip64EndOfCentralDirectoryRecord: UInt(44),
+                                                              versionMadeBy: UInt16(789),
+                                                              versionNeededToExtract: zip64Version,
+                                                              numberOfDisk: 0, numberOfDiskStart: 0,
+                                                              totalNumberOfEntriesOnDisk: 0,
+                                                              totalNumberOfEntriesInCentralDirectory: numberOfEntries,
+                                                              sizeOfCentralDirectory: sizeOfCentralDirectory,
+                                                              offsetToStartOfCentralDirectory: 0,
+                                                              zip64ExtensibleDataSector: Data())
+        let locator = Archive.Zip64EndOfCentralDirectoryLocator(numberOfDiskWithZip64EOCDRecordStart: 0,
+                                                                relativeOffsetOfZip64EOCDRecord: 0,
+                                                                totalNumberOfDisk: 1)
+        return Archive.Zip64EndOfCentralDirectory(record: record, locator: locator)
+    }
+
+    private func makeMockCentralDirectory() -> Entry.CentralDirectoryStructure? {
+        let cdsBytes: [UInt8] = [0x50, 0x4b, 0x01, 0x02, 0x1e, 0x15, 0x14, 0x00,
+                                 0x08, 0x08, 0x08, 0x00, 0xab, 0x85, 0x77, 0x47,
+                                 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+                                 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                 0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
+        guard let cds = Entry.CentralDirectoryStructure(data: Data(cdsBytes),
+                                                        additionalDataProvider: { count -> Data in
+                                                            guard let pathData = "/".data(using: .utf8) else {
+                                                                throw AdditionalDataError.encodingError
+                                                            }
+                                                            XCTAssert(count == pathData.count)
+                                                            return pathData
+                                                        }) else {
+            XCTFail("Failed to read central directory structure.")
+            return nil
+        }
+        return cds
+    }
+}

@@ -18,9 +18,9 @@ extension Entry {
     struct Zip64ExtendedInformation {
         let headerID: UInt16 = ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
         let dataSize: UInt16
-        let uncompressedSize: UInt
-        let compressedSize: UInt
-        let relativeOffsetOfLocalHeader: UInt
+        let uncompressedSize: Int
+        let compressedSize: Int
+        let relativeOffsetOfLocalHeader: Int
         let diskNumberStart: UInt32
     }
 }
@@ -69,7 +69,7 @@ extension Entry.Zip64ExtendedInformation {
         let headerLength = 4
         guard fields.reduce(0, { $0 + $1.dataSize }) + headerLength == data.count else { return nil }
         var readOffset = headerLength
-        func value<T>(of field: Field) throws -> T where T: UnsignedInteger {
+        func value<T>(of field: Field) throws -> T where T: BinaryInteger {
             if fields.contains(field) {
                 defer {
                     readOffset += MemoryLayout<T>.size

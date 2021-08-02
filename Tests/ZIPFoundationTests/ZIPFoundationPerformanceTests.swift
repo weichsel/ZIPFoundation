@@ -20,7 +20,7 @@ extension ZIPFoundationTests {
         measure {
             do {
                 try archive.addEntry(with: entryName, type: .file,
-                                     uncompressedSize: UInt(size),
+                                     uncompressedSize: size,
                                      compressionMethod: .none,
                                      provider: { (position, bufferSize) -> Data in
                                         let upperBound = Swift.min(size, position + bufferSize)
@@ -40,7 +40,7 @@ extension ZIPFoundationTests {
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
             try archive.addEntry(with: entryName, type: .file,
-                                 uncompressedSize: UInt(size),
+                                 uncompressedSize: size,
                                  compressionMethod: .none,
                                  provider: { (position, bufferSize) -> Data in
                                     let upperBound = Swift.min(size, position + bufferSize)
@@ -71,7 +71,7 @@ extension ZIPFoundationTests {
         measure {
             do {
                 try archive.addEntry(with: entryName, type: .file,
-                                     uncompressedSize: UInt(size),
+                                     uncompressedSize: size,
                                      compressionMethod: .deflate,
                                      provider: { (position, bufferSize) -> Data in
                                         let upperBound = Swift.min(size, position + bufferSize)
@@ -91,7 +91,7 @@ extension ZIPFoundationTests {
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
             try archive.addEntry(with: entryName, type: .file,
-                                 uncompressedSize: UInt(size),
+                                 uncompressedSize: size,
                                  compressionMethod: .deflate,
                                  provider: { (position, bufferSize) -> Data in
                                     let upperBound = Swift.min(size, position + bufferSize)

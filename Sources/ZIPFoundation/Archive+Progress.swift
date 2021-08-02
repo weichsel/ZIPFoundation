@@ -17,8 +17,7 @@ extension Archive {
     /// - Parameter entry: The entry that will be removed.
     /// - Returns: The number of the work units.
     public func totalUnitCountForRemoving(_ entry: Entry) -> Int64 {
-        return Int64(self.endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory
-                   - UInt32(entry.localSize))
+        return Int64(self.offsetToStartOfCentralDirectory - Int(entry.localSize))
     }
 
     func makeProgressForRemoving(_ entry: Entry) -> Progress {

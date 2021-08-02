@@ -56,10 +56,9 @@ class ZIPFoundationTests: XCTestCase {
     }
 
     override class func tearDown() {
-        resetIntMaxValues()
         do {
-//            let fileManager = FileManager()
-//            try fileManager.removeItem(at: tempZipDirectoryURL)
+            let fileManager = FileManager()
+            try fileManager.removeItem(at: tempZipDirectoryURL)
         } catch {
             XCTFail("Unexpected error while trying to clean up test resources.")
         }
@@ -188,7 +187,6 @@ extension ZIPFoundationTests {
             ("testCreateArchiveAddLargeCompressedEntry", testCreateArchiveAddLargeCompressedEntry),
             ("testCreateArchiveAddLargeUncompressedEntry", testCreateArchiveAddLargeUncompressedEntry),
             ("testCreateArchiveAddSymbolicLink", testCreateArchiveAddSymbolicLink),
-            ("testCreateArchiveAddTooLargeUncompressedEntry", testCreateArchiveAddTooLargeUncompressedEntry),
             ("testCreateArchiveAddUncompressedEntry", testCreateArchiveAddUncompressedEntry),
             ("testDetectEntryType", testDetectEntryType),
             ("testExtractInvalidBufferSizeErrorConditions", testExtractInvalidBufferSizeErrorConditions),
@@ -249,10 +247,13 @@ extension ZIPFoundationTests {
             ("testArchieveInvalidZip64EOCDLocatorConditions", testArchieveInvalidZip64EOCDLocatorConditions),
             ("testCreateZip64ArchiveWithLargeSize", testCreateZip64ArchiveWithLargeSize),
             ("testCreateZip64ArchiveWithTooManyEntries", testCreateZip64ArchiveWithTooManyEntries),
-            ("testUpdateZip64ArchiveWithZip64LFHOffset", testUpdateZip64ArchiveWithZip64LFHOffset),
+            ("testAddEntryToArchiveWithZip64LFHOffset", testAddEntryToArchiveWithZip64LFHOffset),
+            ("testAddDirectoryToArchiveWithZip64LFHOffset", testAddDirectoryToArchiveWithZip64LFHOffset),
             ("testCreateZip64ArchiveWithLargeSizeOfCD", testCreateZip64ArchiveWithLargeSizeOfCD),
             ("testRemoveEntryFromArchiveWithZip64EOCD", testRemoveEntryFromArchiveWithZip64EOCD),
-            ("testRemoveZip64EntryFromArchiveWithZip64EOCD", testRemoveZip64EntryFromArchiveWithZip64EOCD)
+            ("testRemoveZip64EntryFromArchiveWithZip64EOCD", testRemoveZip64EntryFromArchiveWithZip64EOCD),
+            ("testWriteEOCDWithTooLargeSizeOfCentralDirectory", testWriteEOCDWithTooLargeSizeOfCentralDirectory),
+            ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset)
         ]
     }
 

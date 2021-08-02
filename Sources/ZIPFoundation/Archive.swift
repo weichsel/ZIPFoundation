@@ -72,13 +72,11 @@ public final class Archive: Sequence {
         case invalidUncompressedSize
         /// Thrown when the size of central directory exceeds `Int.max`
         case invalidSizeOfCentralDirectory
-        /// Thrown when the start of the central directory exceeds `UInt32.max`
+        /// Thrown when the start of the central directory exceeds `Int.max`
         case invalidStartOfCentralDirectoryOffset
         /// Thrown when an archive does not contain the required End of Central Directory Record.
         case missingEndOfCentralDirectoryRecord
-        /// Thrown when number of entries on disk exceeds `UInt16.max`
-        case invalidNumberOfEntriesOnDisk
-        /// Thrown when number of entries in central directory exceeds `UInt16.max`
+        /// Thrown when number of entries in central directory exceeds `UInt.max`
         case invalidNumberOfEntriesInCentralDirectory
         /// Thrown when an extract, add or remove operation was canceled.
         case cancelledOperation
@@ -122,13 +120,17 @@ public final class Archive: Sequence {
         zip64EndOfCentralDirectory?.record.totalNumberOfEntriesInCentralDirectory
             ?? UInt(endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory)
     }
-    var sizeOfCentralDirectory: UInt {
-        zip64EndOfCentralDirectory?.record.sizeOfCentralDirectory
-            ?? UInt(endOfCentralDirectoryRecord.sizeOfCentralDirectory)
+    var totalNumberOfEntriesOnDisk: UInt {
+        zip64EndOfCentralDirectory?.record.totalNumberOfEntriesOnDisk
+            ?? UInt(endOfCentralDirectoryRecord.totalNumberOfEntriesOnDisk)
     }
-    var offsetToStartOfCentralDirectory: UInt {
+    var sizeOfCentralDirectory: Int {
+        zip64EndOfCentralDirectory?.record.sizeOfCentralDirectory
+            ?? Int(endOfCentralDirectoryRecord.sizeOfCentralDirectory)
+    }
+    var offsetToStartOfCentralDirectory: Int {
         zip64EndOfCentralDirectory?.record.offsetToStartOfCentralDirectory
-            ?? UInt(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
+            ?? Int(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
     }
 
     /// Initializes a new ZIP `Archive`.
