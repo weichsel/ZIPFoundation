@@ -264,7 +264,7 @@ extension Archive {
         var extraFieldLength = UInt16(0)
         var zip64ExtendedInformation: Entry.Zip64ExtendedInformation?
         var versionNeededToExtract = UInt16(20)
-        // Zip64 Extended Information in the Local header MUST include BOTH original compressed file size fields.
+        // Zip64 Extended Information in the Local header MUST include BOTH original and compressed file size fields.
         if size.uncompressed >= maxUncompressedSize || size.compressed >= maxCompressedSize {
             uncompressedSizeOfLFH = UInt32.max
             compressedSizeOfLFH = UInt32.max

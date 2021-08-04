@@ -120,10 +120,6 @@ public final class Archive: Sequence {
         zip64EndOfCentralDirectory?.record.totalNumberOfEntriesInCentralDirectory
             ?? UInt(endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory)
     }
-    var totalNumberOfEntriesOnDisk: UInt {
-        zip64EndOfCentralDirectory?.record.totalNumberOfEntriesOnDisk
-            ?? UInt(endOfCentralDirectoryRecord.totalNumberOfEntriesOnDisk)
-    }
     var sizeOfCentralDirectory: Int {
         zip64EndOfCentralDirectory?.record.sizeOfCentralDirectory
             ?? Int(endOfCentralDirectoryRecord.sizeOfCentralDirectory)

@@ -32,7 +32,7 @@ extension Entry.Zip64ExtendedInformation {
         case relativeOffsetOfLocalHeader
         case diskNumberStart
 
-        var dataSize: Int {
+        var size: Int {
             switch self {
             case .uncompressedSize, .compressedSize, .relativeOffsetOfLocalHeader:
                 return 8
@@ -67,14 +67,14 @@ extension Entry.Zip64ExtendedInformation {
 
     init?(data: Data, fields: [Field]) {
         let headerLength = 4
-        guard fields.reduce(0, { $0 + $1.dataSize }) + headerLength == data.count else { return nil }
+        guard fields.reduce(0, { $0 + $1.size }) + headerLength == data.count else { return nil }
         var readOffset = headerLength
         func value<T>(of field: Field) throws -> T where T: BinaryInteger {
             if fields.contains(field) {
                 defer {
                     readOffset += MemoryLayout<T>.size
                 }
-                guard readOffset + field.dataSize < data.count + 1 else {
+                guard readOffset + field.size < data.count + 1 else {
                     throw Entry.EntryError.invalidDataError
                 }
                 return data.scanValue(start: readOffset)

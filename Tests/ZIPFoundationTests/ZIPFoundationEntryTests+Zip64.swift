@@ -12,7 +12,22 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+    func testEntryZip64ExtraField() {
+        let extraFieldBytesIncludingSizeFields: [UInt8] = [0x01, 0x00, 0x10, 0x00, 0x0a, 0x00, 0x00, 0x00,
+                                                           0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00,
+                                                           0x00, 0x00, 0x00, 0x00]
+        let zip64ExtraField1 = Entry.Zip64ExtendedInformation(data: Data(extraFieldBytesIncludingSizeFields),
+                                                             fields: [.compressedSize, .uncompressedSize])
+        XCTAssertNotNil(zip64ExtraField1)
+        let extraFieldBytesIncludingOtherFields: [UInt8] = [0x01, 0x00, 0x10, 0x00, 0x0a, 0x00, 0x00, 0x00,
+                                                            0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00]
+        let zip64ExtraField2 = Entry.Zip64ExtendedInformation(data: Data(extraFieldBytesIncludingOtherFields),
+                                                              fields: [.relativeOffsetOfLocalHeader, .diskNumberStart])
+        XCTAssertNotNil(zip64ExtraField2)
+    }
+
     func testEntryZip64FieldOnlyHasUncompressedSize() {
+        // Including both original and compressed file size fields. (at least in the Local header)
         let expectedZip64ExtraFieldBytes: [UInt8] = [0x01, 0x00, 0x10, 0x00, 0x0a, 0x00, 0x00, 0x00,
                                                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                                      0x00, 0x00, 0x00, 0x00]
@@ -24,13 +39,14 @@ extension ZIPFoundationTests {
         XCTAssertEqual(zip64Field.data, Data(expectedZip64ExtraFieldBytes))
     }
 
-    func testEntryZip64ExtraField() {
-        let extraFieldBytes: [UInt8] = [0x01, 0x00, 0x10, 0x00, 0x0a, 0x00, 0x00, 0x00,
-                                        0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00,
-                                        0x00, 0x00, 0x00, 0x00]
-        let zip64ExtraField = Entry.Zip64ExtendedInformation(data: Data(extraFieldBytes),
-                                                            fields: [.compressedSize, .uncompressedSize])
-        XCTAssertNotNil(zip64ExtraField)
+    func testEntryZip64FieldIncludingDiskNumberStart() {
+        let expectedZip64ExtraFieldBytes: [UInt8] = [0x01, 0x00, 0x04, 0x00, 0x0a, 0x00, 0x00, 0x00]
+        let zip64Field = Entry.Zip64ExtendedInformation(dataSize: 4,
+                                                        uncompressedSize: 0,
+                                                        compressedSize: 0,
+                                                        relativeOffsetOfLocalHeader: 0,
+                                                        diskNumberStart: 10)
+        XCTAssertEqual(zip64Field.data, Data(expectedZip64ExtraFieldBytes))
     }
 
     func testEntryInvalidZip64ExtraFieldErrorConditions() {
@@ -55,6 +71,11 @@ extension ZIPFoundationTests {
         let invalidExtraField3 = Entry.Zip64ExtendedInformation(data: Data(extraFieldBytesWithWrongFields),
                                                                 fields: [.compressedSize])
         XCTAssertNil(invalidExtraField3)
+        let extraFieldBytesWithWrongFieldLength: [UInt8] = [0x01, 0x00, 0x10, 0x00, 0x0a, 0x00, 0x00, 0x00,
+                                                            0x00, 0x00, 0x00, 0x00]
+        let invalidExtraField4 = Entry.Zip64ExtendedInformation(data: Data(extraFieldBytesWithWrongFieldLength),
+                                                                fields: [.diskNumberStart])
+        XCTAssertNil(invalidExtraField4)
     }
 
     func testEntryScanForZip64Field() {

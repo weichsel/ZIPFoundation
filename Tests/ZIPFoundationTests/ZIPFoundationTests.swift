@@ -236,8 +236,9 @@ extension ZIPFoundationTests {
 
     static var zip64Tests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
         return [
-            ("testEntryZip64FieldOnlyHasUncompressedSize", testEntryZip64FieldOnlyHasUncompressedSize),
             ("testEntryZip64ExtraField", testEntryZip64ExtraField),
+            ("testEntryZip64FieldOnlyHasUncompressedSize", testEntryZip64FieldOnlyHasUncompressedSize),
+            ("testEntryZip64FieldIncludingDiskNumberStart", testEntryZip64FieldIncludingDiskNumberStart),
             ("testEntryInvalidZip64ExtraFieldErrorConditions", testEntryInvalidZip64ExtraFieldErrorConditions),
             ("testEntryScanForZip64Field", testEntryScanForZip64Field),
             ("testEntryScanForZip64FieldErrorConditions", testEntryScanForZip64FieldErrorConditions),
@@ -253,7 +254,8 @@ extension ZIPFoundationTests {
             ("testRemoveEntryFromArchiveWithZip64EOCD", testRemoveEntryFromArchiveWithZip64EOCD),
             ("testRemoveZip64EntryFromArchiveWithZip64EOCD", testRemoveZip64EntryFromArchiveWithZip64EOCD),
             ("testWriteEOCDWithTooLargeSizeOfCentralDirectory", testWriteEOCDWithTooLargeSizeOfCentralDirectory),
-            ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset)
+            ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset),
+            ("testAddZip64EntryRollback", testAddZip64EntryRollback)
         ]
     }
 
