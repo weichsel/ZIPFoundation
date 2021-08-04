@@ -11,9 +11,9 @@
 import Foundation
 
 /// The minimum version of zip64 format
-public let zip64Version = UInt16(45)
-let zip64EndOfCentralDirectoryRecordStructSignature = 0x06064b50
-let zip64EndOfCentralDirectoryLocatorStructSignature = 0x07064b50
+let zip64Version = UInt16(45)
+let zip64EOCDRecordStructSignature = 0x06064b50
+let zip64EOCDLocatorStructSignature = 0x07064b50
 
 enum ExtraFieldHeaderID: UInt16 {
     case zip64ExtendedInformation = 0x0001
@@ -34,9 +34,9 @@ extension Archive {
         let record: Zip64EndOfCentralDirectoryRecord
         let locator: Zip64EndOfCentralDirectoryLocator
     }
-    
+
     struct Zip64EndOfCentralDirectoryRecord: DataSerializable {
-        let zip64EndOfCentralDirectorySignature = UInt32(zip64EndOfCentralDirectoryRecordStructSignature)
+        let zip64EOCDRecordSignature = UInt32(zip64EOCDRecordStructSignature)
         let sizeOfZip64EndOfCentralDirectoryRecord: UInt
         let versionMadeBy: UInt16
         let versionNeededToExtract: UInt16
@@ -51,7 +51,7 @@ extension Archive {
     }
 
     struct Zip64EndOfCentralDirectoryLocator: DataSerializable {
-        let zip64EndOfCentralDirectoryLocatorSignature = UInt32(zip64EndOfCentralDirectoryLocatorStructSignature)
+        let zip64EOCDLocatorSignature = UInt32(zip64EOCDLocatorStructSignature)
         let numberOfDiskWithZip64EOCDRecordStart: UInt32
         let relativeOffsetOfZip64EOCDRecord: Int
         let totalNumberOfDisk: UInt32
@@ -61,7 +61,7 @@ extension Archive {
 
 extension Archive.Zip64EndOfCentralDirectoryRecord {
     var data: Data {
-        var zip64EOCDRecordSignature = self.zip64EndOfCentralDirectorySignature
+        var zip64EOCDRecordSignature = self.zip64EOCDRecordSignature
         var sizeOfZip64EOCDRecord = self.sizeOfZip64EndOfCentralDirectoryRecord
         var versionMadeBy = self.versionMadeBy
         var versionNeededToExtract = self.versionNeededToExtract
@@ -88,7 +88,7 @@ extension Archive.Zip64EndOfCentralDirectoryRecord {
 
     init?(data: Data, additionalDataProvider provider: (Int) throws -> Data) {
         guard data.count == Archive.Zip64EndOfCentralDirectoryRecord.size else { return nil }
-        guard data.scanValue(start: 0) == zip64EndOfCentralDirectorySignature else { return nil }
+        guard data.scanValue(start: 0) == zip64EOCDRecordSignature else { return nil }
         self.sizeOfZip64EndOfCentralDirectoryRecord = data.scanValue(start: 4)
         self.versionMadeBy = data.scanValue(start: 12)
         self.versionNeededToExtract = data.scanValue(start: 14)
@@ -122,7 +122,7 @@ extension Archive.Zip64EndOfCentralDirectoryRecord {
 
 extension Archive.Zip64EndOfCentralDirectoryLocator {
     var data: Data {
-        var zip64EOCDLocatorSignature = self.zip64EndOfCentralDirectoryLocatorSignature
+        var zip64EOCDLocatorSignature = self.zip64EOCDLocatorSignature
         var numberOfDiskWithZip64EOCD = self.numberOfDiskWithZip64EOCDRecordStart
         var offsetOfZip64EOCDRecord = self.relativeOffsetOfZip64EOCDRecord
         var totalNumberOfDisk = self.totalNumberOfDisk
@@ -136,7 +136,7 @@ extension Archive.Zip64EndOfCentralDirectoryLocator {
 
     init?(data: Data, additionalDataProvider provider: (Int) throws -> Data) {
         guard data.count == Archive.Zip64EndOfCentralDirectoryLocator.size else { return nil }
-        guard data.scanValue(start: 0) == zip64EndOfCentralDirectoryLocatorSignature else { return nil }
+        guard data.scanValue(start: 0) == zip64EOCDLocatorSignature else { return nil }
         self.numberOfDiskWithZip64EOCDRecordStart = data.scanValue(start: 4)
         self.relativeOffsetOfZip64EOCDRecord = data.scanValue(start: 8)
         self.totalNumberOfDisk = data.scanValue(start: 16)

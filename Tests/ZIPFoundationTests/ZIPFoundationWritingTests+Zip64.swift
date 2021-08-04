@@ -123,7 +123,7 @@ extension ZIPFoundationTests {
         do {
             let zip64EOCDSize = 56 + 20
             let zip64EOCDData = try readData(zip64EOCDSize)
-            XCTAssertEqual(zip64EOCDData.scanValue(start: 0), UInt32(zip64EndOfCentralDirectoryRecordStructSignature))
+            XCTAssertEqual(zip64EOCDData.scanValue(start: 0), UInt32(zip64EOCDRecordStructSignature))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 4), UInt(44))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 12), UInt16(789))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 14), zip64Version)
@@ -133,7 +133,7 @@ extension ZIPFoundationTests {
             XCTAssertEqual(zip64EOCDData.scanValue(start: 32), UInt(1))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 40), UInt(cdSize))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 48), UInt(cdOffset))
-            XCTAssertEqual(zip64EOCDData.scanValue(start: 56), UInt32(zip64EndOfCentralDirectoryLocatorStructSignature))
+            XCTAssertEqual(zip64EOCDData.scanValue(start: 56), UInt32(zip64EOCDLocatorStructSignature))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 60), UInt32(0))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 64), UInt(zip64EOCDOffset))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 72), UInt32(1))

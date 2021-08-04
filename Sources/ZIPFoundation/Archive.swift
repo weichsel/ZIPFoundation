@@ -68,12 +68,8 @@ public final class Archive: Sequence {
         case invalidEntryPath
         /// Thrown when an `Entry` can't be stored in the archive with the proposed compression method.
         case invalidCompressionMethod
-        /// Thrown when the uncompressed size exceeds `Int64.max`
-        case invalidUncompressedSize
         /// Thrown when the size of central directory exceeds `Int.max`
         case invalidSizeOfCentralDirectory
-        /// Thrown when the start of the central directory exceeds `Int.max`
-        case invalidStartOfCentralDirectoryOffset
         /// Thrown when an archive does not contain the required End of Central Directory Record.
         case missingEndOfCentralDirectoryRecord
         /// Thrown when number of entries in central directory exceeds `UInt.max`

@@ -123,12 +123,10 @@ extension Archive {
         progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : Int64(uncompressedSize)
         let endOfCentralDirRecord = self.endOfCentralDirectoryRecord
         let zip64EOCD = self.zip64EndOfCentralDirectory
-        let existingStartOfCD = self.offsetToStartOfCentralDirectory
-        var startOfCDInt = Int(existingStartOfCD)
-        fseek(self.archiveFile, startOfCDInt, SEEK_SET)
-        let sizeOfCD = self.sizeOfCentralDirectory
-        let existingCentralDirData = try Data.readChunk(of: sizeOfCD, from: self.archiveFile)
-        fseek(self.archiveFile, startOfCDInt, SEEK_SET)
+        var startOfCD = self.offsetToStartOfCentralDirectory
+        fseek(self.archiveFile, startOfCD, SEEK_SET)
+        let existingCentralDirData = try Data.readChunk(of: self.sizeOfCentralDirectory, from: self.archiveFile)
+        fseek(self.archiveFile, startOfCD, SEEK_SET)
         let localFileHeaderStart = ftell(self.archiveFile)
         let modDateTime = modificationDate.fileModificationDateTime
         defer { fflush(self.archiveFile) }
@@ -141,7 +139,7 @@ extension Archive {
             let (written, checksum) = try self.writeEntry(uncompressedSize: uncompressedSize, type: type,
                                                           compressionMethod: compressionMethod, bufferSize: bufferSize,
                                                           progress: progress, provider: provider)
-            startOfCDInt = ftell(self.archiveFile)
+            startOfCD = ftell(self.archiveFile)
             // Local File Header
             // Write the local file header a second time. Now with compressedSize (if applicable) and a valid checksum.
             fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
@@ -149,7 +147,7 @@ extension Archive {
                                                             size: (uncompressedSize, written),
                                                             checksum: checksum, modificationDateTime: modDateTime)
             // Central Directory
-            fseek(self.archiveFile, startOfCDInt, SEEK_SET)
+            fseek(self.archiveFile, startOfCD, SEEK_SET)
             _ = try Data.write(chunk: existingCentralDirData, to: self.archiveFile)
             let permissions = permissions ?? (type == .directory ? defaultDirectoryPermissions : defaultFilePermissions)
             let externalAttributes = FileManager.externalFileAttributesForEntry(of: type, permissions: permissions)
@@ -159,7 +157,7 @@ extension Archive {
             // End of Central Directory Record (including Zip64 End of Central Directory Record/Locator)
             let startOfEOCDInt = ftell(self.archiveFile)
             let eocdStructure = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDir,
-                                                                    startOfCentralDirectory: startOfCDInt,
+                                                                    startOfCentralDirectory: startOfCD,
                                                                     startOfEndOfCentralDirectory: startOfEOCDInt,
                                                                     operation: .add)
             (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory) = eocdStructure
