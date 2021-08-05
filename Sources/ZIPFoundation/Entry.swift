@@ -95,7 +95,6 @@ public struct Entry: Equatable {
         var usesDataDescriptor: Bool { return (self.generalPurposeBitFlag & (1 << 3 )) != 0 }
         var usesUTF8PathEncoding: Bool { return (self.generalPurposeBitFlag & (1 << 11 )) != 0 }
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
-        var isZIP64: Bool { return UInt8(truncatingIfNeeded: self.versionNeededToExtract) >= 45 }
     }
     /// Returns the `path` of the receiver within a ZIP `Archive` using a given encoding.
     ///
@@ -195,8 +194,7 @@ public struct Entry: Equatable {
     init?(centralDirectoryStructure: CentralDirectoryStructure,
           localFileHeader: LocalFileHeader,
           dataDescriptor: DataDescriptor?) {
-        // We currently don't support ZIP64 or encrypted archives
-        guard !centralDirectoryStructure.isZIP64 else { return nil }
+        // We currently don't support encrypted archives
         guard !centralDirectoryStructure.isEncrypted else { return nil }
         self.centralDirectoryStructure = centralDirectoryStructure
         self.localFileHeader = localFileHeader
@@ -335,7 +333,8 @@ extension Entry.CentralDirectoryStructure {
         self.fileCommentData = additionalData.subdata(in: subRangeStart..<subRangeEnd)
     }
 
-    init(localFileHeader: Entry.LocalFileHeader, fileAttributes: UInt32, relativeOffset: UInt32) {
+    init(localFileHeader: Entry.LocalFileHeader, fileAttributes: UInt32, relativeOffset: UInt32,
+         extraField: (length: UInt16, data: Data)) {
         versionMadeBy = UInt16(789)
         versionNeededToExtract = localFileHeader.versionNeededToExtract
         generalPurposeBitFlag = localFileHeader.generalPurposeBitFlag
@@ -346,14 +345,14 @@ extension Entry.CentralDirectoryStructure {
         compressedSize = localFileHeader.compressedSize
         uncompressedSize = localFileHeader.uncompressedSize
         fileNameLength = localFileHeader.fileNameLength
-        extraFieldLength = UInt16(0)
+        extraFieldLength = extraField.length
         fileCommentLength = UInt16(0)
         diskNumberStart = UInt16(0)
         internalFileAttributes = UInt16(0)
         externalFileAttributes = fileAttributes
         relativeOffsetOfLocalHeader = relativeOffset
         fileNameData = localFileHeader.fileNameData
-        extraFieldData = Data()
+        extraFieldData = extraField.data
         fileCommentData = Data()
     }
 

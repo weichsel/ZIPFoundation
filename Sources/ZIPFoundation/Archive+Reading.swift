@@ -21,7 +21,7 @@ extension Archive {
     ///   - progress: A progress object that can be used to track or cancel the extract operation.
     /// - Returns: The checksum of the processed content or 0 if the `skipCRC32` flag was set to `true`.
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
-    public func extract(_ entry: Entry, to url: URL, bufferSize: UInt32 = defaultReadChunkSize, skipCRC32: Bool = false,
+    public func extract(_ entry: Entry, to url: URL, bufferSize: Int = defaultReadChunkSize, skipCRC32: Bool = false,
                         progress: Progress? = nil) throws -> CRC32 {
         guard bufferSize > 0 else {
             throw ArchiveError.invalidBufferSize
@@ -75,7 +75,7 @@ extension Archive {
     ///   - consumer: A closure that consumes contents of `Entry` as `Data` chunks.
     /// - Returns: The checksum of the processed content or 0 if the `skipCRC32` flag was set to `true`..
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
-    public func extract(_ entry: Entry, bufferSize: UInt32 = defaultReadChunkSize, skipCRC32: Bool = false,
+    public func extract(_ entry: Entry, bufferSize: Int = defaultReadChunkSize, skipCRC32: Bool = false,
                         progress: Progress? = nil, consumer: Consumer) throws -> CRC32 {
         guard bufferSize > 0 else {
             throw ArchiveError.invalidBufferSize
@@ -111,12 +111,12 @@ extension Archive {
 
     // MARK: - Helpers
 
-    private func readUncompressed(entry: Entry, bufferSize: UInt32, skipCRC32: Bool,
+    private func readUncompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                                   progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = Int(entry.centralDirectoryStructure.uncompressedSize)
-        return try Data.consumePart(of: size, chunkSize: Int(bufferSize), skipCRC32: skipCRC32,
+        return try Data.consumePart(of: size, chunkSize: bufferSize, skipCRC32: skipCRC32,
                                     provider: { (_, chunkSize) -> Data in
-            return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
+            return try Data.readChunk(of: chunkSize, from: self.archiveFile)
         }, consumer: { (data) in
             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
             try consumer(data)
@@ -124,10 +124,10 @@ extension Archive {
         })
     }
 
-    private func readCompressed(entry: Entry, bufferSize: UInt32, skipCRC32: Bool,
+    private func readCompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                                 progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = Int(entry.centralDirectoryStructure.compressedSize)
-        return try Data.decompress(size: size, bufferSize: Int(bufferSize), skipCRC32: skipCRC32,
+        return try Data.decompress(size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                    provider: { (_, chunkSize) -> Data in
             return try Data.readChunk(of: chunkSize, from: self.archiveFile)
         }, consumer: { (data) in

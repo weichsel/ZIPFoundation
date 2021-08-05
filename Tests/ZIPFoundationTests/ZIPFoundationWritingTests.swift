@@ -179,7 +179,7 @@ extension ZIPFoundationTests {
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
             try archive.addEntry(with: entryName, type: .file,
-                                 uncompressedSize: UInt32(size), provider: { (position, bufferSize) -> Data in
+                                 uncompressedSize: size, provider: { (position, bufferSize) -> Data in
                                     let upperBound = Swift.min(size, position + bufferSize)
                                     let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
                                     return data.subdata(in: range)
@@ -201,7 +201,7 @@ extension ZIPFoundationTests {
         let data = Data.makeRandomData(size: size)
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
-            try archive.addEntry(with: entryName, type: .file, uncompressedSize: UInt32(size),
+            try archive.addEntry(with: entryName, type: .file, uncompressedSize: size,
                                  compressionMethod: .deflate,
                                  provider: { (position, bufferSize) -> Data in
                                     let upperBound = Swift.min(size, position + bufferSize)
@@ -218,24 +218,6 @@ extension ZIPFoundationTests {
         let dataCRC32 = data.crc32(checksum: 0)
         XCTAssert(entry.checksum == dataCRC32)
         XCTAssert(archive.checkIntegrity())
-    }
-
-    func testCreateArchiveAddTooLargeUncompressedEntry() {
-        let archive = self.archive(for: #function, mode: .create)
-        let fileName = ProcessInfo.processInfo.globallyUniqueString
-        var didCatchExpectedError = false
-        do {
-            try archive.addEntry(with: fileName, type: .file, uncompressedSize: .max,
-                                 provider: { (_, chunkSize) -> Data in
-                return Data(count: chunkSize)
-            })
-        } catch let error as Archive.ArchiveError {
-            XCTAssertNotNil(error == .invalidStartOfCentralDirectoryOffset)
-            didCatchExpectedError = true
-        } catch {
-            XCTFail("Unexpected error while trying to add an entry exceeding maximum size.")
-        }
-        XCTAssert(didCatchExpectedError)
     }
 
     func testRemoveUncompressedEntry() {

@@ -11,7 +11,7 @@
 import Foundation
 
 /// The default chunk size when reading entry data from an archive.
-public let defaultReadChunkSize = UInt32(16*1024)
+public let defaultReadChunkSize = Int(16*1024)
 /// The default chunk size when writing entry data to an archive.
 public let defaultWriteChunkSize = defaultReadChunkSize
 /// The default permissions for newly added entries.
@@ -19,8 +19,7 @@ public let defaultFilePermissions = UInt16(0o644)
 public let defaultDirectoryPermissions = UInt16(0o755)
 let defaultPOSIXBufferSize = defaultReadChunkSize
 let defaultDirectoryUnitCount = Int64(1)
-let minDirectoryEndOffset = 22
-let maxDirectoryEndOffset = 66000
+let minEndOfCentralDirectoryOffset = 22
 let endOfCentralDirectoryStructSignature = 0x06054b50
 let localFileHeaderStructSignature = 0x04034b50
 let dataDescriptorStructSignature = 0x08074b50
@@ -68,13 +67,11 @@ public final class Archive: Sequence {
         case invalidEntryPath
         /// Thrown when an `Entry` can't be stored in the archive with the proposed compression method.
         case invalidCompressionMethod
-        /// Thrown when the start of the central directory exceeds `UInt32.max`
-        case invalidStartOfCentralDirectoryOffset
+        /// Thrown when the size of central directory exceeds `Int.max`
+        case invalidSizeOfCentralDirectory
         /// Thrown when an archive does not contain the required End of Central Directory Record.
         case missingEndOfCentralDirectoryRecord
-        /// Thrown when number of entries on disk exceeds `UInt16.max`
-        case invalidNumberOfEntriesOnDisk
-        /// Thrown when number of entries in central directory exceeds `UInt16.max`
+        /// Thrown when number of entries in central directory exceeds `UInt.max`
         case invalidNumberOfEntriesInCentralDirectory
         /// Thrown when an extract, add or remove operation was canceled.
         case cancelledOperation
@@ -111,7 +108,21 @@ public final class Archive: Sequence {
     public let accessMode: AccessMode
     var archiveFile: UnsafeMutablePointer<FILE>
     var endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
+    var zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?
     var preferredEncoding: String.Encoding?
+
+    var totalNumberOfEntriesInCentralDirectory: UInt {
+        zip64EndOfCentralDirectory?.record.totalNumberOfEntriesInCentralDirectory
+            ?? UInt(endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory)
+    }
+    var sizeOfCentralDirectory: Int {
+        zip64EndOfCentralDirectory?.record.sizeOfCentralDirectory
+            ?? Int(endOfCentralDirectoryRecord.sizeOfCentralDirectory)
+    }
+    var offsetToStartOfCentralDirectory: Int {
+        zip64EndOfCentralDirectory?.record.offsetToStartOfCentralDirectory
+            ?? Int(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
+    }
 
     /// Initializes a new ZIP `Archive`.
     ///
@@ -138,6 +149,7 @@ public final class Archive: Sequence {
         }
         self.archiveFile = config.file
         self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
+        self.zip64EndOfCentralDirectory = config.zip64EndOfCentralDirectory
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
@@ -170,6 +182,7 @@ public final class Archive: Sequence {
         self.archiveFile = config.file
         self.memoryFile = config.memoryFile
         self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
+        self.zip64EndOfCentralDirectory = config.zip64EndOfCentralDirectory
     }
     #endif
 
@@ -178,11 +191,11 @@ public final class Archive: Sequence {
     }
 
     public func makeIterator() -> AnyIterator<Entry> {
-        let endOfCentralDirectoryRecord = self.endOfCentralDirectoryRecord
-        var directoryIndex = Int(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
+        let totalNumberOfEntriesInCD = self.totalNumberOfEntriesInCentralDirectory
+        var directoryIndex = self.offsetToStartOfCentralDirectory
         var index = 0
         return AnyIterator {
-            guard index < Int(endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory) else { return nil }
+            guard index < totalNumberOfEntriesInCD else { return nil }
             guard let centralDirStruct: CentralDirectoryStructure = Data.readStruct(from: self.archiveFile,
                                                                                     at: directoryIndex) else {
                                                                                         return nil
@@ -230,21 +243,27 @@ public final class Archive: Sequence {
     struct BackingConfiguration {
         let file: UnsafeMutablePointer<FILE>
         let endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
+        let zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?
         #if swift(>=5.0)
         let memoryFile: MemoryFile?
 
         init(file: UnsafeMutablePointer<FILE>,
              endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
+             zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory? = nil,
              memoryFile: MemoryFile? = nil) {
             self.file = file
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+            self.zip64EndOfCentralDirectory = zip64EndOfCentralDirectory
             self.memoryFile = memoryFile
         }
         #else
 
-        init(file: UnsafeMutablePointer<FILE>, endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord) {
+        init(file: UnsafeMutablePointer<FILE>,
+             endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
+             zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?) {
             self.file = file
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
+            self.zip64EndOfCentralDirectory = zip64EndOfCentralDirectory
         }
         #endif
     }
@@ -256,10 +275,12 @@ public final class Archive: Sequence {
         case .read:
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             guard let archiveFile = fopen(fileSystemRepresentation, "rb"),
-                let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                    return nil
+                  let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+                return nil
             }
-            return BackingConfiguration(file: archiveFile, endOfCentralDirectoryRecord: endOfCentralDirectoryRecord)
+            return BackingConfiguration(file: archiveFile,
+                                        endOfCentralDirectoryRecord: eocdRecord,
+                                        zip64EndOfCentralDirectory: zip64EOCD)
         case .create:
             let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
                                                                           totalNumberOfEntriesOnDisk: 0,
@@ -275,31 +296,49 @@ public final class Archive: Sequence {
         case .update:
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             guard let archiveFile = fopen(fileSystemRepresentation, "rb+"),
-                let endOfCentralDirectoryRecord = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                    return nil
+                  let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+                return nil
             }
             fseek(archiveFile, 0, SEEK_SET)
-            return BackingConfiguration(file: archiveFile, endOfCentralDirectoryRecord: endOfCentralDirectoryRecord)
+            return BackingConfiguration(file: archiveFile,
+                                        endOfCentralDirectoryRecord: eocdRecord,
+                                        zip64EndOfCentralDirectory: zip64EOCD)
         }
     }
 
     static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
-        -> EndOfCentralDirectoryRecord? {
-        var directoryEnd = 0
-        var index = minDirectoryEndOffset
+        -> EndOfCentralDirectoryStructure? {
+        var eocdOffset = 0
+        var index = minEndOfCentralDirectoryOffset
         fseek(file, 0, SEEK_END)
         let archiveLength = ftell(file)
-        while directoryEnd == 0 && index < maxDirectoryEndOffset && index <= archiveLength {
+        while eocdOffset == 0 && index <= archiveLength {
             fseek(file, archiveLength - index, SEEK_SET)
             var potentialDirectoryEndTag: UInt32 = UInt32()
             fread(&potentialDirectoryEndTag, 1, MemoryLayout<UInt32>.size, file)
             if potentialDirectoryEndTag == UInt32(endOfCentralDirectoryStructSignature) {
-                directoryEnd = archiveLength - index
-                return Data.readStruct(from: file, at: directoryEnd)
+                eocdOffset = archiveLength - index
+                guard let eocd: EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: eocdOffset) else {
+                    return nil
+                }
+                let zip64EOCD = scanForZip64EndOfCentralDirectory(in: file, eocdOffset: eocdOffset)
+                return (eocd, zip64EOCD)
             }
             index += 1
         }
         return nil
+    }
+
+    private static func scanForZip64EndOfCentralDirectory(in file: UnsafeMutablePointer<FILE>, eocdOffset: Int)
+        -> Zip64EndOfCentralDirectory? {
+        let locatorOffset = eocdOffset - Zip64EndOfCentralDirectoryLocator.size
+        let recordOffset = locatorOffset - Zip64EndOfCentralDirectoryRecord.size
+        guard recordOffset > 0,
+              let locator: Zip64EndOfCentralDirectoryLocator = Data.readStruct(from: file, at: locatorOffset),
+              let record: Zip64EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: recordOffset) else {
+            return nil
+        }
+        return Zip64EndOfCentralDirectory(record: record, locator: locator)
     }
 }
 
