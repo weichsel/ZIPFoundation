@@ -19,14 +19,14 @@ extension ZIPFoundationTests {
                                                                                 numberOfEntries: 0)
         do {
             _ = try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
-                                               startOfCentralDirectory: 0,
-                                               startOfEndOfCentralDirectory: 0,
-                                               operation: .add)
+                                                       startOfCentralDirectory: 0,
+                                                       startOfEndOfCentralDirectory: 0,
+                                                       operation: .add)
         } catch let error as Archive.ArchiveError {
             XCTAssertNotNil(error == .invalidSizeOfCentralDirectory)
             didCatchExpectedError = true
         } catch {
-            XCTFail("Unexpected error while trying to add an entry exceeding maximum size.")
+            XCTFail("Unexpected error while writing end of central directory with large central directory size.")
         }
         XCTAssert(didCatchExpectedError)
     }
@@ -38,14 +38,14 @@ extension ZIPFoundationTests {
                                                                                 numberOfEntries: .max)
         do {
             _ = try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
-                                               startOfCentralDirectory: 0,
-                                               startOfEndOfCentralDirectory: 0,
-                                               operation: .add)
+                                                       startOfCentralDirectory: 0,
+                                                       startOfEndOfCentralDirectory: 0,
+                                                       operation: .add)
         } catch let error as Archive.ArchiveError {
             XCTAssertNotNil(error == .invalidNumberOfEntriesInCentralDirectory)
             didCatchExpectedError = true
         } catch {
-            XCTFail("Unexpected error while trying to add an entry exceeding maximum size.")
+            XCTFail("Unexpected error while writing end of central directory with large number of entries.")
         }
         XCTAssert(didCatchExpectedError)
     }

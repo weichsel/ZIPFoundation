@@ -232,8 +232,7 @@ extension FileManager {
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
         // `st_size` is a signed int value
-        let fileSize = fileStat.st_size
-        return Int(fileSize)
+        return Int(fileStat.st_size)
     }
 
     class func typeForItem(at url: URL) throws -> Entry.EntryType {

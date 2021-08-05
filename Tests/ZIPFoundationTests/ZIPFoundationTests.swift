@@ -254,8 +254,7 @@ extension ZIPFoundationTests {
             ("testRemoveEntryFromArchiveWithZip64EOCD", testRemoveEntryFromArchiveWithZip64EOCD),
             ("testRemoveZip64EntryFromArchiveWithZip64EOCD", testRemoveZip64EntryFromArchiveWithZip64EOCD),
             ("testWriteEOCDWithTooLargeSizeOfCentralDirectory", testWriteEOCDWithTooLargeSizeOfCentralDirectory),
-            ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset),
-            ("testAddZip64EntryRollback", testAddZip64EntryRollback)
+            ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset)
         ]
     }
 
@@ -270,6 +269,7 @@ extension ZIPFoundationTests {
             ("testReplaceCurrentArchiveWithArchiveCrossLink", testReplaceCurrentArchiveWithArchiveCrossLink),
             ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
             ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress),
+            ("testZip64ArchiveAddEntryProgress", testZip64ArchiveAddEntryProgress),
             // The below test cases test error code paths but they lead to undefined behavior and memory
             // corruption on non-Darwin platforms. We disable them for now.
             ("testReadStructureErrorConditions", testReadStructureErrorConditions),

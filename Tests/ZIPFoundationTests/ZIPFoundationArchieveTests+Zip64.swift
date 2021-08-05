@@ -51,7 +51,6 @@ extension ZIPFoundationTests {
                                                                           additionalDataProvider: {_ -> Data in
                                                                              return Data() })
         XCTAssertNil(invalidEOCDRecord2)
-        // Version Needed to Extract: 4.5 - File uses ZIP64 format extensions
         let eocdRecordWithWrongVersion: [UInt8] = [0x50, 0x4b, 0x06, 0x06, 0x2c, 0x00, 0x00, 0x00,
                                                    0x00, 0x00, 0x00, 0x00, 0x1e, 0x03, 0x14, 0x00,
                                                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

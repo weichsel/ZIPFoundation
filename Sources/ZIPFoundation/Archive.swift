@@ -11,7 +11,7 @@
 import Foundation
 
 /// The default chunk size when reading entry data from an archive.
-public let defaultReadChunkSize = UInt32(16*1024)
+public let defaultReadChunkSize = Int(16*1024)
 /// The default chunk size when writing entry data to an archive.
 public let defaultWriteChunkSize = defaultReadChunkSize
 /// The default permissions for newly added entries.
@@ -19,8 +19,7 @@ public let defaultFilePermissions = UInt16(0o644)
 public let defaultDirectoryPermissions = UInt16(0o755)
 let defaultPOSIXBufferSize = defaultReadChunkSize
 let defaultDirectoryUnitCount = Int64(1)
-let minDirectoryEndOffset = 22
-let maxDirectoryEndOffset = 66000
+let minEndOfCentralDirectoryOffset = 22
 let endOfCentralDirectoryStructSignature = 0x06054b50
 let localFileHeaderStructSignature = 0x04034b50
 let dataDescriptorStructSignature = 0x08074b50
@@ -192,8 +191,8 @@ public final class Archive: Sequence {
     }
 
     public func makeIterator() -> AnyIterator<Entry> {
-        let totalNumberOfEntriesInCD = Int(self.totalNumberOfEntriesInCentralDirectory)
-        var directoryIndex = Int(self.offsetToStartOfCentralDirectory)
+        let totalNumberOfEntriesInCD = self.totalNumberOfEntriesInCentralDirectory
+        var directoryIndex = self.offsetToStartOfCentralDirectory
         var index = 0
         return AnyIterator {
             guard index < totalNumberOfEntriesInCD else { return nil }
@@ -310,10 +309,10 @@ public final class Archive: Sequence {
     static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
         -> EndOfCentralDirectoryStructure? {
         var eocdOffset = 0
-        var index = minDirectoryEndOffset
+        var index = minEndOfCentralDirectoryOffset
         fseek(file, 0, SEEK_END)
         let archiveLength = ftell(file)
-        while eocdOffset == 0 && index < maxDirectoryEndOffset && index <= archiveLength {
+        while eocdOffset == 0 && index <= archiveLength {
             fseek(file, archiveLength - index, SEEK_SET)
             var potentialDirectoryEndTag: UInt32 = UInt32()
             fread(&potentialDirectoryEndTag, 1, MemoryLayout<UInt32>.size, file)

@@ -19,16 +19,6 @@ enum ExtraFieldHeaderID: UInt16 {
     case zip64ExtendedInformation = 0x0001
 }
 
-var maxUInt32 = UInt32.max
-var maxUInt16 = UInt16.max
-
-var maxCompressedSize: UInt32 { maxUInt32 }
-var maxUncompressedSize: UInt32 { maxUInt32 }
-var maxOffsetOfLocalFileHeader: UInt32 { maxUInt32 }
-var maxOffsetOfCentralDirectory: UInt32 { maxUInt32 }
-var maxSizeOfCentralDirectory: UInt32 { maxUInt32 }
-var maxTotalNumberOfEntries: UInt16 { maxUInt16 }
-
 extension Archive {
     struct Zip64EndOfCentralDirectory {
         let record: Zip64EndOfCentralDirectoryRecord
@@ -92,6 +82,7 @@ extension Archive.Zip64EndOfCentralDirectoryRecord {
         self.sizeOfZip64EndOfCentralDirectoryRecord = data.scanValue(start: 4)
         self.versionMadeBy = data.scanValue(start: 12)
         self.versionNeededToExtract = data.scanValue(start: 14)
+        // Version Needed to Extract: 4.5 - File uses ZIP64 format extensions
         guard self.versionNeededToExtract >= zip64Version else { return nil }
         self.numberOfDisk = data.scanValue(start: 16)
         self.numberOfDiskStart = data.scanValue(start: 20)
@@ -152,3 +143,14 @@ extension Archive.Zip64EndOfCentralDirectoryLocator {
 extension Archive.Zip64EndOfCentralDirectory {
     var data: Data { record.data + locator.data }
 }
+
+/// Properties that represent the maximum value of each field
+var maxUInt32 = UInt32.max
+var maxUInt16 = UInt16.max
+
+var maxCompressedSize: UInt32 { maxUInt32 }
+var maxUncompressedSize: UInt32 { maxUInt32 }
+var maxOffsetOfLocalFileHeader: UInt32 { maxUInt32 }
+var maxOffsetOfCentralDirectory: UInt32 { maxUInt32 }
+var maxSizeOfCentralDirectory: UInt32 { maxUInt32 }
+var maxTotalNumberOfEntries: UInt16 { maxUInt16 }

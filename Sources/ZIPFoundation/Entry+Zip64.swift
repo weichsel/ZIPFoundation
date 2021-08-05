@@ -74,7 +74,7 @@ extension Entry.Zip64ExtendedInformation {
                 defer {
                     readOffset += MemoryLayout<T>.size
                 }
-                guard readOffset + field.size < data.count + 1 else {
+                guard readOffset + field.size <= data.count else {
                     throw Entry.EntryError.invalidDataError
                 }
                 return data.scanValue(start: readOffset)
@@ -98,11 +98,12 @@ extension Entry.Zip64ExtendedInformation {
         var offset = 0
         var headerID: UInt16
         var dataSize: UInt16
-        while offset + 4 < data.count {
+        let extraFieldLength = data.count
+        while offset < extraFieldLength - 4 {
             headerID = data.scanValue(start: offset)
             dataSize = data.scanValue(start: offset + 2)
             let nextOffset = offset + 4 + Int(dataSize)
-            guard nextOffset < data.count + 1 else { return nil }
+            guard nextOffset <= extraFieldLength else { return nil }
             if headerID == ExtraFieldHeaderID.zip64ExtendedInformation.rawValue {
                 return Entry.Zip64ExtendedInformation(data: data.subdata(in: offset..<nextOffset), fields: fields)
             }
