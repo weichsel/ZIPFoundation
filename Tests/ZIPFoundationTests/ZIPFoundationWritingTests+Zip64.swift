@@ -219,7 +219,7 @@ extension ZIPFoundationTests {
 
     /// Target fields: Size of Central Directory
     func testCreateZip64ArchiveWithLargeSizeOfCD() {
-        let factor = 12
+        let factor = 10
         mockIntMaxValues(int32Factor: factor)
         defer { resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .create)
