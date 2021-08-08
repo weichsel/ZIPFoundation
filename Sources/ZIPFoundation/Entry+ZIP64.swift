@@ -1,5 +1,5 @@
 //
-//  Entry+Zip64.swift
+//  Entry+ZIP64.swift
 //  ZIPFoundation
 //
 //  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
@@ -15,7 +15,7 @@ extension Entry {
         case invalidDataError
     }
 
-    struct Zip64ExtendedInformation {
+    struct ZIP64ExtendedInformation {
         let headerID: UInt16 = ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
         let dataSize: UInt16
         let uncompressedSize: Int
@@ -25,7 +25,7 @@ extension Entry {
     }
 }
 
-extension Entry.Zip64ExtendedInformation {
+extension Entry.ZIP64ExtendedInformation {
     enum Field {
         case uncompressedSize
         case compressedSize
@@ -93,7 +93,7 @@ extension Entry.Zip64ExtendedInformation {
         }
     }
 
-    static func scanForZip64Field(in data: Data, fields: [Field]) -> Entry.Zip64ExtendedInformation? {
+    static func scanForZIP64Field(in data: Data, fields: [Field]) -> Entry.ZIP64ExtendedInformation? {
         guard !data.isEmpty else { return nil }
         var offset = 0
         var headerID: UInt16
@@ -105,7 +105,7 @@ extension Entry.Zip64ExtendedInformation {
             let nextOffset = offset + 4 + Int(dataSize)
             guard nextOffset <= extraFieldLength else { return nil }
             if headerID == ExtraFieldHeaderID.zip64ExtendedInformation.rawValue {
-                return Entry.Zip64ExtendedInformation(data: data.subdata(in: offset..<nextOffset), fields: fields)
+                return Entry.ZIP64ExtendedInformation(data: data.subdata(in: offset..<nextOffset), fields: fields)
             }
             offset = nextOffset
         }

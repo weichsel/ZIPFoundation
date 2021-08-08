@@ -181,7 +181,7 @@ extension ZIPFoundationTests {
         self.wait(for: [expectation], timeout: 10.0)
     }
 
-    func testZip64ArchiveAddEntryProgress() {
+    func testZIP64ArchiveAddEntryProgress() {
         mockIntMaxValues()
         defer { resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .update)

@@ -1,5 +1,5 @@
 //
-//  ZIPFoundationProgressTests.swift
+//  ZIPFoundationErrorConditionTests+ZIP64.swift
 //  ZIPFoundation
 //
 //  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
@@ -15,7 +15,7 @@ extension ZIPFoundationTests {
     func testWriteEOCDWithTooLargeSizeOfCentralDirectory() {
         let archive = self.archive(for: #function, mode: .create)
         var didCatchExpectedError = false
-        archive.zip64EndOfCentralDirectory = makeMockZip64EndOfCentralDirectory(sizeOfCentralDirectory: .max,
+        archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: .max,
                                                                                 numberOfEntries: 0)
         do {
             _ = try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
@@ -34,7 +34,7 @@ extension ZIPFoundationTests {
     func testWriteEOCDWithTooLargeCentralDirectoryOffset() {
         let archive = self.archive(for: #function, mode: .create)
         var didCatchExpectedError = false
-        archive.zip64EndOfCentralDirectory = makeMockZip64EndOfCentralDirectory(sizeOfCentralDirectory: 0,
+        archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: 0,
                                                                                 numberOfEntries: .max)
         do {
             _ = try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
@@ -52,9 +52,9 @@ extension ZIPFoundationTests {
 
     // MARK: - Helper
 
-    private func makeMockZip64EndOfCentralDirectory(sizeOfCentralDirectory: Int, numberOfEntries: UInt)
-    -> Archive.Zip64EndOfCentralDirectory {
-        let record = Archive.Zip64EndOfCentralDirectoryRecord(sizeOfZip64EndOfCentralDirectoryRecord: UInt(44),
+    private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: Int, numberOfEntries: UInt)
+    -> Archive.ZIP64EndOfCentralDirectory {
+        let record = Archive.ZIP64EndOfCentralDirectoryRecord(sizeOfZIP64EndOfCentralDirectoryRecord: UInt(44),
                                                               versionMadeBy: UInt16(789),
                                                               versionNeededToExtract: zip64Version,
                                                               numberOfDisk: 0, numberOfDiskStart: 0,
@@ -63,10 +63,10 @@ extension ZIPFoundationTests {
                                                               sizeOfCentralDirectory: sizeOfCentralDirectory,
                                                               offsetToStartOfCentralDirectory: 0,
                                                               zip64ExtensibleDataSector: Data())
-        let locator = Archive.Zip64EndOfCentralDirectoryLocator(numberOfDiskWithZip64EOCDRecordStart: 0,
-                                                                relativeOffsetOfZip64EOCDRecord: 0,
+        let locator = Archive.ZIP64EndOfCentralDirectoryLocator(numberOfDiskWithZIP64EOCDRecordStart: 0,
+                                                                relativeOffsetOfZIP64EOCDRecord: 0,
                                                                 totalNumberOfDisk: 1)
-        return Archive.Zip64EndOfCentralDirectory(record: record, locator: locator)
+        return Archive.ZIP64EndOfCentralDirectory(record: record, locator: locator)
     }
 
     private func makeMockCentralDirectory() -> Entry.CentralDirectoryStructure? {

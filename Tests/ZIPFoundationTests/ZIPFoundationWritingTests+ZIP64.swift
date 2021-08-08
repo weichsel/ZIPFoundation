@@ -1,5 +1,5 @@
 //
-//  ZIPFoundationWritingTests+Zip64.swift
+//  ZIPFoundationWritingTests+ZIP64.swift
 //  ZIPFoundation
 //
 //  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
@@ -13,7 +13,7 @@ import XCTest
 
 extension ZIPFoundationTests {
     /// Target fields: Uncompressed Size, Compressed Size, Offset of Central Directory and other zip64 format fields
-    func testCreateZip64ArchiveWithLargeSize() {
+    func testCreateZIP64ArchiveWithLargeSize() {
         mockIntMaxValues()
         defer { resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .create)
@@ -48,10 +48,10 @@ extension ZIPFoundationTests {
                                                             entryNameLength: entryName.count) { size in
                 try Data.readChunk(of: size, from: archiveFile)
             }
-            // Zip64 End of Central Directory
+            // ZIP64 End of Central Directory
             let zip64EOCDOffset = cdOffset + cdSize
             fseek(archiveFile, zip64EOCDOffset, SEEK_SET)
-            let zip64EOCDSize = checkZip64EndOfCentralDirectory(archive: archive, cdSize: cdSize, cdOffset: cdOffset,
+            let zip64EOCDSize = checkZIP64EndOfCentralDirectory(archive: archive, cdSize: cdSize, cdOffset: cdOffset,
                                                                 zip64EOCDOffset: zip64EOCDOffset) { size in
                 try Data.readChunk(of: size, from: archiveFile)
             }
@@ -114,7 +114,7 @@ extension ZIPFoundationTests {
         return 0
     }
 
-    private func checkZip64EndOfCentralDirectory(archive: Archive, cdSize: Int, cdOffset: Int, zip64EOCDOffset: Int,
+    private func checkZIP64EndOfCentralDirectory(archive: Archive, cdSize: Int, cdOffset: Int, zip64EOCDOffset: Int,
                                                  readData: (Int) throws -> Data) -> Int {
         XCTAssertEqual(archive.endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory, UInt32.max)
         XCTAssertEqual(Int(archive.zip64EndOfCentralDirectory?.record.offsetToStartOfCentralDirectory ?? 0), cdOffset)
@@ -143,7 +143,7 @@ extension ZIPFoundationTests {
     }
 
     /// Target fields: Relative Offset of Local Header
-    func testAddEntryToArchiveWithZip64LFHOffset() {
+    func testAddEntryToArchiveWithZIP64LFHOffset() {
         mockIntMaxValues()
         defer { resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .update)
@@ -166,7 +166,7 @@ extension ZIPFoundationTests {
 //        XCTAssertEqual(entry.centralDirectoryStructure.extraFieldData.scanValue(start: 20), currentLFHOffset)
     }
 
-    func testAddDirectoryToArchiveWithZip64LFHOffset() {
+    func testAddDirectoryToArchiveWithZIP64LFHOffset() {
         mockIntMaxValues()
         defer { resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .update)
@@ -187,7 +187,7 @@ extension ZIPFoundationTests {
     }
 
     /// Target fields: Total Number of Entries in Central Directory
-    func testCreateZip64ArchiveWithTooManyEntries() {
+    func testCreateZIP64ArchiveWithTooManyEntries() {
         let factor = 16
         mockIntMaxValues(int16Factor: factor)
         defer { resetIntMaxValues() }
@@ -218,7 +218,7 @@ extension ZIPFoundationTests {
     }
 
     /// Target fields: Size of Central Directory
-    func testCreateZip64ArchiveWithLargeSizeOfCD() {
+    func testCreateZIP64ArchiveWithLargeSizeOfCD() {
         let factor = 10
         mockIntMaxValues(int32Factor: factor)
         defer { resetIntMaxValues() }
@@ -247,10 +247,10 @@ extension ZIPFoundationTests {
         XCTAssertLessThan(0, archive.zip64EndOfCentralDirectory?.record.sizeOfCentralDirectory ?? 0)
     }
 
-    func testRemoveEntryFromArchiveWithZip64EOCD() {
+    func testRemoveEntryFromArchiveWithZIP64EOCD() {
         /*
          File structure:
-         testRemoveEntryFromArchiveWithZip64EOCD.zip/
+         testRemoveEntryFromArchiveWithZIP64EOCD.zip/
            ├─ data1.random (size: 64)
            ├─ data2.random (size: 64 * 64)
          */
@@ -269,10 +269,10 @@ extension ZIPFoundationTests {
         XCTAssertNotNil(archive.zip64EndOfCentralDirectory)
     }
 
-    func testRemoveZip64EntryFromArchiveWithZip64EOCD() {
+    func testRemoveZIP64EntryFromArchiveWithZIP64EOCD() {
         /*
          File structure:
-         testRemoveZip64EntryFromArchiveWithZip64EOCD.zip/
+         testRemoveZIP64EntryFromArchiveWithZIP64EOCD.zip/
            ├─ data1.random (size: 64)
            ├─ data2.random (size: 64 * 64)
          */

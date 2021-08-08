@@ -16,7 +16,7 @@ extension Archive {
         case add = 1
     }
 
-    typealias EndOfCentralDirectoryStructure = (EndOfCentralDirectoryRecord, Zip64EndOfCentralDirectory?)
+    typealias EndOfCentralDirectoryStructure = (EndOfCentralDirectoryRecord, ZIP64EndOfCentralDirectory?)
 
     /// Write files, directories or symlinks to the receiver.
     ///
@@ -153,7 +153,7 @@ extension Archive {
             let centralDir = try self.writeCentralDirectoryStructure(localFileHeader: localFileHeader,
                                                                      relativeOffset: localFileHeaderStart,
                                                                      externalFileAttributes: externalAttributes)
-            // End of Central Directory Record (including Zip64 End of Central Directory Record/Locator)
+            // End of Central Directory Record (including ZIP64 End of Central Directory Record/Locator)
             let startOfEOCD = ftell(self.archiveFile)
             let eocdStructure = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDir,
                                                                     startOfCentralDirectory: startOfCD,
@@ -287,15 +287,15 @@ extension Archive {
         var uncompressedSizeOfLFH = UInt32(0)
         var compressedSizeOfLFH = UInt32(0)
         var extraFieldLength = UInt16(0)
-        var zip64ExtendedInformation: Entry.Zip64ExtendedInformation?
+        var zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?
         var versionNeededToExtract = UInt16(20)
-        // Zip64 Extended Information in the Local header MUST include BOTH original and compressed file size fields.
+        // ZIP64 Extended Information in the Local header MUST include BOTH original and compressed file size fields.
         if size.uncompressed >= maxUncompressedSize || size.compressed >= maxCompressedSize {
             uncompressedSizeOfLFH = .max
             compressedSizeOfLFH = .max
             extraFieldLength = UInt16(20) // 2 + 2 + 8 + 8
             versionNeededToExtract = zip64Version
-            zip64ExtendedInformation = Entry.Zip64ExtendedInformation(dataSize: extraFieldLength - 4,
+            zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(dataSize: extraFieldLength - 4,
                                                                       uncompressedSize: size.uncompressed,
                                                                       compressedSize: size.compressed,
                                                                       relativeOffsetOfLocalHeader: 0,
@@ -326,10 +326,10 @@ extension Archive {
         var extraOffset: Int?
         var relativeOffsetOfCD = UInt32(0)
         var extraFieldLength = UInt16(0)
-        var zip64ExtendedInformation: Entry.Zip64ExtendedInformation?
+        var zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?
         if localFileHeader.uncompressedSize == .max || localFileHeader.compressedSize == .max {
-            let zip64Field = Entry.Zip64ExtendedInformation
-                .scanForZip64Field(in: localFileHeader.extraFieldData, fields: [.uncompressedSize, .compressedSize])
+            let zip64Field = Entry.ZIP64ExtendedInformation
+                .scanForZIP64Field(in: localFileHeader.extraFieldData, fields: [.uncompressedSize, .compressedSize])
             extraUncompressedSize = zip64Field?.uncompressedSize
             extraCompressedSize = zip64Field?.compressedSize
             extraFieldLength += UInt16(16)
@@ -346,7 +346,7 @@ extension Archive {
             .reduce(UInt16(0), { $0 + UInt16(MemoryLayout.size(ofValue: $1)) })
         if extraFieldLength > 0 {
             // Size of extra fields, shouldn't include the leading 4 bytes
-            zip64ExtendedInformation = Entry.Zip64ExtendedInformation(dataSize: extraFieldLength,
+            zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(dataSize: extraFieldLength,
                                                                       uncompressedSize: extraUncompressedSize ?? 0,
                                                                       compressedSize: extraCompressedSize ?? 0,
                                                                       relativeOffsetOfLocalHeader: extraOffset ?? 0,
@@ -398,10 +398,10 @@ extension Archive {
         let offsetOfCDForEOCD = startOfCentralDirectory >= maxOffsetOfCentralDirectory
             ? UInt32.max
             : UInt32(startOfCentralDirectory)
-        // Zip64 End of Central Directory
-        var zip64eocd: Zip64EndOfCentralDirectory?
+        // ZIP64 End of Central Directory
+        var zip64eocd: ZIP64EndOfCentralDirectory?
         if numberOfTotalEntriesForEOCD == .max || offsetOfCDForEOCD == .max || sizeOfCDForEOCD == .max {
-            zip64eocd = try self.writeZip64EOCD(totalNumberOfEntries: updatedNumberOfEntries,
+            zip64eocd = try self.writeZIP64EOCD(totalNumberOfEntries: updatedNumberOfEntries,
                                                 sizeOfCentralDirectory: updatedSizeOfCD,
                                                 offsetOfCentralDirectory: startOfCentralDirectory,
                                                 offsetOfEndOfCentralDirectory: startOfEndOfCentralDirectory)
@@ -416,7 +416,7 @@ extension Archive {
 
     func rollback(_ localFileHeaderStart: Int, _ existingCentralDirectoryData: Data,
                   _ endOfCentralDirRecord: EndOfCentralDirectoryRecord,
-                  _ zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?) throws {
+                  _ zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?) throws {
         fflush(self.archiveFile)
         ftruncate(fileno(self.archiveFile), off_t(localFileHeaderStart))
         fseek(self.archiveFile, localFileHeaderStart, SEEK_SET)
@@ -495,13 +495,13 @@ extension Archive {
         return (sizeWritten, checksum)
     }
 
-    private func writeZip64EOCD(totalNumberOfEntries: UInt,
+    private func writeZIP64EOCD(totalNumberOfEntries: UInt,
                                 sizeOfCentralDirectory: Int,
                                 offsetOfCentralDirectory: Int,
-                                offsetOfEndOfCentralDirectory: Int) throws -> Zip64EndOfCentralDirectory {
-        var zip64EOCD: Zip64EndOfCentralDirectory = self.zip64EndOfCentralDirectory ?? {
+                                offsetOfEndOfCentralDirectory: Int) throws -> ZIP64EndOfCentralDirectory {
+        var zip64EOCD: ZIP64EndOfCentralDirectory = self.zip64EndOfCentralDirectory ?? {
             // Shouldn't include the leading 12 bytes: (size - 12 = 44)
-            let record = Zip64EndOfCentralDirectoryRecord(sizeOfZip64EndOfCentralDirectoryRecord: UInt(44),
+            let record = ZIP64EndOfCentralDirectoryRecord(sizeOfZIP64EndOfCentralDirectoryRecord: UInt(44),
                                                           versionMadeBy: UInt16(789),
                                                           versionNeededToExtract: zip64Version,
                                                           numberOfDisk: 0, numberOfDiskStart: 0,
@@ -510,20 +510,20 @@ extension Archive {
                                                           sizeOfCentralDirectory: 0,
                                                           offsetToStartOfCentralDirectory: 0,
                                                           zip64ExtensibleDataSector: Data())
-            let locator = Zip64EndOfCentralDirectoryLocator(numberOfDiskWithZip64EOCDRecordStart: 0,
-                                                            relativeOffsetOfZip64EOCDRecord: 0,
+            let locator = ZIP64EndOfCentralDirectoryLocator(numberOfDiskWithZIP64EOCDRecordStart: 0,
+                                                            relativeOffsetOfZIP64EOCDRecord: 0,
                                                             totalNumberOfDisk: 1)
-            return Zip64EndOfCentralDirectory(record: record, locator: locator)
+            return ZIP64EndOfCentralDirectory(record: record, locator: locator)
         }()
 
-        let updatedRecord = Zip64EndOfCentralDirectoryRecord(record: zip64EOCD.record,
+        let updatedRecord = ZIP64EndOfCentralDirectoryRecord(record: zip64EOCD.record,
                                                              numberOfEntriesOnDisk: totalNumberOfEntries,
                                                              numberOfEntriesInCD: totalNumberOfEntries,
                                                              sizeOfCentralDirectory: sizeOfCentralDirectory,
                                                              offsetToStartOfCD: offsetOfCentralDirectory)
-        let updatedLocator = Zip64EndOfCentralDirectoryLocator(locator: zip64EOCD.locator,
-                                                               offsetOfZip64EOCDRecord: offsetOfEndOfCentralDirectory)
-        zip64EOCD = Zip64EndOfCentralDirectory(record: updatedRecord, locator: updatedLocator)
+        let updatedLocator = ZIP64EndOfCentralDirectoryLocator(locator: zip64EOCD.locator,
+                                                               offsetOfZIP64EOCDRecord: offsetOfEndOfCentralDirectory)
+        zip64EOCD = ZIP64EndOfCentralDirectory(record: updatedRecord, locator: updatedLocator)
         _ = try Data.write(chunk: zip64EOCD.data, to: self.archiveFile)
         return zip64EOCD
     }

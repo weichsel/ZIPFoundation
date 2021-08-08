@@ -108,7 +108,7 @@ public final class Archive: Sequence {
     public let accessMode: AccessMode
     var archiveFile: UnsafeMutablePointer<FILE>
     var endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
-    var zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?
+    var zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?
     var preferredEncoding: String.Encoding?
 
     var totalNumberOfEntriesInCentralDirectory: UInt {
@@ -243,13 +243,13 @@ public final class Archive: Sequence {
     struct BackingConfiguration {
         let file: UnsafeMutablePointer<FILE>
         let endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
-        let zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?
+        let zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?
         #if swift(>=5.0)
         let memoryFile: MemoryFile?
 
         init(file: UnsafeMutablePointer<FILE>,
              endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
-             zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory? = nil,
+             zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory? = nil,
              memoryFile: MemoryFile? = nil) {
             self.file = file
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
@@ -260,7 +260,7 @@ public final class Archive: Sequence {
 
         init(file: UnsafeMutablePointer<FILE>,
              endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
-             zip64EndOfCentralDirectory: Zip64EndOfCentralDirectory?) {
+             zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?) {
             self.file = file
             self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
             self.zip64EndOfCentralDirectory = zip64EndOfCentralDirectory
@@ -321,7 +321,7 @@ public final class Archive: Sequence {
                 guard let eocd: EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: eocdOffset) else {
                     return nil
                 }
-                let zip64EOCD = scanForZip64EndOfCentralDirectory(in: file, eocdOffset: eocdOffset)
+                let zip64EOCD = scanForZIP64EndOfCentralDirectory(in: file, eocdOffset: eocdOffset)
                 return (eocd, zip64EOCD)
             }
             index += 1
@@ -329,16 +329,16 @@ public final class Archive: Sequence {
         return nil
     }
 
-    private static func scanForZip64EndOfCentralDirectory(in file: UnsafeMutablePointer<FILE>, eocdOffset: Int)
-        -> Zip64EndOfCentralDirectory? {
-        let locatorOffset = eocdOffset - Zip64EndOfCentralDirectoryLocator.size
-        let recordOffset = locatorOffset - Zip64EndOfCentralDirectoryRecord.size
+    private static func scanForZIP64EndOfCentralDirectory(in file: UnsafeMutablePointer<FILE>, eocdOffset: Int)
+        -> ZIP64EndOfCentralDirectory? {
+        let locatorOffset = eocdOffset - ZIP64EndOfCentralDirectoryLocator.size
+        let recordOffset = locatorOffset - ZIP64EndOfCentralDirectoryRecord.size
         guard recordOffset > 0,
-              let locator: Zip64EndOfCentralDirectoryLocator = Data.readStruct(from: file, at: locatorOffset),
-              let record: Zip64EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: recordOffset) else {
+              let locator: ZIP64EndOfCentralDirectoryLocator = Data.readStruct(from: file, at: locatorOffset),
+              let record: ZIP64EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: recordOffset) else {
             return nil
         }
-        return Zip64EndOfCentralDirectory(record: record, locator: locator)
+        return ZIP64EndOfCentralDirectory(record: record, locator: locator)
     }
 }
 
