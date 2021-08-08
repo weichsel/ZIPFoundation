@@ -22,7 +22,7 @@ extension Archive {
     /// - Returns: The checksum of the processed content or 0 if the `skipCRC32` flag was set to `true`.
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
     public func extract(_ entry: Entry, to url: URL, bufferSize: UInt32 = defaultReadChunkSize, skipCRC32: Bool = false,
-                        progress: Progress? = nil, overwrite: Bool = false) throws -> CRC32 {
+                        progress: Progress? = nil, replaceOnExist: Bool = false) throws -> CRC32 {
         guard bufferSize > 0 else {
             throw ArchiveError.invalidBufferSize
         }
@@ -30,12 +30,10 @@ extension Archive {
         var checksum = CRC32(0)
         switch entry.type {
         case .file:
-            guard (!fileManager.itemExists(at: url) || overwrite) else {
+            guard (!fileManager.itemExists(at: url) || replaceOnExist) else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
-            if fileManager.itemExists(at: url) {
-                try fileManager.removeItem(at: url)
-            }
+            try fileManager.removeItem(at: url)
             try fileManager.createParentDirectoryStructure(for: url)
             let destinationRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             guard let destinationFile: UnsafeMutablePointer<FILE> = fopen(destinationRepresentation, "wb+") else {
@@ -52,12 +50,10 @@ extension Archive {
             checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                         progress: progress, consumer: consumer)
         case .symlink:
-            guard (!fileManager.itemExists(at: url) || overwrite) else {
+            guard (!fileManager.itemExists(at: url) || replaceOnExist) else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
-            if fileManager.itemExists(at: url) {
-                try fileManager.removeItem(at: url)
-            }
+            try fileManager.removeItem(at: url)
             let consumer = { (data: Data) in
                 guard let linkPath = String(data: data, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
                 try fileManager.createParentDirectoryStructure(for: url)
