@@ -90,7 +90,7 @@ extension FileManager {
     ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
-                          progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
+                          progress: Progress? = nil, preferredEncoding: String.Encoding? = nil, overwrite: Bool = false) throws {
         let fileManager = FileManager()
         guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
@@ -124,9 +124,9 @@ extension FileManager {
             if let progress = progress {
                 let entryProgress = archive.makeProgressForReading(entry)
                 progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
-                _ = try archive.extract(entry, to: destinationEntryURL, skipCRC32: skipCRC32, progress: entryProgress)
+                _ = try archive.extract(entry, to: destinationEntryURL, skipCRC32: skipCRC32, progress: entryProgress, overwrite: overwrite)
             } else {
-                _ = try archive.extract(entry, to: destinationEntryURL, skipCRC32: skipCRC32)
+                _ = try archive.extract(entry, to: destinationEntryURL, skipCRC32: skipCRC32, overwrite: overwrite)
             }
         }
     }

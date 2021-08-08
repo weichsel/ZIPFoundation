@@ -22,7 +22,7 @@ extension Archive {
     /// - Returns: The checksum of the processed content or 0 if the `skipCRC32` flag was set to `true`.
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
     public func extract(_ entry: Entry, to url: URL, bufferSize: UInt32 = defaultReadChunkSize, skipCRC32: Bool = false,
-                        progress: Progress? = nil) throws -> CRC32 {
+                        progress: Progress? = nil, overwrite: Bool = false) throws -> CRC32 {
         guard bufferSize > 0 else {
             throw ArchiveError.invalidBufferSize
         }
@@ -30,7 +30,7 @@ extension Archive {
         var checksum = CRC32(0)
         switch entry.type {
         case .file:
-            guard !fileManager.itemExists(at: url) else {
+            guard (!fileManager.itemExists(at: url) || overwrite) else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
             try fileManager.createParentDirectoryStructure(for: url)
