@@ -33,7 +33,9 @@ extension Archive {
             guard (!fileManager.itemExists(at: url) || replaceOnExist) else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
-            try fileManager.removeItem(at: url)
+            if fileManager.itemExists(at: url) {
+                try fileManager.removeItem(at: url)
+            }
             try fileManager.createParentDirectoryStructure(for: url)
             let destinationRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             guard let destinationFile: UnsafeMutablePointer<FILE> = fopen(destinationRepresentation, "wb+") else {
@@ -53,7 +55,9 @@ extension Archive {
             guard (!fileManager.itemExists(at: url) || replaceOnExist) else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
-            try fileManager.removeItem(at: url)
+            if fileManager.itemExists(at: url) {
+                try fileManager.removeItem(at: url)
+            }
             let consumer = { (data: Data) in
                 guard let linkPath = String(data: data, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
                 try fileManager.createParentDirectoryStructure(for: url)
