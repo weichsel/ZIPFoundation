@@ -254,7 +254,8 @@ extension ZIPFoundationTests {
             ("testRemoveEntryFromArchiveWithZIP64EOCD", testRemoveEntryFromArchiveWithZIP64EOCD),
             ("testRemoveZIP64EntryFromArchiveWithZIP64EOCD", testRemoveZIP64EntryFromArchiveWithZIP64EOCD),
             ("testWriteEOCDWithTooLargeSizeOfCentralDirectory", testWriteEOCDWithTooLargeSizeOfCentralDirectory),
-            ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset)
+            ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset),
+            ("testWriteLargeChunk", testWriteLargeChunk)
         ]
     }
 
@@ -275,6 +276,7 @@ extension ZIPFoundationTests {
             ("testReadStructureErrorConditions", testReadStructureErrorConditions),
             ("testReadChunkErrorConditions", testReadChunkErrorConditions),
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
+            ("testWriteLargeChunkErrorConditions", testWriteLargeChunkErrorConditions),
             // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
             ("testZipItemErrorConditions", testZipItemErrorConditions)
         ]

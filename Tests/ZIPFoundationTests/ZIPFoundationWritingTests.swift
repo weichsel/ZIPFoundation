@@ -179,9 +179,9 @@ extension ZIPFoundationTests {
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
             try archive.addEntry(with: entryName, type: .file,
-                                 uncompressedSize: size, provider: { (position, bufferSize) -> Data in
-                                    let upperBound = Swift.min(size, position + bufferSize)
-                                    let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
+                                 uncompressedSize: Int64(size), provider: { (position, bufferSize) -> Data in
+                                    let upperBound = Swift.min(size, Int(position) + bufferSize)
+                                    let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
                                     return data.subdata(in: range)
             })
         } catch {
@@ -201,11 +201,11 @@ extension ZIPFoundationTests {
         let data = Data.makeRandomData(size: size)
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
-            try archive.addEntry(with: entryName, type: .file, uncompressedSize: size,
+            try archive.addEntry(with: entryName, type: .file, uncompressedSize: Int64(size),
                                  compressionMethod: .deflate,
                                  provider: { (position, bufferSize) -> Data in
-                                    let upperBound = Swift.min(size, position + bufferSize)
-                                    let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
+                                    let upperBound = Swift.min(size, Int(position) + bufferSize)
+                                    let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
                                     return data.subdata(in: range)
             })
         } catch {

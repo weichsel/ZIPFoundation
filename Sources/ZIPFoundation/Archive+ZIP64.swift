@@ -27,15 +27,15 @@ extension Archive {
 
     struct ZIP64EndOfCentralDirectoryRecord: DataSerializable {
         let zip64EOCDRecordSignature = UInt32(zip64EOCDRecordStructSignature)
-        let sizeOfZIP64EndOfCentralDirectoryRecord: UInt
+        let sizeOfZIP64EndOfCentralDirectoryRecord: UInt64
         let versionMadeBy: UInt16
         let versionNeededToExtract: UInt16
         let numberOfDisk: UInt32
         let numberOfDiskStart: UInt32
-        let totalNumberOfEntriesOnDisk: UInt
-        let totalNumberOfEntriesInCentralDirectory: UInt
-        let sizeOfCentralDirectory: Int
-        let offsetToStartOfCentralDirectory: Int
+        let totalNumberOfEntriesOnDisk: UInt64
+        let totalNumberOfEntriesInCentralDirectory: UInt64
+        let sizeOfCentralDirectory: Int64
+        let offsetToStartOfCentralDirectory: Int64
         let zip64ExtensibleDataSector: Data
         static let size = 56
     }
@@ -43,7 +43,7 @@ extension Archive {
     struct ZIP64EndOfCentralDirectoryLocator: DataSerializable {
         let zip64EOCDLocatorSignature = UInt32(zip64EOCDLocatorStructSignature)
         let numberOfDiskWithZIP64EOCDRecordStart: UInt32
-        let relativeOffsetOfZIP64EOCDRecord: Int
+        let relativeOffsetOfZIP64EOCDRecord: Int64
         let totalNumberOfDisk: UInt32
         static let size = 20
     }
@@ -94,10 +94,10 @@ extension Archive.ZIP64EndOfCentralDirectoryRecord {
     }
 
     init(record: Archive.ZIP64EndOfCentralDirectoryRecord,
-         numberOfEntriesOnDisk: UInt,
-         numberOfEntriesInCD: UInt,
-         sizeOfCentralDirectory: Int,
-         offsetToStartOfCD: Int) {
+         numberOfEntriesOnDisk: UInt64,
+         numberOfEntriesInCD: UInt64,
+         sizeOfCentralDirectory: Int64,
+         offsetToStartOfCD: Int64) {
         self.sizeOfZIP64EndOfCentralDirectoryRecord = record.sizeOfZIP64EndOfCentralDirectoryRecord
         self.versionMadeBy = record.versionMadeBy
         self.versionNeededToExtract = record.versionNeededToExtract
@@ -133,7 +133,7 @@ extension Archive.ZIP64EndOfCentralDirectoryLocator {
         self.totalNumberOfDisk = data.scanValue(start: 16)
     }
 
-    init(locator: Archive.ZIP64EndOfCentralDirectoryLocator, offsetOfZIP64EOCDRecord: Int) {
+    init(locator: Archive.ZIP64EndOfCentralDirectoryLocator, offsetOfZIP64EOCDRecord: Int64) {
         self.numberOfDiskWithZIP64EOCDRecordStart = locator.numberOfDiskWithZIP64EOCDRecordStart
         self.relativeOffsetOfZIP64EOCDRecord = offsetOfZIP64EOCDRecord
         self.totalNumberOfDisk = locator.totalNumberOfDisk

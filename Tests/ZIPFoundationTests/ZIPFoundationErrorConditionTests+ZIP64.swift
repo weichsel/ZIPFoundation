@@ -52,9 +52,9 @@ extension ZIPFoundationTests {
 
     // MARK: - Helper
 
-    private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: Int, numberOfEntries: UInt)
+    private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: Int64, numberOfEntries: UInt64)
     -> Archive.ZIP64EndOfCentralDirectory {
-        let record = Archive.ZIP64EndOfCentralDirectoryRecord(sizeOfZIP64EndOfCentralDirectoryRecord: UInt(44),
+        let record = Archive.ZIP64EndOfCentralDirectoryRecord(sizeOfZIP64EndOfCentralDirectoryRecord: UInt64(44),
                                                               versionMadeBy: UInt16(789),
                                                               versionNeededToExtract: zip64Version,
                                                               numberOfDisk: 0, numberOfDiskStart: 0,

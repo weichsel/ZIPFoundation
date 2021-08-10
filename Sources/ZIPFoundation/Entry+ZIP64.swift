@@ -18,9 +18,9 @@ extension Entry {
     struct ZIP64ExtendedInformation {
         let headerID: UInt16 = ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
         let dataSize: UInt16
-        let uncompressedSize: Int
-        let compressedSize: Int
-        let relativeOffsetOfLocalHeader: Int
+        let uncompressedSize: Int64
+        let compressedSize: Int64
+        let relativeOffsetOfLocalHeader: Int64
         let diskNumberStart: UInt32
     }
 }

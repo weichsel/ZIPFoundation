@@ -58,7 +58,7 @@ extension Archive {
                 return nil
             }
 
-            fseek(archiveFile, 0, SEEK_SET)
+            fseeko(archiveFile, 0, SEEK_SET)
             return BackingConfiguration(file: archiveFile,
                                         endOfCentralDirectoryRecord: eocdRecord,
                                         zip64EndOfCentralDirectory: zip64EOCD,
@@ -88,7 +88,7 @@ class MemoryFile {
         let result = fopencookie(cookie.toOpaque(), mode, stubs)
         #endif
         if append {
-            fseek(result, 0, SEEK_END)
+            fseeko(result, 0, SEEK_END)
         }
         return result
     }

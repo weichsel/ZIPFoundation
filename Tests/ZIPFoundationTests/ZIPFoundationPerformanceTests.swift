@@ -20,11 +20,11 @@ extension ZIPFoundationTests {
         measure {
             do {
                 try archive.addEntry(with: entryName, type: .file,
-                                     uncompressedSize: size,
+                                     uncompressedSize: Int64(size),
                                      compressionMethod: .none,
                                      provider: { (position, bufferSize) -> Data in
-                                        let upperBound = Swift.min(size, position + bufferSize)
-                                        let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
+                                        let upperBound = Swift.min(size, Int(position) + bufferSize)
+                                        let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
                                         return data.subdata(in: range)
                 })
             } catch {
@@ -40,11 +40,11 @@ extension ZIPFoundationTests {
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
             try archive.addEntry(with: entryName, type: .file,
-                                 uncompressedSize: size,
+                                 uncompressedSize: Int64(size),
                                  compressionMethod: .none,
                                  provider: { (position, bufferSize) -> Data in
-                                    let upperBound = Swift.min(size, position + bufferSize)
-                                    let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
+                                    let upperBound = Swift.min(size, Int(position) + bufferSize)
+                                    let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
                                     return data.subdata(in: range)
             })
         } catch {
@@ -71,11 +71,11 @@ extension ZIPFoundationTests {
         measure {
             do {
                 try archive.addEntry(with: entryName, type: .file,
-                                     uncompressedSize: size,
+                                     uncompressedSize: Int64(size),
                                      compressionMethod: .deflate,
                                      provider: { (position, bufferSize) -> Data in
-                                        let upperBound = Swift.min(size, position + bufferSize)
-                                        let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
+                                        let upperBound = Swift.min(size, Int(position) + bufferSize)
+                                        let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
                                         return data.subdata(in: range)
                 })
             } catch {
@@ -91,11 +91,11 @@ extension ZIPFoundationTests {
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
             try archive.addEntry(with: entryName, type: .file,
-                                 uncompressedSize: size,
+                                 uncompressedSize: Int64(size),
                                  compressionMethod: .deflate,
                                  provider: { (position, bufferSize) -> Data in
-                                    let upperBound = Swift.min(size, position + bufferSize)
-                                    let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
+                                    let upperBound = Swift.min(size, Int(position) + bufferSize)
+                                    let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
                                     return data.subdata(in: range)
             })
         } catch {

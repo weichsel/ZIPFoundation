@@ -17,11 +17,11 @@ extension ZIPFoundationTests {
         mockIntMaxValues()
         defer { resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .create)
-        let size = 64 * 64 * 2
-        let data = Data.makeRandomData(size: size)
+        let size: Int64 = 64 * 64 * 2
+        let data = Data.makeRandomData(size: Int(size))
         let entryName = ProcessInfo.processInfo.globallyUniqueString
         do {
-            try archive.addFileEntry(with: entryName, size: size, data: data)
+            try archive.addFileEntry(with: entryName, size: Int(size), data: data)
         } catch {
             XCTFail("Failed to add zip64 format entry to archive with error : \(error)"); return
         }
@@ -36,21 +36,21 @@ extension ZIPFoundationTests {
         }
         do {
             // Local File Header and Extra Field
-            fseek(archiveFile, 0, SEEK_SET)
+            fseeko(archiveFile, 0, SEEK_SET)
             let lfhSize = checkLocalFileHeaderAndExtraField(entry: entry, dataSize: size,
                                                             entryNameLength: entryName.count) { size in
                 try Data.readChunk(of: size, from: archiveFile)
             }
             // Central Directory and Extra Field
-            let cdOffset = lfhSize + size
-            fseek(archiveFile, cdOffset, SEEK_SET)
+            let cdOffset: Int64 = lfhSize + size
+            fseeko(archiveFile, off_t(cdOffset), SEEK_SET)
             let cdSize = checkCentralDirectoryAndExtraField(entry: entry, dataSize: size,
                                                             entryNameLength: entryName.count) { size in
                 try Data.readChunk(of: size, from: archiveFile)
             }
             // ZIP64 End of Central Directory
-            let zip64EOCDOffset = cdOffset + cdSize
-            fseek(archiveFile, zip64EOCDOffset, SEEK_SET)
+            let zip64EOCDOffset: Int64 = cdOffset + cdSize
+            fseeko(archiveFile, off_t(zip64EOCDOffset), SEEK_SET)
             let zip64EOCDSize = checkZIP64EndOfCentralDirectory(archive: archive, cdSize: cdSize, cdOffset: cdOffset,
                                                                 zip64EOCDOffset: zip64EOCDOffset) { size in
                 try Data.readChunk(of: size, from: archiveFile)
@@ -58,7 +58,7 @@ extension ZIPFoundationTests {
             // End of Central Directory
             let eocdOffset = zip64EOCDOffset + zip64EOCDSize
             let eocdSize = 22
-            fseek(archiveFile, eocdOffset, SEEK_SET)
+            fseeko(archiveFile, off_t(eocdOffset), SEEK_SET)
             let eocdData = try Data.readChunk(of: eocdSize, from: archiveFile)
             XCTAssertEqual(eocdData.scanValue(start: 16), UInt32.max)
         } catch {
@@ -66,8 +66,8 @@ extension ZIPFoundationTests {
         }
     }
 
-    private func checkLocalFileHeaderAndExtraField(entry: Entry, dataSize: Int, entryNameLength: Int,
-                                                   readData: (Int) throws -> Data) -> Int {
+    private func checkLocalFileHeaderAndExtraField(entry: Entry, dataSize: Int64, entryNameLength: Int,
+                                                   readData: (Int) throws -> Data) -> Int64 {
         XCTAssertEqual(entry.localFileHeader.uncompressedSize, UInt32.max)
         XCTAssertEqual(entry.localFileHeader.extraFieldData.scanValue(start: 4), dataSize)
         XCTAssertEqual(entry.localFileHeader.compressedSize, UInt32.max)
@@ -81,17 +81,17 @@ extension ZIPFoundationTests {
             XCTAssertEqual(lfhData.scanValue(start: 22), UInt32.max)
             XCTAssertEqual(lfhData.scanValue(start: lfhExtraFieldOffset), UInt16(1))
             XCTAssertEqual(lfhData.scanValue(start: lfhExtraFieldOffset + 2), UInt16(16))
-            XCTAssertEqual(lfhData.scanValue(start: lfhExtraFieldOffset + 4), Int(dataSize))
-            XCTAssertEqual(lfhData.scanValue(start: lfhExtraFieldOffset + 12), Int(dataSize))
-            return lfhSize
+            XCTAssertEqual(lfhData.scanValue(start: lfhExtraFieldOffset + 4), Int64(dataSize))
+            XCTAssertEqual(lfhData.scanValue(start: lfhExtraFieldOffset + 12), Int64(dataSize))
+            return Int64(lfhSize)
         } catch {
             XCTFail("Unexpected error while reading chunk from archive file.")
         }
         return 0
     }
 
-    private func checkCentralDirectoryAndExtraField(entry: Entry, dataSize: Int, entryNameLength: Int,
-                                                    readData: (Int) throws -> Data) -> Int {
+    private func checkCentralDirectoryAndExtraField(entry: Entry, dataSize: Int64, entryNameLength: Int,
+                                                    readData: (Int) throws -> Data) -> Int64 {
         XCTAssertEqual(entry.centralDirectoryStructure.uncompressedSize, UInt32.max)
         XCTAssertEqual(entry.centralDirectoryStructure.extraFieldData.scanValue(start: 4), dataSize)
         XCTAssertEqual(entry.centralDirectoryStructure.compressedSize, UInt32.max)
@@ -105,19 +105,19 @@ extension ZIPFoundationTests {
             XCTAssertEqual(cdData.scanValue(start: 24), UInt32.max)
             XCTAssertEqual(cdData.scanValue(start: relativeCDExtraFieldOffset), UInt16(1))
             XCTAssertEqual(cdData.scanValue(start: relativeCDExtraFieldOffset + 2), UInt16(16))
-            XCTAssertEqual(cdData.scanValue(start: relativeCDExtraFieldOffset + 4), Int(dataSize))
-            XCTAssertEqual(cdData.scanValue(start: relativeCDExtraFieldOffset + 12), Int(dataSize))
-            return cdSize
+            XCTAssertEqual(cdData.scanValue(start: relativeCDExtraFieldOffset + 4), Int64(dataSize))
+            XCTAssertEqual(cdData.scanValue(start: relativeCDExtraFieldOffset + 12), Int64(dataSize))
+            return Int64(cdSize)
         } catch {
             XCTFail("Unexpected error while reading chunk from archive file.")
         }
         return 0
     }
 
-    private func checkZIP64EndOfCentralDirectory(archive: Archive, cdSize: Int, cdOffset: Int, zip64EOCDOffset: Int,
-                                                 readData: (Int) throws -> Data) -> Int {
+    private func checkZIP64EndOfCentralDirectory(archive: Archive, cdSize: Int64, cdOffset: Int64,
+                                                 zip64EOCDOffset: Int64, readData: (Int) throws -> Data) -> Int64 {
         XCTAssertEqual(archive.endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory, UInt32.max)
-        XCTAssertEqual(Int(archive.zip64EndOfCentralDirectory?.record.offsetToStartOfCentralDirectory ?? 0), cdOffset)
+        XCTAssertEqual(archive.zip64EndOfCentralDirectory?.record.offsetToStartOfCentralDirectory ?? 0, cdOffset)
         do {
             let zip64EOCDSize = 56 + 20
             let zip64EOCDData = try readData(zip64EOCDSize)
@@ -127,15 +127,15 @@ extension ZIPFoundationTests {
             XCTAssertEqual(zip64EOCDData.scanValue(start: 14), zip64Version)
             XCTAssertEqual(zip64EOCDData.scanValue(start: 16), UInt32(0))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 20), UInt32(0))
-            XCTAssertEqual(zip64EOCDData.scanValue(start: 24), UInt(1))
-            XCTAssertEqual(zip64EOCDData.scanValue(start: 32), UInt(1))
-            XCTAssertEqual(zip64EOCDData.scanValue(start: 40), Int(cdSize))
-            XCTAssertEqual(zip64EOCDData.scanValue(start: 48), Int(cdOffset))
+            XCTAssertEqual(zip64EOCDData.scanValue(start: 24), UInt64(1))
+            XCTAssertEqual(zip64EOCDData.scanValue(start: 32), UInt64(1))
+            XCTAssertEqual(zip64EOCDData.scanValue(start: 40), Int64(cdSize))
+            XCTAssertEqual(zip64EOCDData.scanValue(start: 48), Int64(cdOffset))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 56), UInt32(zip64EOCDLocatorStructSignature))
             XCTAssertEqual(zip64EOCDData.scanValue(start: 60), UInt32(0))
-            XCTAssertEqual(zip64EOCDData.scanValue(start: 64), Int(zip64EOCDOffset))
+            XCTAssertEqual(zip64EOCDData.scanValue(start: 64), zip64EOCDOffset)
             XCTAssertEqual(zip64EOCDData.scanValue(start: 72), UInt32(1))
-            return zip64EOCDSize
+            return Int64(zip64EOCDSize)
         } catch {
             XCTFail("Unexpected error while reading chunk from archive file.")
         }
@@ -214,7 +214,7 @@ extension ZIPFoundationTests {
         }
         XCTAssertEqual(archive.endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory, UInt16.max)
         XCTAssertEqual(archive.zip64EndOfCentralDirectory?.record.totalNumberOfEntriesInCentralDirectory ?? 0,
-                       UInt(factor))
+                       UInt64(factor))
     }
 
     /// Target fields: Size of Central Directory
@@ -226,7 +226,7 @@ extension ZIPFoundationTests {
         let size = 64
         // Case 1: The size of central directory is less than maximum value
         do {
-            try archive.addEntry(with: "link", type: .symlink, uncompressedSize: size,
+            try archive.addEntry(with: "link", type: .symlink, uncompressedSize: Int64(size),
                                  provider: { (_, count) -> Data in
                                     return Data(count: count)
             })
@@ -307,9 +307,9 @@ extension ZIPFoundationTests {
 extension Archive {
     fileprivate func addFileEntry(with name: String, size: Int, data: Data) throws {
         try self.addEntry(with: name, type: .file,
-                          uncompressedSize: size, provider: { (position, bufferSize) -> Data in
-                            let upperBound = Swift.min(size, position + bufferSize)
-                            let range = Range(uncheckedBounds: (lower: position, upper: upperBound))
+                          uncompressedSize: Int64(size), provider: { (position, bufferSize) -> Data in
+                            let upperBound = Swift.min(size, Int(position) + bufferSize)
+                            let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
                             return data.subdata(in: range)
         })
     }

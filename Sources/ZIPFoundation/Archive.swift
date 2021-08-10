@@ -19,7 +19,7 @@ public let defaultFilePermissions = UInt16(0o644)
 public let defaultDirectoryPermissions = UInt16(0o755)
 let defaultPOSIXBufferSize = defaultReadChunkSize
 let defaultDirectoryUnitCount = Int64(1)
-let minEndOfCentralDirectoryOffset = 22
+let minEndOfCentralDirectoryOffset = Int64(22)
 let endOfCentralDirectoryStructSignature = 0x06054b50
 let localFileHeaderStructSignature = 0x04034b50
 let dataDescriptorStructSignature = 0x08074b50
@@ -111,17 +111,17 @@ public final class Archive: Sequence {
     var zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?
     var preferredEncoding: String.Encoding?
 
-    var totalNumberOfEntriesInCentralDirectory: UInt {
+    var totalNumberOfEntriesInCentralDirectory: UInt64 {
         zip64EndOfCentralDirectory?.record.totalNumberOfEntriesInCentralDirectory
-            ?? UInt(endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory)
+            ?? UInt64(endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory)
     }
-    var sizeOfCentralDirectory: Int {
+    var sizeOfCentralDirectory: Int64 {
         zip64EndOfCentralDirectory?.record.sizeOfCentralDirectory
-            ?? Int(endOfCentralDirectoryRecord.sizeOfCentralDirectory)
+            ?? Int64(endOfCentralDirectoryRecord.sizeOfCentralDirectory)
     }
-    var offsetToStartOfCentralDirectory: Int {
+    var offsetToStartOfCentralDirectory: Int64 {
         zip64EndOfCentralDirectory?.record.offsetToStartOfCentralDirectory
-            ?? Int(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
+            ?? Int64(endOfCentralDirectoryRecord.offsetToStartOfCentralDirectory)
     }
 
     /// Initializes a new ZIP `Archive`.
@@ -200,22 +200,22 @@ public final class Archive: Sequence {
                                                                                     at: directoryIndex) else {
                                                                                         return nil
             }
-            let offset = Int(centralDirStruct.relativeOffsetOfLocalHeader)
+            let offset = Int64(centralDirStruct.relativeOffsetOfLocalHeader)
             guard let localFileHeader: LocalFileHeader = Data.readStruct(from: self.archiveFile,
                                                                          at: offset) else { return nil }
             var dataDescriptor: DataDescriptor?
             if centralDirStruct.usesDataDescriptor {
-                let additionalSize = Int(localFileHeader.fileNameLength) + Int(localFileHeader.extraFieldLength)
+                let additionalSize = Int64(localFileHeader.fileNameLength) + Int64(localFileHeader.extraFieldLength)
                 let isCompressed = centralDirStruct.compressionMethod != CompressionMethod.none.rawValue
                 let dataSize = isCompressed ? centralDirStruct.compressedSize : centralDirStruct.uncompressedSize
-                let descriptorPosition = offset + LocalFileHeader.size + additionalSize + Int(dataSize)
+                let descriptorPosition = offset + Int64(LocalFileHeader.size) + additionalSize + Int64(dataSize)
                 dataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
             }
             defer {
-                directoryIndex += CentralDirectoryStructure.size
-                directoryIndex += Int(centralDirStruct.fileNameLength)
-                directoryIndex += Int(centralDirStruct.extraFieldLength)
-                directoryIndex += Int(centralDirStruct.fileCommentLength)
+                directoryIndex += Int64(CentralDirectoryStructure.size)
+                directoryIndex += Int64(centralDirStruct.fileNameLength)
+                directoryIndex += Int64(centralDirStruct.extraFieldLength)
+                directoryIndex += Int64(centralDirStruct.fileCommentLength)
                 index += 1
             }
             return Entry(centralDirectoryStructure: centralDirStruct,
@@ -299,7 +299,7 @@ public final class Archive: Sequence {
                   let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
                 return nil
             }
-            fseek(archiveFile, 0, SEEK_SET)
+            fseeko(archiveFile, 0, SEEK_SET)
             return BackingConfiguration(file: archiveFile,
                                         endOfCentralDirectoryRecord: eocdRecord,
                                         zip64EndOfCentralDirectory: zip64EOCD)
@@ -308,12 +308,12 @@ public final class Archive: Sequence {
 
     static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
         -> EndOfCentralDirectoryStructure? {
-        var eocdOffset = 0
+        var eocdOffset: Int64 = 0
         var index = minEndOfCentralDirectoryOffset
-        fseek(file, 0, SEEK_END)
-        let archiveLength = ftell(file)
+        fseeko(file, 0, SEEK_END)
+        let archiveLength = Int64(ftello(file))
         while eocdOffset == 0 && index <= archiveLength {
-            fseek(file, archiveLength - index, SEEK_SET)
+            fseeko(file, off_t(archiveLength - index), SEEK_SET)
             var potentialDirectoryEndTag: UInt32 = UInt32()
             fread(&potentialDirectoryEndTag, 1, MemoryLayout<UInt32>.size, file)
             if potentialDirectoryEndTag == UInt32(endOfCentralDirectoryStructSignature) {
@@ -329,10 +329,10 @@ public final class Archive: Sequence {
         return nil
     }
 
-    private static func scanForZIP64EndOfCentralDirectory(in file: UnsafeMutablePointer<FILE>, eocdOffset: Int)
+    private static func scanForZIP64EndOfCentralDirectory(in file: UnsafeMutablePointer<FILE>, eocdOffset: Int64)
         -> ZIP64EndOfCentralDirectory? {
-        let locatorOffset = eocdOffset - ZIP64EndOfCentralDirectoryLocator.size
-        let recordOffset = locatorOffset - ZIP64EndOfCentralDirectoryRecord.size
+        let locatorOffset = eocdOffset - Int64(ZIP64EndOfCentralDirectoryLocator.size)
+        let recordOffset = locatorOffset - Int64(ZIP64EndOfCentralDirectoryRecord.size)
         guard recordOffset > 0,
               let locator: ZIP64EndOfCentralDirectoryLocator = Data.readStruct(from: file, at: locatorOffset),
               let record: ZIP64EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: recordOffset) else {

@@ -31,8 +31,8 @@ extension Data {
         #endif
     }
 
-    static func readStruct<T>(from file: UnsafeMutablePointer<FILE>, at offset: Int) -> T? where T: DataSerializable {
-        fseek(file, offset, SEEK_SET)
+    static func readStruct<T>(from file: UnsafeMutablePointer<FILE>, at offset: Int64) -> T? where T: DataSerializable {
+        fseeko(file, off_t(offset), SEEK_SET)
         guard let data = try? self.readChunk(of: T.size, from: file) else {
             return nil
         }
@@ -42,7 +42,7 @@ extension Data {
         return structure
     }
 
-    static func consumePart(of size: Int, chunkSize: Int, skipCRC32: Bool = false,
+    static func consumePart(of size: Int64, chunkSize: Int, skipCRC32: Bool = false,
                             provider: Provider, consumer: Consumer) throws -> CRC32 {
         var checksum = CRC32(0)
         guard size > 0 else {
@@ -51,17 +51,17 @@ extension Data {
         }
 
         let readInOneChunk = (size < chunkSize)
-        var chunkSize = readInOneChunk ? size : chunkSize
-        var bytesRead = 0
+        var chunkSize = readInOneChunk ? Int(size) : chunkSize
+        var bytesRead: Int64 = 0
         while bytesRead < size {
             let remainingSize = size - bytesRead
-            chunkSize = remainingSize < chunkSize ? remainingSize : chunkSize
+            chunkSize = remainingSize < chunkSize ? Int(remainingSize) : chunkSize
             let data = try provider(bytesRead, chunkSize)
             try consumer(data)
             if !skipCRC32 {
                 checksum = data.crc32(checksum: checksum)
             }
-            bytesRead += chunkSize
+            bytesRead += Int64(chunkSize)
         }
         return checksum
     }
@@ -86,8 +86,31 @@ extension Data {
         #endif
     }
 
+    static func writeLargeChunk(_ chunk: Data, size: Int64, bufferSize: Int,
+                                to file: UnsafeMutablePointer<FILE>) throws -> Int64 {
+        var sizeWritten: Int64 = 0
+        chunk.withUnsafeBytes { (rawBufferPointer) in
+            if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
+                let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+
+                while sizeWritten < size {
+                    let remainingSize = size - sizeWritten
+                    let chunkSize = Swift.min(Int(remainingSize), bufferSize)
+                    let curPointer = pointer.advanced(by: Int(sizeWritten))
+                    fwrite(curPointer, 1, chunkSize, file)
+                    sizeWritten += Int64(chunkSize)
+                }
+            }
+        }
+        let error = ferror(file)
+        if error > 0 {
+            throw DataError.unwritableFile
+        }
+        return sizeWritten
+    }
+
     static func write(chunk: Data, to file: UnsafeMutablePointer<FILE>) throws -> Int {
-        var sizeWritten = 0
+        var sizeWritten: Int = 0
         chunk.withUnsafeBytes { (rawBufferPointer) in
             if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
                 let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
