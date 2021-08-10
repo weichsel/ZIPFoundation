@@ -374,10 +374,10 @@ extension Archive {
         let numberOfTotalEntries = self.totalNumberOfEntriesInCentralDirectory
 
         let countChange = operation.rawValue
-        var dataLength = Int(centralDirectoryStructure.extraFieldLength)
-        dataLength += Int(centralDirectoryStructure.fileNameLength)
-        dataLength += Int(centralDirectoryStructure.fileCommentLength)
-        let cdDataLengthChange = countChange * (dataLength + CentralDirectoryStructure.size)
+        var dataLength = centralDirectoryStructure.extraFieldLength
+        dataLength += centralDirectoryStructure.fileNameLength
+        dataLength += centralDirectoryStructure.fileCommentLength
+        let cdDataLengthChange = countChange * (Int(dataLength) + CentralDirectoryStructure.size)
         guard Int64.max - sizeOfCD >= cdDataLengthChange else {
             throw ArchiveError.invalidSizeOfCentralDirectory
         }

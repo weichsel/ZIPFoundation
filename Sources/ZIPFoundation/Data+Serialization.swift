@@ -86,6 +86,21 @@ extension Data {
         #endif
     }
 
+    static func write(chunk: Data, to file: UnsafeMutablePointer<FILE>) throws -> Int {
+        var sizeWritten: Int = 0
+        chunk.withUnsafeBytes { (rawBufferPointer) in
+            if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
+                let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
+                sizeWritten = fwrite(pointer, 1, chunk.count, file)
+            }
+        }
+        let error = ferror(file)
+        if error > 0 {
+            throw DataError.unwritableFile
+        }
+        return sizeWritten
+    }
+
     static func writeLargeChunk(_ chunk: Data, size: Int64, bufferSize: Int,
                                 to file: UnsafeMutablePointer<FILE>) throws -> Int64 {
         var sizeWritten: Int64 = 0
@@ -100,21 +115,6 @@ extension Data {
                     fwrite(curPointer, 1, chunkSize, file)
                     sizeWritten += Int64(chunkSize)
                 }
-            }
-        }
-        let error = ferror(file)
-        if error > 0 {
-            throw DataError.unwritableFile
-        }
-        return sizeWritten
-    }
-
-    static func write(chunk: Data, to file: UnsafeMutablePointer<FILE>) throws -> Int {
-        var sizeWritten: Int = 0
-        chunk.withUnsafeBytes { (rawBufferPointer) in
-            if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
-                let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
-                sizeWritten = fwrite(pointer, 1, chunk.count, file)
             }
         }
         let error = ferror(file)

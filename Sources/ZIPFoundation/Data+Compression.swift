@@ -240,7 +240,6 @@ import CZlib
 
 extension Data {
     static func encode(size: Int64, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
-        print("!!!: \(_FILE_OFFSET_BITS)")
         var stream = z_stream()
         let streamSize = Int32(MemoryLayout<z_stream>.size)
         var result = deflateInit2_(&stream, Z_DEFAULT_COMPRESSION,

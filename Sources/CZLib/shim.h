@@ -14,4 +14,13 @@
 #import <stdio.h>
 #import <zlib.h>
 
+// [zlib] change the regular functions to 64 bits if _FILE_OFFSET_BITS is 64
+#ifndef _FILE_OFFSET_BITS
+#  define _FILE_OFFSET_BITS 64
+#endif
+// [zlib] on systems without large file support, _LFS64_LARGEFILE must also be true
+#ifndef _LFS64_LARGEFILE
+#  define _LFS64_LARGEFILE 1
+#endif
+
 #endif
