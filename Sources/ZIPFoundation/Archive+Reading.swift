@@ -130,10 +130,10 @@ extension Archive {
         return try Data.decompress(size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                    provider: { (_, chunkSize) -> Data in
             return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
-                                   }) { (data) in
+        }, consumer: { (data) in
             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
             try consumer(data)
             progress?.completedUnitCount += Int64(data.count)
-        }
+        })
     }
 }

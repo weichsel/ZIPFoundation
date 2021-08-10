@@ -85,8 +85,12 @@ class ZIPFoundationTests: XCTestCase {
                 throw Archive.ArchiveError.unreadableArchive
             }
             return archive
-        } catch {
+        } catch Archive.ArchiveError.unreadableArchive {
             XCTFail("Failed to get test archive '\(destinationArchiveURL.lastPathComponent)'")
+            type(of: self).tearDown()
+            preconditionFailure()
+        } catch {
+            XCTFail("File system error: \(error)")
             type(of: self).tearDown()
             preconditionFailure()
         }
