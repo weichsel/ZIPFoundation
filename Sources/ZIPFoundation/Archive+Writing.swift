@@ -334,12 +334,10 @@ extension Archive {
                 .scanForZIP64Field(in: localFileHeader.extraFieldData, fields: [.uncompressedSize, .compressedSize])
             extraUncompressedSize = zip64Field?.uncompressedSize
             extraCompressedSize = zip64Field?.compressedSize
-            extraFieldLength += UInt16(16)
         }
         if relativeOffset >= maxOffsetOfLocalFileHeader {
             extraOffset = relativeOffset
             relativeOffsetOfCD = .max
-            extraFieldLength += UInt16(8)
         } else {
             relativeOffsetOfCD = UInt32(relativeOffset)
         }
@@ -353,7 +351,7 @@ extension Archive {
                                                                       compressedSize: extraCompressedSize ?? 0,
                                                                       relativeOffsetOfLocalHeader: extraOffset ?? 0,
                                                                       diskNumberStart: 0)
-            extraFieldLength += 4
+            extraFieldLength += Entry.ZIP64ExtendedInformation.headerSize
         }
         let centralDirectory = CentralDirectoryStructure(localFileHeader: localFileHeader,
                                                          fileAttributes: externalFileAttributes,

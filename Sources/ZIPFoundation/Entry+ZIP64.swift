@@ -18,6 +18,7 @@ extension Entry {
     struct ZIP64ExtendedInformation {
         let headerID: UInt16 = ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
         let dataSize: UInt16
+        static let headerSize: UInt16 = 4
         let uncompressedSize: Int64
         let compressedSize: Int64
         let relativeOffsetOfLocalHeader: Int64
@@ -94,15 +95,16 @@ extension Entry.ZIP64ExtendedInformation {
     }
 
     static func scanForZIP64Field(in data: Data, fields: [Field]) -> Entry.ZIP64ExtendedInformation? {
-        guard !data.isEmpty else { return nil }
+        guard data.isEmpty == false else { return nil }
         var offset = 0
         var headerID: UInt16
         var dataSize: UInt16
         let extraFieldLength = data.count
-        while offset < extraFieldLength - 4 {
+        let headerSize = Int(Entry.ZIP64ExtendedInformation.headerSize)
+        while offset < extraFieldLength - headerSize {
             headerID = data.scanValue(start: offset)
             dataSize = data.scanValue(start: offset + 2)
-            let nextOffset = offset + 4 + Int(dataSize)
+            let nextOffset = offset + headerSize + Int(dataSize)
             guard nextOffset <= extraFieldLength else { return nil }
             if headerID == ExtraFieldHeaderID.zip64ExtendedInformation.rawValue {
                 return Entry.ZIP64ExtendedInformation(data: data.subdata(in: offset..<nextOffset), fields: fields)

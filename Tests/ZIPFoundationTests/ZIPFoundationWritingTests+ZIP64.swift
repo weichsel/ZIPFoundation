@@ -248,12 +248,10 @@ extension ZIPFoundationTests {
     }
 
     func testRemoveEntryFromArchiveWithZIP64EOCD() {
-        /*
-         File structure:
-         testRemoveEntryFromArchiveWithZIP64EOCD.zip/
-           ├─ data1.random (size: 64)
-           ├─ data2.random (size: 64 * 64)
-         */
+        // File structure:
+        // testRemoveEntryFromArchiveWithZIP64EOCD.zip/
+        //   ├─ data1.random (size: 64)
+        //   ├─ data2.random (size: 64 * 64)
         mockIntMaxValues()
         defer { resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .update)
@@ -270,12 +268,10 @@ extension ZIPFoundationTests {
     }
 
     func testRemoveZIP64EntryFromArchiveWithZIP64EOCD() {
-        /*
-         File structure:
-         testRemoveZIP64EntryFromArchiveWithZIP64EOCD.zip/
-           ├─ data1.random (size: 64)
-           ├─ data2.random (size: 64 * 64)
-         */
+        // File structure:
+        // testRemoveEntryFromArchiveWithZIP64EOCD.zip/
+        //   ├─ data1.random (size: 64)
+        //   ├─ data2.random (size: 64 * 64)
         mockIntMaxValues()
         defer { resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .update)
