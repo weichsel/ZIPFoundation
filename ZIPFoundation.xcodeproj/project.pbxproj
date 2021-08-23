@@ -479,7 +479,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
 				TARGET_NAME = ZIPFoundation;
-				_LFS64_LARGEFILE = 0;
 			};
 			name = Debug;
 		};
@@ -506,7 +505,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
 				TARGET_NAME = ZIPFoundation;
-				_LFS64_LARGEFILE = 0;
 			};
 			name = Release;
 		};
