@@ -10,12 +10,17 @@
 
 import Foundation
 
+protocol ExtensibleDataField {
+    var headerID: UInt16 { get }
+    var dataSize: UInt16 { get }
+}
+
 extension Entry {
     enum EntryError: Error {
         case invalidDataError
     }
 
-    struct ZIP64ExtendedInformation {
+    struct ZIP64ExtendedInformation: ExtensibleDataField {
         let headerID: UInt16 = ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
         let dataSize: UInt16
         static let headerSize: UInt16 = 4
@@ -23,6 +28,28 @@ extension Entry {
         let compressedSize: Int64
         let relativeOffsetOfLocalHeader: Int64
         let diskNumberStart: UInt32
+    }
+}
+
+typealias Field = Entry.ZIP64ExtendedInformation.Field
+
+extension Entry.LocalFileHeader {
+    var validFields: [Field] {
+        var fields: [Field] = []
+        if uncompressedSize == .max { fields.append(.uncompressedSize) }
+        if compressedSize == .max { fields.append(.compressedSize) }
+        return fields
+    }
+}
+
+extension Entry.CentralDirectoryStructure {
+    var validFields: [Field] {
+        var fields: [Field] = []
+        if uncompressedSize == .max { fields.append(.uncompressedSize) }
+        if compressedSize == .max { fields.append(.compressedSize) }
+        if relativeOffsetOfLocalHeader == .max { fields.append(.relativeOffsetOfLocalHeader) }
+        if diskNumberStart == .max { fields.append(.diskNumberStart) }
+        return fields
     }
 }
 

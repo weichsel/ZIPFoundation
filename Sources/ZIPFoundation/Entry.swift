@@ -59,6 +59,9 @@ public struct Entry: Equatable {
         static let size = 30
         let fileNameData: Data
         let extraFieldData: Data
+
+        var extraFields: [ExtensibleDataField]?
+        var isZIP64: Bool { return UInt8(truncatingIfNeeded: self.versionNeededToExtract) >= 45 }
     }
 
     struct DataDescriptor: DataSerializable {
@@ -92,9 +95,12 @@ public struct Entry: Equatable {
         let fileNameData: Data
         let extraFieldData: Data
         let fileCommentData: Data
+
+        var extraFields: [ExtensibleDataField]?
         var usesDataDescriptor: Bool { return (self.generalPurposeBitFlag & (1 << 3 )) != 0 }
         var usesUTF8PathEncoding: Bool { return (self.generalPurposeBitFlag & (1 << 11 )) != 0 }
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
+        var isZIP64: Bool { return UInt8(truncatingIfNeeded: self.versionNeededToExtract) >= 45 }
     }
     /// Returns the `path` of the receiver within a ZIP `Archive` using a given encoding.
     ///
@@ -254,6 +260,10 @@ extension Entry.LocalFileHeader {
         subRangeStart += Int(self.fileNameLength)
         subRangeEnd = subRangeStart + Int(self.extraFieldLength)
         self.extraFieldData = additionalData.subdata(in: subRangeStart..<subRangeEnd)
+        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(data: self.extraFieldData,
+                                                                         fields: self.validFields) {
+            self.extraFields = [zip64ExtendedInformation]
+        }
     }
 }
 
@@ -331,6 +341,10 @@ extension Entry.CentralDirectoryStructure {
         subRangeStart += Int(self.extraFieldLength)
         subRangeEnd = subRangeStart + Int(self.fileCommentLength)
         self.fileCommentData = additionalData.subdata(in: subRangeStart..<subRangeEnd)
+        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(data: self.extraFieldData,
+                                                                         fields: self.validFields) {
+            self.extraFields = [zip64ExtendedInformation]
+        }
     }
 
     init(localFileHeader: Entry.LocalFileHeader, fileAttributes: UInt32, relativeOffset: UInt32,
@@ -354,6 +368,10 @@ extension Entry.CentralDirectoryStructure {
         fileNameData = localFileHeader.fileNameData
         extraFieldData = extraField.data
         fileCommentData = Data()
+        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(data: self.extraFieldData,
+                                                                         fields: self.validFields) {
+            self.extraFields = [zip64ExtendedInformation]
+        }
     }
 
     init(centralDirectoryStructure: Entry.CentralDirectoryStructure, offset: UInt32) {
@@ -377,6 +395,10 @@ extension Entry.CentralDirectoryStructure {
         fileNameData = centralDirectoryStructure.fileNameData
         extraFieldData = centralDirectoryStructure.extraFieldData
         fileCommentData = centralDirectoryStructure.fileCommentData
+        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(data: self.extraFieldData,
+                                                                         fields: self.validFields) {
+            self.extraFields = [zip64ExtendedInformation]
+        }
     }
 }
 
