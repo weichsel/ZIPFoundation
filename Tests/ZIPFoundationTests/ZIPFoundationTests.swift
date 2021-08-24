@@ -200,6 +200,7 @@ extension ZIPFoundationTests {
             ("testEntryInvalidSignatureErrorConditions", testEntryInvalidSignatureErrorConditions),
             ("testEntryMissingDataDescriptorErrorCondition", testEntryMissingDataDescriptorErrorCondition),
             ("testEntryTypeDetectionHeuristics", testEntryTypeDetectionHeuristics),
+            ("testEntryValidDataDescriptor", testEntryValidDataDescriptor),
             ("testEntryWrongDataLengthErrorConditions", testEntryWrongDataLengthErrorConditions),
             ("testExtractCompressedDataDescriptorArchive", testExtractCompressedDataDescriptorArchive),
             ("testExtractCompressedFolderEntries", testExtractCompressedFolderEntries),

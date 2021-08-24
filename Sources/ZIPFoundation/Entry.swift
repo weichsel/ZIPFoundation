@@ -59,19 +59,23 @@ public struct Entry: Equatable {
         static let size = 30
         let fileNameData: Data
         let extraFieldData: Data
-
         var extraFields: [ExtensibleDataField]?
-        var isZIP64: Bool { return UInt8(truncatingIfNeeded: self.versionNeededToExtract) >= 45 }
     }
 
-    struct DataDescriptor: DataSerializable {
+    struct DataDescriptor<T: BinaryInteger>: DataSerializable {
         let data: Data
         let dataDescriptorSignature = UInt32(dataDescriptorStructSignature)
         let crc32: UInt32
-        let compressedSize: UInt32
-        let uncompressedSize: UInt32
-        static let size = 16
+        // For normal archives, the compressed and uncompressed sizes are 4 bytes each.
+        // For ZIP64 format archives, the compressed and uncompressed sizes are 8 bytes each.
+        let compressedSize: T
+        let uncompressedSize: T
+        static var memoryLengthOfSize: Int { MemoryLayout<T>.size }
+        static var size: Int { memoryLengthOfSize * 2 + 8 } // 16
     }
+
+    typealias DefaultDataDescriptor = DataDescriptor<UInt32>
+    typealias ZIP64DataDescriptor = DataDescriptor<Int64>
 
     struct CentralDirectoryStructure: DataSerializable {
         let centralDirectorySignature = UInt32(centralDirectoryStructSignature)
@@ -176,7 +180,11 @@ public struct Entry: Equatable {
         var size = LocalFileHeader.size + extraDataLength
         let isCompressed = localFileHeader.compressionMethod != CompressionMethod.none.rawValue
         size += isCompressed ? self.compressedSize : self.uncompressedSize
-        size += self.dataDescriptor != nil ? DataDescriptor.size : 0
+        if centralDirectoryStructure.isZIP64 {
+            size += self.zip64DataDescriptor != nil ? ZIP64DataDescriptor.size : 0
+        } else {
+            size += self.dataDescriptor != nil ? DefaultDataDescriptor.size : 0
+        }
         return Int64(size)
     }
     var dataOffset: Int {
@@ -188,7 +196,8 @@ public struct Entry: Equatable {
     }
     let centralDirectoryStructure: CentralDirectoryStructure
     let localFileHeader: LocalFileHeader
-    let dataDescriptor: DataDescriptor?
+    let dataDescriptor: DefaultDataDescriptor?
+    let zip64DataDescriptor: ZIP64DataDescriptor?
 
     public static func == (lhs: Entry, rhs: Entry) -> Bool {
         return lhs.path == rhs.path
@@ -199,12 +208,14 @@ public struct Entry: Equatable {
 
     init?(centralDirectoryStructure: CentralDirectoryStructure,
           localFileHeader: LocalFileHeader,
-          dataDescriptor: DataDescriptor?) {
+          dataDescriptor: DefaultDataDescriptor? = nil,
+          zip64DataDescriptor: ZIP64DataDescriptor? = nil) {
         // We currently don't support encrypted archives
         guard !centralDirectoryStructure.isEncrypted else { return nil }
         self.centralDirectoryStructure = centralDirectoryStructure
         self.localFileHeader = localFileHeader
         self.dataDescriptor = dataDescriptor
+        self.zip64DataDescriptor = zip64DataDescriptor
     }
 }
 
@@ -404,14 +415,16 @@ extension Entry.CentralDirectoryStructure {
 
 extension Entry.DataDescriptor {
     init?(data: Data, additionalDataProvider provider: (Int) throws -> Data) {
-        guard data.count == Entry.DataDescriptor.size else { return nil }
+        guard data.count == Self.size else { return nil }
         let signature: UInt32 = data.scanValue(start: 0)
         // The DataDescriptor signature is not mandatory so we have to re-arrange the input data if it is missing.
         var readOffset = 0
         if signature == self.dataDescriptorSignature { readOffset = 4 }
-        self.crc32 = data.scanValue(start: readOffset + 0)
-        self.compressedSize = data.scanValue(start: readOffset + 4)
-        self.uncompressedSize = data.scanValue(start: readOffset + 8)
+        self.crc32 = data.scanValue(start: readOffset)
+        readOffset += MemoryLayout<UInt32>.size
+        self.compressedSize = data.scanValue(start: readOffset)
+        readOffset += Self.memoryLengthOfSize
+        self.uncompressedSize = data.scanValue(start: readOffset)
         // Our add(_ entry:) methods always maintain compressed & uncompressed
         // sizes and so we don't need a data descriptor for newly added entries.
         // Data descriptors of already existing entries are manually preserved

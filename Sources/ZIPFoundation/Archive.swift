@@ -203,13 +203,18 @@ public final class Archive: Sequence {
             let offset = Int64(centralDirStruct.relativeOffsetOfLocalHeader)
             guard let localFileHeader: LocalFileHeader = Data.readStruct(from: self.archiveFile,
                                                                          at: offset) else { return nil }
-            var dataDescriptor: DataDescriptor?
+            var dataDescriptor: Entry.DefaultDataDescriptor?
+            var zip64DataDescriptor: Entry.ZIP64DataDescriptor?
             if centralDirStruct.usesDataDescriptor {
                 let additionalSize = Int64(localFileHeader.fileNameLength) + Int64(localFileHeader.extraFieldLength)
                 let isCompressed = centralDirStruct.compressionMethod != CompressionMethod.none.rawValue
                 let dataSize = isCompressed ? centralDirStruct.compressedSize : centralDirStruct.uncompressedSize
                 let descriptorPosition = offset + Int64(LocalFileHeader.size) + additionalSize + Int64(dataSize)
-                dataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
+                if centralDirStruct.isZIP64 {
+                    zip64DataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
+                } else {
+                    dataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
+                }
             }
             defer {
                 directoryIndex += Int64(CentralDirectoryStructure.size)
@@ -218,8 +223,8 @@ public final class Archive: Sequence {
                 directoryIndex += Int64(centralDirStruct.fileCommentLength)
                 index += 1
             }
-            return Entry(centralDirectoryStructure: centralDirStruct,
-                         localFileHeader: localFileHeader, dataDescriptor: dataDescriptor)
+            return Entry(centralDirectoryStructure: centralDirStruct, localFileHeader: localFileHeader,
+                         dataDescriptor: dataDescriptor, zip64DataDescriptor: zip64DataDescriptor)
         }
     }
 
