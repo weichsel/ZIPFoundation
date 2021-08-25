@@ -436,29 +436,29 @@ extension Entry.CentralDirectoryStructure {
 
 extension Entry.CentralDirectoryStructure {
     public var exactCompressedSize: Int64 {
-        if isZIP64 {
-            return zip64ExtendedInformation?.compressedSize ?? Int64(compressedSize)
+        if isZIP64, let compressedSize = zip64ExtendedInformation?.compressedSize, compressedSize > 0 {
+            return compressedSize
         } else {
             return Int64(compressedSize)
         }
     }
     public var exactUncompressedSize: Int64 {
-        if isZIP64 {
-            return zip64ExtendedInformation?.uncompressedSize ?? Int64(uncompressedSize)
+        if isZIP64, let uncompressedSize = zip64ExtendedInformation?.uncompressedSize, uncompressedSize > 0 {
+            return uncompressedSize
         } else {
             return Int64(uncompressedSize)
         }
     }
     public var exactRelativeOffsetOfLocalHeader: Int64 {
-        if isZIP64 {
-            return zip64ExtendedInformation?.relativeOffsetOfLocalHeader ?? Int64(relativeOffsetOfLocalHeader)
+        if isZIP64, let offset = zip64ExtendedInformation?.relativeOffsetOfLocalHeader, offset > 0 {
+            return offset
         } else {
             return Int64(relativeOffsetOfLocalHeader)
         }
     }
     public var exactDiskNumberStart: UInt32 {
-        if isZIP64 {
-            return zip64ExtendedInformation?.diskNumberStart ?? UInt32(diskNumberStart)
+        if isZIP64, let diskNumberStart = zip64ExtendedInformation?.diskNumberStart, diskNumberStart > 0 {
+            return diskNumberStart
         } else {
             return UInt32(diskNumberStart)
         }

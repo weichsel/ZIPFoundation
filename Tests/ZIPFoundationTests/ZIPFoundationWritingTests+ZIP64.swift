@@ -29,7 +29,7 @@ extension ZIPFoundationTests {
             XCTFail("Failed to add zip64 format entry to archive"); return
         }
         XCTAssert(entry.checksum == data.crc32(checksum: 0))
-//        XCTAssert(archive.checkIntegrity())
+        XCTAssert(archive.checkIntegrity())
         let fileSystemRepresentation = FileManager.default.fileSystemRepresentation(withPath: archive.url.path)
         guard let archiveFile = fopen(fileSystemRepresentation, "rb") else {
             XCTFail("Failed to read data of archive file."); return
@@ -150,20 +150,19 @@ extension ZIPFoundationTests {
         let size = 64 * 64 * 2
         let data = Data.makeRandomData(size: size)
         let entryName = ProcessInfo.processInfo.globallyUniqueString
-//        let currentLFHOffset = archive.offsetToStartOfCentralDirectory
+        let currentLFHOffset = archive.offsetToStartOfCentralDirectory
         do {
             try archive.addFileEntry(with: entryName, size: size, data: data)
         } catch {
             XCTFail("Failed to add zip64 format entry to archive with error : \(error)"); return
         }
-        // Please ignore this test for now, will be fixed later
-//        guard let entry = archive[entryName] else {
-//            XCTFail("Failed to add zip64 format entry to archive"); return
-//        }
-//        XCTAssert(entry.checksum == data.crc32(checksum: 0))
-//        XCTAssert(archive.checkIntegrity())
-//        XCTAssertEqual(entry.centralDirectoryStructure.relativeOffsetOfLocalHeader, UInt32.max)
-//        XCTAssertEqual(entry.centralDirectoryStructure.extraFieldData.scanValue(start: 20), currentLFHOffset)
+        guard let entry = archive[entryName] else {
+            XCTFail("Failed to add zip64 format entry to archive"); return
+        }
+        XCTAssert(entry.checksum == data.crc32(checksum: 0))
+        XCTAssert(archive.checkIntegrity())
+        XCTAssertEqual(entry.centralDirectoryStructure.relativeOffsetOfLocalHeader, UInt32.max)
+        XCTAssertEqual(entry.centralDirectoryStructure.extraFieldData.scanValue(start: 20), currentLFHOffset)
     }
 
     func testAddDirectoryToArchiveWithZIP64LFHOffset() {
@@ -171,19 +170,19 @@ extension ZIPFoundationTests {
         defer { resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .update)
         let entryName = "Test"
+        let currentLFHOffset = archive.offsetToStartOfCentralDirectory
         do {
             try archive.addEntry(with: entryName, type: .directory,
                                  uncompressedSize: 0, provider: { _, _ in return Data() })
         } catch {
             XCTFail("Failed to add directory entry to zip64 archive.")
         }
-        // Please ignore this test for now, will be fixed later
-//        guard let entry = archive[entryName] else {
-//            XCTFail("Failed to add zip64 format entry to archive"); return
-//        }
-//        XCTAssertNotNil(entry)
-//        XCTAssertEqual(entry.centralDirectoryStructure.relativeOffsetOfLocalHeader, UInt32.max)
-//        XCTAssertEqual(entry.centralDirectoryStructure.extraFieldData.scanValue(start: 4), currentLFHOffset)
+        guard let entry = archive[entryName] else {
+            XCTFail("Failed to add zip64 format entry to archive"); return
+        }
+        XCTAssertNotNil(entry)
+        XCTAssertEqual(entry.centralDirectoryStructure.relativeOffsetOfLocalHeader, UInt32.max)
+        XCTAssertEqual(entry.centralDirectoryStructure.extraFieldData.scanValue(start: 4), currentLFHOffset)
     }
 
     /// Target fields: Total Number of Entries in Central Directory
