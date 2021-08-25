@@ -200,7 +200,7 @@ public final class Archive: Sequence {
                                                                                     at: directoryIndex) else {
                                                                                         return nil
             }
-            let offset = Int64(centralDirStruct.relativeOffsetOfLocalHeader)
+            let offset = Int64(centralDirStruct.exactRelativeOffsetOfLocalHeader)
             guard let localFileHeader: LocalFileHeader = Data.readStruct(from: self.archiveFile,
                                                                          at: offset) else { return nil }
             var dataDescriptor: Entry.DefaultDataDescriptor?
@@ -208,8 +208,9 @@ public final class Archive: Sequence {
             if centralDirStruct.usesDataDescriptor {
                 let additionalSize = Int64(localFileHeader.fileNameLength) + Int64(localFileHeader.extraFieldLength)
                 let isCompressed = centralDirStruct.compressionMethod != CompressionMethod.none.rawValue
-                let dataSize = isCompressed ? centralDirStruct.compressedSize : centralDirStruct.uncompressedSize
-                let descriptorPosition = offset + Int64(LocalFileHeader.size) + additionalSize + Int64(dataSize)
+                let dataSize = isCompressed
+                    ? centralDirStruct.exactCompressedSize : centralDirStruct.exactUncompressedSize
+                let descriptorPosition = offset + Int64(LocalFileHeader.size) + additionalSize + dataSize
                 if centralDirStruct.isZIP64 {
                     zip64DataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
                 } else {

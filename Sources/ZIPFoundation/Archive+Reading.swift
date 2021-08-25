@@ -82,7 +82,7 @@ extension Archive {
         }
         var checksum = CRC32(0)
         let localFileHeader = entry.localFileHeader
-        fseek(self.archiveFile, entry.dataOffset, SEEK_SET)
+        fseeko(self.archiveFile, off_t(entry.dataOffset), SEEK_SET)
         progress?.totalUnitCount = self.totalUnitCountForReading(entry)
         switch entry.type {
         case .file:
@@ -113,10 +113,10 @@ extension Archive {
 
     private func readUncompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                                   progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
-        let size = Int64(entry.centralDirectoryStructure.uncompressedSize)
+        let size = entry.centralDirectoryStructure.exactUncompressedSize
         return try Data.consumePart(of: size, chunkSize: bufferSize, skipCRC32: skipCRC32,
                                     provider: { (_, chunkSize) -> Data in
-            return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
+            return try Data.readChunk(of: chunkSize, from: self.archiveFile)
         }, consumer: { (data) in
             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
             try consumer(data)
@@ -126,10 +126,10 @@ extension Archive {
 
     private func readCompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                                 progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
-        let size = Int64(entry.centralDirectoryStructure.compressedSize)
+        let size = entry.centralDirectoryStructure.exactCompressedSize
         return try Data.decompress(size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                    provider: { (_, chunkSize) -> Data in
-            return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
+            return try Data.readChunk(of: chunkSize, from: self.archiveFile)
         }, consumer: { (data) in
             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
             try consumer(data)

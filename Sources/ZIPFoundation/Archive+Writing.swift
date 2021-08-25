@@ -184,7 +184,7 @@ extension Archive {
         for currentEntry in self {
             let centralDirectoryStructure = currentEntry.centralDirectoryStructure
             if currentEntry != entry {
-                let entryStart = Int64(currentEntry.centralDirectoryStructure.relativeOffsetOfLocalHeader)
+                let entryStart = currentEntry.centralDirectoryStructure.exactRelativeOffsetOfLocalHeader
                 fseeko(self.archiveFile, off_t(entryStart), SEEK_SET)
                 let provider: Provider = { (_, chunkSize) -> Data in
                     return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
@@ -196,8 +196,13 @@ extension Archive {
                 }
                 _ = try Data.consumePart(of: currentEntry.localSize, chunkSize: bufferSize,
                                          provider: provider, consumer: consumer)
+                let updatedOffset = centralDirectoryStructure.exactRelativeOffsetOfLocalHeader - offset
+                let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(
+                    zip64ExtendedInformation: centralDirectoryStructure.zip64ExtendedInformation, offset: updatedOffset)
+                let offsetInCD = updatedOffset < maxOffsetOfLocalFileHeader ? UInt32(updatedOffset) : UInt32.max
                 let centralDir = CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
-                                                           offset: UInt32(offset))
+                                                           zip64ExtendedInformation: zip64ExtendedInformation,
+                                                           relativeOffset: offsetInCD)
                 centralDirectoryData.append(centralDir.data)
             } else { offset = currentEntry.localSize }
         }

@@ -104,7 +104,11 @@ public struct Entry: Equatable {
         var usesDataDescriptor: Bool { return (self.generalPurposeBitFlag & (1 << 3 )) != 0 }
         var usesUTF8PathEncoding: Bool { return (self.generalPurposeBitFlag & (1 << 11 )) != 0 }
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
-        var isZIP64: Bool { return UInt8(truncatingIfNeeded: self.versionNeededToExtract) >= 45 }
+        var isZIP64: Bool {
+            // If zip64 extended information is existing, try to treat cd as zip64 format
+            // even if the version needed to extract is lower than 4.5
+            return UInt8(truncatingIfNeeded: self.versionNeededToExtract) >= 45 || zip64ExtendedInformation != nil
+        }
     }
     /// Returns the `path` of the receiver within a ZIP `Archive` using a given encoding.
     ///
@@ -165,33 +169,41 @@ public struct Entry: Equatable {
         }
     }
     /// The size of the receiver's compressed data.
-    public var compressedSize: Int {
-        return Int(dataDescriptor?.compressedSize ?? localFileHeader.compressedSize)
+    public var compressedSize: Int64 {
+        if centralDirectoryStructure.isZIP64 {
+            return zip64DataDescriptor?.compressedSize ?? centralDirectoryStructure.exactCompressedSize
+        } else {
+            return Int64(dataDescriptor?.compressedSize ?? centralDirectoryStructure.compressedSize)
+        }
     }
     /// The size of the receiver's uncompressed data.
-    public var uncompressedSize: Int {
-        return Int(dataDescriptor?.uncompressedSize ?? localFileHeader.uncompressedSize)
+    public var uncompressedSize: Int64 {
+        if centralDirectoryStructure.isZIP64 {
+            return zip64DataDescriptor?.uncompressedSize ?? centralDirectoryStructure.exactUncompressedSize
+        } else {
+            return Int64(dataDescriptor?.uncompressedSize ?? centralDirectoryStructure.uncompressedSize)
+        }
     }
     /// The combined size of the local header, the data and the optional data descriptor.
     var localSize: Int64 {
         let localFileHeader = self.localFileHeader
         var extraDataLength = Int(localFileHeader.fileNameLength)
         extraDataLength += Int(localFileHeader.extraFieldLength)
-        var size = LocalFileHeader.size + extraDataLength
+        var size: Int64 = Int64(LocalFileHeader.size + extraDataLength)
         let isCompressed = localFileHeader.compressionMethod != CompressionMethod.none.rawValue
         size += isCompressed ? self.compressedSize : self.uncompressedSize
         if centralDirectoryStructure.isZIP64 {
-            size += self.zip64DataDescriptor != nil ? ZIP64DataDescriptor.size : 0
+            size += self.zip64DataDescriptor != nil ? Int64(ZIP64DataDescriptor.size) : 0
         } else {
-            size += self.dataDescriptor != nil ? DefaultDataDescriptor.size : 0
+            size += self.dataDescriptor != nil ? Int64(DefaultDataDescriptor.size) : 0
         }
-        return Int64(size)
+        return size
     }
-    var dataOffset: Int {
-        var dataOffset = Int(self.centralDirectoryStructure.relativeOffsetOfLocalHeader)
-        dataOffset += LocalFileHeader.size
-        dataOffset += Int(self.localFileHeader.fileNameLength)
-        dataOffset += Int(self.localFileHeader.extraFieldLength)
+    var dataOffset: Int64 {
+        var dataOffset = self.centralDirectoryStructure.exactRelativeOffsetOfLocalHeader
+        dataOffset += Int64(LocalFileHeader.size)
+        dataOffset += Int64(self.localFileHeader.fileNameLength)
+        dataOffset += Int64(self.localFileHeader.extraFieldLength)
         return dataOffset
     }
     let centralDirectoryStructure: CentralDirectoryStructure
@@ -202,8 +214,8 @@ public struct Entry: Equatable {
     public static func == (lhs: Entry, rhs: Entry) -> Bool {
         return lhs.path == rhs.path
             && lhs.localFileHeader.crc32 == rhs.localFileHeader.crc32
-            && lhs.centralDirectoryStructure.relativeOffsetOfLocalHeader
-            == rhs.centralDirectoryStructure.relativeOffsetOfLocalHeader
+            && lhs.centralDirectoryStructure.exactRelativeOffsetOfLocalHeader
+            == rhs.centralDirectoryStructure.exactRelativeOffsetOfLocalHeader
     }
 
     init?(centralDirectoryStructure: CentralDirectoryStructure,
@@ -385,11 +397,22 @@ extension Entry.CentralDirectoryStructure {
         }
     }
 
-    init(centralDirectoryStructure: Entry.CentralDirectoryStructure, offset: UInt32) {
-        let relativeOffset = centralDirectoryStructure.relativeOffsetOfLocalHeader - offset
+    init(centralDirectoryStructure: Entry.CentralDirectoryStructure,
+         zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, relativeOffset: UInt32) {
+        if let existingInfo = zip64ExtendedInformation {
+            extraFieldData = existingInfo.data
+            versionNeededToExtract = max(centralDirectoryStructure.versionNeededToExtract, zip64Version)
+        } else {
+            extraFieldData = Data()
+            if centralDirectoryStructure.versionNeededToExtract < zip64Version {
+                versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract
+            } else {
+                versionNeededToExtract = UInt16(20)
+            }
+        }
+        extraFieldLength = UInt16(extraFieldData.count)
         relativeOffsetOfLocalHeader = relativeOffset
         versionMadeBy = centralDirectoryStructure.versionMadeBy
-        versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract
         generalPurposeBitFlag = centralDirectoryStructure.generalPurposeBitFlag
         compressionMethod = centralDirectoryStructure.compressionMethod
         lastModFileTime = centralDirectoryStructure.lastModFileTime
@@ -398,17 +421,46 @@ extension Entry.CentralDirectoryStructure {
         compressedSize = centralDirectoryStructure.compressedSize
         uncompressedSize = centralDirectoryStructure.uncompressedSize
         fileNameLength = centralDirectoryStructure.fileNameLength
-        extraFieldLength = centralDirectoryStructure.extraFieldLength
         fileCommentLength = centralDirectoryStructure.fileCommentLength
         diskNumberStart = centralDirectoryStructure.diskNumberStart
         internalFileAttributes = centralDirectoryStructure.internalFileAttributes
         externalFileAttributes = centralDirectoryStructure.externalFileAttributes
         fileNameData = centralDirectoryStructure.fileNameData
-        extraFieldData = centralDirectoryStructure.extraFieldData
         fileCommentData = centralDirectoryStructure.fileCommentData
         if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(data: self.extraFieldData,
                                                                          fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
+        }
+    }
+}
+
+extension Entry.CentralDirectoryStructure {
+    public var exactCompressedSize: Int64 {
+        if isZIP64 {
+            return zip64ExtendedInformation?.compressedSize ?? Int64(compressedSize)
+        } else {
+            return Int64(compressedSize)
+        }
+    }
+    public var exactUncompressedSize: Int64 {
+        if isZIP64 {
+            return zip64ExtendedInformation?.uncompressedSize ?? Int64(uncompressedSize)
+        } else {
+            return Int64(uncompressedSize)
+        }
+    }
+    public var exactRelativeOffsetOfLocalHeader: Int64 {
+        if isZIP64 {
+            return zip64ExtendedInformation?.relativeOffsetOfLocalHeader ?? Int64(relativeOffsetOfLocalHeader)
+        } else {
+            return Int64(relativeOffsetOfLocalHeader)
+        }
+    }
+    public var exactDiskNumberStart: UInt32 {
+        if isZIP64 {
+            return zip64ExtendedInformation?.diskNumberStart ?? UInt32(diskNumberStart)
+        } else {
+            return UInt32(diskNumberStart)
         }
     }
 }

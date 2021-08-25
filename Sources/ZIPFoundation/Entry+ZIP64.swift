@@ -29,6 +29,10 @@ extension Entry {
         let relativeOffsetOfLocalHeader: Int64
         let diskNumberStart: UInt32
     }
+
+    var zip64ExtendedInformation: ZIP64ExtendedInformation? {
+        centralDirectoryStructure.zip64ExtendedInformation
+    }
 }
 
 typealias Field = Entry.ZIP64ExtendedInformation.Field
@@ -50,6 +54,9 @@ extension Entry.CentralDirectoryStructure {
         if relativeOffsetOfLocalHeader == .max { fields.append(.relativeOffsetOfLocalHeader) }
         if diskNumberStart == .max { fields.append(.diskNumberStart) }
         return fields
+    }
+    var zip64ExtendedInformation: Entry.ZIP64ExtendedInformation? {
+        extraFields?.compactMap { $0 as? Entry.ZIP64ExtendedInformation }.first
     }
 }
 
@@ -119,6 +126,17 @@ extension Entry.ZIP64ExtendedInformation {
         } catch {
             return nil
         }
+    }
+
+    init?(zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, offset: Int64) {
+        guard let existingInfo = zip64ExtendedInformation else { return nil }
+        relativeOffsetOfLocalHeader = offset >= maxOffsetOfLocalFileHeader ? offset : 0
+        uncompressedSize = existingInfo.uncompressedSize
+        compressedSize = existingInfo.compressedSize
+        diskNumberStart = existingInfo.diskNumberStart
+        dataSize = [relativeOffsetOfLocalHeader, uncompressedSize, compressedSize, diskNumberStart]
+            .reduce(UInt16(0), { $0 + UInt16(MemoryLayout.size(ofValue: $1)) })
+        if dataSize == 0 { return nil }
     }
 
     static func scanForZIP64Field(in data: Data, fields: [Field]) -> Entry.ZIP64ExtendedInformation? {
