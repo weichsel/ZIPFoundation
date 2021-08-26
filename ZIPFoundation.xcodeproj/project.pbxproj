@@ -14,6 +14,8 @@
 		591C971326B0FF9F00F65F97 /* ZIPFoundationWritingTests+ZIP64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 591C971226B0FF9F00F65F97 /* ZIPFoundationWritingTests+ZIP64.swift */; };
 		591C971426B0FFAA00F65F97 /* ZIPFoundationArchiveTests+ZIP64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590A7DAF26B0F96800CBEFB4 /* ZIPFoundationArchiveTests+ZIP64.swift */; };
 		59248AA226B6EC770078ABDA /* ZIPFoundationErrorConditionTests+ZIP64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59248AA126B6EC770078ABDA /* ZIPFoundationErrorConditionTests+ZIP64.swift */; };
+		5968EBED26D692360037EA62 /* ZIPFoundationReadingTests+ZIP64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5968EBEC26D692360037EA62 /* ZIPFoundationReadingTests+ZIP64.swift */; };
+		5968EBF126D695AD0037EA62 /* ZIPFoundationFileManagerTests+ZIP64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5968EBF026D695AD0037EA62 /* ZIPFoundationFileManagerTests+ZIP64.swift */; };
 		95B5A3D42366731B00D4D8FD /* Archive+MemoryFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B5A3D32366731B00D4D8FD /* Archive+MemoryFile.swift */; };
 		95B5A3D72367999900D4D8FD /* ZIPFoundationMemoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryTests.swift */; };
 		BA3716AB21F0A238006E54E6 /* ZIPFoundationProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */; };
@@ -55,6 +57,8 @@
 		590A7DAF26B0F96800CBEFB4 /* ZIPFoundationArchiveTests+ZIP64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "ZIPFoundationArchiveTests+ZIP64.swift"; sourceTree = "<group>"; };
 		591C971226B0FF9F00F65F97 /* ZIPFoundationWritingTests+ZIP64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "ZIPFoundationWritingTests+ZIP64.swift"; sourceTree = "<group>"; };
 		59248AA126B6EC770078ABDA /* ZIPFoundationErrorConditionTests+ZIP64.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ZIPFoundationErrorConditionTests+ZIP64.swift"; sourceTree = "<group>"; };
+		5968EBEC26D692360037EA62 /* ZIPFoundationReadingTests+ZIP64.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ZIPFoundationReadingTests+ZIP64.swift"; sourceTree = "<group>"; };
+		5968EBF026D695AD0037EA62 /* ZIPFoundationFileManagerTests+ZIP64.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ZIPFoundationFileManagerTests+ZIP64.swift"; sourceTree = "<group>"; };
 		95B5A3D32366731B00D4D8FD /* Archive+MemoryFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+MemoryFile.swift"; sourceTree = "<group>"; };
 		95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationMemoryTests.swift; sourceTree = "<group>"; };
 		BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationProgressTests.swift; sourceTree = "<group>"; };
@@ -113,6 +117,7 @@
 				OBJ_23 /* ZIPFoundationTests.swift */,
 				590A7DAF26B0F96800CBEFB4 /* ZIPFoundationArchiveTests+ZIP64.swift */,
 				OBJ_22 /* ZIPFoundationReadingTests.swift */,
+				5968EBEC26D692360037EA62 /* ZIPFoundationReadingTests+ZIP64.swift */,
 				OBJ_24 /* ZIPFoundationWritingTests.swift */,
 				591C971226B0FF9F00F65F97 /* ZIPFoundationWritingTests+ZIP64.swift */,
 				95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryTests.swift */,
@@ -120,6 +125,7 @@
 				590A7DAD26B0F95E00CBEFB4 /* ZIPFoundationEntryTests+ZIP64.swift */,
 				OBJ_18 /* ZIPFoundationDataSerializationTests.swift */,
 				OBJ_20 /* ZIPFoundationFileManagerTests.swift */,
+				5968EBF026D695AD0037EA62 /* ZIPFoundationFileManagerTests+ZIP64.swift */,
 				OBJ_21 /* ZIPFoundationPerformanceTests.swift */,
 				BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */,
 				BAAF13D925CC140300070A95 /* ZIPFoundationErrorConditionTests.swift */,
@@ -271,8 +277,10 @@
 			buildActionMask = 0;
 			files = (
 				591C971426B0FFAA00F65F97 /* ZIPFoundationArchiveTests+ZIP64.swift in Sources */,
+				5968EBED26D692360037EA62 /* ZIPFoundationReadingTests+ZIP64.swift in Sources */,
 				591C971326B0FF9F00F65F97 /* ZIPFoundationWritingTests+ZIP64.swift in Sources */,
 				591C970D26B0FBAE00F65F97 /* ZIPFoundationEntryTests+ZIP64.swift in Sources */,
+				5968EBF126D695AD0037EA62 /* ZIPFoundationFileManagerTests+ZIP64.swift in Sources */,
 				OBJ_33 /* ZIPFoundationDataSerializationTests.swift in Sources */,
 				OBJ_34 /* ZIPFoundationEntryTests.swift in Sources */,
 				BAAF13DA25CC140300070A95 /* ZIPFoundationErrorConditionTests.swift in Sources */,

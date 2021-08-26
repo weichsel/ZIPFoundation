@@ -159,6 +159,18 @@ class ZIPFoundationTests: XCTestCase {
         handler()
         #endif
     }
+
+    // MARK: - ZIP64 Helpers
+
+    func resetIntMaxValues() {
+        maxUInt32 = .max
+        maxUInt16 = .max
+    }
+
+    func mockIntMaxValues(int32Factor: Int = 64, int16Factor: Int = 64) {
+        maxUInt32 = UInt32(int32Factor * int32Factor)
+        maxUInt16 = UInt16(int16Factor)
+    }
 }
 
 extension ZIPFoundationTests {
@@ -241,6 +253,10 @@ extension ZIPFoundationTests {
 
     static var zip64Tests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
         return [
+            ("testZipCompressedZIP64Item", testZipCompressedZIP64Item),
+            ("testZipUncompressedZIP64Item", testZipUncompressedZIP64Item),
+            ("testUnzipCompressedZIP64Item", testUnzipCompressedZIP64Item),
+            ("testUnzipUncompressedZIP64Item", testUnzipUncompressedZIP64Item),
             ("testEntryZIP64ExtraField", testEntryZIP64ExtraField),
             ("testEntryZIP64FieldOnlyHasUncompressedSize", testEntryZIP64FieldOnlyHasUncompressedSize),
             ("testEntryZIP64FieldIncludingDiskNumberStart", testEntryZIP64FieldIncludingDiskNumberStart),

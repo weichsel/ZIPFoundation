@@ -209,7 +209,8 @@ public final class Archive: Sequence {
                 let additionalSize = Int64(localFileHeader.fileNameLength) + Int64(localFileHeader.extraFieldLength)
                 let isCompressed = centralDirStruct.compressionMethod != CompressionMethod.none.rawValue
                 let dataSize = isCompressed
-                    ? centralDirStruct.exactCompressedSize : centralDirStruct.exactUncompressedSize
+                    ? centralDirStruct.exactCompressedSize
+                    : centralDirStruct.exactUncompressedSize
                 let descriptorPosition = offset + Int64(LocalFileHeader.size) + additionalSize + dataSize
                 if centralDirStruct.isZIP64 {
                     zip64DataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)

@@ -285,18 +285,6 @@ extension ZIPFoundationTests {
         }
         XCTAssertNil(archive.zip64EndOfCentralDirectory)
     }
-
-    // MARK: - Helpers
-
-    func resetIntMaxValues() {
-        maxUInt32 = .max
-        maxUInt16 = .max
-    }
-
-    func mockIntMaxValues(int32Factor: Int = 64, int16Factor: Int = 64) {
-        maxUInt32 = UInt32(int32Factor * int32Factor)
-        maxUInt16 = UInt16(int16Factor)
-    }
 }
 
 extension Archive {

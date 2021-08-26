@@ -212,7 +212,7 @@ extension ZIPFoundationTests {
         self.wait(for: [cancel], timeout: 20.0)
         zipQueue.sync {
             XCTAssert(progress.fractionCompleted > 0.5)
-//            XCTAssert(archive.checkIntegrity())
+            XCTAssert(archive.checkIntegrity())
         }
     }
 }

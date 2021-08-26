@@ -283,8 +283,8 @@ extension Entry.LocalFileHeader {
         subRangeStart += Int(self.fileNameLength)
         subRangeEnd = subRangeStart + Int(self.extraFieldLength)
         self.extraFieldData = additionalData.subdata(in: subRangeStart..<subRangeEnd)
-        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(data: self.extraFieldData,
-                                                                         fields: self.validFields) {
+        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation.scanForZIP64Field(in: self.extraFieldData,
+                                                                                           fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
         }
     }
@@ -364,8 +364,8 @@ extension Entry.CentralDirectoryStructure {
         subRangeStart += Int(self.extraFieldLength)
         subRangeEnd = subRangeStart + Int(self.fileCommentLength)
         self.fileCommentData = additionalData.subdata(in: subRangeStart..<subRangeEnd)
-        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(data: self.extraFieldData,
-                                                                         fields: self.validFields) {
+        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation.scanForZIP64Field(in: self.extraFieldData,
+                                                                                           fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
         }
     }
@@ -391,8 +391,8 @@ extension Entry.CentralDirectoryStructure {
         fileNameData = localFileHeader.fileNameData
         extraFieldData = extraField.data
         fileCommentData = Data()
-        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(data: self.extraFieldData,
-                                                                         fields: self.validFields) {
+        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation.scanForZIP64Field(in: self.extraFieldData,
+                                                                                           fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
         }
     }
@@ -427,8 +427,8 @@ extension Entry.CentralDirectoryStructure {
         externalFileAttributes = centralDirectoryStructure.externalFileAttributes
         fileNameData = centralDirectoryStructure.fileNameData
         fileCommentData = centralDirectoryStructure.fileCommentData
-        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(data: self.extraFieldData,
-                                                                         fields: self.validFields) {
+        if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation.scanForZIP64Field(in: self.extraFieldData,
+                                                                                           fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
         }
     }
