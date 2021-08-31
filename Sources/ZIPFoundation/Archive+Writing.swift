@@ -162,7 +162,7 @@ extension Archive {
                                                                     operation: .add)
             (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory) = eocdStructure
         } catch ArchiveError.cancelledOperation {
-            try rollback(localFileHeaderStart, existingCDData, existingCDSize, bufferSize, eocdRecord, zip64EOCD)
+            try rollback(localFileHeaderStart, (existingCDData, existingCDSize), bufferSize, eocdRecord, zip64EOCD)
             throw ArchiveError.cancelledOperation
         }
     }
@@ -196,14 +196,9 @@ extension Archive {
                 }
                 _ = try Data.consumePart(of: currentEntry.localSize, chunkSize: bufferSize,
                                          provider: provider, consumer: consumer)
-                let updatedOffset = entryStart - offset
-                let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(
-                    zip64ExtendedInformation: centralDirectoryStructure.zip64ExtendedInformation, offset: updatedOffset)
-                let offsetInCD = updatedOffset < maxOffsetOfLocalFileHeader ? UInt32(updatedOffset) : UInt32.max
-                let centralDir = CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
-                                                           zip64ExtendedInformation: zip64ExtendedInformation,
-                                                           relativeOffset: offsetInCD)
-                centralDirectoryData.append(centralDir.data)
+                let updatedCentralDirectory = updateOffsetInCentralDirectory(cds: centralDirectoryStructure,
+                                                                             updatedOffset: entryStart - offset)
+                centralDirectoryData.append(updatedCentralDirectory.data)
             } else { offset = currentEntry.localSize }
         }
         let startOfCentralDirectory = Int64(ftello(tempArchive.archiveFile))
@@ -419,17 +414,15 @@ extension Archive {
         return (record, zip64eocd)
     }
 
-    func rollback(_ localFileHeaderStart: Int64, _ existingCentralDirectoryData: Data,
-                  _ existingCentralDirectorySize: Int64,
-                  _ bufferSize: Int,
-                  _ endOfCentralDirRecord: EndOfCentralDirectoryRecord,
+    func rollback(_ localFileHeaderStart: Int64, _ existingCentralDirectory: (data: Data, size: Int64),
+                  _ bufferSize: Int, _ endOfCentralDirRecord: EndOfCentralDirectoryRecord,
                   _ zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?) throws {
         fflush(self.archiveFile)
         ftruncate(fileno(self.archiveFile), off_t(localFileHeaderStart))
         fseeko(self.archiveFile, off_t(localFileHeaderStart), SEEK_SET)
-        _ = try Data.writeLargeChunk(existingCentralDirectoryData, size: existingCentralDirectorySize,
+        _ = try Data.writeLargeChunk(existingCentralDirectory.data, size: existingCentralDirectory.size,
                                      bufferSize: bufferSize, to: archiveFile)
-        _ = try Data.write(chunk: existingCentralDirectoryData, to: self.archiveFile)
+        _ = try Data.write(chunk: existingCentralDirectory.data, to: self.archiveFile)
         if let zip64EOCD = zip64EndOfCentralDirectory {
             _ = try Data.write(chunk: zip64EOCD.data, to: self.archiveFile)
         }
@@ -536,5 +529,15 @@ extension Archive {
         zip64EOCD = ZIP64EndOfCentralDirectory(record: updatedRecord, locator: updatedLocator)
         _ = try Data.write(chunk: zip64EOCD.data, to: self.archiveFile)
         return zip64EOCD
+    }
+
+    private func updateOffsetInCentralDirectory(cds: CentralDirectoryStructure,
+                                                updatedOffset: Int64) -> CentralDirectoryStructure {
+        let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(
+            zip64ExtendedInformation: cds.zip64ExtendedInformation, offset: updatedOffset)
+        let offsetInCD = updatedOffset < maxOffsetOfLocalFileHeader ? UInt32(updatedOffset) : UInt32.max
+        return CentralDirectoryStructure(centralDirectoryStructure: cds,
+                                         zip64ExtendedInformation: zip64ExtendedInformation,
+                                         relativeOffset: offsetInCD)
     }
 }
