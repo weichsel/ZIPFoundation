@@ -12,19 +12,19 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
-    private enum ZIPFoundationTestsError: Error, CustomStringConvertible {
-        case zipItemFailed(url: URL)
-        case readArchiveFailed(url: URL)
-        case extractEntryFailed
+    private enum ZIP64FileManagerTestsError: Error, CustomStringConvertible {
+        case failedToZipItem(url: URL)
+        case failedToReadArchive(url: URL)
+        case failedToUnzipItem
 
         var description: String {
             switch self {
-            case .zipItemFailed(let assetURL):
+            case .failedToZipItem(let assetURL):
                 return "Failed to zip item at URL: \(assetURL)."
-            case .readArchiveFailed(let fileArchiveURL):
+            case .failedToReadArchive(let fileArchiveURL):
                 return "Failed to read archive at URL: \(fileArchiveURL)."
-            case .extractEntryFailed:
-                return "Failed to extract item."
+            case .failedToUnzipItem:
+                return "Failed to unzip item."
             }
         }
     }
@@ -46,7 +46,7 @@ extension ZIPFoundationTests {
     }
 
     func testUnzipCompressedZIP64Item() {
-        // compressed(deflate) by zip 3.0 via command line: zip -fz
+        // compressed(deflate) by zip 3.0 via command line: zip -r -fz
         do {
             try unarchiveZIP64Item(for: #function)
         } catch {
@@ -74,23 +74,36 @@ extension ZIPFoundationTests {
         do {
             try FileManager().zipItem(at: assetURL, to: fileArchiveURL, compressionMethod: compressionMethod)
         } catch {
-            throw ZIPFoundationTestsError.zipItemFailed(url: assetURL)
+            throw ZIP64FileManagerTestsError.failedToZipItem(url: assetURL)
         }
         guard let archive = Archive(url: fileArchiveURL, accessMode: .read) else {
-            throw ZIPFoundationTestsError.zipItemFailed(url: fileArchiveURL)
+            throw ZIP64FileManagerTestsError.failedToZipItem(url: fileArchiveURL)
         }
         XCTAssertNotNil(archive[assetURL.lastPathComponent])
         XCTAssert(archive.checkIntegrity())
     }
 
     private func unarchiveZIP64Item(for testFunction: String) throws {
+        // File Structure:
+        // testUnzipCompressedZIP64Item.zip/
+        //   ├─ directory
+        //   ├─ testLink
+        //   ├─ nested
+        //     ├─ nestedLink
+        //     ├─ faust copy.txt
+        //     ├─ deep
+        //       ├─ another.random
+        //   ├─ faust.txt
+        //   ├─ empty
+        //   ├─ data.random
+        //   ├─ random.data
         let fileManager = FileManager()
         let archive = self.archive(for: testFunction, mode: .read)
         let destinationURL = self.createDirectory(for: testFunction)
         do {
             try fileManager.unzipItem(at: archive.url, to: destinationURL)
         } catch {
-            throw ZIPFoundationTestsError.extractEntryFailed
+            throw ZIP64FileManagerTestsError.failedToUnzipItem
         }
         var itemsExist = false
         for entry in archive {

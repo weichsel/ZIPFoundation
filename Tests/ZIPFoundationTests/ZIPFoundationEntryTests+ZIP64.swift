@@ -24,6 +24,7 @@ extension ZIPFoundationTests {
         let zip64ExtraField2 = Entry.ZIP64ExtendedInformation(data: Data(extraFieldBytesIncludingOtherFields),
                                                               fields: [.relativeOffsetOfLocalHeader, .diskNumberStart])
         XCTAssertNotNil(zip64ExtraField2)
+        // TODO: chen test extraFields, validFields.
     }
 
     func testEntryZIP64FieldOnlyHasUncompressedSize() {
