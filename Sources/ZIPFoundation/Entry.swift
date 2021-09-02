@@ -71,7 +71,7 @@ public struct Entry: Equatable {
         let compressedSize: T
         let uncompressedSize: T
         static var memoryLengthOfSize: Int { MemoryLayout<T>.size }
-        static var size: Int { memoryLengthOfSize * 2 + 8 } // 16
+        static var size: Int { memoryLengthOfSize * 2 + 8 }
     }
 
     typealias DefaultDataDescriptor = DataDescriptor<UInt32>
@@ -185,7 +185,7 @@ public struct Entry: Equatable {
         let localFileHeader = self.localFileHeader
         var extraDataLength = Int(localFileHeader.fileNameLength)
         extraDataLength += Int(localFileHeader.extraFieldLength)
-        var size: Int64 = Int64(LocalFileHeader.size + extraDataLength)
+        var size = Int64(LocalFileHeader.size + extraDataLength)
         let isCompressed = localFileHeader.compressionMethod != CompressionMethod.none.rawValue
         size += isCompressed ? self.compressedSize : self.uncompressedSize
         if centralDirectoryStructure.isZIP64 {

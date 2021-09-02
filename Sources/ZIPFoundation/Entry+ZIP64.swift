@@ -129,14 +129,17 @@ extension Entry.ZIP64ExtendedInformation {
     }
 
     init?(zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, offset: Int64) {
+        // Only used when removing entry, if no zip64 extended information exists,
+        // then this information will not be newly added either
         guard let existingInfo = zip64ExtendedInformation else { return nil }
         relativeOffsetOfLocalHeader = offset >= maxOffsetOfLocalFileHeader ? offset : 0
         uncompressedSize = existingInfo.uncompressedSize
         compressedSize = existingInfo.compressedSize
         diskNumberStart = existingInfo.diskNumberStart
-        dataSize = [relativeOffsetOfLocalHeader, uncompressedSize, compressedSize, Int64(diskNumberStart)]
+        let tempDataSize = [relativeOffsetOfLocalHeader, uncompressedSize, compressedSize]
             .filter { $0 != 0 }
-            .reduce(UInt16(0), { $0 + UInt16(MemoryLayout.size(ofValue: $1)) })
+            .reduce(UInt16(0), { $0 + UInt16(MemoryLayout.size(ofValue: $1))})
+        dataSize = tempDataSize + (diskNumberStart > 0 ? UInt16(MemoryLayout.size(ofValue: diskNumberStart)) : 0)
         if dataSize == 0 { return nil }
     }
 

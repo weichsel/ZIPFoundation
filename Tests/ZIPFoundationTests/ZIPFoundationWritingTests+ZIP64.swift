@@ -26,7 +26,7 @@ extension ZIPFoundationTests {
             XCTFail("Failed to add zip64 format entry to archive with error : \(error)"); return
         }
         guard let entry = archive[entryName] else {
-            XCTFail("Failed to add zip64 format entry to archive"); return
+            XCTFail("Failed to retrive zip64 format entry from archive"); return
         }
         XCTAssert(entry.checksum == data.crc32(checksum: 0))
         XCTAssert(archive.checkIntegrity())
@@ -157,7 +157,7 @@ extension ZIPFoundationTests {
             XCTFail("Failed to add zip64 format entry to archive with error : \(error)"); return
         }
         guard let entry = archive[entryName] else {
-            XCTFail("Failed to add zip64 format entry to archive"); return
+            XCTFail("Failed to retrive zip64 format entry from archivee"); return
         }
         XCTAssert(entry.checksum == data.crc32(checksum: 0))
         XCTAssert(archive.checkIntegrity())
@@ -178,8 +178,9 @@ extension ZIPFoundationTests {
             XCTFail("Failed to add directory entry to zip64 archive.")
         }
         guard let entry = archive[entryName] else {
-            XCTFail("Failed to add zip64 format entry to archive"); return
+            XCTFail("Failed to retrive zip64 format entry from archive"); return
         }
+        XCTAssert(archive.checkIntegrity())
         XCTAssertNotNil(entry)
         XCTAssertEqual(entry.centralDirectoryStructure.relativeOffsetOfLocalHeader, UInt32.max)
         XCTAssertEqual(entry.centralDirectoryStructure.extraFieldData.scanValue(start: 4), currentLFHOffset)
@@ -202,6 +203,7 @@ extension ZIPFoundationTests {
         } catch {
             XCTFail("Failed to add zip64 format entry to archive with error : \(error)"); return
         }
+        XCTAssert(archive.checkIntegrity())
         XCTAssertEqual(archive.endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory, UInt16(factor - 1))
         XCTAssertNil(archive.zip64EndOfCentralDirectory?.record.totalNumberOfEntriesInCentralDirectory)
         // Case 2: The total number os entries is equal to maximum value
@@ -211,6 +213,7 @@ extension ZIPFoundationTests {
         } catch {
             XCTFail("Failed to add zip64 format entry to archive with error : \(error)"); return
         }
+        XCTAssert(archive.checkIntegrity())
         XCTAssertEqual(archive.endOfCentralDirectoryRecord.totalNumberOfEntriesInCentralDirectory, UInt16.max)
         XCTAssertEqual(archive.zip64EndOfCentralDirectory?.record.totalNumberOfEntriesInCentralDirectory ?? 0,
                        UInt64(factor))
@@ -232,6 +235,7 @@ extension ZIPFoundationTests {
         } catch {
             XCTFail("Failed to add zip64 format entry to archive with error : \(error)"); return
         }
+        XCTAssert(archive.checkIntegrity())
         XCTAssertLessThan(archive.endOfCentralDirectoryRecord.sizeOfCentralDirectory, UInt32.max)
         XCTAssertNil(archive.zip64EndOfCentralDirectory?.record.sizeOfCentralDirectory)
         // Case 2: The size of central directory is greater than maximum value
@@ -242,6 +246,7 @@ extension ZIPFoundationTests {
         } catch {
             XCTFail("Failed to add zip64 format entry to archive with error : \(error)"); return
         }
+        XCTAssert(archive.checkIntegrity())
         XCTAssertEqual(archive.endOfCentralDirectoryRecord.sizeOfCentralDirectory, UInt32.max)
         XCTAssertLessThan(0, archive.zip64EndOfCentralDirectory?.record.sizeOfCentralDirectory ?? 0)
     }
@@ -262,6 +267,7 @@ extension ZIPFoundationTests {
         } catch {
             XCTFail("Failed to remove entry from archive with error : \(error)")
         }
+        XCTAssert(archive.checkIntegrity())
         XCTAssertNotNil(archive.zip64EndOfCentralDirectory)
     }
 
@@ -281,6 +287,7 @@ extension ZIPFoundationTests {
         } catch {
             XCTFail("Failed to remove entry from archive with error : \(error)")
         }
+        XCTAssert(archive.checkIntegrity())
         XCTAssertNil(archive.zip64EndOfCentralDirectory)
     }
 
@@ -302,7 +309,8 @@ extension ZIPFoundationTests {
         } catch {
             XCTFail("Failed to remove entry from archive with error : \(error)")
         }
-        // Should update(aka. delete) zip64 extended information of data3.random as offset changed
+        XCTAssert(archive.checkIntegrity())
+        // Should delete zip64 extended information of data3.random as offset changed
         guard let entry3 = archive["data3.random"] else {
             XCTFail("Failed to retrieve zip64 format entry from archive"); return
         }

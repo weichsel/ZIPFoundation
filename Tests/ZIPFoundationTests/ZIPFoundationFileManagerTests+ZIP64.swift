@@ -89,7 +89,7 @@ extension ZIPFoundationTests {
         }
     }
 
-    func testUnzipZIP64ItemWithDataDescriptor() {
+    func testUnzipItemWithZIP64DataDescriptor() {
         // testUnzipCompressedZIP64Item.zip
         //   ├─ simple.data
         do {

@@ -54,7 +54,8 @@ let memoryURLScheme = "memory"
 ///     try archive?.addEntry("test.txt", relativeTo: baseURL, compressionMethod: .deflate)
 public final class Archive: Sequence {
     typealias LocalFileHeader = Entry.LocalFileHeader
-    typealias DataDescriptor = Entry.DataDescriptor
+    typealias DefaultDataDescriptor = Entry.DefaultDataDescriptor
+    typealias ZIP64DataDescriptor = Entry.ZIP64DataDescriptor
     typealias CentralDirectoryStructure = Entry.CentralDirectoryStructure
 
     /// An error that occurs during reading, creating or updating a ZIP file.
@@ -203,8 +204,8 @@ public final class Archive: Sequence {
             let offset = Int64(centralDirStruct.exactRelativeOffsetOfLocalHeader)
             guard let localFileHeader: LocalFileHeader = Data.readStruct(from: self.archiveFile,
                                                                          at: offset) else { return nil }
-            var dataDescriptor: Entry.DefaultDataDescriptor?
-            var zip64DataDescriptor: Entry.ZIP64DataDescriptor?
+            var dataDescriptor: DefaultDataDescriptor?
+            var zip64DataDescriptor: ZIP64DataDescriptor?
             if centralDirStruct.usesDataDescriptor {
                 let additionalSize = Int64(localFileHeader.fileNameLength) + Int64(localFileHeader.extraFieldLength)
                 let isCompressed = centralDirStruct.compressionMethod != CompressionMethod.none.rawValue

@@ -182,9 +182,9 @@ extension Archive {
         var centralDirectoryData = Data()
         var offset: Int64 = 0
         for currentEntry in self {
-            let centralDirectoryStructure = currentEntry.centralDirectoryStructure
+            let cds = currentEntry.centralDirectoryStructure
             if currentEntry != entry {
-                let entryStart = centralDirectoryStructure.exactRelativeOffsetOfLocalHeader
+                let entryStart = cds.exactRelativeOffsetOfLocalHeader
                 fseeko(self.archiveFile, off_t(entryStart), SEEK_SET)
                 let provider: Provider = { (_, chunkSize) -> Data in
                     return try Data.readChunk(of: chunkSize, from: self.archiveFile)
@@ -196,7 +196,7 @@ extension Archive {
                 }
                 _ = try Data.consumePart(of: currentEntry.localSize, chunkSize: bufferSize,
                                          provider: provider, consumer: consumer)
-                let updatedCentralDirectory = updateOffsetInCentralDirectory(cds: centralDirectoryStructure,
+                let updatedCentralDirectory = updateOffsetInCentralDirectory(centralDirectoryStructure: cds,
                                                                              updatedOffset: entryStart - offset)
                 centralDirectoryData.append(updatedCentralDirectory.data)
             } else { offset = currentEntry.localSize }
@@ -531,12 +531,12 @@ extension Archive {
         return zip64EOCD
     }
 
-    private func updateOffsetInCentralDirectory(cds: CentralDirectoryStructure,
+    private func updateOffsetInCentralDirectory(centralDirectoryStructure: CentralDirectoryStructure,
                                                 updatedOffset: Int64) -> CentralDirectoryStructure {
         let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(
-            zip64ExtendedInformation: cds.zip64ExtendedInformation, offset: updatedOffset)
+            zip64ExtendedInformation: centralDirectoryStructure.zip64ExtendedInformation, offset: updatedOffset)
         let offsetInCD = updatedOffset < maxOffsetOfLocalFileHeader ? UInt32(updatedOffset) : UInt32.max
-        return CentralDirectoryStructure(centralDirectoryStructure: cds,
+        return CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
                                          zip64ExtendedInformation: zip64ExtendedInformation,
                                          relativeOffset: offsetInCD)
     }
