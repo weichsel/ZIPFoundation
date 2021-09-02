@@ -247,7 +247,6 @@ extension ZIPFoundationTests {
     }
 
     func testRemoveEntryFromArchiveWithZIP64EOCD() {
-        // File structure:
         // testRemoveEntryFromArchiveWithZIP64EOCD.zip/
         //   ├─ data1.random (size: 64)
         //   ├─ data2.random (size: 64 * 64)
@@ -255,7 +254,7 @@ extension ZIPFoundationTests {
         defer { resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .update)
         guard let entry = archive["data1.random"] else {
-            XCTFail("Failed to add zip64 format entry to archive"); return
+            XCTFail("Failed to retrieve zip64 format entry from archive"); return
         }
         // Should keep zip64 ecod
         do {
@@ -267,7 +266,6 @@ extension ZIPFoundationTests {
     }
 
     func testRemoveZIP64EntryFromArchiveWithZIP64EOCD() {
-        // File structure:
         // testRemoveEntryFromArchiveWithZIP64EOCD.zip/
         //   ├─ data1.random (size: 64)
         //   ├─ data2.random (size: 64 * 64)
@@ -275,7 +273,7 @@ extension ZIPFoundationTests {
         defer { resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .update)
         guard let entry = archive["data2.random"] else {
-            XCTFail("Failed to add zip64 format entry to archive"); return
+            XCTFail("Failed to retrieve zip64 format entry from archive"); return
         }
         // Should remove zip64 eocd at the same time
         do {
@@ -284,6 +282,36 @@ extension ZIPFoundationTests {
             XCTFail("Failed to remove entry from archive with error : \(error)")
         }
         XCTAssertNil(archive.zip64EndOfCentralDirectory)
+    }
+
+    func testRemoveEntryWithZIP64ExtendedInformation() {
+        // testRemoveEntryFromArchiveWithZIP64EOCD.zip/
+        //   ├─ data1.random (size: 64 * 32)
+        //   ├─ data2.random (size: 64 * 32)
+        //   ├─ data3.random (size: 64 * 32) [headerID: 1, dataSize: 8, ..0..0, relativeOffsetOfLocalHeader: 4180, ..0]
+        //   ├─ data4.random (size: 64 * 32) [headerID: 1, dataSize: 8, ..0..0, relativeOffsetOfLocalHeader: 6270, ..0]
+        mockIntMaxValues()
+        defer { resetIntMaxValues() }
+        let archive = self.archive(for: #function, mode: .update)
+        guard let entry2 = archive["data2.random"] else {
+            XCTFail("Failed to retrieve zip64 format entry from archive"); return
+        }
+        let entry3OriginalOffset = archive["data3.random"]?.zip64ExtendedInformation?.relativeOffsetOfLocalHeader ?? 0
+        do {
+            try archive.remove(entry2)
+        } catch {
+            XCTFail("Failed to remove entry from archive with error : \(error)")
+        }
+        // Should update(aka. delete) zip64 extended information of data3.random as offset changed
+        guard let entry3 = archive["data3.random"] else {
+            XCTFail("Failed to retrieve zip64 format entry from archive"); return
+        }
+        XCTAssertNil(entry3.zip64ExtendedInformation)
+        // Should update zip64 extended information of data4.random as offset changed
+        guard let entry4 = archive["data4.random"] else {
+            XCTFail("Failed to retrieve zip64 format entry from archive"); return
+        }
+        XCTAssertEqual(entry4.zip64ExtendedInformation?.relativeOffsetOfLocalHeader, entry3OriginalOffset)
     }
 }
 

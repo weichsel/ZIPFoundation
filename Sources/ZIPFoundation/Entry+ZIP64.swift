@@ -134,7 +134,8 @@ extension Entry.ZIP64ExtendedInformation {
         uncompressedSize = existingInfo.uncompressedSize
         compressedSize = existingInfo.compressedSize
         diskNumberStart = existingInfo.diskNumberStart
-        dataSize = [relativeOffsetOfLocalHeader, uncompressedSize, compressedSize, diskNumberStart]
+        dataSize = [relativeOffsetOfLocalHeader, uncompressedSize, compressedSize, Int64(diskNumberStart)]
+            .filter { $0 != 0 }
             .reduce(UInt16(0), { $0 + UInt16(MemoryLayout.size(ofValue: $1)) })
         if dataSize == 0 { return nil }
     }

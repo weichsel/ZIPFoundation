@@ -120,7 +120,7 @@ extension Archive {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
         // Directories and symlinks cannot be compressed
         let compressionMethod = type == .file ? compressionMethod : .none
-        progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : Int64(uncompressedSize)
+        progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : uncompressedSize
         let (eocdRecord, zip64EOCD) = (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory)
         var startOfCD = self.offsetToStartOfCentralDirectory
         fseeko(self.archiveFile, off_t(startOfCD), SEEK_SET)
@@ -187,7 +187,7 @@ extension Archive {
                 let entryStart = centralDirectoryStructure.exactRelativeOffsetOfLocalHeader
                 fseeko(self.archiveFile, off_t(entryStart), SEEK_SET)
                 let provider: Provider = { (_, chunkSize) -> Data in
-                    return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
+                    return try Data.readChunk(of: chunkSize, from: self.archiveFile)
                 }
                 let consumer: Consumer = {
                     if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
