@@ -257,9 +257,12 @@ extension ZIPFoundationTests {
             ("testZipUncompressedZIP64Item", testZipUncompressedZIP64Item),
             ("testUnzipCompressedZIP64Item", testUnzipCompressedZIP64Item),
             ("testUnzipUncompressedZIP64Item", testUnzipUncompressedZIP64Item),
+            ("testUnzipZIP64ItemWithDataDescriptor", testUnzipZIP64ItemWithDataDescriptor),
             ("testEntryZIP64ExtraField", testEntryZIP64ExtraField),
             ("testEntryZIP64FieldOnlyHasUncompressedSize", testEntryZIP64FieldOnlyHasUncompressedSize),
             ("testEntryZIP64FieldIncludingDiskNumberStart", testEntryZIP64FieldIncludingDiskNumberStart),
+            ("testEntryValidZIP64DataDescriptor", testEntryValidZIP64DataDescriptor),
+            ("testEntryWithZIP64ExtraField", testEntryWithZIP64ExtraField),
             ("testEntryInvalidZIP64ExtraFieldErrorConditions", testEntryInvalidZIP64ExtraFieldErrorConditions),
             ("testEntryScanForZIP64Field", testEntryScanForZIP64Field),
             ("testEntryScanForZIP64FieldErrorConditions", testEntryScanForZIP64FieldErrorConditions),
@@ -278,7 +281,8 @@ extension ZIPFoundationTests {
             ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset),
             ("testWriteLargeChunk", testWriteLargeChunk),
             ("testExtractUncompressedZIP64Entries", testExtractUncompressedZIP64Entries),
-            ("testExtractCompressedZIP64Entries", testExtractCompressedZIP64Entries)
+            ("testExtractCompressedZIP64Entries", testExtractCompressedZIP64Entries),
+            ("testExtractEntryWithZIP64DataDescriptor", testExtractEntryWithZIP64DataDescriptor)
         ]
     }
 

@@ -47,12 +47,20 @@ extension ZIPFoundationTests {
         }
     }
 
+    func testExtractEntryWithZIP64DataDescriptor() {
+        do {
+            try extractEntryFromZIP64Archive(for: #function, reservedFileName: "simple.data")
+        } catch {
+            XCTFail("\(error)")
+        }
+    }
+
     // MARK: - helpers
 
-    private func extractEntryFromZIP64Archive(for testFunction: String) throws {
+    private func extractEntryFromZIP64Archive(for testFunction: String, reservedFileName: String? = nil) throws {
         let archive = self.archive(for: testFunction, mode: .read)
-        let fileName = testFunction.replacingOccurrences(of: "()", with: "")
-        guard let entry = archive["\(fileName).png"] else {
+        let fileName = reservedFileName ?? testFunction.replacingOccurrences(of: "()", with: ".png")
+        guard let entry = archive[fileName] else {
             throw ZIP64ReadingTestsError.failedToReadEntry(name: fileName)
         }
         do {

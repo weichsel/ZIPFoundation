@@ -136,12 +136,10 @@ public struct Entry: Equatable {
     ///
     /// - Note: Always returns `0` for entries of type `EntryType.directory`.
     public var checksum: CRC32 {
-        var checksum = self.centralDirectoryStructure.crc32
         if self.centralDirectoryStructure.usesDataDescriptor {
-            guard let dataDescriptor = self.dataDescriptor else { return 0 }
-            checksum = dataDescriptor.crc32
+            return self.zip64DataDescriptor?.crc32 ?? self.dataDescriptor?.crc32 ?? 0
         }
-        return checksum
+        return self.centralDirectoryStructure.crc32
     }
     /// The `EntryType` of the receiver.
     public var type: EntryType {
@@ -172,17 +170,15 @@ public struct Entry: Equatable {
     public var compressedSize: Int64 {
         if centralDirectoryStructure.isZIP64 {
             return zip64DataDescriptor?.compressedSize ?? centralDirectoryStructure.exactCompressedSize
-        } else {
-            return Int64(dataDescriptor?.compressedSize ?? centralDirectoryStructure.compressedSize)
         }
+        return Int64(dataDescriptor?.compressedSize ?? centralDirectoryStructure.compressedSize)
     }
     /// The size of the receiver's uncompressed data.
     public var uncompressedSize: Int64 {
         if centralDirectoryStructure.isZIP64 {
             return zip64DataDescriptor?.uncompressedSize ?? centralDirectoryStructure.exactUncompressedSize
-        } else {
-            return Int64(dataDescriptor?.uncompressedSize ?? centralDirectoryStructure.uncompressedSize)
         }
+        return Int64(dataDescriptor?.uncompressedSize ?? centralDirectoryStructure.uncompressedSize)
     }
     /// The combined size of the local header, the data and the optional data descriptor.
     var localSize: Int64 {
@@ -404,11 +400,9 @@ extension Entry.CentralDirectoryStructure {
             versionNeededToExtract = max(centralDirectoryStructure.versionNeededToExtract, zip64Version)
         } else {
             extraFieldData = Data()
-            if centralDirectoryStructure.versionNeededToExtract < zip64Version {
-                versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract
-            } else {
-                versionNeededToExtract = UInt16(20)
-            }
+            versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract < zip64Version
+                ? centralDirectoryStructure.versionNeededToExtract
+                : UInt16(20)
         }
         extraFieldLength = UInt16(extraFieldData.count)
         relativeOffsetOfLocalHeader = relativeOffset
@@ -438,30 +432,20 @@ extension Entry.CentralDirectoryStructure {
     public var exactCompressedSize: Int64 {
         if isZIP64, let compressedSize = zip64ExtendedInformation?.compressedSize, compressedSize > 0 {
             return compressedSize
-        } else {
-            return Int64(compressedSize)
         }
+        return Int64(compressedSize)
     }
     public var exactUncompressedSize: Int64 {
         if isZIP64, let uncompressedSize = zip64ExtendedInformation?.uncompressedSize, uncompressedSize > 0 {
             return uncompressedSize
-        } else {
-            return Int64(uncompressedSize)
         }
+        return Int64(uncompressedSize)
     }
     public var exactRelativeOffsetOfLocalHeader: Int64 {
         if isZIP64, let offset = zip64ExtendedInformation?.relativeOffsetOfLocalHeader, offset > 0 {
             return offset
-        } else {
-            return Int64(relativeOffsetOfLocalHeader)
         }
-    }
-    public var exactDiskNumberStart: UInt32 {
-        if isZIP64, let diskNumberStart = zip64ExtendedInformation?.diskNumberStart, diskNumberStart > 0 {
-            return diskNumberStart
-        } else {
-            return UInt32(diskNumberStart)
-        }
+        return Int64(relativeOffsetOfLocalHeader)
     }
 }
 

@@ -24,7 +24,6 @@ extension ZIPFoundationTests {
         let zip64ExtraField2 = Entry.ZIP64ExtendedInformation(data: Data(extraFieldBytesIncludingOtherFields),
                                                               fields: [.relativeOffsetOfLocalHeader, .diskNumberStart])
         XCTAssertNotNil(zip64ExtraField2)
-        // TODO: chen test extraFields, validFields.
     }
 
     func testEntryZIP64FieldOnlyHasUncompressedSize() {
@@ -48,6 +47,61 @@ extension ZIPFoundationTests {
                                                         relativeOffsetOfLocalHeader: 0,
                                                         diskNumberStart: 10)
         XCTAssertEqual(zip64Field.data, Data(expectedZIP64ExtraFieldBytes))
+    }
+
+    func testEntryValidZIP64DataDescriptor() {
+        let zip64DDBytes: [UInt8] = [0x50, 0x4b, 0x07, 0x08, 0x00, 0x00, 0x00, 0x00,
+                                     0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                     0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        let zip64DataDescriptor = Entry.ZIP64DataDescriptor(data: Data(zip64DDBytes),
+                                                       additionalDataProvider: {_ -> Data in
+                                                        return Data() })
+        XCTAssertEqual(zip64DataDescriptor?.uncompressedSize, 10)
+        XCTAssertEqual(zip64DataDescriptor?.compressedSize, 10)
+    }
+
+    func testEntryWithZIP64ExtraField() {
+        // Central Directory
+        let extraFieldBytesIncludingSizeFields: [UInt8] = [0x01, 0x00, 0x10, 0x00, 0x0a, 0x00, 0x00, 0x00,
+                                                           0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00,
+                                                           0x00, 0x00, 0x00, 0x00]
+        let cdsBytes: [UInt8] = [0x50, 0x4b, 0x01, 0x02, 0x1e, 0x15, 0x2d, 0x00,
+                                 0x08, 0x08, 0x08, 0x00, 0xab, 0x85, 0x77, 0x47,
+                                 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
+                                 0xff, 0xff, 0xff, 0xff, 0x01, 0x00, 0x14, 0x00,
+                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                 0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
+        guard let cds = Entry.CentralDirectoryStructure(data: Data(cdsBytes),
+                                                        additionalDataProvider: { count -> Data in
+                                                            guard let name = "/".data(using: .utf8) else {
+                                                                throw AdditionalDataError.encodingError
+                                                            }
+                                                            let extra = name + Data(extraFieldBytesIncludingSizeFields)
+                                                            XCTAssert(count == extra.count)
+                                                            return extra
+                                                        }) else {
+            XCTFail("Failed to read central directory structure."); return
+        }
+        XCTAssertNotNil(cds.extraFields)
+        XCTAssertEqual(cds.exactCompressedSize, 10)
+        XCTAssertEqual(cds.exactUncompressedSize, 10)
+        // Entry
+        let lfhBytes: [UInt8] = [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x08, 0x08,
+                                 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x0a, 0x00,
+                                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        guard let lfh = Entry.LocalFileHeader(data: Data(lfhBytes),
+                                              additionalDataProvider: { _ -> Data in
+                                                return Data()
+                                              }) else {
+            XCTFail("Failed to read local file header."); return
+        }
+        guard let entry = Entry(centralDirectoryStructure: cds, localFileHeader: lfh) else {
+            XCTFail("Failed to create test entry."); return
+        }
+        XCTAssertNotNil(entry.zip64ExtendedInformation)
+        XCTAssertEqual(entry.compressedSize, 10)
+        XCTAssertEqual(entry.uncompressedSize, 10)
     }
 
     func testEntryInvalidZIP64ExtraFieldErrorConditions() {

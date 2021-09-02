@@ -200,13 +200,5 @@ extension ZIPFoundationTests {
                                                                             return Data() })
         XCTAssertEqual(dataDescriptorWithoutSignature?.uncompressedSize, 10)
         XCTAssertEqual(dataDescriptorWithoutSignature?.compressedSize, 10)
-        let zip64DDBytes: [UInt8] = [0x50, 0x4b, 0x07, 0x08, 0x00, 0x00, 0x00, 0x00,
-                                     0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                     0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-        let zip64DataDescriptor = Entry.ZIP64DataDescriptor(data: Data(zip64DDBytes),
-                                                       additionalDataProvider: {_ -> Data in
-                                                        return Data() })
-        XCTAssertEqual(zip64DataDescriptor?.uncompressedSize, 10)
-        XCTAssertEqual(zip64DataDescriptor?.compressedSize, 10)
     }
 }

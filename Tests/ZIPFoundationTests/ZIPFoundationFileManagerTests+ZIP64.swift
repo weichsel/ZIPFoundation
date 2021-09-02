@@ -46,7 +46,20 @@ extension ZIPFoundationTests {
     }
 
     func testUnzipCompressedZIP64Item() {
-        // compressed(deflate) by zip 3.0 via command line: zip -r -fz
+        // stored by zip 3.0 via command line: zip -0 -fz
+        //
+        // testUnzipCompressedZIP64Item.zip/
+        //   ├─ directory
+        //   ├─ testLink
+        //   ├─ nested
+        //     ├─ nestedLink
+        //     ├─ faust copy.txt
+        //     ├─ deep
+        //       ├─ another.random
+        //   ├─ faust.txt
+        //   ├─ empty
+        //   ├─ data.random
+        //   ├─ random.data
         do {
             try unarchiveZIP64Item(for: #function)
         } catch {
@@ -56,6 +69,29 @@ extension ZIPFoundationTests {
 
     func testUnzipUncompressedZIP64Item() {
         // stored by zip 3.0 via command line: zip -0 -fz
+        //
+        // testUnzipCompressedZIP64Item.zip/
+        //   ├─ directory
+        //   ├─ testLink
+        //   ├─ nested
+        //     ├─ nestedLink
+        //     ├─ faust copy.txt
+        //     ├─ deep
+        //       ├─ another.random
+        //   ├─ faust.txt
+        //   ├─ empty
+        //   ├─ data.random
+        //   ├─ random.data
+        do {
+            try unarchiveZIP64Item(for: #function)
+        } catch {
+            XCTFail("\(error)")
+        }
+    }
+
+    func testUnzipZIP64ItemWithDataDescriptor() {
+        // testUnzipCompressedZIP64Item.zip
+        //   ├─ simple.data
         do {
             try unarchiveZIP64Item(for: #function)
         } catch {
@@ -84,19 +120,6 @@ extension ZIPFoundationTests {
     }
 
     private func unarchiveZIP64Item(for testFunction: String) throws {
-        // File Structure:
-        // testUnzipCompressedZIP64Item.zip/
-        //   ├─ directory
-        //   ├─ testLink
-        //   ├─ nested
-        //     ├─ nestedLink
-        //     ├─ faust copy.txt
-        //     ├─ deep
-        //       ├─ another.random
-        //   ├─ faust.txt
-        //   ├─ empty
-        //   ├─ data.random
-        //   ├─ random.data
         let fileManager = FileManager()
         let archive = self.archive(for: testFunction, mode: .read)
         let destinationURL = self.createDirectory(for: testFunction)
