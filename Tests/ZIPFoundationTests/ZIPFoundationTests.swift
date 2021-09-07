@@ -312,8 +312,8 @@ extension Data {
     static func makeDeterministicRandomData(size: Int, seed: UInt32) -> Data {
         var bytes = [UInt32](repeating: 0, count: size)
         var value = seed
-        for i in 0..<size {
-            bytes[i] = value
+        for index in 0..<size {
+            bytes[index] = value
             value ^= value << 13
             value ^= value >> 17
             value ^= value << 5
