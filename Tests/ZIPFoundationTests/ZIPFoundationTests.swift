@@ -308,6 +308,18 @@ extension Data {
         #endif
         return Data(bytes: bytes, count: size)
     }
+
+    static func makeDeterministicRandomData(size: Int, seed: UInt32) -> Data {
+        var bytes = [UInt32](repeating: 0, count: size)
+        var value = seed
+        for i in 0..<size {
+            bytes[i] = value
+            value ^= value << 13
+            value ^= value >> 17
+            value ^= value << 5
+        }
+        return Data(bytes: bytes, count: size)
+    }
 }
 
 #if os(macOS)

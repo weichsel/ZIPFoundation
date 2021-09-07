@@ -103,7 +103,7 @@ extension Data {
     /// - Parameter checksum: The starting seed.
     /// - Returns: The checksum calculated from the bytes of the receiver and the starting seed.
     public func crc32(checksum: CRC32) -> CRC32 {
-        #if swift(>=5.0) && canImport(zlib)
+        #if canImport(zlib)
         withUnsafeBytes { bufferPointer in
             CRC32(zlib.crc32(UInt(checksum), bufferPointer.bindMemory(to: UInt8.self).baseAddress, UInt32(count)))
         }
