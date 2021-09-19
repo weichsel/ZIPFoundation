@@ -10,7 +10,7 @@
 
 import Foundation
 
-/// The minimum version of zip64 format
+/// The minimum version of ZIP64 format
 let zip64Version = UInt16(45)
 let zip64EOCDRecordStructSignature = 0x06064b50
 let zip64EOCDLocatorStructSignature = 0x07064b50
