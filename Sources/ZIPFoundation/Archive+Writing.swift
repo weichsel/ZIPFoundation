@@ -224,7 +224,7 @@ extension Archive {
         if self.isMemoryArchive {
             #if swift(>=5.0)
             guard let data = archive.data,
-                  let config = Archive.configureMemoryBacking(for: data, mode: .update) else {
+                  let config = Archive.makeBackingConfiguration(for: data, mode: .update) else {
                 throw ArchiveError.unwritableArchive
             }
 
