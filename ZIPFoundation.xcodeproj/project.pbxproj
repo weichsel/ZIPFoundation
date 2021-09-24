@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		590A7DA626B0F8F800CBEFB4 /* Archive+ZIP64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590A7DA526B0F8F800CBEFB4 /* Archive+ZIP64.swift */; };
 		590A7DA826B0F91F00CBEFB4 /* Entry+ZIP64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590A7DA726B0F91E00CBEFB4 /* Entry+ZIP64.swift */; };
-		590A7DAA26B0F93A00CBEFB4 /* Archive+EntryOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590A7DA926B0F93A00CBEFB4 /* Archive+EntryOperation.swift */; };
 		591C970D26B0FBAE00F65F97 /* ZIPFoundationEntryTests+ZIP64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590A7DAD26B0F95E00CBEFB4 /* ZIPFoundationEntryTests+ZIP64.swift */; };
 		591C971326B0FF9F00F65F97 /* ZIPFoundationWritingTests+ZIP64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 591C971226B0FF9F00F65F97 /* ZIPFoundationWritingTests+ZIP64.swift */; };
 		591C971426B0FFAA00F65F97 /* ZIPFoundationArchiveTests+ZIP64.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590A7DAF26B0F96800CBEFB4 /* ZIPFoundationArchiveTests+ZIP64.swift */; };
@@ -55,7 +54,6 @@
 /* Begin PBXFileReference section */
 		590A7DA526B0F8F800CBEFB4 /* Archive+ZIP64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Archive+ZIP64.swift"; sourceTree = "<group>"; };
 		590A7DA726B0F91E00CBEFB4 /* Entry+ZIP64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Entry+ZIP64.swift"; sourceTree = "<group>"; };
-		590A7DA926B0F93A00CBEFB4 /* Archive+EntryOperation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Archive+EntryOperation.swift"; sourceTree = "<group>"; };
 		590A7DAD26B0F95E00CBEFB4 /* ZIPFoundationEntryTests+ZIP64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "ZIPFoundationEntryTests+ZIP64.swift"; sourceTree = "<group>"; };
 		590A7DAF26B0F96800CBEFB4 /* ZIPFoundationArchiveTests+ZIP64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "ZIPFoundationArchiveTests+ZIP64.swift"; sourceTree = "<group>"; };
 		591C971226B0FF9F00F65F97 /* ZIPFoundationWritingTests+ZIP64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "ZIPFoundationWritingTests+ZIP64.swift"; sourceTree = "<group>"; };
@@ -173,7 +171,6 @@
 			children = (
 				OBJ_11 /* Archive.swift */,
 				BACE20B726F7CE6C003BA312 /* Archive+BackingConfiguration.swift */,
-				590A7DA926B0F93A00CBEFB4 /* Archive+EntryOperation.swift */,
 				BACE20B926F7D18A003BA312 /* Archive+Helpers.swift */,
 				95B5A3D32366731B00D4D8FD /* Archive+MemoryFile.swift */,
 				BA643D7B2648131C00018273 /* Archive+Progress.swift */,
@@ -313,7 +310,6 @@
 				OBJ_50 /* Archive.swift in Sources */,
 				BACE20B826F7CE6C003BA312 /* Archive+BackingConfiguration.swift in Sources */,
 				OBJ_51 /* Data+Compression.swift in Sources */,
-				590A7DAA26B0F93A00CBEFB4 /* Archive+EntryOperation.swift in Sources */,
 				95B5A3D42366731B00D4D8FD /* Archive+MemoryFile.swift in Sources */,
 				OBJ_52 /* Data+Serialization.swift in Sources */,
 				590A7DA826B0F91F00CBEFB4 /* Entry+ZIP64.swift in Sources */,
