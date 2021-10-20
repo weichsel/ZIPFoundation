@@ -217,7 +217,6 @@ extension Archive {
                   let config = Archive.configureMemoryBacking(for: data, mode: .update) else {
                 throw ArchiveError.unwritableArchive
             }
-
             self.archiveFile = config.file
             self.memoryFile = config.memoryFile
             self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
@@ -236,7 +235,8 @@ extension Archive {
             _ = try fileManager.moveItem(at: archive.url, to: self.url)
             #endif
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: self.url.path)
-            self.archiveFile = fopen(fileSystemRepresentation, "rb+")
+            guard let file = fopen(fileSystemRepresentation, "rb+") else { throw ArchiveError.unreadableArchive }
+            self.archiveFile = file
         }
     }
 
