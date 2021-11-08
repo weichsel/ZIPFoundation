@@ -105,7 +105,8 @@ extension Data {
     public func crc32(checksum: CRC32) -> CRC32 {
         #if canImport(zlib)
         return withUnsafeBytes { bufferPointer in
-            return CRC32(zlib.crc32(UInt(checksum), bufferPointer.bindMemory(to: UInt8.self).baseAddress, UInt32(count)))
+            let length = UInt32(count)
+            return CRC32(zlib.crc32(UInt(checksum), bufferPointer.bindMemory(to: UInt8.self).baseAddress, length))
         }
         #else
         // The typecast is necessary on 32-bit platforms because of
