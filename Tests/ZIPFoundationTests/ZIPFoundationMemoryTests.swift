@@ -243,10 +243,3 @@ extension ZIPFoundationTests {
 }
 
 #endif
-
-extension ZIPFoundationTests {
-    func testCRC32() {
-        let data = Data.makeDeterministicRandomData(size: 4096, seed: 1694141810)
-        XCTAssertEqual(data.crc32(checksum: 0), 1763005010)
-    }
-}

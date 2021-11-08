@@ -317,7 +317,6 @@ private let crcTable: [CRC32] = [
 
 private extension Data {
 
-
     /// Lookup table-based CRC32 implenetation that is used
     /// if `zlib` isn't available.
     /// - Parameter checksum: Running checksum or `0` for the initial run.
