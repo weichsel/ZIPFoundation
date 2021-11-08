@@ -315,7 +315,7 @@ private let crcTable: [CRC32] = [
     0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b,
     0x2d02ef8d]
 
-private extension Data {
+extension Data {
 
     /// Lookup table-based CRC32 implenetation that is used
     /// if `zlib` isn't available.
