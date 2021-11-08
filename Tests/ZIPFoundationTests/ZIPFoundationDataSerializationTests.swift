@@ -75,7 +75,8 @@ extension ZIPFoundationTests {
     }
 
     func testCRC32Calculation() {
-        let data = Data.makeDeterministicRandomData(size: 4096, seed: 1694141810)
-        XCTAssertEqual(data.crc32(checksum: 0), 1763005010)
+        let dataURL = self.resourceURL(for: #function, pathExtension: "data")
+        let data = (try? Data.init(contentsOf: dataURL)) ?? Data()
+        XCTAssertEqual(data.crc32(checksum: 0), 1400077496)
     }
 }
