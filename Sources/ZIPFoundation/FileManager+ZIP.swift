@@ -29,10 +29,15 @@ extension FileManager {
     ///                        By default, `zipItem` will create uncompressed archives.
     ///   - progress: A progress object that can be used to track or cancel the zip operation.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
-    public func zipItem(at sourceURL: URL, to destinationURL: URL,
-                        shouldKeepParent: Bool = true, compressionMethod: CompressionMethod = .none,
-                        progress: Progress? = nil) throws {
+    public func zipItem(
+		at sourceURL: URL,
+		to destinationURL: URL,
+		shouldKeepParent: Bool = true,
+		compressionMethod: CompressionMethod = .none,
+		progress: Progress? = nil
+	) throws {
         let fileManager = FileManager()
+        //  FIXME: Somehow testZipItemErrorConditions() fails, if the method doesn't check for source's existance here.
         guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
@@ -41,6 +46,42 @@ extension FileManager {
         }
         guard let archive = Archive(url: destinationURL, accessMode: .create) else {
             throw Archive.ArchiveError.unwritableArchive
+        }
+        try zipItem(
+			at: sourceURL,
+			to: archive,
+			shouldKeepParent: shouldKeepParent,
+			compressionMethod: compressionMethod,
+			progress: progress
+		)
+    }
+
+    /// Zips the file or direcory contents at the specified source URL to the given archive.
+    ///
+    /// If the item at the source URL is a directory, the directory itself will be
+    /// represented within the ZIP `Archive`. Calling this method with a directory URL
+    /// `file:///path/directory/` will create an archive with a `directory/` entry at the root level.
+    /// You can override this behavior by passing `false` for `shouldKeepParent`. In that case, the contents
+    /// of the source directory will be placed at the root of the archive.
+    /// - Parameters:
+    ///   - sourceURL: The file URL pointing to an existing file or directory.
+    ///   - archive: The file URL that identifies the destination of the zip operation.
+    ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element
+    ///                       within the archive. Default is `true`.
+    ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied.
+    ///                        By default, `zipItem` will create uncompressed archives.
+    ///   - progress: A progress object that can be used to track or cancel the zip operation.
+    /// - Throws: Throws an error if the source item does not exist.
+    public func zipItem(
+		at sourceURL: URL,
+		to archive: Archive,
+		shouldKeepParent: Bool = true,
+		compressionMethod: CompressionMethod = .none,
+		progress: Progress? = nil
+	) throws {
+        let fileManager = FileManager()
+        guard fileManager.itemExists(at: sourceURL) else {
+            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
         let isDirectory = try FileManager.typeForItem(at: sourceURL) == .directory
         if isDirectory {
@@ -54,9 +95,9 @@ extension FileManager {
                 })
                 progress.totalUnitCount = totalUnitCount
             }
-
-            // If the caller wants to keep the parent directory, we use the lastPathComponent of the source URL
-            // as common base for all entries (similar to macOS' Archive Utility.app)
+            // If the caller wants to keep the parent directory,
+			// we use the lastPathComponent of the source URL as common base for all entries
+			// (similar to macOS' Archive Utility.app)
             let directoryPrefix = sourceURL.lastPathComponent
             for entryPath in subPaths {
                 let finalEntryPath = shouldKeepParent ? directoryPrefix + "/" + entryPath : entryPath
@@ -80,6 +121,41 @@ extension FileManager {
         }
     }
 
+    #if swift(>=5)
+    /// Zips the file or direcory contents at the specified source URL and returns an archive containing them.
+    ///
+    /// If the item at the source URL is a directory, the directory itself will be represented within the ZIP `Archive`.
+	/// Calling this method with a directory URL `file:///path/directory/` will create an archive with a `directory/` entry at the root level.
+    /// You can override this behavior by passing `false` for `shouldKeepParent`.
+	/// In that case, the contents of the source directory will be placed at the root of the archive.
+    /// - Parameters:
+    ///   - sourceURL: The file URL pointing to an existing file or directory.
+    ///   - shouldKeepParent: Indicates that the directory name of a source item should be used as root element within the archive.
+	///                       Default is `true`.
+    ///   - compressionMethod: Indicates the `CompressionMethod` that should be applied.
+    ///                        By default, `zipItem` will create uncompressed archives.
+    ///   - progress: A progress object that can be used to track or cancel the zip operation.
+    /// - Returns: If successful at creating an in-memory Archive, an archive containing the zipped file or direcory contents at the specified source URL;
+	///            if not, `nil`.
+    /// - Throws: Throws an error if the source item does not exist.
+    public func itemZipped(
+		from sourceURL: URL,
+		shouldKeepParent: Bool = true,
+		compressionMethod: CompressionMethod = .none,
+		progress: Progress? = nil
+	) throws -> Archive? {
+		guard let archive = Archive(accessMode: .create) else { return nil }
+		try zipItem(
+			at: sourceURL,
+			to: archive,
+			shouldKeepParent: shouldKeepParent,
+			compressionMethod: compressionMethod,
+			progress: progress
+		)
+        return archive
+    }
+    #endif
+
     /// Unzips the contents at the specified source URL to the destination URL.
     ///
     /// - Parameters:
@@ -89,14 +165,43 @@ extension FileManager {
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
     ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
-    public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
-                          progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
+    public func unzipItem(
+		at sourceURL: URL,
+		to destinationURL: URL,
+		skipCRC32: Bool = false,
+		progress: Progress? = nil,
+		preferredEncoding: String.Encoding? = nil
+	) throws {
         let fileManager = FileManager()
         guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
         guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: preferredEncoding) else {
             throw Archive.ArchiveError.unreadableArchive
+        }
+        try unzip(
+			archive,
+			to: destinationURL,
+			skipCRC32: skipCRC32,
+			progress: progress,
+			preferredEncoding: preferredEncoding
+		)
+    }
+
+    /// Unzips the contents of the specified archive to the destination URL.
+    ///
+    /// - Parameters:
+    ///   - archive: The archive to be unzipped.
+    ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
+    ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
+    ///   - progress: A progress object that can be used to track or cancel the unzip operation.
+    ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
+    /// - Throws: Throws an error if destination URL is not writable.
+    public func unzip(_ archive: Archive, to destinationURL: URL, skipCRC32: Bool = false,
+                      progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
+        let fileManager = FileManager()
+        guard fileManager.isWritableFile(atPath: destinationURL.path) else {
+            throw CocoaError(.fileWriteNoPermission, userInfo: [NSFilePathErrorKey: destinationURL.path])
         }
         // Defer extraction of symlinks until all files & directories have been created.
         // This is necessary because we can't create links to files that haven't been created yet.
@@ -113,7 +218,6 @@ extension FileManager {
             totalUnitCount = sortedEntries.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
             progress.totalUnitCount = totalUnitCount
         }
-
         for entry in sortedEntries {
             let path = preferredEncoding == nil ? entry.path : entry.path(using: preferredEncoding!)
             let destinationEntryURL = destinationURL.appendingPathComponent(path)
@@ -136,10 +240,10 @@ extension FileManager {
     func itemExists(at url: URL) -> Bool {
         // Use `URL.checkResourceIsReachable()` instead of `FileManager.fileExists()` here
         // because we don't want implicit symlink resolution.
-        // As per documentation, `FileManager.fileExists()` traverses symlinks and therefore a broken symlink
-        // would throw a `.fileReadNoSuchFile` false positive error.
-        // For ZIP files it may be intended to archive "broken" symlinks because they might be
-        // resolvable again when extracting the archive to a different destination.
+        // As per documentation, `FileManager.fileExists()` traverses symlinks
+		// and therefore a broken symlink would throw a `.fileReadNoSuchFile` false positive error.
+        // For ZIP files it may be intended to archive "broken" symlinks
+		// because they might be resolvable again when extracting the archive to a different destination.
         return (try? url.checkResourceIsReachable()) == true
     }
 

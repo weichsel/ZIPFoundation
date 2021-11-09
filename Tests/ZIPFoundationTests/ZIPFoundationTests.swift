@@ -53,6 +53,8 @@ class ZIPFoundationTests: XCTestCase {
         } catch {
             XCTFail("Unexpected error while trying to set up test resources.")
         }
+		
+		//	TODO: Setup empty in-memory archive for testing here.
     }
 
     override class func tearDown() {
@@ -231,10 +233,14 @@ extension ZIPFoundationTests {
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
             ("testTemporaryReplacementDirectoryURL", testTemporaryReplacementDirectoryURL),
             ("testTraversalAttack", testTraversalAttack),
+			("testUnzipArchive", testUnzipArchive),
+			("testUnzipArchiveWithPreferredEncoding", testUnzipArchiveWithPreferredEncoding),
+			("testUnzipArchiveErrorConditions", testUnzipArchiveErrorConditions),
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testZipItem", testZipItem),
+			("testZipItemToArchive", testZipItemToArchive),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
         ] + darwinOnlyTests + swift5OnlyTests
     }
@@ -246,6 +252,7 @@ extension ZIPFoundationTests {
             ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
             ("testZipItemProgress", testZipItemProgress),
             ("testUnzipItemProgress", testUnzipItemProgress),
+			("testUnzipArchiveProgress", testUnzipArchiveProgress),
             ("testRemoveEntryProgress", testRemoveEntryProgress),
             ("testReplaceCurrentArchiveWithArchiveCrossLink", testReplaceCurrentArchiveWithArchiveCrossLink),
             ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
@@ -256,7 +263,8 @@ extension ZIPFoundationTests {
             ("testReadChunkErrorConditions", testReadChunkErrorConditions),
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
-            ("testZipItemErrorConditions", testZipItemErrorConditions)
+            ("testZipItemErrorConditions", testZipItemErrorConditions),
+			("testZipItemToArchiveErrorConditions", testZipItemToArchiveErrorConditions)
         ]
         #else
         return []
@@ -276,7 +284,9 @@ extension ZIPFoundationTests {
             ("testWriteOnlyFile", testWriteOnlyFile),
             ("testReadOnlyFile", testReadOnlyFile),
             ("testReadOnlySlicedFile", testReadOnlySlicedFile),
-            ("testReadWriteFile", testReadWriteFile)
+            ("testReadWriteFile", testReadWriteFile),
+			("testZipItemAndReturnArchive", testZipItemAndReturnArchive),
+			("testZipItemAndReturnArchiveErrorConditions", testZipItemAndReturnArchiveErrorConditions)
         ]
         #else
         return []
