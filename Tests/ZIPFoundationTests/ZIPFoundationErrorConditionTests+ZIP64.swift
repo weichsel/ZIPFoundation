@@ -56,7 +56,7 @@ extension ZIPFoundationTests {
     -> Archive.ZIP64EndOfCentralDirectory {
         let record = Archive.ZIP64EndOfCentralDirectoryRecord(sizeOfZIP64EndOfCentralDirectoryRecord: UInt64(44),
                                                               versionMadeBy: UInt16(789),
-                                                              versionNeededToExtract: zip64Version,
+                                                              versionNeededToExtract: Archive.Version.v45.rawValue,
                                                               numberOfDisk: 0, numberOfDiskStart: 0,
                                                               totalNumberOfEntriesOnDisk: 0,
                                                               totalNumberOfEntriesInCentralDirectory: numberOfEntries,

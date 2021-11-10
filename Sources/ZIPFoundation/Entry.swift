@@ -260,12 +260,12 @@ extension Entry.CentralDirectoryStructure {
          zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, relativeOffset: UInt32) {
         if let existingInfo = zip64ExtendedInformation {
             extraFieldData = existingInfo.data
-            versionNeededToExtract = max(centralDirectoryStructure.versionNeededToExtract, zip64Version)
+            versionNeededToExtract = max(centralDirectoryStructure.versionNeededToExtract, Archive.Version.v45.rawValue)
         } else {
             extraFieldData = Data()
-            versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract < zip64Version
+            versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract < Archive.Version.v45.rawValue
                 ? centralDirectoryStructure.versionNeededToExtract
-                : UInt16(20)
+                : Archive.Version.v20.rawValue
         }
         extraFieldLength = UInt16(extraFieldData.count)
         relativeOffsetOfLocalHeader = relativeOffset

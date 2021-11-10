@@ -90,6 +90,14 @@ public final class Archive: Sequence {
         case update
     }
 
+    /// The version of an `Archive`
+    enum Version: UInt16 {
+        /// The minimum version for deflate compressed archives
+        case v20 = 20
+        /// The minimum version for archives making use of ZIP64 extensions
+        case v45 = 45
+    }
+
     struct EndOfCentralDirectoryRecord: DataSerializable {
         let endOfCentralDirectorySignature = UInt32(endOfCentralDirectoryStructSignature)
         let numberOfDisk: UInt16

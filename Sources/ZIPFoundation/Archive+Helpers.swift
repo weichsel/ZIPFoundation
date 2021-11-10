@@ -81,13 +81,13 @@ extension Archive {
         var compressedSizeOfLFH = UInt32(0)
         var extraFieldLength = UInt16(0)
         var zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?
-        var versionNeededToExtract = UInt16(20)
+        var versionNeededToExtract = Version.v20.rawValue
         // ZIP64 Extended Information in the Local header MUST include BOTH original and compressed file size fields.
         if size.uncompressed >= maxUncompressedSize || size.compressed >= maxCompressedSize {
             uncompressedSizeOfLFH = .max
             compressedSizeOfLFH = .max
             extraFieldLength = UInt16(20) // 2 + 2 + 8 + 8
-            versionNeededToExtract = zip64Version
+            versionNeededToExtract = Version.v45.rawValue
             zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(dataSize: extraFieldLength - 4,
                                                                       uncompressedSize: size.uncompressed,
                                                                       compressedSize: size.compressed,
@@ -250,7 +250,7 @@ extension Archive {
             // Shouldn't include the leading 12 bytes: (size - 12 = 44)
             let record = ZIP64EndOfCentralDirectoryRecord(sizeOfZIP64EndOfCentralDirectoryRecord: UInt64(44),
                                                           versionMadeBy: UInt16(789),
-                                                          versionNeededToExtract: zip64Version,
+                                                          versionNeededToExtract: Version.v45.rawValue,
                                                           numberOfDisk: 0, numberOfDiskStart: 0,
                                                           totalNumberOfEntriesOnDisk: 0,
                                                           totalNumberOfEntriesInCentralDirectory: 0,
