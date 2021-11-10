@@ -199,6 +199,7 @@ extension ZIPFoundationTests {
             ("testCorruptFileErrorConditions", testCorruptFileErrorConditions),
             ("testCorruptSymbolicLinkErrorConditions", testCorruptSymbolicLinkErrorConditions),
             ("testCreateArchiveAddCompressedEntry", testCreateArchiveAddCompressedEntry),
+            ("testCRC32Calculation", testCRC32Calculation),
             ("testCreateArchiveAddDirectory", testCreateArchiveAddDirectory),
             ("testCreateArchiveAddEntryErrorConditions", testCreateArchiveAddEntryErrorConditions),
             ("testCreateArchiveAddZeroSizeUncompressedEntry", testCreateArchiveAddZeroSizeUncompressedEntry),
