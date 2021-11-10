@@ -129,7 +129,7 @@ extension Entry.ZIP64ExtendedInformation {
     }
 
     init?(zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, offset: Int64) {
-        // Only used when removing entry, if no zip64 extended information exists,
+        // Only used when removing entry, if no ZIP64 extended information exists,
         // then this information will not be newly added either
         guard let existingInfo = zip64ExtendedInformation else { return nil }
         relativeOffsetOfLocalHeader = offset >= maxOffsetOfLocalFileHeader ? offset : 0

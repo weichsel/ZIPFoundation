@@ -55,7 +55,7 @@ extension ZIPFoundationTests {
         }
     }
 
-    // MARK: - helpers
+    // MARK: - Helpers
 
     private func extractEntryFromZIP64Archive(for testFunction: String, reservedFileName: String? = nil) throws {
         let archive = self.archive(for: testFunction, mode: .read)

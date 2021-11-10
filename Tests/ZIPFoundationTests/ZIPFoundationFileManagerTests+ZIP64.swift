@@ -99,11 +99,11 @@ extension ZIPFoundationTests {
         }
     }
 
-    // MARK: - helpers
+    // MARK: - Helpers
 
     private func archiveZIP64Item(for testFunction: String, compressionMethod: CompressionMethod) throws {
-        mockIntMaxValues(int32Factor: 16, int16Factor: 16)
-        defer { resetIntMaxValues() }
+        self.mockIntMaxValues(int32Factor: 16, int16Factor: 16)
+        defer { self.resetIntMaxValues() }
         let assetURL = self.resourceURL(for: testFunction, pathExtension: "png")
         var fileArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         fileArchiveURL.appendPathComponent(self.archiveName(for: testFunction))

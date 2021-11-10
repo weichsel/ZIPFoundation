@@ -54,7 +54,7 @@ let memoryURLScheme = "memory"
 ///     try archive?.addEntry("test.txt", relativeTo: baseURL, compressionMethod: .deflate)
 public final class Archive: Sequence {
     typealias LocalFileHeader = Entry.LocalFileHeader
-    typealias DefaultDataDescriptor = Entry.DefaultDataDescriptor
+    typealias DataDescriptor = Entry.DefaultDataDescriptor
     typealias ZIP64DataDescriptor = Entry.ZIP64DataDescriptor
     typealias CentralDirectoryStructure = Entry.CentralDirectoryStructure
 
@@ -204,7 +204,7 @@ public final class Archive: Sequence {
             let offset = Int64(centralDirStruct.exactRelativeOffsetOfLocalHeader)
             guard let localFileHeader: LocalFileHeader = Data.readStruct(from: self.archiveFile,
                                                                          at: offset) else { return nil }
-            var dataDescriptor: DefaultDataDescriptor?
+            var dataDescriptor: DataDescriptor?
             var zip64DataDescriptor: ZIP64DataDescriptor?
             if centralDirStruct.usesDataDescriptor {
                 let additionalSize = Int64(localFileHeader.fileNameLength) + Int64(localFileHeader.extraFieldLength)

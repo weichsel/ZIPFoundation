@@ -105,7 +105,7 @@ public struct Entry: Equatable {
         var usesUTF8PathEncoding: Bool { return (self.generalPurposeBitFlag & (1 << 11 )) != 0 }
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
         var isZIP64: Bool {
-            // If zip64 extended information is existing, try to treat cd as zip64 format
+            // If ZIP64 extended information is existing, try to treat cd as ZIP64 format
             // even if the version needed to extract is lower than 4.5
             return UInt8(truncatingIfNeeded: self.versionNeededToExtract) >= 45 || zip64ExtendedInformation != nil
         }

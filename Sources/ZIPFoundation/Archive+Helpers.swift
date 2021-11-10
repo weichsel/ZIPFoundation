@@ -158,10 +158,8 @@ extension Archive {
                                     startOfEndOfCentralDirectory: Int64,
                                     operation: ModifyOperation) throws -> EndOfCentralDirectoryStructure {
         var record = self.endOfCentralDirectoryRecord
-
         let sizeOfCD = self.sizeOfCentralDirectory
         let numberOfTotalEntries = self.totalNumberOfEntriesInCentralDirectory
-
         let countChange = operation.rawValue
         var dataLength = centralDirectoryStructure.extraFieldLength
         dataLength += centralDirectoryStructure.fileNameLength
@@ -190,9 +188,9 @@ extension Archive {
             ? UInt32.max
             : UInt32(startOfCentralDirectory)
         // ZIP64 End of Central Directory
-        var zip64eocd: ZIP64EndOfCentralDirectory?
+        var zip64EOCD: ZIP64EndOfCentralDirectory?
         if numberOfTotalEntriesForEOCD == .max || offsetOfCDForEOCD == .max || sizeOfCDForEOCD == .max {
-            zip64eocd = try self.writeZIP64EOCD(totalNumberOfEntries: updatedNumberOfEntries,
+            zip64EOCD = try self.writeZIP64EOCD(totalNumberOfEntries: updatedNumberOfEntries,
                                                 sizeOfCentralDirectory: updatedSizeOfCD,
                                                 offsetOfCentralDirectory: startOfCentralDirectory,
                                                 offsetOfEndOfCentralDirectory: startOfEndOfCentralDirectory)
@@ -202,7 +200,7 @@ extension Archive {
                                              updatedSizeOfCentralDirectory: sizeOfCDForEOCD,
                                              startOfCentralDirectory: offsetOfCDForEOCD)
         _ = try Data.write(chunk: record.data, to: self.archiveFile)
-        return (record, zip64eocd)
+        return (record, zip64EOCD)
     }
 
     func writeUncompressed(size: Int64, bufferSize: Int, progress: Progress? = nil,

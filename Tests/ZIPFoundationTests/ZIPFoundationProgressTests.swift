@@ -182,8 +182,8 @@ extension ZIPFoundationTests {
     }
 
     func testZIP64ArchiveAddEntryProgress() {
-        mockIntMaxValues()
-        defer { resetIntMaxValues() }
+        self.mockIntMaxValues()
+        defer { self.resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .update)
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         let progress = archive.makeProgressForAddingItem(at: assetURL)
