@@ -182,8 +182,8 @@ extension ZIPFoundationTests {
     }
 
     func testZIP64ArchiveAddEntryProgress() {
-        mockIntMaxValues()
-        defer { resetIntMaxValues() }
+        self.mockIntMaxValues()
+        defer { self.resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .update)
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         let progress = archive.makeProgressForAddingItem(at: assetURL)
@@ -212,7 +212,7 @@ extension ZIPFoundationTests {
         self.wait(for: [cancel], timeout: 20.0)
         zipQueue.sync {
             XCTAssert(progress.fractionCompleted > 0.5)
-//            XCTAssert(archive.checkIntegrity())
+            XCTAssert(archive.checkIntegrity())
         }
     }
 }

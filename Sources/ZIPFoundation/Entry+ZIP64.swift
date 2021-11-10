@@ -10,12 +10,17 @@
 
 import Foundation
 
+protocol ExtensibleDataField {
+    var headerID: UInt16 { get }
+    var dataSize: UInt16 { get }
+}
+
 extension Entry {
     enum EntryError: Error {
         case invalidDataError
     }
 
-    struct ZIP64ExtendedInformation {
+    struct ZIP64ExtendedInformation: ExtensibleDataField {
         let headerID: UInt16 = ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
         let dataSize: UInt16
         static let headerSize: UInt16 = 4
@@ -23,6 +28,35 @@ extension Entry {
         let compressedSize: Int64
         let relativeOffsetOfLocalHeader: Int64
         let diskNumberStart: UInt32
+    }
+
+    var zip64ExtendedInformation: ZIP64ExtendedInformation? {
+        centralDirectoryStructure.zip64ExtendedInformation
+    }
+}
+
+typealias Field = Entry.ZIP64ExtendedInformation.Field
+
+extension Entry.LocalFileHeader {
+    var validFields: [Field] {
+        var fields: [Field] = []
+        if uncompressedSize == .max { fields.append(.uncompressedSize) }
+        if compressedSize == .max { fields.append(.compressedSize) }
+        return fields
+    }
+}
+
+extension Entry.CentralDirectoryStructure {
+    var validFields: [Field] {
+        var fields: [Field] = []
+        if uncompressedSize == .max { fields.append(.uncompressedSize) }
+        if compressedSize == .max { fields.append(.compressedSize) }
+        if relativeOffsetOfLocalHeader == .max { fields.append(.relativeOffsetOfLocalHeader) }
+        if diskNumberStart == .max { fields.append(.diskNumberStart) }
+        return fields
+    }
+    var zip64ExtendedInformation: Entry.ZIP64ExtendedInformation? {
+        extraFields?.compactMap { $0 as? Entry.ZIP64ExtendedInformation }.first
     }
 }
 
@@ -92,6 +126,21 @@ extension Entry.ZIP64ExtendedInformation {
         } catch {
             return nil
         }
+    }
+
+    init?(zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, offset: Int64) {
+        // Only used when removing entry, if no ZIP64 extended information exists,
+        // then this information will not be newly added either
+        guard let existingInfo = zip64ExtendedInformation else { return nil }
+        relativeOffsetOfLocalHeader = offset >= maxOffsetOfLocalFileHeader ? offset : 0
+        uncompressedSize = existingInfo.uncompressedSize
+        compressedSize = existingInfo.compressedSize
+        diskNumberStart = existingInfo.diskNumberStart
+        let tempDataSize = [relativeOffsetOfLocalHeader, uncompressedSize, compressedSize]
+            .filter { $0 != 0 }
+            .reduce(UInt16(0), { $0 + UInt16(MemoryLayout.size(ofValue: $1))})
+        dataSize = tempDataSize + (diskNumberStart > 0 ? UInt16(MemoryLayout.size(ofValue: diskNumberStart)) : 0)
+        if dataSize == 0 { return nil }
     }
 
     static func scanForZIP64Field(in data: Data, fields: [Field]) -> Entry.ZIP64ExtendedInformation? {

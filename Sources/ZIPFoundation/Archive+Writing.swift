@@ -120,7 +120,7 @@ extension Archive {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
         // Directories and symlinks cannot be compressed
         let compressionMethod = type == .file ? compressionMethod : .none
-        progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : Int64(uncompressedSize)
+        progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : uncompressedSize
         let (eocdRecord, zip64EOCD) = (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory)
         var startOfCD = self.offsetToStartOfCentralDirectory
         fseeko(self.archiveFile, off_t(startOfCD), SEEK_SET)
@@ -162,7 +162,7 @@ extension Archive {
                                                                     operation: .add)
             (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory) = eocdStructure
         } catch ArchiveError.cancelledOperation {
-            try rollback(localFileHeaderStart, existingCDData, existingCDSize, bufferSize, eocdRecord, zip64EOCD)
+            try rollback(localFileHeaderStart, (existingCDData, existingCDSize), bufferSize, eocdRecord, zip64EOCD)
             throw ArchiveError.cancelledOperation
         }
     }
@@ -182,12 +182,12 @@ extension Archive {
         var centralDirectoryData = Data()
         var offset: Int64 = 0
         for currentEntry in self {
-            let centralDirectoryStructure = currentEntry.centralDirectoryStructure
+            let cds = currentEntry.centralDirectoryStructure
             if currentEntry != entry {
-                let entryStart = Int64(currentEntry.centralDirectoryStructure.relativeOffsetOfLocalHeader)
+                let entryStart = cds.exactRelativeOffsetOfLocalHeader
                 fseeko(self.archiveFile, off_t(entryStart), SEEK_SET)
                 let provider: Provider = { (_, chunkSize) -> Data in
-                    return try Data.readChunk(of: Int(chunkSize), from: self.archiveFile)
+                    return try Data.readChunk(of: chunkSize, from: self.archiveFile)
                 }
                 let consumer: Consumer = {
                     if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
@@ -196,9 +196,9 @@ extension Archive {
                 }
                 _ = try Data.consumePart(of: currentEntry.localSize, chunkSize: bufferSize,
                                          provider: provider, consumer: consumer)
-                let centralDir = CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
-                                                           offset: UInt32(offset))
-                centralDirectoryData.append(centralDir.data)
+                let updatedCentralDirectory = updateOffsetInCentralDirectory(centralDirectoryStructure: cds,
+                                                                             updatedOffset: entryStart - offset)
+                centralDirectoryData.append(updatedCentralDirectory.data)
             } else { offset = currentEntry.localSize }
         }
         let startOfCentralDirectory = Int64(ftello(tempArchive.archiveFile))
@@ -217,14 +217,12 @@ extension Archive {
         try self.replaceCurrentArchive(with: tempArchive)
     }
 
-    // MARK: - Helpers
-
     func replaceCurrentArchive(with archive: Archive) throws {
         fclose(self.archiveFile)
         if self.isMemoryArchive {
             #if swift(>=5.0)
             guard let data = archive.data,
-                  let config = Archive.configureMemoryBacking(for: data, mode: .update) else {
+                  let config = Archive.makeBackingConfiguration(for: data, mode: .update) else {
                 throw ArchiveError.unwritableArchive
             }
 
@@ -250,181 +248,31 @@ extension Archive {
             self.archiveFile = fopen(fileSystemRepresentation, "rb+")
         }
     }
+}
 
-    func writeEntry(uncompressedSize: Int64, type: Entry.EntryType,
-                    compressionMethod: CompressionMethod, bufferSize: Int, progress: Progress? = nil,
-                    provider: Provider) throws -> (sizeWritten: Int64, crc32: CRC32) {
-        var checksum = CRC32(0)
-        var sizeWritten = Int64(0)
-        switch type {
-        case .file:
-            switch compressionMethod {
-            case .none:
-                (sizeWritten, checksum) = try self.writeUncompressed(size: uncompressedSize,
-                                                                     bufferSize: bufferSize,
-                                                                     progress: progress, provider: provider)
-            case .deflate:
-                (sizeWritten, checksum) = try self.writeCompressed(size: uncompressedSize,
-                                                                   bufferSize: bufferSize,
-                                                                   progress: progress, provider: provider)
-            }
-        case .directory:
-            _ = try provider(0, 0)
-            if let progress = progress { progress.completedUnitCount = progress.totalUnitCount }
-        case .symlink:
-            let (linkSizeWritten, linkChecksum) = try self.writeSymbolicLink(size: Int(uncompressedSize),
-                                                                             provider: provider)
-            (sizeWritten, checksum) = (Int64(linkSizeWritten), linkChecksum)
-            if let progress = progress { progress.completedUnitCount = progress.totalUnitCount }
-        }
-        return (sizeWritten, checksum)
+// MARK: - Private
+
+private extension Archive {
+
+    func updateOffsetInCentralDirectory(centralDirectoryStructure: CentralDirectoryStructure,
+                                        updatedOffset: Int64) -> CentralDirectoryStructure {
+        let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(
+            zip64ExtendedInformation: centralDirectoryStructure.zip64ExtendedInformation, offset: updatedOffset)
+        let offsetInCD = updatedOffset < maxOffsetOfLocalFileHeader ? UInt32(updatedOffset) : UInt32.max
+        return CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
+                                         zip64ExtendedInformation: zip64ExtendedInformation,
+                                         relativeOffset: offsetInCD)
     }
 
-    func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
-                              size: (uncompressed: Int64, compressed: Int64), checksum: CRC32,
-                              modificationDateTime: (UInt16, UInt16)) throws -> LocalFileHeader {
-        // We always set Bit 11 in generalPurposeBitFlag, which indicates an UTF-8 encoded path.
-        guard let fileNameData = path.data(using: .utf8) else { throw ArchiveError.invalidEntryPath }
-
-        var uncompressedSizeOfLFH = UInt32(0)
-        var compressedSizeOfLFH = UInt32(0)
-        var extraFieldLength = UInt16(0)
-        var zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?
-        var versionNeededToExtract = UInt16(20)
-        // ZIP64 Extended Information in the Local header MUST include BOTH original and compressed file size fields.
-        if size.uncompressed >= maxUncompressedSize || size.compressed >= maxCompressedSize {
-            uncompressedSizeOfLFH = .max
-            compressedSizeOfLFH = .max
-            extraFieldLength = UInt16(20) // 2 + 2 + 8 + 8
-            versionNeededToExtract = zip64Version
-            zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(dataSize: extraFieldLength - 4,
-                                                                      uncompressedSize: size.uncompressed,
-                                                                      compressedSize: size.compressed,
-                                                                      relativeOffsetOfLocalHeader: 0,
-                                                                      diskNumberStart: 0)
-        } else {
-            uncompressedSizeOfLFH = UInt32(size.uncompressed)
-            compressedSizeOfLFH = UInt32(size.compressed)
-        }
-
-        let localFileHeader = LocalFileHeader(versionNeededToExtract: versionNeededToExtract,
-                                              generalPurposeBitFlag: UInt16(2048),
-                                              compressionMethod: compressionMethod.rawValue,
-                                              lastModFileTime: modificationDateTime.1,
-                                              lastModFileDate: modificationDateTime.0, crc32: checksum,
-                                              compressedSize: compressedSizeOfLFH,
-                                              uncompressedSize: uncompressedSizeOfLFH,
-                                              fileNameLength: UInt16(fileNameData.count),
-                                              extraFieldLength: extraFieldLength, fileNameData: fileNameData,
-                                              extraFieldData: zip64ExtendedInformation?.data ?? Data())
-        _ = try Data.write(chunk: localFileHeader.data, to: self.archiveFile)
-        return localFileHeader
-    }
-
-    func writeCentralDirectoryStructure(localFileHeader: LocalFileHeader, relativeOffset: Int64,
-                                        externalFileAttributes: UInt32) throws -> CentralDirectoryStructure {
-        var extraUncompressedSize: Int64?
-        var extraCompressedSize: Int64?
-        var extraOffset: Int64?
-        var relativeOffsetOfCD = UInt32(0)
-        var extraFieldLength = UInt16(0)
-        var zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?
-        if localFileHeader.uncompressedSize == .max || localFileHeader.compressedSize == .max {
-            let zip64Field = Entry.ZIP64ExtendedInformation
-                .scanForZIP64Field(in: localFileHeader.extraFieldData, fields: [.uncompressedSize, .compressedSize])
-            extraUncompressedSize = zip64Field?.uncompressedSize
-            extraCompressedSize = zip64Field?.compressedSize
-        }
-        if relativeOffset >= maxOffsetOfLocalFileHeader {
-            extraOffset = relativeOffset
-            relativeOffsetOfCD = .max
-        } else {
-            relativeOffsetOfCD = UInt32(relativeOffset)
-        }
-        extraFieldLength = [extraUncompressedSize, extraCompressedSize, extraOffset]
-            .compactMap { $0 }
-            .reduce(UInt16(0), { $0 + UInt16(MemoryLayout.size(ofValue: $1)) })
-        if extraFieldLength > 0 {
-            // Size of extra fields, shouldn't include the leading 4 bytes
-            zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(dataSize: extraFieldLength,
-                                                                      uncompressedSize: extraUncompressedSize ?? 0,
-                                                                      compressedSize: extraCompressedSize ?? 0,
-                                                                      relativeOffsetOfLocalHeader: extraOffset ?? 0,
-                                                                      diskNumberStart: 0)
-            extraFieldLength += Entry.ZIP64ExtendedInformation.headerSize
-        }
-        let centralDirectory = CentralDirectoryStructure(localFileHeader: localFileHeader,
-                                                         fileAttributes: externalFileAttributes,
-                                                         relativeOffset: relativeOffsetOfCD,
-                                                         extraField: (extraFieldLength,
-                                                                      zip64ExtendedInformation?.data ?? Data()))
-        _ = try Data.write(chunk: centralDirectory.data, to: self.archiveFile)
-        return centralDirectory
-    }
-
-    func writeEndOfCentralDirectory(centralDirectoryStructure: CentralDirectoryStructure,
-                                    startOfCentralDirectory: Int64,
-                                    startOfEndOfCentralDirectory: Int64,
-                                    operation: ModifyOperation) throws -> EndOfCentralDirectoryStructure {
-        var record = self.endOfCentralDirectoryRecord
-
-        let sizeOfCD = self.sizeOfCentralDirectory
-        let numberOfTotalEntries = self.totalNumberOfEntriesInCentralDirectory
-
-        let countChange = operation.rawValue
-        var dataLength = centralDirectoryStructure.extraFieldLength
-        dataLength += centralDirectoryStructure.fileNameLength
-        dataLength += centralDirectoryStructure.fileCommentLength
-        let cdDataLengthChange = countChange * (Int(dataLength) + CentralDirectoryStructure.size)
-        guard Int64.max - sizeOfCD >= cdDataLengthChange else {
-            throw ArchiveError.invalidSizeOfCentralDirectory
-        }
-        let updatedSizeOfCD = sizeOfCD + Int64(cdDataLengthChange)
-        guard UInt64.max - numberOfTotalEntries >= countChange else {
-            throw ArchiveError.invalidNumberOfEntriesInCentralDirectory
-        }
-        let updatedNumberOfEntries: UInt64 = {
-            switch operation {
-            case .add: return numberOfTotalEntries + UInt64(countChange)
-            case .remove: return numberOfTotalEntries - UInt64(-countChange)
-            }
-        }()
-        let sizeOfCDForEOCD = updatedSizeOfCD >= maxSizeOfCentralDirectory
-            ? UInt32.max
-            : UInt32(updatedSizeOfCD)
-        let numberOfTotalEntriesForEOCD = updatedNumberOfEntries >= maxTotalNumberOfEntries
-            ? UInt16.max
-            : UInt16(updatedNumberOfEntries)
-        let offsetOfCDForEOCD = startOfCentralDirectory >= maxOffsetOfCentralDirectory
-            ? UInt32.max
-            : UInt32(startOfCentralDirectory)
-        // ZIP64 End of Central Directory
-        var zip64eocd: ZIP64EndOfCentralDirectory?
-        if numberOfTotalEntriesForEOCD == .max || offsetOfCDForEOCD == .max || sizeOfCDForEOCD == .max {
-            zip64eocd = try self.writeZIP64EOCD(totalNumberOfEntries: updatedNumberOfEntries,
-                                                sizeOfCentralDirectory: updatedSizeOfCD,
-                                                offsetOfCentralDirectory: startOfCentralDirectory,
-                                                offsetOfEndOfCentralDirectory: startOfEndOfCentralDirectory)
-        }
-        record = EndOfCentralDirectoryRecord(record: record, numberOfEntriesOnDisk: numberOfTotalEntriesForEOCD,
-                                             numberOfEntriesInCentralDirectory: numberOfTotalEntriesForEOCD,
-                                             updatedSizeOfCentralDirectory: sizeOfCDForEOCD,
-                                             startOfCentralDirectory: offsetOfCDForEOCD)
-        _ = try Data.write(chunk: record.data, to: self.archiveFile)
-        return (record, zip64eocd)
-    }
-
-    func rollback(_ localFileHeaderStart: Int64, _ existingCentralDirectoryData: Data,
-                  _ existingCentralDirectorySize: Int64,
-                  _ bufferSize: Int,
-                  _ endOfCentralDirRecord: EndOfCentralDirectoryRecord,
+    func rollback(_ localFileHeaderStart: Int64, _ existingCentralDirectory: (data: Data, size: Int64),
+                  _ bufferSize: Int, _ endOfCentralDirRecord: EndOfCentralDirectoryRecord,
                   _ zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?) throws {
         fflush(self.archiveFile)
         ftruncate(fileno(self.archiveFile), off_t(localFileHeaderStart))
         fseeko(self.archiveFile, off_t(localFileHeaderStart), SEEK_SET)
-        _ = try Data.writeLargeChunk(existingCentralDirectoryData, size: existingCentralDirectorySize,
+        _ = try Data.writeLargeChunk(existingCentralDirectory.data, size: existingCentralDirectory.size,
                                      bufferSize: bufferSize, to: archiveFile)
-        _ = try Data.write(chunk: existingCentralDirectoryData, to: self.archiveFile)
+        _ = try Data.write(chunk: existingCentralDirectory.data, to: self.archiveFile)
         if let zip64EOCD = zip64EndOfCentralDirectory {
             _ = try Data.write(chunk: zip64EOCD.data, to: self.archiveFile)
         }
@@ -457,79 +305,5 @@ extension Archive {
             url = tempDir
         }
         return (archive, url)
-    }
-
-    // MARK: - Private
-
-    private func writeUncompressed(size: Int64, bufferSize: Int, progress: Progress? = nil,
-                                   provider: Provider) throws -> (sizeWritten: Int64, checksum: CRC32) {
-        var position: Int64 = 0
-        var sizeWritten: Int64 = 0
-        var checksum = CRC32(0)
-        while position < size {
-            if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
-            let readSize = (size - position) >= bufferSize ? bufferSize : Int(size - position)
-            let entryChunk = try provider(position, readSize)
-            checksum = entryChunk.crc32(checksum: checksum)
-            sizeWritten += Int64(try Data.write(chunk: entryChunk, to: self.archiveFile))
-            position += Int64(bufferSize)
-            progress?.completedUnitCount = sizeWritten
-        }
-        return (sizeWritten, checksum)
-    }
-
-    private func writeCompressed(size: Int64, bufferSize: Int, progress: Progress? = nil,
-                                 provider: Provider) throws -> (sizeWritten: Int64, checksum: CRC32) {
-        var sizeWritten: Int64 = 0
-        let consumer: Consumer = { data in sizeWritten += Int64(try Data.write(chunk: data, to: self.archiveFile)) }
-        let checksum = try Data.compress(size: size, bufferSize: bufferSize,
-                                         provider: { (position, size) -> Data in
-                                            if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
-                                            let data = try provider(position, size)
-                                            progress?.completedUnitCount += Int64(data.count)
-                                            return data
-                                         }, consumer: consumer)
-        return(sizeWritten, checksum)
-    }
-
-    private func writeSymbolicLink(size: Int, provider: Provider) throws -> (sizeWritten: Int, checksum: CRC32) {
-        // The reported size of a symlink is the number of characters in the path it points to.
-        let linkData = try provider(0, size)
-        let checksum = linkData.crc32(checksum: 0)
-        let sizeWritten = try Data.write(chunk: linkData, to: self.archiveFile)
-        return (sizeWritten, checksum)
-    }
-
-    private func writeZIP64EOCD(totalNumberOfEntries: UInt64,
-                                sizeOfCentralDirectory: Int64,
-                                offsetOfCentralDirectory: Int64,
-                                offsetOfEndOfCentralDirectory: Int64) throws -> ZIP64EndOfCentralDirectory {
-        var zip64EOCD: ZIP64EndOfCentralDirectory = self.zip64EndOfCentralDirectory ?? {
-            // Shouldn't include the leading 12 bytes: (size - 12 = 44)
-            let record = ZIP64EndOfCentralDirectoryRecord(sizeOfZIP64EndOfCentralDirectoryRecord: UInt64(44),
-                                                          versionMadeBy: UInt16(789),
-                                                          versionNeededToExtract: zip64Version,
-                                                          numberOfDisk: 0, numberOfDiskStart: 0,
-                                                          totalNumberOfEntriesOnDisk: 0,
-                                                          totalNumberOfEntriesInCentralDirectory: 0,
-                                                          sizeOfCentralDirectory: 0,
-                                                          offsetToStartOfCentralDirectory: 0,
-                                                          zip64ExtensibleDataSector: Data())
-            let locator = ZIP64EndOfCentralDirectoryLocator(numberOfDiskWithZIP64EOCDRecordStart: 0,
-                                                            relativeOffsetOfZIP64EOCDRecord: 0,
-                                                            totalNumberOfDisk: 1)
-            return ZIP64EndOfCentralDirectory(record: record, locator: locator)
-        }()
-
-        let updatedRecord = ZIP64EndOfCentralDirectoryRecord(record: zip64EOCD.record,
-                                                             numberOfEntriesOnDisk: totalNumberOfEntries,
-                                                             numberOfEntriesInCD: totalNumberOfEntries,
-                                                             sizeOfCentralDirectory: sizeOfCentralDirectory,
-                                                             offsetToStartOfCD: offsetOfCentralDirectory)
-        let updatedLocator = ZIP64EndOfCentralDirectoryLocator(locator: zip64EOCD.locator,
-                                                               offsetOfZIP64EOCDRecord: offsetOfEndOfCentralDirectory)
-        zip64EOCD = ZIP64EndOfCentralDirectory(record: updatedRecord, locator: updatedLocator)
-        _ = try Data.write(chunk: zip64EOCD.data, to: self.archiveFile)
-        return zip64EOCD
     }
 }

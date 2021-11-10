@@ -12,7 +12,6 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
-
     func testExtractUncompressedFolderEntries() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {

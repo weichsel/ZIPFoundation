@@ -10,8 +10,6 @@
 
 import Foundation
 
-/// The minimum version of zip64 format
-let zip64Version = UInt16(45)
 let zip64EOCDRecordStructSignature = 0x06064b50
 let zip64EOCDLocatorStructSignature = 0x07064b50
 
@@ -83,7 +81,7 @@ extension Archive.ZIP64EndOfCentralDirectoryRecord {
         self.versionMadeBy = data.scanValue(start: 12)
         self.versionNeededToExtract = data.scanValue(start: 14)
         // Version Needed to Extract: 4.5 - File uses ZIP64 format extensions
-        guard self.versionNeededToExtract >= zip64Version else { return nil }
+        guard self.versionNeededToExtract >= Archive.Version.v45.rawValue else { return nil }
         self.numberOfDisk = data.scanValue(start: 16)
         self.numberOfDiskStart = data.scanValue(start: 20)
         self.totalNumberOfEntriesOnDisk = data.scanValue(start: 24)

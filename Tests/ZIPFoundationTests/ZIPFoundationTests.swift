@@ -159,6 +159,21 @@ class ZIPFoundationTests: XCTestCase {
         handler()
         #endif
     }
+
+    // MARK: - ZIP64 Helpers
+
+    // It's not practical to create compressed files that exceed the size limit every time for test,
+    // so provide helper methods to mock the maximum size limit
+
+    func mockIntMaxValues(int32Factor: Int = 64, int16Factor: Int = 64) {
+        maxUInt32 = UInt32(int32Factor * int32Factor)
+        maxUInt16 = UInt16(int16Factor)
+    }
+
+    func resetIntMaxValues() {
+        maxUInt32 = .max
+        maxUInt16 = .max
+    }
 }
 
 extension ZIPFoundationTests {
@@ -200,6 +215,7 @@ extension ZIPFoundationTests {
             ("testEntryInvalidSignatureErrorConditions", testEntryInvalidSignatureErrorConditions),
             ("testEntryMissingDataDescriptorErrorCondition", testEntryMissingDataDescriptorErrorCondition),
             ("testEntryTypeDetectionHeuristics", testEntryTypeDetectionHeuristics),
+            ("testEntryValidDataDescriptor", testEntryValidDataDescriptor),
             ("testEntryWrongDataLengthErrorConditions", testEntryWrongDataLengthErrorConditions),
             ("testExtractCompressedDataDescriptorArchive", testExtractCompressedDataDescriptorArchive),
             ("testExtractCompressedFolderEntries", testExtractCompressedFolderEntries),
@@ -240,9 +256,16 @@ extension ZIPFoundationTests {
 
     static var zip64Tests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
         return [
+            ("testZipCompressedZIP64Item", testZipCompressedZIP64Item),
+            ("testZipUncompressedZIP64Item", testZipUncompressedZIP64Item),
+            ("testUnzipCompressedZIP64Item", testUnzipCompressedZIP64Item),
+            ("testUnzipUncompressedZIP64Item", testUnzipUncompressedZIP64Item),
+            ("testUnzipItemWithZIP64DataDescriptor", testUnzipItemWithZIP64DataDescriptor),
             ("testEntryZIP64ExtraField", testEntryZIP64ExtraField),
             ("testEntryZIP64FieldOnlyHasUncompressedSize", testEntryZIP64FieldOnlyHasUncompressedSize),
             ("testEntryZIP64FieldIncludingDiskNumberStart", testEntryZIP64FieldIncludingDiskNumberStart),
+            ("testEntryValidZIP64DataDescriptor", testEntryValidZIP64DataDescriptor),
+            ("testEntryWithZIP64ExtraField", testEntryWithZIP64ExtraField),
             ("testEntryInvalidZIP64ExtraFieldErrorConditions", testEntryInvalidZIP64ExtraFieldErrorConditions),
             ("testEntryScanForZIP64Field", testEntryScanForZIP64Field),
             ("testEntryScanForZIP64FieldErrorConditions", testEntryScanForZIP64FieldErrorConditions),
@@ -257,9 +280,13 @@ extension ZIPFoundationTests {
             ("testCreateZIP64ArchiveWithLargeSizeOfCD", testCreateZIP64ArchiveWithLargeSizeOfCD),
             ("testRemoveEntryFromArchiveWithZIP64EOCD", testRemoveEntryFromArchiveWithZIP64EOCD),
             ("testRemoveZIP64EntryFromArchiveWithZIP64EOCD", testRemoveZIP64EntryFromArchiveWithZIP64EOCD),
+            ("testRemoveEntryWithZIP64ExtendedInformation", testRemoveEntryWithZIP64ExtendedInformation),
             ("testWriteEOCDWithTooLargeSizeOfCentralDirectory", testWriteEOCDWithTooLargeSizeOfCentralDirectory),
             ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset),
-            ("testWriteLargeChunk", testWriteLargeChunk)
+            ("testWriteLargeChunk", testWriteLargeChunk),
+            ("testExtractUncompressedZIP64Entries", testExtractUncompressedZIP64Entries),
+            ("testExtractCompressedZIP64Entries", testExtractCompressedZIP64Entries),
+            ("testExtractEntryWithZIP64DataDescriptor", testExtractEntryWithZIP64DataDescriptor)
         ]
     }
 

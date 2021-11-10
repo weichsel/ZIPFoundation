@@ -54,7 +54,8 @@ let memoryURLScheme = "memory"
 ///     try archive?.addEntry("test.txt", relativeTo: baseURL, compressionMethod: .deflate)
 public final class Archive: Sequence {
     typealias LocalFileHeader = Entry.LocalFileHeader
-    typealias DataDescriptor = Entry.DataDescriptor
+    typealias DataDescriptor = Entry.DefaultDataDescriptor
+    typealias ZIP64DataDescriptor = Entry.ZIP64DataDescriptor
     typealias CentralDirectoryStructure = Entry.CentralDirectoryStructure
 
     /// An error that occurs during reading, creating or updating a ZIP file.
@@ -87,6 +88,14 @@ public final class Archive: Sequence {
         case read
         /// Indicates that a newly instantiated `Archive` should update an existing backing file.
         case update
+    }
+
+    /// The version of an `Archive`
+    enum Version: UInt16 {
+        /// The minimum version for deflate compressed archives
+        case v20 = 20
+        /// The minimum version for archives making use of ZIP64 extensions
+        case v45 = 45
     }
 
     struct EndOfCentralDirectoryRecord: DataSerializable {
@@ -144,7 +153,7 @@ public final class Archive: Sequence {
         self.url = url
         self.accessMode = mode
         self.preferredEncoding = preferredEncoding
-        guard let config = Archive.configureFileBacking(for: url, mode: mode) else {
+        guard let config = Archive.makeBackingConfiguration(for: url, mode: mode) else {
             return nil
         }
         self.archiveFile = config.file
@@ -172,7 +181,7 @@ public final class Archive: Sequence {
     ///   - The backing `data` _must_ be empty (or omitted) for `AccessMode.create`.
     public init?(data: Data = Data(), accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
         guard let url = URL(string: "\(memoryURLScheme)://"),
-            let config = Archive.configureMemoryBacking(for: data, mode: mode) else {
+            let config = Archive.makeBackingConfiguration(for: data, mode: mode) else {
             return nil
         }
 
@@ -200,16 +209,23 @@ public final class Archive: Sequence {
                                                                                     at: directoryIndex) else {
                                                                                         return nil
             }
-            let offset = Int64(centralDirStruct.relativeOffsetOfLocalHeader)
+            let offset = Int64(centralDirStruct.exactRelativeOffsetOfLocalHeader)
             guard let localFileHeader: LocalFileHeader = Data.readStruct(from: self.archiveFile,
                                                                          at: offset) else { return nil }
             var dataDescriptor: DataDescriptor?
+            var zip64DataDescriptor: ZIP64DataDescriptor?
             if centralDirStruct.usesDataDescriptor {
                 let additionalSize = Int64(localFileHeader.fileNameLength) + Int64(localFileHeader.extraFieldLength)
                 let isCompressed = centralDirStruct.compressionMethod != CompressionMethod.none.rawValue
-                let dataSize = isCompressed ? centralDirStruct.compressedSize : centralDirStruct.uncompressedSize
-                let descriptorPosition = offset + Int64(LocalFileHeader.size) + additionalSize + Int64(dataSize)
-                dataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
+                let dataSize = isCompressed
+                    ? centralDirStruct.exactCompressedSize
+                    : centralDirStruct.exactUncompressedSize
+                let descriptorPosition = offset + Int64(LocalFileHeader.size) + additionalSize + dataSize
+                if centralDirStruct.isZIP64 {
+                    zip64DataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
+                } else {
+                    dataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
+                }
             }
             defer {
                 directoryIndex += Int64(CentralDirectoryStructure.size)
@@ -218,8 +234,8 @@ public final class Archive: Sequence {
                 directoryIndex += Int64(centralDirStruct.fileCommentLength)
                 index += 1
             }
-            return Entry(centralDirectoryStructure: centralDirStruct,
-                         localFileHeader: localFileHeader, dataDescriptor: dataDescriptor)
+            return Entry(centralDirectoryStructure: centralDirStruct, localFileHeader: localFileHeader,
+                         dataDescriptor: dataDescriptor, zip64DataDescriptor: zip64DataDescriptor)
         }
     }
 
@@ -239,72 +255,6 @@ public final class Archive: Sequence {
     }
 
     // MARK: - Helpers
-
-    struct BackingConfiguration {
-        let file: UnsafeMutablePointer<FILE>
-        let endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
-        let zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?
-        #if swift(>=5.0)
-        let memoryFile: MemoryFile?
-
-        init(file: UnsafeMutablePointer<FILE>,
-             endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
-             zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory? = nil,
-             memoryFile: MemoryFile? = nil) {
-            self.file = file
-            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
-            self.zip64EndOfCentralDirectory = zip64EndOfCentralDirectory
-            self.memoryFile = memoryFile
-        }
-        #else
-
-        init(file: UnsafeMutablePointer<FILE>,
-             endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
-             zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?) {
-            self.file = file
-            self.endOfCentralDirectoryRecord = endOfCentralDirectoryRecord
-            self.zip64EndOfCentralDirectory = zip64EndOfCentralDirectory
-        }
-        #endif
-    }
-
-    private static func configureFileBacking(for url: URL, mode: AccessMode)
-        -> BackingConfiguration? {
-        let fileManager = FileManager()
-        switch mode {
-        case .read:
-            let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            guard let archiveFile = fopen(fileSystemRepresentation, "rb"),
-                  let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
-            }
-            return BackingConfiguration(file: archiveFile,
-                                        endOfCentralDirectoryRecord: eocdRecord,
-                                        zip64EndOfCentralDirectory: zip64EOCD)
-        case .create:
-            let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
-                                                                          totalNumberOfEntriesOnDisk: 0,
-                                                                          totalNumberOfEntriesInCentralDirectory: 0,
-                                                                          sizeOfCentralDirectory: 0,
-                                                                          offsetToStartOfCentralDirectory: 0,
-                                                                          zipFileCommentLength: 0,
-                                                                          zipFileCommentData: Data())
-            do {
-                try endOfCentralDirectoryRecord.data.write(to: url, options: .withoutOverwriting)
-            } catch { return nil }
-            fallthrough
-        case .update:
-            let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            guard let archiveFile = fopen(fileSystemRepresentation, "rb+"),
-                  let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
-            }
-            fseeko(archiveFile, 0, SEEK_SET)
-            return BackingConfiguration(file: archiveFile,
-                                        endOfCentralDirectoryRecord: eocdRecord,
-                                        zip64EndOfCentralDirectory: zip64EOCD)
-        }
-    }
 
     static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
         -> EndOfCentralDirectoryStructure? {
