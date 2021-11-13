@@ -88,15 +88,6 @@ extension ZIPFoundationTests {
     }
 
     func testArchiveInvalidDataErrorConditions() {
-        let emptyECDR = Archive.EndOfCentralDirectoryRecord(data: Data(),
-                                                            additionalDataProvider: {_ -> Data in
-                                                                return Data() })
-        XCTAssertNil(emptyECDR)
-        let invalidECDRData = Data(count: 22)
-        let invalidECDR = Archive.EndOfCentralDirectoryRecord(data: invalidECDRData,
-                                                              additionalDataProvider: {_ -> Data in
-                                                                return Data() })
-        XCTAssertNil(invalidECDR)
         let ecdrInvalidCommentBytes: [UInt8] = [0x50, 0x4B, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
                                                 0x01, 0x00, 0x01, 0x00, 0x5A, 0x00, 0x00, 0x00,
                                                 0x2A, 0x00, 0x00, 0x00, 0x00, 0x00]

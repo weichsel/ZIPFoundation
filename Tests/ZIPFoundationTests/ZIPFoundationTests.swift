@@ -192,6 +192,7 @@ extension ZIPFoundationTests {
         return [
             ("testArchiveAddEntryErrorConditions", testArchiveAddEntryErrorConditions),
             ("testArchiveCreateErrorConditions", testArchiveCreateErrorConditions),
+            ("testArchiveInvalidEOCDRecordConditions", testArchiveInvalidEOCDRecordConditions),
             ("testArchiveInvalidDataErrorConditions", testArchiveInvalidDataErrorConditions),
             ("testArchiveIteratorErrorConditions", testArchiveIteratorErrorConditions),
             ("testArchiveReadErrorConditions", testArchiveReadErrorConditions),
