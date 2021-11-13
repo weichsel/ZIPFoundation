@@ -169,14 +169,14 @@ public struct Entry: Equatable {
     /// The size of the receiver's compressed data.
     public var compressedSize: Int64 {
         if centralDirectoryStructure.isZIP64 {
-            return zip64DataDescriptor?.compressedSize ?? centralDirectoryStructure.exactCompressedSize
+            return zip64DataDescriptor?.compressedSize ?? centralDirectoryStructure.effectiveCompressedSize
         }
         return Int64(dataDescriptor?.compressedSize ?? centralDirectoryStructure.compressedSize)
     }
     /// The size of the receiver's uncompressed data.
     public var uncompressedSize: Int64 {
         if centralDirectoryStructure.isZIP64 {
-            return zip64DataDescriptor?.uncompressedSize ?? centralDirectoryStructure.exactUncompressedSize
+            return zip64DataDescriptor?.uncompressedSize ?? centralDirectoryStructure.effectiveUncompressedSize
         }
         return Int64(dataDescriptor?.uncompressedSize ?? centralDirectoryStructure.uncompressedSize)
     }
@@ -196,7 +196,7 @@ public struct Entry: Equatable {
         return size
     }
     var dataOffset: Int64 {
-        var dataOffset = self.centralDirectoryStructure.exactRelativeOffsetOfLocalHeader
+        var dataOffset = self.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader
         dataOffset += Int64(LocalFileHeader.size)
         dataOffset += Int64(self.localFileHeader.fileNameLength)
         dataOffset += Int64(self.localFileHeader.extraFieldLength)
@@ -210,8 +210,8 @@ public struct Entry: Equatable {
     public static func == (lhs: Entry, rhs: Entry) -> Bool {
         return lhs.path == rhs.path
             && lhs.localFileHeader.crc32 == rhs.localFileHeader.crc32
-            && lhs.centralDirectoryStructure.exactRelativeOffsetOfLocalHeader
-            == rhs.centralDirectoryStructure.exactRelativeOffsetOfLocalHeader
+            && lhs.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader
+            == rhs.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader
     }
 
     init?(centralDirectoryStructure: CentralDirectoryStructure,
@@ -293,20 +293,20 @@ extension Entry.CentralDirectoryStructure {
 
 extension Entry.CentralDirectoryStructure {
 
-    var exactCompressedSize: Int64 {
-        if isZIP64, let compressedSize = zip64ExtendedInformation?.compressedSize, compressedSize > 0 {
+    var effectiveCompressedSize: Int64 {
+        if self.isZIP64, let compressedSize = zip64ExtendedInformation?.compressedSize, compressedSize > 0 {
             return compressedSize
         }
         return Int64(compressedSize)
     }
-    var exactUncompressedSize: Int64 {
-        if isZIP64, let uncompressedSize = zip64ExtendedInformation?.uncompressedSize, uncompressedSize > 0 {
+    var effectiveUncompressedSize: Int64 {
+        if self.isZIP64, let uncompressedSize = zip64ExtendedInformation?.uncompressedSize, uncompressedSize > 0 {
             return uncompressedSize
         }
         return Int64(uncompressedSize)
     }
-    var exactRelativeOffsetOfLocalHeader: Int64 {
-        if isZIP64, let offset = zip64ExtendedInformation?.relativeOffsetOfLocalHeader, offset > 0 {
+    var effectiveRelativeOffsetOfLocalHeader: Int64 {
+        if self.isZIP64, let offset = zip64ExtendedInformation?.relativeOffsetOfLocalHeader, offset > 0 {
             return offset
         }
         return Int64(relativeOffsetOfLocalHeader)

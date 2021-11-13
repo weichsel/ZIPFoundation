@@ -184,7 +184,7 @@ extension Archive {
         for currentEntry in self {
             let cds = currentEntry.centralDirectoryStructure
             if currentEntry != entry {
-                let entryStart = cds.exactRelativeOffsetOfLocalHeader
+                let entryStart = cds.effectiveRelativeOffsetOfLocalHeader
                 fseeko(self.archiveFile, off_t(entryStart), SEEK_SET)
                 let provider: Provider = { (_, chunkSize) -> Data in
                     return try Data.readChunk(of: chunkSize, from: self.archiveFile)

@@ -94,8 +94,8 @@ extension ZIPFoundationTests {
             XCTFail("Failed to read central directory structure."); return
         }
         XCTAssertNotNil(cds.extraFields)
-        XCTAssertEqual(cds.exactCompressedSize, 10)
-        XCTAssertEqual(cds.exactUncompressedSize, 10)
+        XCTAssertEqual(cds.effectiveCompressedSize, 10)
+        XCTAssertEqual(cds.effectiveUncompressedSize, 10)
         // Entry
         let lfhBytes: [UInt8] = [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x08, 0x08,
                                  0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
