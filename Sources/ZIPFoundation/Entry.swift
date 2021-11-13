@@ -231,25 +231,25 @@ extension Entry.CentralDirectoryStructure {
 
     init(localFileHeader: Entry.LocalFileHeader, fileAttributes: UInt32, relativeOffset: UInt32,
          extraField: (length: UInt16, data: Data)) {
-        versionMadeBy = UInt16(789)
-        versionNeededToExtract = localFileHeader.versionNeededToExtract
-        generalPurposeBitFlag = localFileHeader.generalPurposeBitFlag
-        compressionMethod = localFileHeader.compressionMethod
-        lastModFileTime = localFileHeader.lastModFileTime
-        lastModFileDate = localFileHeader.lastModFileDate
-        crc32 = localFileHeader.crc32
-        compressedSize = localFileHeader.compressedSize
-        uncompressedSize = localFileHeader.uncompressedSize
-        fileNameLength = localFileHeader.fileNameLength
-        extraFieldLength = extraField.length
-        fileCommentLength = UInt16(0)
-        diskNumberStart = UInt16(0)
-        internalFileAttributes = UInt16(0)
-        externalFileAttributes = fileAttributes
-        relativeOffsetOfLocalHeader = relativeOffset
-        fileNameData = localFileHeader.fileNameData
-        extraFieldData = extraField.data
-        fileCommentData = Data()
+        self.versionMadeBy = UInt16(789)
+        self.versionNeededToExtract = localFileHeader.versionNeededToExtract
+        self.generalPurposeBitFlag = localFileHeader.generalPurposeBitFlag
+        self.compressionMethod = localFileHeader.compressionMethod
+        self.lastModFileTime = localFileHeader.lastModFileTime
+        self.lastModFileDate = localFileHeader.lastModFileDate
+        self.crc32 = localFileHeader.crc32
+        self.compressedSize = localFileHeader.compressedSize
+        self.uncompressedSize = localFileHeader.uncompressedSize
+        self.fileNameLength = localFileHeader.fileNameLength
+        self.extraFieldLength = extraField.length
+        self.fileCommentLength = UInt16(0)
+        self.diskNumberStart = UInt16(0)
+        self.internalFileAttributes = UInt16(0)
+        self.externalFileAttributes = fileAttributes
+        self.relativeOffsetOfLocalHeader = relativeOffset
+        self.fileNameData = localFileHeader.fileNameData
+        self.extraFieldData = extraField.data
+        self.fileCommentData = Data()
         if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation.scanForZIP64Field(in: self.extraFieldData,
                                                                                            fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
@@ -267,23 +267,23 @@ extension Entry.CentralDirectoryStructure {
                 ? centralDirectoryStructure.versionNeededToExtract
                 : Archive.Version.v20.rawValue
         }
-        extraFieldLength = UInt16(extraFieldData.count)
-        relativeOffsetOfLocalHeader = relativeOffset
-        versionMadeBy = centralDirectoryStructure.versionMadeBy
-        generalPurposeBitFlag = centralDirectoryStructure.generalPurposeBitFlag
-        compressionMethod = centralDirectoryStructure.compressionMethod
-        lastModFileTime = centralDirectoryStructure.lastModFileTime
-        lastModFileDate = centralDirectoryStructure.lastModFileDate
-        crc32 = centralDirectoryStructure.crc32
-        compressedSize = centralDirectoryStructure.compressedSize
-        uncompressedSize = centralDirectoryStructure.uncompressedSize
-        fileNameLength = centralDirectoryStructure.fileNameLength
-        fileCommentLength = centralDirectoryStructure.fileCommentLength
-        diskNumberStart = centralDirectoryStructure.diskNumberStart
-        internalFileAttributes = centralDirectoryStructure.internalFileAttributes
-        externalFileAttributes = centralDirectoryStructure.externalFileAttributes
-        fileNameData = centralDirectoryStructure.fileNameData
-        fileCommentData = centralDirectoryStructure.fileCommentData
+        self.extraFieldLength = UInt16(extraFieldData.count)
+        self.relativeOffsetOfLocalHeader = relativeOffset
+        self.versionMadeBy = centralDirectoryStructure.versionMadeBy
+        self.generalPurposeBitFlag = centralDirectoryStructure.generalPurposeBitFlag
+        self.compressionMethod = centralDirectoryStructure.compressionMethod
+        self.lastModFileTime = centralDirectoryStructure.lastModFileTime
+        self.lastModFileDate = centralDirectoryStructure.lastModFileDate
+        self.crc32 = centralDirectoryStructure.crc32
+        self.compressedSize = centralDirectoryStructure.compressedSize
+        self.uncompressedSize = centralDirectoryStructure.uncompressedSize
+        self.fileNameLength = centralDirectoryStructure.fileNameLength
+        self.fileCommentLength = centralDirectoryStructure.fileCommentLength
+        self.diskNumberStart = centralDirectoryStructure.diskNumberStart
+        self.internalFileAttributes = centralDirectoryStructure.internalFileAttributes
+        self.externalFileAttributes = centralDirectoryStructure.externalFileAttributes
+        self.fileNameData = centralDirectoryStructure.fileNameData
+        self.fileCommentData = centralDirectoryStructure.fileCommentData
         if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation.scanForZIP64Field(in: self.extraFieldData,
                                                                                            fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]

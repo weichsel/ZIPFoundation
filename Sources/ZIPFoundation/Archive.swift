@@ -335,13 +335,13 @@ extension Archive.EndOfCentralDirectoryRecord {
          numberOfEntriesInCentralDirectory: UInt16,
          updatedSizeOfCentralDirectory: UInt32,
          startOfCentralDirectory: UInt32) {
-        numberOfDisk = record.numberOfDisk
-        numberOfDiskStart = record.numberOfDiskStart
-        totalNumberOfEntriesOnDisk = numberOfEntriesOnDisk
-        totalNumberOfEntriesInCentralDirectory = numberOfEntriesInCentralDirectory
-        sizeOfCentralDirectory = updatedSizeOfCentralDirectory
-        offsetToStartOfCentralDirectory = startOfCentralDirectory
-        zipFileCommentLength = record.zipFileCommentLength
-        zipFileCommentData = record.zipFileCommentData
+        self.numberOfDisk = record.numberOfDisk
+        self.numberOfDiskStart = record.numberOfDiskStart
+        self.totalNumberOfEntriesOnDisk = numberOfEntriesOnDisk
+        self.totalNumberOfEntriesInCentralDirectory = numberOfEntriesInCentralDirectory
+        self.sizeOfCentralDirectory = updatedSizeOfCentralDirectory
+        self.offsetToStartOfCentralDirectory = startOfCentralDirectory
+        self.zipFileCommentLength = record.zipFileCommentLength
+        self.zipFileCommentData = record.zipFileCommentData
     }
 }
