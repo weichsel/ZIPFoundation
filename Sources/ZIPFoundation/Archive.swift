@@ -16,6 +16,7 @@ public let defaultReadChunkSize = Int(16*1024)
 public let defaultWriteChunkSize = defaultReadChunkSize
 /// The default permissions for newly added entries.
 public let defaultFilePermissions = UInt16(0o644)
+/// The default permissions for newly added directories.
 public let defaultDirectoryPermissions = UInt16(0o755)
 let defaultPOSIXBufferSize = defaultReadChunkSize
 let defaultDirectoryUnitCount = Int64(1)

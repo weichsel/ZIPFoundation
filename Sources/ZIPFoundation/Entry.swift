@@ -292,6 +292,7 @@ extension Entry.CentralDirectoryStructure {
 }
 
 extension Entry.CentralDirectoryStructure {
+
     var exactCompressedSize: Int64 {
         if isZIP64, let compressedSize = zip64ExtendedInformation?.compressedSize, compressedSize > 0 {
             return compressedSize
