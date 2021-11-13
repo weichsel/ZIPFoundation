@@ -292,19 +292,19 @@ extension Entry.CentralDirectoryStructure {
 }
 
 extension Entry.CentralDirectoryStructure {
-    public var exactCompressedSize: Int64 {
+    var exactCompressedSize: Int64 {
         if isZIP64, let compressedSize = zip64ExtendedInformation?.compressedSize, compressedSize > 0 {
             return compressedSize
         }
         return Int64(compressedSize)
     }
-    public var exactUncompressedSize: Int64 {
+    var exactUncompressedSize: Int64 {
         if isZIP64, let uncompressedSize = zip64ExtendedInformation?.uncompressedSize, uncompressedSize > 0 {
             return uncompressedSize
         }
         return Int64(uncompressedSize)
     }
-    public var exactRelativeOffsetOfLocalHeader: Int64 {
+    var exactRelativeOffsetOfLocalHeader: Int64 {
         if isZIP64, let offset = zip64ExtendedInformation?.relativeOffsetOfLocalHeader, offset > 0 {
             return offset
         }
