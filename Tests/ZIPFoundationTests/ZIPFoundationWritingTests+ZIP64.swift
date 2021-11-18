@@ -173,7 +173,7 @@ extension ZIPFoundationTests {
         let currentLFHOffset = archive.offsetToStartOfCentralDirectory
         do {
             try archive.addEntry(with: entryName, type: .directory,
-                                 uncompressedSize: 0, provider: { _, _ in return Data() })
+                                 uncompressedSize: Int64(0), provider: { _, _ in return Data() })
         } catch {
             XCTFail("Failed to add directory entry to ZIP64 archive.")
         }
@@ -209,7 +209,7 @@ extension ZIPFoundationTests {
         // Case 2: The total number os entries is equal to maximum value
         do {
             try archive.addEntry(with: "Test", type: .directory,
-                                 uncompressedSize: 0, provider: { _, _ in return Data() })
+                                 uncompressedSize: Int64(0), provider: { _, _ in return Data() })
         } catch {
             XCTFail("Failed to add ZIP64 format entry to archive with error : \(error)"); return
         }

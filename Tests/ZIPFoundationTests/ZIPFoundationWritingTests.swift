@@ -44,7 +44,7 @@ extension ZIPFoundationTests {
         let archive = self.archive(for: #function, mode: .create)
         do {
             try archive.addEntry(with: "Test", type: .directory,
-                                 uncompressedSize: 0, provider: { _, _ in return Data()})
+                                 uncompressedSize: Int64(0), provider: { _, _ in return Data()})
         } catch {
             XCTFail("Failed to add directory entry without file system representation to archive.")
         }
@@ -85,7 +85,8 @@ extension ZIPFoundationTests {
         XCTAssertNotNil(entry)
         XCTAssert(archive.checkIntegrity())
         do {
-            try archive.addEntry(with: "link", type: .symlink, uncompressedSize: 10, provider: { (_, count) -> Data in
+            try archive.addEntry(with: "link", type: .symlink, uncompressedSize: Int64(10),
+                                 provider: { (_, count) -> Data in
                 return Data(count: count)
             })
         } catch {
@@ -132,7 +133,7 @@ extension ZIPFoundationTests {
         let readonlyArchive = self.archive(for: #function, mode: .read)
         do {
             try readonlyArchive.addEntry(with: "Test", type: .directory,
-                                         uncompressedSize: 0, provider: { _, _ in return Data()})
+                                         uncompressedSize: Int64(0), provider: { _, _ in return Data()})
         } catch let error as Archive.ArchiveError {
             XCTAssert(error == .unwritableArchive)
             didCatchExpectedError = true
