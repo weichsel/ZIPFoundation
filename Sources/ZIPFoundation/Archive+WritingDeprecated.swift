@@ -12,7 +12,25 @@ import Foundation
 
 public extension Archive {
 
-    @available(*, deprecated, message: "Please use `Int64` for `uncompressedSize` and provider `position`.")
+    @available(*, deprecated,
+                message: "Please use `Int` for `bufferSize`.")
+    func addEntry(with path: String, relativeTo baseURL: URL,
+                  compressionMethod: CompressionMethod = .none,
+                  bufferSize: UInt32, progress: Progress? = nil) throws {
+        try self.addEntry(with: path, relativeTo: baseURL, compressionMethod: compressionMethod,
+                          bufferSize: Int(bufferSize), progress: progress)
+    }
+
+    @available(*, deprecated,
+                message: "Please use `Int` for `bufferSize`.")
+    func addEntry(with path: String, fileURL: URL, compressionMethod: CompressionMethod = .none,
+                  bufferSize: UInt32, progress: Progress? = nil) throws {
+        try self.addEntry(with: path, fileURL: fileURL, compressionMethod: compressionMethod,
+                          bufferSize: Int(bufferSize), progress: progress)
+    }
+
+    @available(*, deprecated,
+                message: "Please use `Int64` for `uncompressedSize` and provider `position`. `Int` for `bufferSize`.")
     func addEntry(with path: String, type: Entry.EntryType, uncompressedSize: UInt32,
                   modificationDate: Date = Date(), permissions: UInt16? = nil,
                   compressionMethod: CompressionMethod = .none, bufferSize: Int = defaultWriteChunkSize,
@@ -22,5 +40,11 @@ public extension Archive {
                           modificationDate: modificationDate, permissions: permissions,
                           compressionMethod: compressionMethod, bufferSize: bufferSize,
                           progress: progress, provider: newProvider)
+    }
+
+    @available(*, deprecated,
+                message: "Please use `Int` for `bufferSize`.")
+    func remove(_ entry: Entry, bufferSize: UInt32, progress: Progress? = nil) throws {
+        try self.remove(entry, bufferSize: Int(bufferSize), progress: progress)
     }
 }
