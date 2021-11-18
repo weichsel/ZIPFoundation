@@ -37,7 +37,7 @@ public typealias Consumer = (_ data: Data) throws -> Void
 /// - Throws: Can throw to indicate errors in the data source.
 public typealias Provider = (_ position: Int64, _ size: Int) throws -> Data
 
-public extension Data {
+extension Data {
     enum CompressionError: Error {
         case invalidStream
         case corruptedData
@@ -47,7 +47,7 @@ public extension Data {
     ///
     /// - Parameter checksum: The starting seed.
     /// - Returns: The checksum calculated from the bytes of the receiver and the starting seed.
-    func crc32(checksum: CRC32) -> CRC32 {
+    public func crc32(checksum: CRC32) -> CRC32 {
         #if canImport(zlib)
         return withUnsafeBytes { bufferPointer in
             let length = UInt32(count)
@@ -65,7 +65,7 @@ public extension Data {
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
     ///   - consumer: A closure that processes the result of the compress operation.
     /// - Returns: The checksum of the processed content.
-    static func compress(size: Int64, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
+    public static func compress(size: Int64, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_ENCODE, size: size, bufferSize: bufferSize,
                                 provider: provider, consumer: consumer)
@@ -82,8 +82,8 @@ public extension Data {
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
     ///   - consumer: A closure that processes the result of the decompress operation.
     /// - Returns: The checksum of the processed content.
-    static func decompress(size: Int64, bufferSize: Int, skipCRC32: Bool,
-                           provider: Provider, consumer: Consumer) throws -> CRC32 {
+    public static func decompress(size: Int64, bufferSize: Int, skipCRC32: Bool,
+                                  provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize,
                                 skipCRC32: skipCRC32, provider: provider, consumer: consumer)
