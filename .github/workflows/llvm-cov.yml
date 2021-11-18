@@ -2,9 +2,9 @@ name: Coverage
 
 on:
   push:
-    branches: [development]
+    branches: [development, feature/zip64]
   pull_request:
-    branches: [development]
+    branches: [development, feature/zip64]
 
 jobs:
   Coverage:
