@@ -30,6 +30,8 @@ To learn more about the performance characteristics of the framework, you can re
 
 - [x] Modern Swift API
 - [x] High Performance Compression and Decompression
+- [x] Large File Support
+- [x] In-Memory Archives
 - [x] Deterministic Memory Consumption
 - [x] Linux compatibility
 - [x] No 3rd party dependencies (on Apple platforms, zlib on Linux)
@@ -257,7 +259,7 @@ You can also add entries from an in-memory data source. To do this you have to p
 ```swift
 let string = "abcdefghijkl"
 guard let data = string.data(using: .utf8) else { return }
-try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: UInt32(string.count), bufferSize: 4, provider: { (position, size) -> Data in
+try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: UInt64(string.count), bufferSize: 4, provider: { (position, size) -> Data in
     // This will be called until `data` is exhausted (3x in this case).
     return data.subdata(in: position..<position+size)
 })
@@ -277,7 +279,7 @@ To _create_ an in-memory archive, the `data` parameter can be omitted:
 let string = "Some string!"
 guard let archive = Archive(accessMode: .create),
         let data = string.data(using: .utf8) else { return }
-    try? archive.addEntry(with: "inMemory.txt", type: .file, uncompressedSize: UInt32(string.count), bufferSize: 4, provider: { (position, size) -> Data in
+    try? archive.addEntry(with: "inMemory.txt", type: .file, uncompressedSize: UInt64(string.count), bufferSize: 4, provider: { (position, size) -> Data in
         return data.subdata(in: position..<position+size)
     })
 let archiveData = archive.data
