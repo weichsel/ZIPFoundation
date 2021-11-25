@@ -122,13 +122,13 @@ extension Archive {
         let compressionMethod = type == .file ? compressionMethod : .none
         progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : uncompressedSize
         let (eocdRecord, zip64EOCD) = (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory)
-        guard self.offsetToStartOfCentralDirectory <= UInt64.max else { throw ArchiveError.invalidOffsetOfCentralDirectory }
+        guard self.offsetToStartOfCentralDirectory <= .max else { throw ArchiveError.invalidCentralDirectoryOffset }
         var startOfCD = Int64(self.offsetToStartOfCentralDirectory)
         fseeko(self.archiveFile, off_t(startOfCD), SEEK_SET)
-        let existingCDSize = self.sizeOfCentralDirectory
-        let existingCDData = try Data.readChunk(of: Int(existingCDSize), from: self.archiveFile)
+        let existingSize = self.sizeOfCentralDirectory
+        let existingData = try Data.readChunk(of: Int(existingSize), from: self.archiveFile)
         fseeko(self.archiveFile, off_t(startOfCD), SEEK_SET)
-        let localFileHeaderStart = Int64(ftello(self.archiveFile))
+        let fileHeaderStart = Int64(ftello(self.archiveFile))
         let modDateTime = modificationDate.fileModificationDateTime
         defer { fflush(self.archiveFile) }
         do {
@@ -141,29 +141,27 @@ extension Archive {
                                                           compressionMethod: compressionMethod, bufferSize: bufferSize,
                                                           progress: progress, provider: provider)
             startOfCD = Int64(ftello(self.archiveFile))
-            // Local File Header
             // Write the local file header a second time. Now with compressedSize (if applicable) and a valid checksum.
-            fseeko(self.archiveFile, off_t(localFileHeaderStart), SEEK_SET)
+            fseeko(self.archiveFile, off_t(fileHeaderStart), SEEK_SET)
             localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
                                                             size: (UInt64(uncompressedSize), UInt64(written)),
                                                             checksum: checksum, modificationDateTime: modDateTime)
             // Central Directory
             fseeko(self.archiveFile, off_t(startOfCD), SEEK_SET)
-            _ = try Data.writeLargeChunk(existingCDData, size: existingCDSize, bufferSize: bufferSize, to: archiveFile)
+            _ = try Data.writeLargeChunk(existingData, size: existingSize, bufferSize: bufferSize, to: archiveFile)
             let permissions = permissions ?? (type == .directory ? defaultDirectoryPermissions : defaultFilePermissions)
             let externalAttributes = FileManager.externalFileAttributesForEntry(of: type, permissions: permissions)
             let centralDir = try self.writeCentralDirectoryStructure(localFileHeader: localFileHeader,
-                                                                     relativeOffset: UInt64(localFileHeaderStart),
+                                                                     relativeOffset: UInt64(fileHeaderStart),
                                                                      externalFileAttributes: externalAttributes)
             // End of Central Directory Record (including ZIP64 End of Central Directory Record/Locator)
-            let startOfEOCD = ftello(self.archiveFile)
-            let eocdStructure = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDir,
-                                                                    startOfCentralDirectory: UInt64(startOfCD),
-                                                                    startOfEndOfCentralDirectory: UInt64(startOfEOCD),
-                                                                    operation: .add)
-            (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory) = eocdStructure
+            let startOfEOCD = UInt64(ftello(self.archiveFile))
+            let eocd = try self.writeEndOfCentralDirectory(centralDirectoryStructure: centralDir,
+                                                           startOfCentralDirectory: UInt64(startOfCD),
+                                                           startOfEndOfCentralDirectory: startOfEOCD, operation: .add)
+            (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory) = eocd
         } catch ArchiveError.cancelledOperation {
-            try rollback(UInt64(localFileHeaderStart), (existingCDData, existingCDSize), bufferSize, eocdRecord, zip64EOCD)
+            try rollback(UInt64(fileHeaderStart), (existingData, existingSize), bufferSize, eocdRecord, zip64EOCD)
             throw ArchiveError.cancelledOperation
         }
     }

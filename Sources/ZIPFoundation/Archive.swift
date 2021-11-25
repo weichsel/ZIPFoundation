@@ -86,7 +86,7 @@ public final class Archive: Sequence {
         /// Thrown when the size of local header exceeds `Int64.max`
         case invalidSizeOfLocalHeader
         /// Thrown when the offset of central directory exceeds `Int64.max`
-        case invalidOffsetOfCentralDirectory
+        case invalidCentralDirectoryOffset
     }
 
     /// The access mode for an `Archive`.
