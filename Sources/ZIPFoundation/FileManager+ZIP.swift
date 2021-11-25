@@ -231,6 +231,9 @@ extension FileManager {
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
+        guard fileStat.st_size >= 0 else {
+            throw CocoaError(.fileReadTooLarge, userInfo: [NSFilePathErrorKey: url.path])
+        }
         // `st_size` is a signed int value
         return Int64(fileStat.st_size)
     }

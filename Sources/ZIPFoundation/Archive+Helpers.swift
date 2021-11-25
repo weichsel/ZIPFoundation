@@ -17,7 +17,8 @@ extension Archive {
     func readUncompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                           progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = entry.centralDirectoryStructure.effectiveUncompressedSize
-        return try Data.consumePart(of: size, chunkSize: bufferSize, skipCRC32: skipCRC32,
+        guard size <= Int64.max else { throw ArchiveError.tooLargeFile }
+        return try Data.consumePart(of: Int64(size), chunkSize: bufferSize, skipCRC32: skipCRC32,
                                     provider: { (_, chunkSize) -> Data in
                                         return try Data.readChunk(of: chunkSize, from: self.archiveFile)
                                     }, consumer: { (data) in
@@ -30,7 +31,8 @@ extension Archive {
     func readCompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                         progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = entry.centralDirectoryStructure.effectiveCompressedSize
-        return try Data.decompress(size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
+        guard size <= Int64.max else { throw ArchiveError.tooLargeFile }
+        return try Data.decompress(size: Int64(size), bufferSize: bufferSize, skipCRC32: skipCRC32,
                                    provider: { (_, chunkSize) -> Data in
                                     return try Data.readChunk(of: chunkSize, from: self.archiveFile)
                                    }, consumer: { (data) in
@@ -72,7 +74,7 @@ extension Archive {
     }
 
     func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
-                              size: (uncompressed: Int64, compressed: Int64), checksum: CRC32,
+                              size: (uncompressed: UInt64, compressed: UInt64), checksum: CRC32,
                               modificationDateTime: (UInt16, UInt16)) throws -> LocalFileHeader {
         // We always set Bit 11 in generalPurposeBitFlag, which indicates an UTF-8 encoded path.
         guard let fileNameData = path.data(using: .utf8) else { throw ArchiveError.invalidEntryPath }
@@ -112,11 +114,11 @@ extension Archive {
         return localFileHeader
     }
 
-    func writeCentralDirectoryStructure(localFileHeader: LocalFileHeader, relativeOffset: Int64,
+    func writeCentralDirectoryStructure(localFileHeader: LocalFileHeader, relativeOffset: UInt64,
                                         externalFileAttributes: UInt32) throws -> CentralDirectoryStructure {
-        var extraUncompressedSize: Int64?
-        var extraCompressedSize: Int64?
-        var extraOffset: Int64?
+        var extraUncompressedSize: UInt64?
+        var extraCompressedSize: UInt64?
+        var extraOffset: UInt64?
         var relativeOffsetOfCD = UInt32(0)
         var extraFieldLength = UInt16(0)
         var zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?
@@ -154,8 +156,8 @@ extension Archive {
     }
 
     func writeEndOfCentralDirectory(centralDirectoryStructure: CentralDirectoryStructure,
-                                    startOfCentralDirectory: Int64,
-                                    startOfEndOfCentralDirectory: Int64,
+                                    startOfCentralDirectory: UInt64,
+                                    startOfEndOfCentralDirectory: UInt64,
                                     operation: ModifyOperation) throws -> EndOfCentralDirectoryStructure {
         var record = self.endOfCentralDirectoryRecord
         let sizeOfCD = self.sizeOfCentralDirectory
@@ -165,17 +167,18 @@ extension Archive {
         dataLength += centralDirectoryStructure.fileNameLength
         dataLength += centralDirectoryStructure.fileCommentLength
         let cdDataLengthChange = countChange * (Int(dataLength) + CentralDirectoryStructure.size)
-        guard Int64.max - sizeOfCD >= cdDataLengthChange else {
-            throw ArchiveError.invalidSizeOfCentralDirectory
-        }
-        let updatedSizeOfCD = sizeOfCD + Int64(cdDataLengthChange)
-        guard UInt64.max - numberOfTotalEntries >= countChange else {
-            throw ArchiveError.invalidNumberOfEntriesInCentralDirectory
-        }
-        let updatedNumberOfEntries: UInt64 = {
+        let (updatedSizeOfCD, updatedNumberOfEntries): (UInt64, UInt64) = try {
             switch operation {
-            case .add: return numberOfTotalEntries + UInt64(countChange)
-            case .remove: return numberOfTotalEntries - UInt64(-countChange)
+            case .add:
+                guard UInt64.max - sizeOfCD >= cdDataLengthChange else {
+                    throw ArchiveError.invalidSizeOfCentralDirectory
+                }
+                guard UInt64.max - numberOfTotalEntries >= countChange else {
+                    throw ArchiveError.invalidNumberOfEntriesInCentralDirectory
+                }
+                return (sizeOfCD + UInt64(cdDataLengthChange), numberOfTotalEntries + UInt64(countChange))
+            case .remove:
+                return (sizeOfCD - UInt64(-cdDataLengthChange), numberOfTotalEntries - UInt64(-countChange))
             }
         }()
         let sizeOfCDForEOCD = updatedSizeOfCD >= maxSizeOfCentralDirectory
@@ -243,9 +246,9 @@ extension Archive {
     }
 
     func writeZIP64EOCD(totalNumberOfEntries: UInt64,
-                        sizeOfCentralDirectory: Int64,
-                        offsetOfCentralDirectory: Int64,
-                        offsetOfEndOfCentralDirectory: Int64) throws -> ZIP64EndOfCentralDirectory {
+                        sizeOfCentralDirectory: UInt64,
+                        offsetOfCentralDirectory: UInt64,
+                        offsetOfEndOfCentralDirectory: UInt64) throws -> ZIP64EndOfCentralDirectory {
         var zip64EOCD: ZIP64EndOfCentralDirectory = self.zip64EndOfCentralDirectory ?? {
             // Shouldn't include the leading 12 bytes: (size - 12 = 44)
             let record = ZIP64EndOfCentralDirectoryRecord(sizeOfZIP64EndOfCentralDirectoryRecord: UInt64(44),

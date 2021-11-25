@@ -17,7 +17,7 @@ extension Archive {
     /// - Parameter entry: The entry that will be removed.
     /// - Returns: The number of the work units.
     public func totalUnitCountForRemoving(_ entry: Entry) -> Int64 {
-        return self.offsetToStartOfCentralDirectory - entry.localSize
+        return Int64(self.offsetToStartOfCentralDirectory - entry.localSize)
     }
 
     func makeProgressForRemoving(_ entry: Entry) -> Progress {
@@ -32,7 +32,7 @@ extension Archive {
     public func totalUnitCountForReading(_ entry: Entry) -> Int64 {
         switch entry.type {
         case .file, .symlink:
-            return entry.uncompressedSize
+            return Int64(entry.uncompressedSize)
         case .directory:
             return defaultDirectoryUnitCount
         }

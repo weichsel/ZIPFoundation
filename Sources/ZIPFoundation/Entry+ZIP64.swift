@@ -24,9 +24,9 @@ extension Entry {
         let headerID: UInt16 = ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
         let dataSize: UInt16
         static let headerSize: UInt16 = 4
-        let uncompressedSize: Int64
-        let compressedSize: Int64
-        let relativeOffsetOfLocalHeader: Int64
+        let uncompressedSize: UInt64
+        let compressedSize: UInt64
+        let relativeOffsetOfLocalHeader: UInt64
         let diskNumberStart: UInt32
     }
 
@@ -128,7 +128,7 @@ extension Entry.ZIP64ExtendedInformation {
         }
     }
 
-    init?(zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, offset: Int64) {
+    init?(zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, offset: UInt64) {
         // Only used when removing entry, if no ZIP64 extended information exists,
         // then this information will not be newly added either
         guard let existingInfo = zip64ExtendedInformation else { return nil }

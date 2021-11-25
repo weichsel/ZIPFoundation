@@ -31,7 +31,8 @@ extension Data {
         #endif
     }
 
-    static func readStruct<T>(from file: UnsafeMutablePointer<FILE>, at offset: Int64) -> T? where T: DataSerializable {
+    static func readStruct<T>(from file: UnsafeMutablePointer<FILE>, at offset: UInt64) -> T? where T: DataSerializable {
+        guard offset <= Int64.max else { return nil }
         fseeko(file, off_t(offset), SEEK_SET)
         guard let data = try? self.readChunk(of: T.size, from: file) else {
             return nil
@@ -101,9 +102,9 @@ extension Data {
         return sizeWritten
     }
 
-    static func writeLargeChunk(_ chunk: Data, size: Int64, bufferSize: Int,
-                                to file: UnsafeMutablePointer<FILE>) throws -> Int64 {
-        var sizeWritten: Int64 = 0
+    static func writeLargeChunk(_ chunk: Data, size: UInt64, bufferSize: Int,
+                                to file: UnsafeMutablePointer<FILE>) throws -> UInt64 {
+        var sizeWritten: UInt64 = 0
         chunk.withUnsafeBytes { (rawBufferPointer) in
             if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
                 let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
@@ -113,7 +114,7 @@ extension Data {
                     let chunkSize = Swift.min(Int(remainingSize), bufferSize)
                     let curPointer = pointer.advanced(by: Int(sizeWritten))
                     fwrite(curPointer, 1, chunkSize, file)
-                    sizeWritten += Int64(chunkSize)
+                    sizeWritten += UInt64(chunkSize)
                 }
             }
         }
