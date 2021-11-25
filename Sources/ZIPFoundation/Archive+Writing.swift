@@ -140,7 +140,7 @@ extension Archive {
             let (written, checksum) = try self.writeEntry(uncompressedSize: uncompressedSize, type: type,
                                                           compressionMethod: compressionMethod, bufferSize: bufferSize,
                                                           progress: progress, provider: provider)
-            startOfCD = ftello(self.archiveFile)
+            startOfCD = Int64(ftello(self.archiveFile))
             // Local File Header
             // Write the local file header a second time. Now with compressedSize (if applicable) and a valid checksum.
             fseeko(self.archiveFile, off_t(localFileHeaderStart), SEEK_SET)
@@ -148,7 +148,7 @@ extension Archive {
                                                             size: (UInt64(uncompressedSize), UInt64(written)),
                                                             checksum: checksum, modificationDateTime: modDateTime)
             // Central Directory
-            fseeko(self.archiveFile, startOfCD, SEEK_SET)
+            fseeko(self.archiveFile, off_t(startOfCD), SEEK_SET)
             _ = try Data.writeLargeChunk(existingCDData, size: existingCDSize, bufferSize: bufferSize, to: archiveFile)
             let permissions = permissions ?? (type == .directory ? defaultDirectoryPermissions : defaultFilePermissions)
             let externalAttributes = FileManager.externalFileAttributesForEntry(of: type, permissions: permissions)
