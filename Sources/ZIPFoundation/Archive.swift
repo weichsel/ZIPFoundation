@@ -73,17 +73,17 @@ public final class Archive: Sequence {
         case cancelledOperation
         /// Thrown when an extract operation was called with zero or negative `bufferSize` parameter.
         case invalidBufferSize
-        /// Thrown when uncompressedSize/compressedSize exceeds `Int64.max`
+        /// Thrown when uncompressedSize/compressedSize exceeds `Int64.max` (Imposed by file API).
         case invalidEntrySize
-        /// Thrown when the offset of local header data exceeds `Int64.max`
+        /// Thrown when the offset of local header data exceeds `Int64.max` (Imposed by file API).
         case invalidLocalHeaderDataOffset
-        /// Thrown when the size of local header exceeds `Int64.max`
+        /// Thrown when the size of local header exceeds `Int64.max` (Imposed by file API).
         case invalidLocalHeaderSize
-        /// Thrown when the offset of central directory exceeds `Int64.max`
+        /// Thrown when the offset of central directory exceeds `Int64.max` (Imposed by file API).
         case invalidCentralDirectoryOffset
-        /// Thrown when the size of central directory exceeds `UInt64.max`
+        /// Thrown when the size of central directory exceeds `UInt64.max` (Imposed by ZIP specification).
         case invalidCentralDirectorySize
-        /// Thrown when number of entries in central directory exceeds `UInt64.max`
+        /// Thrown when number of entries in central directory exceeds `UInt64.max` (Imposed by ZIP specification).
         case invalidCentralDirectoryEntryCount
         /// Thrown when an archive does not contain the required End of Central Directory Record.
         case missingEndOfCentralDirectoryRecord
