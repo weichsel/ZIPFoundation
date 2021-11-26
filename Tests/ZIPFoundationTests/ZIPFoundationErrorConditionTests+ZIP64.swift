@@ -23,7 +23,7 @@ extension ZIPFoundationTests {
                                                        startOfEndOfCentralDirectory: 0,
                                                        operation: .add)
         } catch let error as Archive.ArchiveError {
-            XCTAssertNotNil(error == .invalidSizeOfCentralDirectory)
+            XCTAssertNotNil(error == .invalidCentralDirectorySize)
             didCatchExpectedError = true
         } catch {
             XCTFail("Unexpected error while writing end of central directory with large central directory size.")
@@ -42,7 +42,7 @@ extension ZIPFoundationTests {
                                                        startOfEndOfCentralDirectory: 0,
                                                        operation: .add)
         } catch let error as Archive.ArchiveError {
-            XCTAssertNotNil(error == .invalidNumberOfEntriesInCentralDirectory)
+            XCTAssertNotNil(error == .invalidCentralDirectoryEntryCount)
             didCatchExpectedError = true
         } catch {
             XCTFail("Unexpected error while writing end of central directory with large number of entries.")

@@ -69,24 +69,24 @@ public final class Archive: Sequence {
         case invalidEntryPath
         /// Thrown when an `Entry` can't be stored in the archive with the proposed compression method.
         case invalidCompressionMethod
-        /// Thrown when the size of central directory exceeds `UInt64.max`
-        case invalidSizeOfCentralDirectory
-        /// Thrown when an archive does not contain the required End of Central Directory Record.
-        case missingEndOfCentralDirectoryRecord
-        /// Thrown when number of entries in central directory exceeds `UInt64.max`
-        case invalidNumberOfEntriesInCentralDirectory
         /// Thrown when an extract, add or remove operation was canceled.
         case cancelledOperation
         /// Thrown when an extract operation was called with zero or negative `bufferSize` parameter.
         case invalidBufferSize
         /// Thrown when uncompressedSize/compressedSize exceeds `Int64.max`
-        case tooLargeFile
+        case invalidEntrySize
         /// Thrown when the offset of local header data exceeds `Int64.max`
-        case invalidOffsetOfLocalHeaderData
+        case invalidLocalHeaderDataOffset
         /// Thrown when the size of local header exceeds `Int64.max`
-        case invalidSizeOfLocalHeader
+        case invalidLocalHeaderSize
         /// Thrown when the offset of central directory exceeds `Int64.max`
         case invalidCentralDirectoryOffset
+        /// Thrown when the size of central directory exceeds `UInt64.max`
+        case invalidCentralDirectorySize
+        /// Thrown when number of entries in central directory exceeds `UInt64.max`
+        case invalidCentralDirectoryEntryCount
+        /// Thrown when an archive does not contain the required End of Central Directory Record.
+        case missingEndOfCentralDirectoryRecord
     }
 
     /// The access mode for an `Archive`.
