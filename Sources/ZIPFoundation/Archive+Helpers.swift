@@ -17,7 +17,7 @@ extension Archive {
     func readUncompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                           progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = entry.centralDirectoryStructure.effectiveUncompressedSize
-        guard size <= Int64.max else { throw ArchiveError.invalidEntrySize }
+        guard size <= .max else { throw ArchiveError.invalidEntrySize }
         return try Data.consumePart(of: Int64(size), chunkSize: bufferSize, skipCRC32: skipCRC32,
                                     provider: { (_, chunkSize) -> Data in
                                         return try Data.readChunk(of: chunkSize, from: self.archiveFile)
@@ -31,7 +31,7 @@ extension Archive {
     func readCompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                         progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = entry.centralDirectoryStructure.effectiveCompressedSize
-        guard size <= Int64.max else { throw ArchiveError.invalidEntrySize }
+        guard size <= .max else { throw ArchiveError.invalidEntrySize }
         return try Data.decompress(size: Int64(size), bufferSize: bufferSize, skipCRC32: skipCRC32,
                                    provider: { (_, chunkSize) -> Data in
                                     return try Data.readChunk(of: chunkSize, from: self.archiveFile)
@@ -170,10 +170,10 @@ extension Archive {
         let (updatedSizeOfCD, updatedNumberOfEntries): (UInt64, UInt64) = try {
             switch operation {
             case .add:
-                guard UInt64.max - sizeOfCD >= cdDataLengthChange else {
+                guard .max - sizeOfCD >= cdDataLengthChange else {
                     throw ArchiveError.invalidCentralDirectorySize
                 }
-                guard UInt64.max - numberOfTotalEntries >= countChange else {
+                guard .max - numberOfTotalEntries >= countChange else {
                     throw ArchiveError.invalidCentralDirectoryEntryCount
                 }
                 return (sizeOfCD + UInt64(cdDataLengthChange), numberOfTotalEntries + UInt64(countChange))

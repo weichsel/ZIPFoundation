@@ -193,7 +193,7 @@ extension Archive {
                     _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
                     progress?.completedUnitCount += Int64($0.count)
                 }
-                guard currentEntry.localSize <= UInt64.max else { throw ArchiveError.invalidLocalHeaderSize }
+                guard currentEntry.localSize <= .max else { throw ArchiveError.invalidLocalHeaderSize }
                 _ = try Data.consumePart(of: Int64(currentEntry.localSize), chunkSize: bufferSize,
                                          provider: provider, consumer: consumer)
                 let updatedCentralDirectory = updateOffsetInCentralDirectory(centralDirectoryStructure: cds,
