@@ -75,7 +75,7 @@ public struct Entry: Equatable {
     }
 
     typealias DefaultDataDescriptor = DataDescriptor<UInt32>
-    typealias ZIP64DataDescriptor = DataDescriptor<Int64>
+    typealias ZIP64DataDescriptor = DataDescriptor<UInt64>
 
     struct CentralDirectoryStructure: DataSerializable {
         let centralDirectorySignature = UInt32(centralDirectoryStructSignature)
@@ -167,39 +167,39 @@ public struct Entry: Equatable {
         }
     }
     /// The size of the receiver's compressed data.
-    public var compressedSize: Int64 {
+    public var compressedSize: UInt64 {
         if centralDirectoryStructure.isZIP64 {
             return zip64DataDescriptor?.compressedSize ?? centralDirectoryStructure.effectiveCompressedSize
         }
-        return Int64(dataDescriptor?.compressedSize ?? centralDirectoryStructure.compressedSize)
+        return UInt64(dataDescriptor?.compressedSize ?? centralDirectoryStructure.compressedSize)
     }
     /// The size of the receiver's uncompressed data.
-    public var uncompressedSize: Int64 {
+    public var uncompressedSize: UInt64 {
         if centralDirectoryStructure.isZIP64 {
             return zip64DataDescriptor?.uncompressedSize ?? centralDirectoryStructure.effectiveUncompressedSize
         }
-        return Int64(dataDescriptor?.uncompressedSize ?? centralDirectoryStructure.uncompressedSize)
+        return UInt64(dataDescriptor?.uncompressedSize ?? centralDirectoryStructure.uncompressedSize)
     }
     /// The combined size of the local header, the data and the optional data descriptor.
-    var localSize: Int64 {
+    var localSize: UInt64 {
         let localFileHeader = self.localFileHeader
         var extraDataLength = Int(localFileHeader.fileNameLength)
         extraDataLength += Int(localFileHeader.extraFieldLength)
-        var size = Int64(LocalFileHeader.size + extraDataLength)
+        var size = UInt64(LocalFileHeader.size + extraDataLength)
         let isCompressed = localFileHeader.compressionMethod != CompressionMethod.none.rawValue
         size += isCompressed ? self.compressedSize : self.uncompressedSize
         if centralDirectoryStructure.isZIP64 {
-            size += self.zip64DataDescriptor != nil ? Int64(ZIP64DataDescriptor.size) : 0
+            size += self.zip64DataDescriptor != nil ? UInt64(ZIP64DataDescriptor.size) : 0
         } else {
-            size += self.dataDescriptor != nil ? Int64(DefaultDataDescriptor.size) : 0
+            size += self.dataDescriptor != nil ? UInt64(DefaultDataDescriptor.size) : 0
         }
         return size
     }
-    var dataOffset: Int64 {
+    var dataOffset: UInt64 {
         var dataOffset = self.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader
-        dataOffset += Int64(LocalFileHeader.size)
-        dataOffset += Int64(self.localFileHeader.fileNameLength)
-        dataOffset += Int64(self.localFileHeader.extraFieldLength)
+        dataOffset += UInt64(LocalFileHeader.size)
+        dataOffset += UInt64(self.localFileHeader.fileNameLength)
+        dataOffset += UInt64(self.localFileHeader.extraFieldLength)
         return dataOffset
     }
     let centralDirectoryStructure: CentralDirectoryStructure
@@ -293,22 +293,22 @@ extension Entry.CentralDirectoryStructure {
 
 extension Entry.CentralDirectoryStructure {
 
-    var effectiveCompressedSize: Int64 {
+    var effectiveCompressedSize: UInt64 {
         if self.isZIP64, let compressedSize = zip64ExtendedInformation?.compressedSize, compressedSize > 0 {
             return compressedSize
         }
-        return Int64(compressedSize)
+        return UInt64(compressedSize)
     }
-    var effectiveUncompressedSize: Int64 {
+    var effectiveUncompressedSize: UInt64 {
         if self.isZIP64, let uncompressedSize = zip64ExtendedInformation?.uncompressedSize, uncompressedSize > 0 {
             return uncompressedSize
         }
-        return Int64(uncompressedSize)
+        return UInt64(uncompressedSize)
     }
-    var effectiveRelativeOffsetOfLocalHeader: Int64 {
+    var effectiveRelativeOffsetOfLocalHeader: UInt64 {
         if self.isZIP64, let offset = zip64ExtendedInformation?.relativeOffsetOfLocalHeader, offset > 0 {
             return offset
         }
-        return Int64(relativeOffsetOfLocalHeader)
+        return UInt64(relativeOffsetOfLocalHeader)
     }
 }

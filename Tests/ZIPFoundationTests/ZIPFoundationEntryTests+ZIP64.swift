@@ -32,8 +32,8 @@ extension ZIPFoundationTests {
                        zip64ExtraField1?.relativeOffsetOfLocalHeader)
         XCTAssertEqual(updatedZIP64ExtraField1?.dataSize, zip64ExtraField1?.dataSize)
         let updatedZIP64ExtraField2 = ZIP64ExtendedInformation(zip64ExtendedInformation: zip64ExtraField2,
-                                                               offset: Int64(UInt32.max) + 1)
-        XCTAssertEqual(updatedZIP64ExtraField2?.relativeOffsetOfLocalHeader, Int64(UInt32.max) + 1)
+                                                               offset: UInt64(UInt32.max) + 1)
+        XCTAssertEqual(updatedZIP64ExtraField2?.relativeOffsetOfLocalHeader, UInt64(UInt32.max) + 1)
         XCTAssertEqual(updatedZIP64ExtraField2?.dataSize, zip64ExtraField2?.dataSize)
     }
 
