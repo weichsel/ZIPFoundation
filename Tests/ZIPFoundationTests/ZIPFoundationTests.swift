@@ -85,8 +85,12 @@ class ZIPFoundationTests: XCTestCase {
                 throw Archive.ArchiveError.unreadableArchive
             }
             return archive
-        } catch {
+        } catch Archive.ArchiveError.unreadableArchive {
             XCTFail("Failed to get test archive '\(destinationArchiveURL.lastPathComponent)'")
+            type(of: self).tearDown()
+            preconditionFailure()
+        } catch {
+            XCTFail("File system error: \(error)")
             type(of: self).tearDown()
             preconditionFailure()
         }
@@ -155,6 +159,21 @@ class ZIPFoundationTests: XCTestCase {
         handler()
         #endif
     }
+
+    // MARK: - ZIP64 Helpers
+
+    // It's not practical to create compressed files that exceed the size limit every time for test,
+    // so provide helper methods to mock the maximum size limit
+
+    func mockIntMaxValues(int32Factor: Int = 64, int16Factor: Int = 64) {
+        maxUInt32 = UInt32(int32Factor * int32Factor)
+        maxUInt16 = UInt16(int16Factor)
+    }
+
+    func resetIntMaxValues() {
+        maxUInt32 = .max
+        maxUInt16 = .max
+    }
 }
 
 extension ZIPFoundationTests {
@@ -173,6 +192,7 @@ extension ZIPFoundationTests {
         return [
             ("testArchiveAddEntryErrorConditions", testArchiveAddEntryErrorConditions),
             ("testArchiveCreateErrorConditions", testArchiveCreateErrorConditions),
+            ("testArchiveInvalidEOCDRecordConditions", testArchiveInvalidEOCDRecordConditions),
             ("testArchiveInvalidDataErrorConditions", testArchiveInvalidDataErrorConditions),
             ("testArchiveIteratorErrorConditions", testArchiveIteratorErrorConditions),
             ("testArchiveReadErrorConditions", testArchiveReadErrorConditions),
@@ -188,9 +208,6 @@ extension ZIPFoundationTests {
             ("testCreateArchiveAddLargeCompressedEntry", testCreateArchiveAddLargeCompressedEntry),
             ("testCreateArchiveAddLargeUncompressedEntry", testCreateArchiveAddLargeUncompressedEntry),
             ("testCreateArchiveAddSymbolicLink", testCreateArchiveAddSymbolicLink),
-            ("testCreateArchiveAddTooLargeUncompressedEntry", testCreateArchiveAddTooLargeUncompressedEntry),
-            ("testCreateArchiveWithTooManyEntriesOnDisk", testCreateArchiveWithTooManyEntriesOnDisk),
-            ("testCreateArchiveWithTooManyDirectories", testCreateArchiveWithTooManyEntriesInCD),
             ("testCreateArchiveAddUncompressedEntry", testCreateArchiveAddUncompressedEntry),
             ("testDetectEntryType", testDetectEntryType),
             ("testExtractInvalidBufferSizeErrorConditions", testExtractInvalidBufferSizeErrorConditions),
@@ -200,6 +217,7 @@ extension ZIPFoundationTests {
             ("testEntryInvalidSignatureErrorConditions", testEntryInvalidSignatureErrorConditions),
             ("testEntryMissingDataDescriptorErrorCondition", testEntryMissingDataDescriptorErrorCondition),
             ("testEntryTypeDetectionHeuristics", testEntryTypeDetectionHeuristics),
+            ("testEntryValidDataDescriptor", testEntryValidDataDescriptor),
             ("testEntryWrongDataLengthErrorConditions", testEntryWrongDataLengthErrorConditions),
             ("testExtractCompressedDataDescriptorArchive", testExtractCompressedDataDescriptorArchive),
             ("testExtractCompressedFolderEntries", testExtractCompressedFolderEntries),
@@ -212,7 +230,6 @@ extension ZIPFoundationTests {
             ("testExtractUncompressedDataDescriptorArchive", testExtractUncompressedDataDescriptorArchive),
             ("testExtractUncompressedFolderEntries", testExtractUncompressedFolderEntries),
             ("testExtractUncompressedEmptyFile", testExtractUncompressedEmptyFile),
-            ("testExtractZIP64ArchiveErrorConditions", testExtractZIP64ArchiveErrorConditions),
             ("testFileAttributeHelperMethods", testFileAttributeHelperMethods),
             ("testFilePermissionHelperMethods", testFilePermissionHelperMethods),
             ("testFileSizeHelperMethods", testFileSizeHelperMethods),
@@ -236,7 +253,43 @@ extension ZIPFoundationTests {
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
-        ] + darwinOnlyTests + swift5OnlyTests
+        ] + zip64Tests + darwinOnlyTests + swift5OnlyTests
+    }
+
+    static var zip64Tests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
+        return [
+            ("testZipCompressedZIP64Item", testZipCompressedZIP64Item),
+            ("testZipUncompressedZIP64Item", testZipUncompressedZIP64Item),
+            ("testUnzipCompressedZIP64Item", testUnzipCompressedZIP64Item),
+            ("testUnzipUncompressedZIP64Item", testUnzipUncompressedZIP64Item),
+            ("testUnzipItemWithZIP64DataDescriptor", testUnzipItemWithZIP64DataDescriptor),
+            ("testEntryZIP64ExtraField", testEntryZIP64ExtraField),
+            ("testEntryZIP64FieldOnlyHasUncompressedSize", testEntryZIP64FieldOnlyHasUncompressedSize),
+            ("testEntryZIP64FieldIncludingDiskNumberStart", testEntryZIP64FieldIncludingDiskNumberStart),
+            ("testEntryValidZIP64DataDescriptor", testEntryValidZIP64DataDescriptor),
+            ("testEntryWithZIP64ExtraField", testEntryWithZIP64ExtraField),
+            ("testEntryInvalidZIP64ExtraFieldErrorConditions", testEntryInvalidZIP64ExtraFieldErrorConditions),
+            ("testEntryScanForZIP64Field", testEntryScanForZIP64Field),
+            ("testEntryScanForZIP64FieldErrorConditions", testEntryScanForZIP64FieldErrorConditions),
+            ("testArchiveZIP64EOCDRecord", testArchiveZIP64EOCDRecord),
+            ("testArchiveInvalidZIP64EOCERecordConditions", testArchiveInvalidZIP64EOCERecordConditions),
+            ("testArchiveZIP64EOCDLocator", testArchiveZIP64EOCDLocator),
+            ("testArchiveInvalidZIP64EOCDLocatorConditions", testArchiveInvalidZIP64EOCDLocatorConditions),
+            ("testCreateZIP64ArchiveWithLargeSize", testCreateZIP64ArchiveWithLargeSize),
+            ("testCreateZIP64ArchiveWithTooManyEntries", testCreateZIP64ArchiveWithTooManyEntries),
+            ("testAddEntryToArchiveWithZIP64LFHOffset", testAddEntryToArchiveWithZIP64LFHOffset),
+            ("testAddDirectoryToArchiveWithZIP64LFHOffset", testAddDirectoryToArchiveWithZIP64LFHOffset),
+            ("testCreateZIP64ArchiveWithLargeSizeOfCD", testCreateZIP64ArchiveWithLargeSizeOfCD),
+            ("testRemoveEntryFromArchiveWithZIP64EOCD", testRemoveEntryFromArchiveWithZIP64EOCD),
+            ("testRemoveZIP64EntryFromArchiveWithZIP64EOCD", testRemoveZIP64EntryFromArchiveWithZIP64EOCD),
+            ("testRemoveEntryWithZIP64ExtendedInformation", testRemoveEntryWithZIP64ExtendedInformation),
+            ("testWriteEOCDWithTooLargeSizeOfCentralDirectory", testWriteEOCDWithTooLargeSizeOfCentralDirectory),
+            ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset),
+            ("testWriteLargeChunk", testWriteLargeChunk),
+            ("testExtractUncompressedZIP64Entries", testExtractUncompressedZIP64Entries),
+            ("testExtractCompressedZIP64Entries", testExtractCompressedZIP64Entries),
+            ("testExtractEntryWithZIP64DataDescriptor", testExtractEntryWithZIP64DataDescriptor)
+        ]
     }
 
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
@@ -250,11 +303,13 @@ extension ZIPFoundationTests {
             ("testReplaceCurrentArchiveWithArchiveCrossLink", testReplaceCurrentArchiveWithArchiveCrossLink),
             ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
             ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress),
+            ("testZIP64ArchiveAddEntryProgress", testZIP64ArchiveAddEntryProgress),
             // The below test cases test error code paths but they lead to undefined behavior and memory
             // corruption on non-Darwin platforms. We disable them for now.
             ("testReadStructureErrorConditions", testReadStructureErrorConditions),
             ("testReadChunkErrorConditions", testReadChunkErrorConditions),
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
+            ("testWriteLargeChunkErrorConditions", testWriteLargeChunkErrorConditions),
             // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
             ("testZipItemErrorConditions", testZipItemErrorConditions)
         ]

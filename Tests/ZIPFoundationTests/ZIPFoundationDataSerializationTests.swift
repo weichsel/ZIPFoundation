@@ -82,4 +82,50 @@ extension ZIPFoundationTests {
         XCTAssertEqual(data.crc32(checksum: 0), data.builtInCRC32(checksum: 0))
         #endif
     }
+
+    func testWriteLargeChunk() {
+        let processInfo = ProcessInfo.processInfo
+        let fileManager = FileManager()
+        var fileURL = ZIPFoundationTests.tempZipDirectoryURL
+        fileURL.appendPathComponent(processInfo.globallyUniqueString)
+        let result = fileManager.createFile(atPath: fileURL.path, contents: Data(),
+                                            attributes: nil)
+        XCTAssert(result == true)
+        let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
+        let file: UnsafeMutablePointer<FILE> = fopen(fileSystemRepresentation, "rb+")
+        let data = Data.makeRandomData(size: 1024)
+        do {
+            let writtenSize = try Data.writeLargeChunk(data, size: 1024, bufferSize: 256, to: file)
+            XCTAssertEqual(writtenSize, 1024)
+            fseeko(file, 0, SEEK_SET)
+            let writtenData = try Data.readChunk(of: Int(writtenSize), from: file)
+            XCTAssertEqual(writtenData, data)
+        } catch {
+            XCTFail("Unexpected error while testing to write into a closed file.")
+        }
+    }
+
+    func testWriteLargeChunkErrorConditions() {
+        let processInfo = ProcessInfo.processInfo
+        let fileManager = FileManager()
+        var fileURL = ZIPFoundationTests.tempZipDirectoryURL
+        fileURL.appendPathComponent(processInfo.globallyUniqueString)
+        let result = fileManager.createFile(atPath: fileURL.path, contents: Data(),
+                                            attributes: nil)
+        XCTAssert(result == true)
+        let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
+        let file: UnsafeMutablePointer<FILE> = fopen(fileSystemRepresentation, "rb")
+        let data = Data.makeRandomData(size: 1024)
+        // Close the file to exercise the error path during writeChunk that deals with
+        // unwritable files.
+        fclose(file)
+        do {
+            let dataWritten = try Data.writeLargeChunk(data, size: 1024, bufferSize: 256, to: file)
+            XCTAssert(dataWritten == 0)
+        } catch let error as Data.DataError {
+            XCTAssert(error == .unwritableFile)
+        } catch {
+            XCTFail("Unexpected error while testing to write into a closed file.")
+        }
+    }
 }

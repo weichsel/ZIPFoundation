@@ -12,7 +12,6 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
-
     func testExtractUncompressedFolderEntries() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
@@ -205,16 +204,6 @@ extension ZIPFoundationTests {
                 XCTFail("Unexpected error while trying to extract entry with invalid compression method link.")
             }
         }
-    }
-
-    func testExtractZIP64ArchiveErrorConditions() {
-        let archive = self.archive(for: #function, mode: .read)
-        var entriesRead = 0
-        for _ in archive {
-            entriesRead += 1
-        }
-        // We currently don't support ZIP64 so we expect failed initialization for entry objects.
-        XCTAssert(entriesRead == 0)
     }
 
     func testExtractEncryptedArchiveErrorConditions() {

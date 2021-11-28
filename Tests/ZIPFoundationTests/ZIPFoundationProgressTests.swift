@@ -180,5 +180,40 @@ extension ZIPFoundationTests {
         }
         self.wait(for: [expectation], timeout: 10.0)
     }
+
+    func testZIP64ArchiveAddEntryProgress() {
+        self.mockIntMaxValues()
+        defer { self.resetIntMaxValues() }
+        let archive = self.archive(for: #function, mode: .update)
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        let progress = archive.makeProgressForAddingItem(at: assetURL)
+        let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
+            if progress.fractionCompleted > 0.5 {
+                progress.cancel()
+                return true
+            }
+            return false
+        }
+        let cancel = self.keyValueObservingExpectation(for: progress, keyPath: #keyPath(Progress.fractionCompleted),
+                                                       handler: handler)
+        let zipQueue = DispatchQueue(label: "ZIPFoundationTests")
+        zipQueue.async {
+            do {
+                let relativePath = assetURL.lastPathComponent
+                let baseURL = assetURL.deletingLastPathComponent()
+                try archive.addEntry(with: relativePath, relativeTo: baseURL,
+                                     compressionMethod: .deflate, bufferSize: 1, progress: progress)
+            } catch let error as Archive.ArchiveError {
+                XCTAssert(error == Archive.ArchiveError.cancelledOperation)
+            } catch {
+                XCTFail("Failed to add entry to uncompressed folder archive with error : \(error)")
+            }
+        }
+        self.wait(for: [cancel], timeout: 20.0)
+        zipQueue.sync {
+            XCTAssert(progress.fractionCompleted > 0.5)
+            XCTAssert(archive.checkIntegrity())
+        }
+    }
 }
 #endif
