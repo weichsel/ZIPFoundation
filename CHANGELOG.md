@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.13](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.13)
+### Added
+ - Added large file support (ZIP64)
+ 
+### Updated
+ - Fixed an `UInt16` overflow when calculating the number of entries
+ - Fixed entry removal for in-memory archives
+ - Fixed a crash when `fopen()` fails during archive replacement
+ - Improved CRC32 calculation performance via zlib (when available)
+
 ## [0.9.12](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.12)
 
 ### Added
