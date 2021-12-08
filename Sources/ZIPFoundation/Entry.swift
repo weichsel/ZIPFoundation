@@ -296,19 +296,19 @@ extension Entry.CentralDirectoryStructure {
 extension Entry.CentralDirectoryStructure {
 
     var effectiveCompressedSize: UInt64 {
-        if self.isZIP64, let compressedSize = zip64ExtendedInformation?.compressedSize, compressedSize > 0 {
+        if self.isZIP64, let compressedSize = self.zip64ExtendedInformation?.compressedSize, compressedSize > 0 {
             return compressedSize
         }
         return UInt64(compressedSize)
     }
     var effectiveUncompressedSize: UInt64 {
-        if self.isZIP64, let uncompressedSize = zip64ExtendedInformation?.uncompressedSize, uncompressedSize > 0 {
+        if self.isZIP64, let uncompressedSize = self.zip64ExtendedInformation?.uncompressedSize, uncompressedSize > 0 {
             return uncompressedSize
         }
         return UInt64(uncompressedSize)
     }
     var effectiveRelativeOffsetOfLocalHeader: UInt64 {
-        if self.isZIP64, let offset = zip64ExtendedInformation?.relativeOffsetOfLocalHeader, offset > 0 {
+        if self.isZIP64, let offset = self.zip64ExtendedInformation?.relativeOffsetOfLocalHeader, offset > 0 {
             return offset
         }
         return UInt64(relativeOffsetOfLocalHeader)
