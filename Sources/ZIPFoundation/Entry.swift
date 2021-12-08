@@ -259,11 +259,11 @@ extension Entry.CentralDirectoryStructure {
     init(centralDirectoryStructure: Entry.CentralDirectoryStructure,
          zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, relativeOffset: UInt32) {
         if let existingInfo = zip64ExtendedInformation {
-            extraFieldData = existingInfo.data
-            versionNeededToExtract = max(centralDirectoryStructure.versionNeededToExtract, Archive.Version.v45.rawValue)
+            self.extraFieldData = existingInfo.data
+            self.versionNeededToExtract = max(centralDirectoryStructure.versionNeededToExtract, Archive.Version.v45.rawValue)
         } else {
-            extraFieldData = Data()
-            versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract < Archive.Version.v45.rawValue
+            self.extraFieldData = centralDirectoryStructure.extraFieldData
+            self.versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract < Archive.Version.v45.rawValue
                 ? centralDirectoryStructure.versionNeededToExtract
                 : Archive.Version.v20.rawValue
         }
