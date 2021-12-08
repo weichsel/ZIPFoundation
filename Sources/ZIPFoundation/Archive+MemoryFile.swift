@@ -10,37 +10,15 @@
 
 import Foundation
 
+extension Archive {
+    var isMemoryArchive: Bool { return self.url.scheme == memoryURLScheme }
+}
+
 #if swift(>=5.0)
 
 extension Archive {
     /// Returns a `Data` object containing a representation of the receiver.
-    public var data: Data? { return memoryFile?.data }
-
-    static func configureMemoryBacking(for data: Data, mode: AccessMode)
-    -> (UnsafeMutablePointer<FILE>, MemoryFile)? {
-        let posixMode: String
-        switch mode {
-        case .read: posixMode = "rb"
-        case .create: posixMode = "wb+"
-        case .update: posixMode = "rb+"
-        }
-        let memoryFile = MemoryFile(data: data)
-        guard let archiveFile = memoryFile.open(mode: posixMode) else { return nil }
-
-        if mode == .create {
-            let endOfCentralDirectoryRecord = EndOfCentralDirectoryRecord(numberOfDisk: 0, numberOfDiskStart: 0,
-                                                                          totalNumberOfEntriesOnDisk: 0,
-                                                                          totalNumberOfEntriesInCentralDirectory: 0,
-                                                                          sizeOfCentralDirectory: 0,
-                                                                          offsetToStartOfCentralDirectory: 0,
-                                                                          zipFileCommentLength: 0,
-                                                                          zipFileCommentData: Data())
-            _ = endOfCentralDirectoryRecord.data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
-                fwrite(buffer.baseAddress, buffer.count, 1, archiveFile) // Errors handled during read
-            }
-        }
-        return (archiveFile, memoryFile)
-    }
+    public var data: Data? { return self.memoryFile?.data }
 }
 
 class MemoryFile {
@@ -64,7 +42,7 @@ class MemoryFile {
         let result = fopencookie(cookie.toOpaque(), mode, stubs)
         #endif
         if append {
-            fseek(result, 0, SEEK_END)
+            fseeko(result, 0, SEEK_END)
         }
         return result
     }

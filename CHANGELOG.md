@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.9.13](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.13)
+
+### Added
+ - Added large file support (ZIP64)
+ 
+### Updated
+ - Fixed an `UInt16` overflow when calculating the number of entries
+ - Fixed entry removal for in-memory archives
+ - Fixed a crash when `fopen()` fails during archive replacement
+ - Improved CRC32 calculation performance via zlib (when available)
+
+## [0.9.12](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.12)
+
+### Added
+ - Added check to disallow removal of entries from readonly archives
+ - Added guard against API misuse by providing zero byte buffer sizes
+ 
+### Updated
+ - Fixed an `UInt16` overflow when calculating the end of the central directory record
+ - Fixed detection of ZIP version required to extract
+ - Fixed missing consumer closure call for zero byte entries
+ - Fixed erroneous application of `.deflate` compression on `.symlink` and `.directory` entries
+ - Improved detection of `.directory` entries
+ - Improved performance when looking up entries via subscripting
+ - Improved consistency of URL format used in the Swift package description
+
 ## [0.9.11](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.11)
 
 ### Added
