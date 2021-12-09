@@ -31,7 +31,7 @@ extension Entry {
     }
 
     var zip64ExtendedInformation: ZIP64ExtendedInformation? {
-        centralDirectoryStructure.zip64ExtendedInformation
+        self.centralDirectoryStructure.zip64ExtendedInformation
     }
 }
 
@@ -40,8 +40,8 @@ typealias Field = Entry.ZIP64ExtendedInformation.Field
 extension Entry.LocalFileHeader {
     var validFields: [Field] {
         var fields: [Field] = []
-        if uncompressedSize == .max { fields.append(.uncompressedSize) }
-        if compressedSize == .max { fields.append(.compressedSize) }
+        if self.uncompressedSize == .max { fields.append(.uncompressedSize) }
+        if self.compressedSize == .max { fields.append(.compressedSize) }
         return fields
     }
 }
@@ -49,14 +49,14 @@ extension Entry.LocalFileHeader {
 extension Entry.CentralDirectoryStructure {
     var validFields: [Field] {
         var fields: [Field] = []
-        if uncompressedSize == .max { fields.append(.uncompressedSize) }
-        if compressedSize == .max { fields.append(.compressedSize) }
-        if relativeOffsetOfLocalHeader == .max { fields.append(.relativeOffsetOfLocalHeader) }
-        if diskNumberStart == .max { fields.append(.diskNumberStart) }
+        if self.uncompressedSize == .max { fields.append(.uncompressedSize) }
+        if self.compressedSize == .max { fields.append(.compressedSize) }
+        if self.relativeOffsetOfLocalHeader == .max { fields.append(.relativeOffsetOfLocalHeader) }
+        if self.diskNumberStart == .max { fields.append(.diskNumberStart) }
         return fields
     }
     var zip64ExtendedInformation: Entry.ZIP64ExtendedInformation? {
-        extraFields?.compactMap { $0 as? Entry.ZIP64ExtendedInformation }.first
+        self.extraFields?.compactMap { $0 as? Entry.ZIP64ExtendedInformation }.first
     }
 }
 
