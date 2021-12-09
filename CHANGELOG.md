@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.9.14](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.14)
+
+### Updated
+ - Fixed missing extra field data after entry removal
+
 ## [0.9.13](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.13)
 
 ### Added
