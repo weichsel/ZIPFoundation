@@ -31,7 +31,7 @@ extension Entry {
     }
 
     var zip64ExtendedInformation: ZIP64ExtendedInformation? {
-        centralDirectoryStructure.zip64ExtendedInformation
+        self.centralDirectoryStructure.zip64ExtendedInformation
     }
 }
 
