@@ -117,14 +117,15 @@ extension Data {
         var position: Int64 = 0
         var sourceData: Data?
         repeat {
-            if stream.src_size == 0 {
+            let isExhausted = stream.src_size == 0
+            if isExhausted {
                 do {
                     sourceData = try provider(position, Int(Swift.min((size - position), Int64(bufferSize))))
                     position += Int64(stream.prepare(for: sourceData))
                 } catch { throw error }
             }
             if let sourceData = sourceData {
-                sourceData.withUnsafeBytes { (rawBufferPointer) in
+                sourceData.withUnsafeBytes { rawBufferPointer in
                     if let baseAddress = rawBufferPointer.baseAddress {
                         let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
                         stream.src_ptr = pointer.advanced(by: sourceData.count - stream.src_size)
@@ -132,7 +133,8 @@ extension Data {
                         status = compression_stream_process(&stream, flags)
                     }
                 }
-                if operation == COMPRESSION_STREAM_ENCODE && !skipCRC32 { crc32 = sourceData.crc32(checksum: crc32) }
+                if operation == COMPRESSION_STREAM_ENCODE &&
+                    isExhausted && skipCRC32 == false { crc32 = sourceData.crc32(checksum: crc32) }
             }
             switch status {
             case COMPRESSION_STATUS_OK, COMPRESSION_STATUS_END:
