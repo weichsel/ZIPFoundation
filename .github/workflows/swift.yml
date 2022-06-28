@@ -10,8 +10,8 @@ jobs:
   Xcode:
     strategy:
       matrix:
-        xcode_version: ['11.2.1', '11.3.1', '11.4.1', '11.5', '11.6', '11.7', '12.0.1', '12.1', '12.2', '12.3', '12.4']
-    runs-on: macos-latest
+        xcode_version: ['13.2.1', '13.1', '13.0', '12.5.1', '12.4', '11.7']
+    runs-on: macos-11
     env:
       DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode_version }}.app
     steps:
