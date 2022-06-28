@@ -129,7 +129,14 @@ extension FileManager {
             } else {
                 crc32 = try archive.extract(entry, to: entryURL, skipCRC32: skipCRC32)
             }
-            guard skipCRC32 == false, crc32 == entry.checksum else { throw Archive.ArchiveError.invalidCRC32 }
+
+            func verifyChecksumIfNecessary() throws {
+                guard skipCRC32 == false, crc32 == entry.checksum
+                else {
+                    throw Archive.ArchiveError.invalidCRC32
+                }
+            }
+            try verifyChecksumIfNecessary()
         }
     }
 

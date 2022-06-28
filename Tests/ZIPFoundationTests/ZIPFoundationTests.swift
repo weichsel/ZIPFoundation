@@ -241,6 +241,7 @@ extension ZIPFoundationTests {
             ("testPerformanceWriteUncompressed", testPerformanceWriteUncompressed),
             ("testPerformanceCRC32", testPerformanceCRC32),
             ("testPOSIXPermissions", testPOSIXPermissions),
+            ("testCRC32Check", testCRC32Check),
             ("testProgressHelpers", testProgressHelpers),
             ("testRemoveCompressedEntry", testRemoveCompressedEntry),
             ("testRemoveDataDescriptorCompressedEntry", testRemoveDataDescriptorCompressedEntry),
