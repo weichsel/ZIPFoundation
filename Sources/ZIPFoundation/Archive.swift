@@ -69,6 +69,8 @@ public final class Archive: Sequence {
         case invalidEntryPath
         /// Thrown when an `Entry` can't be stored in the archive with the proposed compression method.
         case invalidCompressionMethod
+        /// Thrown when the stored checksum of an `Entry` doesn't match the checksum during reading.
+        case invalidCRC32
         /// Thrown when an extract, add or remove operation was canceled.
         case cancelledOperation
         /// Thrown when an extract operation was called with zero or negative `bufferSize` parameter.

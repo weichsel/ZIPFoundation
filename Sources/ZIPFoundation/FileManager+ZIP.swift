@@ -116,18 +116,27 @@ extension FileManager {
 
         for entry in sortedEntries {
             let path = preferredEncoding == nil ? entry.path : entry.path(using: preferredEncoding!)
-            let destinationEntryURL = destinationURL.appendingPathComponent(path)
-            guard destinationEntryURL.isContained(in: destinationURL) else {
+            let entryURL = destinationURL.appendingPathComponent(path)
+            guard entryURL.isContained(in: destinationURL) else {
                 throw CocoaError(.fileReadInvalidFileName,
-                                 userInfo: [NSFilePathErrorKey: destinationEntryURL.path])
+                                 userInfo: [NSFilePathErrorKey: entryURL.path])
             }
+            let crc32: CRC32
             if let progress = progress {
                 let entryProgress = archive.makeProgressForReading(entry)
                 progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
-                _ = try archive.extract(entry, to: destinationEntryURL, skipCRC32: skipCRC32, progress: entryProgress)
+                crc32 = try archive.extract(entry, to: entryURL, skipCRC32: skipCRC32, progress: entryProgress)
             } else {
-                _ = try archive.extract(entry, to: destinationEntryURL, skipCRC32: skipCRC32)
+                crc32 = try archive.extract(entry, to: entryURL, skipCRC32: skipCRC32)
             }
+
+            func verifyChecksumIfNecessary() throws {
+                guard skipCRC32 == false, crc32 == entry.checksum
+                else {
+                    throw Archive.ArchiveError.invalidCRC32
+                }
+            }
+            try verifyChecksumIfNecessary()
         }
     }
 

@@ -335,6 +335,21 @@ extension ZIPFoundationTests {
         } catch { XCTFail("Failed to test POSIX permissions") }
     }
 
+    func testCRC32Check() {
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        do {
+            try fileManager.unzipItem(at: archive.url, to: destinationURL)
+        } catch let error as Archive.ArchiveError {
+            XCTAssert(error == Archive.ArchiveError.invalidCRC32)
+            return
+        } catch {
+            XCTFail("Extraction should fail with an archive error")
+        }
+        XCTFail("Extraction should fail")
+    }
+
     func testTraversalAttack() {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)
