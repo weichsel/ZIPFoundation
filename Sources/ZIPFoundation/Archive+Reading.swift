@@ -35,7 +35,7 @@ extension Archive {
             }
             try fileManager.createParentDirectoryStructure(for: url)
             let destinationRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            guard let destinationFile: UnsafeMutablePointer<FILE> = fopen(destinationRepresentation, "wb+") else {
+            guard let destinationFile: FILEPointer = fopen(destinationRepresentation, "wb+") else {
                 throw CocoaError(.fileNoSuchFile)
             }
             defer { fclose(destinationFile) }

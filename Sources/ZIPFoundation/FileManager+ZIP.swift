@@ -255,7 +255,7 @@ extension FileManager {
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
-        return Entry.EntryType(mode: fileStat.st_mode)
+        return Entry.EntryType(mode: mode_t(fileStat.st_mode))
     }
 }
 

@@ -10,6 +10,12 @@
 
 import Foundation
 
+#if os(Android)
+public typealias FILEPointer = OpaquePointer
+#else
+public typealias FILEPointer = UnsafeMutablePointer<FILE>
+#endif
+
 protocol DataSerializable {
     static var size: Int { get }
     init?(data: Data, additionalDataProvider: (Int) throws -> Data)
@@ -31,7 +37,7 @@ extension Data {
         #endif
     }
 
-    static func readStruct<T>(from file: UnsafeMutablePointer<FILE>, at offset: UInt64)
+    static func readStruct<T>(from file: FILEPointer, at offset: UInt64)
     -> T? where T: DataSerializable {
         guard offset <= .max else { return nil }
         fseeko(file, off_t(offset), SEEK_SET)
@@ -68,7 +74,7 @@ extension Data {
         return checksum
     }
 
-    static func readChunk(of size: Int, from file: UnsafeMutablePointer<FILE>) throws -> Data {
+    static func readChunk(of size: Int, from file: FILEPointer) throws -> Data {
         let alignment = MemoryLayout<UInt>.alignment
         #if swift(>=4.1)
         let bytes = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: alignment)
@@ -88,7 +94,7 @@ extension Data {
         #endif
     }
 
-    static func write(chunk: Data, to file: UnsafeMutablePointer<FILE>) throws -> Int {
+    static func write(chunk: Data, to file: FILEPointer) throws -> Int {
         var sizeWritten: Int = 0
         chunk.withUnsafeBytes { (rawBufferPointer) in
             if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
@@ -104,7 +110,7 @@ extension Data {
     }
 
     static func writeLargeChunk(_ chunk: Data, size: UInt64, bufferSize: Int,
-                                to file: UnsafeMutablePointer<FILE>) throws -> UInt64 {
+                                to file: FILEPointer) throws -> UInt64 {
         var sizeWritten: UInt64 = 0
         chunk.withUnsafeBytes { (rawBufferPointer) in
             if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {

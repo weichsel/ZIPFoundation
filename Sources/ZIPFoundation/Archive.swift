@@ -126,7 +126,7 @@ public final class Archive: Sequence {
     public let url: URL
     /// Access mode for an archive file.
     public let accessMode: AccessMode
-    var archiveFile: UnsafeMutablePointer<FILE>
+    var archiveFile: FILEPointer
     var endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
     var zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?
     var preferredEncoding: String.Encoding?
@@ -267,7 +267,7 @@ public final class Archive: Sequence {
 
     // MARK: - Helpers
 
-    static func scanForEndOfCentralDirectoryRecord(in file: UnsafeMutablePointer<FILE>)
+    static func scanForEndOfCentralDirectoryRecord(in file: FILEPointer)
         -> EndOfCentralDirectoryStructure? {
         var eocdOffset: UInt64 = 0
         var index = minEndOfCentralDirectoryOffset
@@ -290,7 +290,7 @@ public final class Archive: Sequence {
         return nil
     }
 
-    private static func scanForZIP64EndOfCentralDirectory(in file: UnsafeMutablePointer<FILE>, eocdOffset: UInt64)
+    private static func scanForZIP64EndOfCentralDirectory(in file: FILEPointer, eocdOffset: UInt64)
         -> ZIP64EndOfCentralDirectory? {
         guard UInt64(ZIP64EndOfCentralDirectoryLocator.size) < eocdOffset else {
             return nil
