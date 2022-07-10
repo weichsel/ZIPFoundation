@@ -154,7 +154,7 @@ extension ZIPFoundationTests {
         let archiveURL = self.resourceURL(for: #function, pathExtension: "zip")
         let fileManager = FileManager()
         let destinationFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: archiveURL.path)
-        let destinationFile: UnsafeMutablePointer<FILE> = fopen(destinationFileSystemRepresentation, "r+b")
+        let destinationFile: FILEPointer = fopen(destinationFileSystemRepresentation, "r+b")
 
         do {
             fseek(destinationFile, 64, SEEK_SET)

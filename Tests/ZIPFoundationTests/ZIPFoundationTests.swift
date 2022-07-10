@@ -137,7 +137,7 @@ class ZIPFoundationTests: XCTestCase {
     }
 
     func runWithFileDescriptorLimit(_ limit: UInt64, handler: () -> Void) {
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(Android)
         let fileNoFlag = RLIMIT_NOFILE
         #else
         let fileNoFlag = Int32(RLIMIT_NOFILE.rawValue)

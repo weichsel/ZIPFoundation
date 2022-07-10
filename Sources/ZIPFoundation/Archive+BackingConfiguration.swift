@@ -13,13 +13,13 @@ import Foundation
 extension Archive {
 
     struct BackingConfiguration {
-        let file: UnsafeMutablePointer<FILE>
+        let file: FILEPointer
         let endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
         let zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?
         #if swift(>=5.0)
         let memoryFile: MemoryFile?
 
-        init(file: UnsafeMutablePointer<FILE>,
+        init(file: FILEPointer,
              endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
              zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory? = nil,
              memoryFile: MemoryFile? = nil) {
@@ -30,7 +30,7 @@ extension Archive {
         }
         #else
 
-        init(file: UnsafeMutablePointer<FILE>,
+        init(file: FILEPointer,
              endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord,
              zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?) {
             self.file = file

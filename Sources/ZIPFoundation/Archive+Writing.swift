@@ -66,7 +66,7 @@ extension Archive {
         switch type {
         case .file:
             let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
-            guard let entryFile: UnsafeMutablePointer<FILE> = fopen(entryFileSystemRepresentation, "rb") else {
+            guard let entryFile: FILEPointer = fopen(entryFileSystemRepresentation, "rb") else {
                 throw CocoaError(.fileNoSuchFile)
             }
             defer { fclose(entryFile) }

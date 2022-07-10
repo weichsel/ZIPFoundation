@@ -21,7 +21,7 @@ extension ZIPFoundationTests {
                                             attributes: nil)
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
-        let file: UnsafeMutablePointer<FILE> = fopen(fileSystemRepresentation, "rb")
+        let file: FILEPointer = fopen(fileSystemRepresentation, "rb")
         // Close the file to exercise the error path during readStructure that deals with
         // unreadable file data.
         fclose(file)
@@ -38,7 +38,7 @@ extension ZIPFoundationTests {
                                             attributes: nil)
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
-        let file: UnsafeMutablePointer<FILE> = fopen(fileSystemRepresentation, "rb")
+        let file: FILEPointer = fopen(fileSystemRepresentation, "rb")
         // Close the file to exercise the error path during readChunk that deals with
         // unreadable file data.
         fclose(file)
@@ -60,7 +60,7 @@ extension ZIPFoundationTests {
                                             attributes: nil)
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
-        let file: UnsafeMutablePointer<FILE> = fopen(fileSystemRepresentation, "rb")
+        let file: FILEPointer = fopen(fileSystemRepresentation, "rb")
         // Close the file to exercise the error path during writeChunk that deals with
         // unwritable files.
         fclose(file)
@@ -92,7 +92,7 @@ extension ZIPFoundationTests {
                                             attributes: nil)
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
-        let file: UnsafeMutablePointer<FILE> = fopen(fileSystemRepresentation, "rb+")
+        let file: FILEPointer = fopen(fileSystemRepresentation, "rb+")
         let data = Data.makeRandomData(size: 1024)
         do {
             let writtenSize = try Data.writeLargeChunk(data, size: 1024, bufferSize: 256, to: file)
@@ -114,7 +114,7 @@ extension ZIPFoundationTests {
                                             attributes: nil)
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
-        let file: UnsafeMutablePointer<FILE> = fopen(fileSystemRepresentation, "rb")
+        let file: FILEPointer = fopen(fileSystemRepresentation, "rb")
         let data = Data.makeRandomData(size: 1024)
         // Close the file to exercise the error path during writeChunk that deals with
         // unwritable files.
