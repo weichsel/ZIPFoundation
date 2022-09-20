@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.15](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.15)
+
+### Added
+ - Added initial support for building for Android
+ 
+### Updated
+ - Fixed CRC32 calculation for non-final compression streams
+ - Fixed evaluation of CRC32 checksums when using `FileManager.unzipItem`
+
 ## [0.9.14](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.14)
 
 ### Updated
