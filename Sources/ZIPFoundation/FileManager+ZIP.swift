@@ -131,8 +131,7 @@ extension FileManager {
             }
 
             func verifyChecksumIfNecessary() throws {
-                guard skipCRC32 == false, crc32 == entry.checksum
-                else {
+                if skipCRC32 == false, crc32 != entry.checksum {
                     throw Archive.ArchiveError.invalidCRC32
                 }
             }
