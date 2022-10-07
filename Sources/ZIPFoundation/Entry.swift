@@ -166,6 +166,10 @@ public struct Entry: Equatable {
         default: return isDirectory ? .directory : .file
         }
     }
+    /// Whether or not the receiver is compressed.
+    public var isCompressed: Bool {
+        self.localFileHeader.compressionMethod != CompressionMethod.none.rawValue
+    }
     /// The size of the receiver's compressed data.
     public var compressedSize: UInt64 {
         if centralDirectoryStructure.isZIP64 {
@@ -186,8 +190,7 @@ public struct Entry: Equatable {
         var extraDataLength = Int(localFileHeader.fileNameLength)
         extraDataLength += Int(localFileHeader.extraFieldLength)
         var size = UInt64(LocalFileHeader.size + extraDataLength)
-        let isCompressed = localFileHeader.compressionMethod != CompressionMethod.none.rawValue
-        size += isCompressed ? self.compressedSize : self.uncompressedSize
+        size += self.isCompressed ? self.compressedSize : self.uncompressedSize
         if centralDirectoryStructure.isZIP64 {
             size += self.zip64DataDescriptor != nil ? UInt64(ZIP64DataDescriptor.size) : 0
         } else {
