@@ -201,4 +201,10 @@ extension ZIPFoundationTests {
         XCTAssertEqual(dataDescriptorWithoutSignature?.uncompressedSize, 10)
         XCTAssertEqual(dataDescriptorWithoutSignature?.compressedSize, 10)
     }
+
+    func testEntryIsCompressed() throws {
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssert(archive["compressed"]?.isCompressed == true)
+        XCTAssert(archive["uncompressed"]?.isCompressed == false)
+    }
 }
