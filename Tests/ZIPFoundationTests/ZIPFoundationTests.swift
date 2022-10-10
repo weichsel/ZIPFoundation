@@ -212,6 +212,7 @@ extension ZIPFoundationTests {
             ("testDetectEntryType", testDetectEntryType),
             ("testExtractInvalidBufferSizeErrorConditions", testExtractInvalidBufferSizeErrorConditions),
             ("testDirectoryCreationHelperMethods", testDirectoryCreationHelperMethods),
+            ("testEntryIsCompressed", testEntryIsCompressed),
             ("testEntryInvalidAdditionalDataErrorConditions", testEntryInvalidAdditionalDataErrorConditions),
             ("testEntryInvalidPathEncodingErrorConditions", testEntryInvalidPathEncodingErrorConditions),
             ("testEntryInvalidSignatureErrorConditions", testEntryInvalidSignatureErrorConditions),
