@@ -166,7 +166,7 @@ public struct Entry: Equatable {
         default: return isDirectory ? .directory : .file
         }
     }
-    /// Whether or not the receiver is compressed.
+    /// Indicates whether or not the receiver is compressed.
     public var isCompressed: Bool {
         self.localFileHeader.compressionMethod != CompressionMethod.none.rawValue
     }
