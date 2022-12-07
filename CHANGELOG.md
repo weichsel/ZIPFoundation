@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.9.16](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.16)
+
+### Added
+ - Added `isCompressed` accessor to `Entry`
+ 
+### Updated
+ - Improved README and documentation
+ - Fixed deprecation in the random test data generator
+
 ## [0.9.15](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.15)
 
 ### Added
