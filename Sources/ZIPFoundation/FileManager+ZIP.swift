@@ -162,6 +162,11 @@ extension FileManager {
         case .directory, .file:
             try self.setAttributes(attributes, ofItemAtPath: url.path)
         case .symlink:
+            // TODO: enhancement/symlinkHandling - Implement special handling for symlinks
+            // `FileManager.setAttributes` traverses symlinks and applies the attributes to
+            // the symlink destination. Since we want to be able to create symlinks where
+            // the destination isn't available (yet), we want to directly apply entry attributes
+            // to the symlink (vs. the destination).
             throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: url.path])
         }
     }
