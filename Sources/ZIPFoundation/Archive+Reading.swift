@@ -60,8 +60,7 @@ extension Archive {
             checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                         progress: progress, consumer: consumer)
         }
-        let attributes = FileManager.attributes(from: entry)
-        try fileManager.setAttributes(attributes, ofItemAtPath: url.path)
+        try fileManager.transferAttributes(from: entry, toItemAtURL: url)
         return checksum
     }
 

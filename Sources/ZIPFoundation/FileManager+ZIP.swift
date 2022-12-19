@@ -156,6 +156,16 @@ extension FileManager {
         try self.createDirectory(at: parentDirectoryURL, withIntermediateDirectories: true, attributes: nil)
     }
 
+    func transferAttributes(from entry: Entry, toItemAtURL url: URL) throws {
+        let attributes = FileManager.attributes(from: entry)
+        switch entry.type {
+        case .directory, .file:
+            try self.setAttributes(attributes, ofItemAtPath: url.path)
+        case .symlink:
+            throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: url.path])
+        }
+    }
+
     class func attributes(from entry: Entry) -> [FileAttributeKey: Any] {
         let centralDirectoryStructure = entry.centralDirectoryStructure
         let entryType = entry.type
