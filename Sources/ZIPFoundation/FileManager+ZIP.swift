@@ -160,15 +160,57 @@ extension FileManager {
         let attributes = FileManager.attributes(from: entry)
         switch entry.type {
         case .directory, .file:
-            try self.setAttributes(attributes, ofItemAtPath: url.path)
+            try self.setAttributes(attributes, ofItemAtURL: url)
         case .symlink:
-            // TODO: enhancement/symlinkHandling - Implement special handling for symlinks
-            // `FileManager.setAttributes` traverses symlinks and applies the attributes to
-            // the symlink destination. Since we want to be able to create symlinks where
-            // the destination isn't available (yet), we want to directly apply entry attributes
-            // to the symlink (vs. the destination).
-            throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: url.path])
+            try self.setAttributes(attributes, ofItemAtURL: url, traverseLink: false)
         }
+    }
+
+    func setAttributes(_ attributes: [FileAttributeKey: Any], ofItemAtURL url: URL, traverseLink: Bool = true) throws {
+        guard traverseLink == false else {
+            try self.setAttributes(attributes, ofItemAtPath: url.path)
+            return
+        }
+
+        // `FileManager.setAttributes` traverses symlinks and applies the attributes to
+        // the symlink destination. Since we want to be able to create symlinks where
+        // the destination isn't available (yet), we want to directly apply entry attributes
+        // to the symlink (vs. the destination file).
+        let fileSystemRepresentation = self.fileSystemRepresentation(withPath: url.path)
+        guard let posixPermissions = attributes[.posixPermissions] as? NSNumber else {
+            throw Entry.EntryError.missingPermissionsAttributeError
+        }
+#if os(macOS) || os(iOS)
+        let modeT = posixPermissions.uint16Value
+#elseif os(Linux) || os(Android)
+        let modeT = number.uint32Value
+#endif
+        guard chmod(fileSystemRepresentation, mode_t(modeT)) == 0 else {
+            throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
+        }
+
+        // Certain keys are not yet supported in swift-corelibs
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        var stat = stat()
+        guard let modificationDate = attributes[.modificationDate] as? Date else {
+            throw Entry.EntryError.missingModificationDateAttributeError
+        }
+
+        guard lstat(fileSystemRepresentation, &stat) == 0 else {
+            throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
+        }
+
+        let accessDate = stat.lastAccessDate
+        let array = [
+            timeval(timeIntervalSince1970: accessDate.timeIntervalSince1970),
+            timeval(timeIntervalSince1970: modificationDate.timeIntervalSince1970)
+        ]
+        try array.withUnsafeBufferPointer {
+            guard utimes(fileSystemRepresentation, $0.baseAddress) == 0 else {
+                throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
+            }
+        }
+#endif
     }
 
     class func attributes(from entry: Entry) -> [FileAttributeKey: Any] {
@@ -179,9 +221,9 @@ extension FileManager {
         let defaultPermissions = entryType == .directory ? defaultDirectoryPermissions : defaultFilePermissions
         var attributes = [.posixPermissions: defaultPermissions] as [FileAttributeKey: Any]
         // Certain keys are not yet supported in swift-corelibs
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         attributes[.modificationDate] = Date(dateTime: (fileDate, fileTime))
-        #endif
+#endif
         let versionMadeBy = centralDirectoryStructure.versionMadeBy
         guard let osType = Entry.OSType(rawValue: UInt(versionMadeBy >> 8)) else { return attributes }
 
@@ -235,11 +277,11 @@ extension FileManager {
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         let modTimeSpec = fileStat.st_mtimespec
-        #else
+#else
         let modTimeSpec = fileStat.st_mtim
-        #endif
+#endif
 
         let timeStamp = TimeInterval(modTimeSpec.tv_sec) + TimeInterval(modTimeSpec.tv_nsec)/1000000000.0
         let modDate = Date(timeIntervalSince1970: timeStamp)
@@ -273,53 +315,34 @@ extension FileManager {
     }
 }
 
-extension Date {
-    init(dateTime: (UInt16, UInt16)) {
-        var msdosDateTime = Int(dateTime.0)
-        msdosDateTime <<= 16
-        msdosDateTime |= Int(dateTime.1)
-        var unixTime = tm()
-        unixTime.tm_sec = Int32((msdosDateTime&31)*2)
-        unixTime.tm_min = Int32((msdosDateTime>>5)&63)
-        unixTime.tm_hour = Int32((Int(dateTime.1)>>11)&31)
-        unixTime.tm_mday = Int32((msdosDateTime>>16)&31)
-        unixTime.tm_mon = Int32((msdosDateTime>>21)&15)
-        unixTime.tm_mon -= 1 // UNIX time struct month entries are zero based.
-        unixTime.tm_year = Int32(1980+(msdosDateTime>>25))
-        unixTime.tm_year -= 1900 // UNIX time structs count in "years since 1900".
-        let time = timegm(&unixTime)
-        self = Date(timeIntervalSince1970: TimeInterval(time))
-    }
+extension CocoaError {
 
-    var fileModificationDateTime: (UInt16, UInt16) {
-        return (self.fileModificationDate, self.fileModificationTime)
-    }
-
-    var fileModificationDate: UInt16 {
-        var time = time_t(self.timeIntervalSince1970)
-        guard let unixTime = gmtime(&time) else {
-            return 0
+    init(posixErrorCode: Int32, fileURL: URL, isRead: Bool) {
+        let posixCode = POSIXError.Code(rawValue: posixErrorCode)
+        var cocoaCode: CocoaError.Code {
+            switch posixCode {
+            case .EPERM, .EACCES:
+                return isRead ? .fileReadNoPermission : .fileWriteNoPermission
+            case .ENOENT:
+                return isRead ? .fileReadNoSuchFile : .fileNoSuchFile
+            case .EEXIST:
+                return .fileWriteFileExists
+            case .EFBIG:
+                return .fileReadTooLarge
+            case .ENOSPC:
+                return .fileWriteOutOfSpace
+            case .EROFS:
+                return .fileWriteVolumeReadOnly
+            case .EFTYPE:
+                return .fileReadCorruptFile
+            case .ECANCELED:
+                return .userCancelled
+            default:
+                return isRead ? .fileReadUnknown : .fileWriteUnknown
+            }
         }
-        var year = unixTime.pointee.tm_year + 1900 // UNIX time structs count in "years since 1900".
-        // ZIP uses the MSDOS date format which has a valid range of 1980 - 2099.
-        year = year >= 1980 ? year : 1980
-        year = year <= 2099 ? year : 2099
-        let month = unixTime.pointee.tm_mon + 1 // UNIX time struct month entries are zero based.
-        let day = unixTime.pointee.tm_mday
-        return (UInt16)(day + ((month) * 32) +  ((year - 1980) * 512))
+        self = .init(cocoaCode, userInfo: [NSFilePathErrorKey: fileURL.path])
     }
-
-    var fileModificationTime: UInt16 {
-        var time = time_t(self.timeIntervalSince1970)
-        guard let unixTime = gmtime(&time) else {
-            return 0
-        }
-        let hour = unixTime.pointee.tm_hour
-        let minute = unixTime.pointee.tm_min
-        let second = unixTime.pointee.tm_sec
-        return (UInt16)((second/2) + (minute * 32) + (hour * 2048))
-    }
-}
 
 #if swift(>=4.2)
 #else
@@ -327,11 +350,10 @@ extension Date {
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
 #else
 
-// The swift-corelibs-foundation version of NSError.swift was missing a convenience method to create
-// error objects from error codes. (https://github.com/apple/swift-corelibs-foundation/pull/1420)
-// We have to provide an implementation for non-Darwin platforms using Swift versions < 4.2.
+    // The swift-corelibs-foundation version of NSError.swift was missing a convenience method to create
+    // error objects from error codes. (https://github.com/apple/swift-corelibs-foundation/pull/1420)
+    // We have to provide an implementation for non-Darwin platforms using Swift versions < 4.2.
 
-public extension CocoaError {
     public static func error(_ code: CocoaError.Code, userInfo: [AnyHashable: Any]? = nil, url: URL? = nil) -> Error {
         var info: [String: Any] = userInfo as? [String: Any] ?? [:]
         if let url = url {
@@ -339,10 +361,10 @@ public extension CocoaError {
         }
         return NSError(domain: NSCocoaErrorDomain, code: code.rawValue, userInfo: info)
     }
-}
 
 #endif
 #endif
+}
 
 public extension URL {
     func isContained(in parentDirectoryURL: URL) -> Bool {

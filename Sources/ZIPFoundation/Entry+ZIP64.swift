@@ -18,6 +18,8 @@ protocol ExtensibleDataField {
 extension Entry {
     enum EntryError: Error {
         case invalidDataError
+        case missingPermissionsAttributeError
+        case missingModificationDateAttributeError
     }
 
     struct ZIP64ExtendedInformation: ExtensibleDataField {
