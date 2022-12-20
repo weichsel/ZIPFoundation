@@ -98,23 +98,14 @@ extension FileManager {
         guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: preferredEncoding) else {
             throw Archive.ArchiveError.unreadableArchive
         }
-        // Defer extraction of symlinks until all files & directories have been created.
-        // This is necessary because we can't create links to files that haven't been created yet.
-        let sortedEntries = archive.sorted { (left, right) -> Bool in
-            switch (left.type, right.type) {
-            case (.directory, .file): return true
-            case (.directory, .symlink): return true
-            case (.file, .symlink): return true
-            default: return false
-            }
-        }
+
         var totalUnitCount = Int64(0)
         if let progress = progress {
-            totalUnitCount = sortedEntries.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
+            totalUnitCount = archive.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
             progress.totalUnitCount = totalUnitCount
         }
 
-        for entry in sortedEntries {
+        for entry in archive {
             let path = preferredEncoding == nil ? entry.path : entry.path(using: preferredEncoding!)
             let entryURL = destinationURL.appendingPathComponent(path)
             guard entryURL.isContained(in: destinationURL) else {
@@ -180,12 +171,12 @@ extension FileManager {
         guard let posixPermissions = attributes[.posixPermissions] as? NSNumber else {
             throw Entry.EntryError.missingPermissionsAttributeError
         }
-#if os(macOS) || os(iOS)
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         let modeT = posixPermissions.uint16Value
 #elseif os(Linux) || os(Android)
         let modeT = number.uint32Value
 #endif
-        guard chmod(fileSystemRepresentation, mode_t(modeT)) == 0 else {
+        guard lchmod(fileSystemRepresentation, mode_t(modeT)) == 0 else {
             throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
         }
 
@@ -206,7 +197,7 @@ extension FileManager {
             timeval(timeIntervalSince1970: modificationDate.timeIntervalSince1970)
         ]
         try array.withUnsafeBufferPointer {
-            guard utimes(fileSystemRepresentation, $0.baseAddress) == 0 else {
+            guard lutimes(fileSystemRepresentation, $0.baseAddress) == 0 else {
                 throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
             }
         }
