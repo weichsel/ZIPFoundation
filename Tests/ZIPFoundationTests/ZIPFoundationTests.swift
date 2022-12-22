@@ -236,6 +236,7 @@ extension ZIPFoundationTests {
             ("testFileSizeHelperMethods", testFileSizeHelperMethods),
             ("testFileTypeHelperMethods", testFileTypeHelperMethods),
             ("testInvalidCompressionMethodErrorConditions", testInvalidCompressionMethodErrorConditions),
+            ("testInvalidPOSIXError", testInvalidPOSIXError),
             ("testPerformanceReadCompressed", testPerformanceReadCompressed),
             ("testPerformanceReadUncompressed", testPerformanceReadUncompressed),
             ("testPerformanceWriteCompressed", testPerformanceWriteCompressed),

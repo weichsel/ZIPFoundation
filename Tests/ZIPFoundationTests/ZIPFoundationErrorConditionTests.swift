@@ -106,4 +106,9 @@ extension ZIPFoundationTests {
                                                                             return Data() })
         XCTAssertNil(invalidECDRCommentLength)
     }
+
+    func testInvalidPOSIXError() {
+        let invalidPOSIXError = POSIXError(Int32.max, path: "/")
+        XCTAssert(invalidPOSIXError.code == .EPERM)
+    }
 }

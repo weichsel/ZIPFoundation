@@ -421,6 +421,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
+				SWIFT_VERSION = 5.0;
 				TARGET_NAME = ZIPFoundationTests;
 			};
 			name = Debug;
@@ -439,6 +440,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @loader_path/Frameworks";
 				OTHER_LDFLAGS = "$(inherited)";
 				OTHER_SWIFT_FLAGS = "$(inherited)";
+				SWIFT_VERSION = 5.0;
 				TARGET_NAME = ZIPFoundationTests;
 			};
 			name = Release;
@@ -514,6 +516,7 @@
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				TARGET_NAME = ZIPFoundation;
 			};
 			name = Debug;
@@ -540,6 +543,7 @@
 				PRODUCT_MODULE_NAME = "$(TARGET_NAME:c99extidentifier)";
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				TARGET_NAME = ZIPFoundation;
 			};
 			name = Release;

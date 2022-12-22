@@ -194,9 +194,8 @@ extension ZIPFoundationTests {
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         guard let lfh = Entry.LocalFileHeader(data: Data(lfhBytes),
-                                              additionalDataProvider: { _ -> Data in
-                                                return Data()
-                                              }) else {
+                                              additionalDataProvider: { _ -> Data in return Data() })
+        else {
             XCTFail("Failed to read local file header."); return
         }
         guard let entry = Entry(centralDirectoryStructure: cds, localFileHeader: lfh) else {
@@ -240,8 +239,7 @@ extension ZIPFoundationTests {
             XCTFail("Unexpected error while trying to transfer symlink attributes")
         }
         do {
-            try fileManager.setAttributes([.posixPermissions: permissions,
-                                           .modificationDate: Date()],
+            try fileManager.setAttributes([.posixPermissions: permissions, .modificationDate: Date()],
                                           ofItemAtURL: nonExistantURL, traverseLink: false)
         } catch let error as POSIXError {
             XCTAssert(error.code == .ENOENT)
@@ -252,12 +250,10 @@ extension ZIPFoundationTests {
 
     func testSymlinkModificationDateTransferErrorConditions() {
         let fileManager = FileManager()
-        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        var assetURL = self.resourceURL(for: #function, pathExtension: "png")
         let tempPath = NSTemporaryDirectory()
         var nonExistantURL = URL(fileURLWithPath: tempPath)
         nonExistantURL.appendPathComponent("invalid.path")
-        let invalidPOSIXError = POSIXError(Int32.max, path: "/")
-        XCTAssert(invalidPOSIXError.code == .EPERM)
         do {
             try fileManager.setSymlinkModificationDate(Date(),
                                                        ofItemAtURL: nonExistantURL)
@@ -268,8 +264,13 @@ extension ZIPFoundationTests {
         }
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         do {
-            let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: assetURL.path)
-            chflags(fileSystemRepresentation, __uint32_t(UF_IMMUTABLE))
+            var resourceValues = URLResourceValues()
+            resourceValues.isUserImmutable = true
+            try? assetURL.setResourceValues(resourceValues)
+            defer {
+                resourceValues.isUserImmutable = false
+                try? assetURL.setResourceValues(resourceValues)
+            }
             try fileManager.setSymlinkModificationDate(Date(),
                                                        ofItemAtURL: assetURL)
         } catch let error as POSIXError {
