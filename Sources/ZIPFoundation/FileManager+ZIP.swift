@@ -182,16 +182,16 @@ extension FileManager {
 
         // Certain keys are not yet supported in swift-corelibs
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        var stat = stat()
+        var fileStat = stat()
         guard let modificationDate = attributes[.modificationDate] as? Date else {
             throw Entry.EntryError.missingModificationDateAttributeError
         }
 
-        guard lstat(fileSystemRepresentation, &stat) == 0 else {
+        guard lstat(fileSystemRepresentation, &fileStat) == 0 else {
             throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
         }
 
-        let accessDate = stat.lastAccessDate
+        let accessDate = fileStat.lastAccessDate
         let array = [
             timeval(timeIntervalSince1970: accessDate.timeIntervalSince1970),
             timeval(timeIntervalSince1970: modificationDate.timeIntervalSince1970)
