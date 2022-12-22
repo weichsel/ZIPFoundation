@@ -174,7 +174,7 @@ extension FileManager {
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         let modeT = posixPermissions.uint16Value
 #elseif os(Linux) || os(Android)
-        let modeT = number.uint32Value
+        let modeT = posixPermissions.uint32Value
 #endif
         guard lchmod(fileSystemRepresentation, mode_t(modeT)) == 0 else {
             throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
