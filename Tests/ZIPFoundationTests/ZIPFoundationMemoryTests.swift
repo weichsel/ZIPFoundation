@@ -16,6 +16,7 @@ import XCTest
 #if swift(>=5.0)
 
 extension ZIPFoundationTests {
+
     func testExtractUncompressedFolderEntriesFromMemory() {
         let archive = self.memoryArchive(for: #function, mode: .read)
         for entry in archive {

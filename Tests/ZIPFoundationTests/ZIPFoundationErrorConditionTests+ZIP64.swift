@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testWriteEOCDWithTooLargeSizeOfCentralDirectory() {
         let archive = self.archive(for: #function, mode: .create)
         var didCatchExpectedError = false

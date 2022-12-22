@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testPerformanceWriteUncompressed() {
         let archive = self.archive(for: #function, mode: .create)
         let size = 1024*1024*20

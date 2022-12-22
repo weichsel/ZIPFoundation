@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     typealias ZIP64ExtendedInformation = Entry.ZIP64ExtendedInformation
 
     func testEntryZIP64ExtraField() {

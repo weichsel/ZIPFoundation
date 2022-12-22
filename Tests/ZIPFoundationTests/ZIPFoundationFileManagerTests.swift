@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testZipItem() {
         let fileManager = FileManager()
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
@@ -171,16 +172,6 @@ extension ZIPFoundationTests {
         } catch { XCTFail("Unexpected error while trying to unzip via fileManager."); return }
     }
 
-    func testDirectoryCreationHelperMethods() {
-        let processInfo = ProcessInfo.processInfo
-        var nestedURL = ZIPFoundationTests.tempZipDirectoryURL
-        nestedURL.appendPathComponent(processInfo.globallyUniqueString)
-        nestedURL.appendPathComponent(processInfo.globallyUniqueString)
-        do {
-            try FileManager().createParentDirectoryStructure(for: nestedURL)
-        } catch { XCTFail("Failed to create parent directory.") }
-    }
-
     func testFileAttributeHelperMethods() {
         let cdsBytes: [UInt8] = [0x50, 0x4b, 0x01, 0x02, 0x1e, 0x15, 0x14, 0x00,
                                  0x08, 0x08, 0x08, 0x00, 0xab, 0x85, 0x77, 0x47,
@@ -216,6 +207,77 @@ extension ZIPFoundationTests {
             XCTFail("Failed to read file attributes."); return
         }
         XCTAssert(permissions == defaultDirectoryPermissions)
+    }
+
+    func testSymlinkPermissionsTransferErrorConditions() {
+        let fileManager = FileManager()
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        do {
+            try fileManager.setAttributes([:], ofItemAtURL: assetURL, traverseLink: false)
+        } catch let error as Entry.EntryError {
+            XCTAssert(error == Entry.EntryError.missingPermissionsAttributeError)
+        } catch {
+            XCTFail("Unexpected error while trying to transfer symlink attributes")
+        }
+        let permissions = NSNumber(value: Int16(0o753))
+        let tempPath = NSTemporaryDirectory()
+        var nonExistantURL = URL(fileURLWithPath: tempPath)
+        nonExistantURL.appendPathComponent("invalid.path")
+        do {
+            try fileManager.setAttributes([.posixPermissions: permissions],
+                                          ofItemAtURL: nonExistantURL, traverseLink: false)
+        } catch let error as POSIXError {
+            XCTAssert(error.code == .ENOENT)
+        } catch {
+            XCTFail("Unexpected error while trying to transfer symlink attributes")
+        }
+        do {
+            try fileManager.setAttributes([.posixPermissions: permissions],
+                                          ofItemAtURL: assetURL, traverseLink: false)
+        } catch let error as Entry.EntryError {
+            XCTAssert(error == Entry.EntryError.missingModificationDateAttributeError)
+        } catch {
+            XCTFail("Unexpected error while trying to transfer symlink attributes")
+        }
+        do {
+            try fileManager.setAttributes([.posixPermissions: permissions,
+                                           .modificationDate: Date()],
+                                          ofItemAtURL: nonExistantURL, traverseLink: false)
+        } catch let error as POSIXError {
+            XCTAssert(error.code == .ENOENT)
+        } catch {
+            XCTFail("Unexpected error while trying to transfer symlink attributes")
+        }
+    }
+
+    func testSymlinkModificationDateTransferErrorConditions() {
+        let fileManager = FileManager()
+        let assetURL = self.resourceURL(for: #function, pathExtension: "png")
+        let tempPath = NSTemporaryDirectory()
+        var nonExistantURL = URL(fileURLWithPath: tempPath)
+        nonExistantURL.appendPathComponent("invalid.path")
+        let invalidPOSIXError = POSIXError(Int32.max, path: "/")
+        XCTAssert(invalidPOSIXError.code == .EPERM)
+        do {
+            try fileManager.setSymlinkModificationDate(Date(),
+                                                       ofItemAtURL: nonExistantURL)
+        } catch let error as POSIXError {
+            XCTAssert(error.code == .ENOENT)
+        } catch {
+            XCTFail("Unexpected error while trying to transfer symlink attributes")
+        }
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        do {
+            let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: assetURL.path)
+            chflags(fileSystemRepresentation, __uint32_t(UF_IMMUTABLE))
+            try fileManager.setSymlinkModificationDate(Date(),
+                                                       ofItemAtURL: assetURL)
+        } catch let error as POSIXError {
+            XCTAssert(error.code == .EPERM)
+        } catch {
+            XCTFail("Unexpected error while trying to transfer symlink attributes")
+        }
+#endif
     }
 
     func testFilePermissionHelperMethods() {
@@ -333,61 +395,5 @@ extension ZIPFoundationTests {
             }
             XCTAssert(permissions.int16Value == filePermissions.int16Value)
         } catch { XCTFail("Failed to test POSIX permissions") }
-    }
-
-    func testCRC32Check() {
-        let fileManager = FileManager()
-        let archive = self.archive(for: #function, mode: .read)
-        let destinationURL = self.createDirectory(for: #function)
-        do {
-            try fileManager.unzipItem(at: archive.url, to: destinationURL)
-        } catch let error as Archive.ArchiveError {
-            XCTAssert(error == Archive.ArchiveError.invalidCRC32)
-            return
-        } catch {
-            XCTFail("Extraction should fail with an archive error")
-        }
-        XCTFail("Extraction should fail")
-    }
-
-    func testTraversalAttack() {
-        let fileManager = FileManager()
-        let archive = self.archive(for: #function, mode: .read)
-        let destinationURL = self.createDirectory(for: #function)
-        do {
-            try fileManager.unzipItem(at: archive.url, to: destinationURL)
-        } catch {
-            XCTAssert((error as? CocoaError)?.code == .fileReadInvalidFileName); return
-        }
-        XCTFail("Extraction should fail")
-    }
-
-    func testTemporaryReplacementDirectoryURL() {
-        let archive = self.archive(for: #function, mode: .create)
-        var tempURLs = Set<URL>()
-        defer {
-            for url in tempURLs {
-                try? FileManager.default.removeItem(at: url)
-            }
-        }
-        // We choose 2000 temp directories to test workaround for http://openradar.appspot.com/50553219
-        for _ in 1...2000 {
-            let tempDir = URL.temporaryReplacementDirectoryURL(for: archive)
-            XCTAssertFalse(tempURLs.contains(tempDir), "Temp directory URL should be unique. \(tempDir)")
-            tempURLs.insert(tempDir)
-        }
-
-        #if swift(>=5.0)
-        // Also cover the fallback codepath in the helper method to generate a unique temp URL.
-        // In-memory archives have no filesystem representation and therefore don't need a per-volume
-        // temp URL.
-        guard let memoryArchive = Archive(data: Data(), accessMode: .create) else {
-            XCTFail("Temporary memory archive creation failed.")
-            return
-        }
-
-        let memoryTempURL = URL.temporaryReplacementDirectoryURL(for: memoryArchive)
-        XCTAssertNotNil(memoryTempURL, "Temporary URL creation for in-memory archive failed.")
-        #endif
     }
 }

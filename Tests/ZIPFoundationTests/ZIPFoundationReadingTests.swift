@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testExtractUncompressedFolderEntries() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
@@ -296,5 +297,32 @@ extension ZIPFoundationTests {
         for entry in archive {
             XCTAssertEqual(entry.type, expectedData[entry.path])
         }
+    }
+
+    func testCRC32Check() {
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        do {
+            try fileManager.unzipItem(at: archive.url, to: destinationURL)
+        } catch let error as Archive.ArchiveError {
+            XCTAssert(error == Archive.ArchiveError.invalidCRC32)
+            return
+        } catch {
+            XCTFail("Extraction should fail with an archive error")
+        }
+        XCTFail("Extraction should fail")
+    }
+
+    func testTraversalAttack() {
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        do {
+            try fileManager.unzipItem(at: archive.url, to: destinationURL)
+        } catch {
+            XCTAssert((error as? CocoaError)?.code == .fileReadInvalidFileName); return
+        }
+        XCTFail("Extraction should fail")
     }
 }

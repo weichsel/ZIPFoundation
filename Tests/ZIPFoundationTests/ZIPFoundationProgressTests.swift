@@ -12,6 +12,7 @@ import XCTest
 
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
 extension ZIPFoundationTests {
+
     func testArchiveAddUncompressedEntryProgress() {
         let archive = self.archive(for: #function, mode: .update)
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")

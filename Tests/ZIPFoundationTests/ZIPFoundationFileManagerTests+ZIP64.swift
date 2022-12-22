@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     private enum ZIP64FileManagerTestsError: Error, CustomStringConvertible {
         case failedToZipItem(url: URL)
         case failedToReadArchive(url: URL)

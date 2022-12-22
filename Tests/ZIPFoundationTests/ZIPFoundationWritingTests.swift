@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testCreateArchiveAddUncompressedEntry() {
         let archive = self.archive(for: #function, mode: .create)
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")

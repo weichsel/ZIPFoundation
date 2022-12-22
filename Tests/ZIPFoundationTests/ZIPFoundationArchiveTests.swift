@@ -24,4 +24,39 @@ extension ZIPFoundationTests {
             return Data() })
         XCTAssertNil(invalidECDR)
     }
+
+    func testDirectoryCreationHelperMethods() {
+        let processInfo = ProcessInfo.processInfo
+        var nestedURL = ZIPFoundationTests.tempZipDirectoryURL
+        nestedURL.appendPathComponent(processInfo.globallyUniqueString)
+        nestedURL.appendPathComponent(processInfo.globallyUniqueString)
+        do {
+            try FileManager().createParentDirectoryStructure(for: nestedURL)
+        } catch { XCTFail("Failed to create parent directory.") }
+    }
+
+    func testTemporaryReplacementDirectoryURL() {
+        let archive = self.archive(for: #function, mode: .create)
+        var tempURLs = Set<URL>()
+        defer { for url in tempURLs { try? FileManager.default.removeItem(at: url) } }
+        // We choose 2000 temp directories to test workaround for http://openradar.appspot.com/50553219
+        for _ in 1...2000 {
+            let tempDir = URL.temporaryReplacementDirectoryURL(for: archive)
+            XCTAssertFalse(tempURLs.contains(tempDir), "Temp directory URL should be unique. \(tempDir)")
+            tempURLs.insert(tempDir)
+        }
+
+#if swift(>=5.0)
+        // Also cover the fallback codepath in the helper method to generate a unique temp URL.
+        // In-memory archives have no filesystem representation and therefore don't need a per-volume
+        // temp URL.
+        guard let memoryArchive = Archive(data: Data(), accessMode: .create) else {
+            XCTFail("Temporary memory archive creation failed.")
+            return
+        }
+
+        let memoryTempURL = URL.temporaryReplacementDirectoryURL(for: memoryArchive)
+        XCTAssertNotNil(memoryTempURL, "Temporary URL creation for in-memory archive failed.")
+#endif
+    }
 }

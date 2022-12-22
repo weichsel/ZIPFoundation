@@ -168,21 +168,36 @@ extension FileManager {
         }
 
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        let fileSystemRepresentation = self.fileSystemRepresentation(withPath: url.path)
         guard let posixPermissions = attributes[.posixPermissions] as? NSNumber else {
             throw Entry.EntryError.missingPermissionsAttributeError
         }
 
-        let modeT = posixPermissions.uint16Value
-        guard lchmod(fileSystemRepresentation, mode_t(modeT)) == 0 else {
-            throw POSIXError(errno, path: url.path)
-        }
+        try self.setSymlinkPermissions(posixPermissions, ofItemAtURL: url)
 
-        var fileStat = stat()
         guard let modificationDate = attributes[.modificationDate] as? Date else {
             throw Entry.EntryError.missingModificationDateAttributeError
         }
 
+        try self.setSymlinkModificationDate(modificationDate, ofItemAtURL: url)
+#else
+        // Since non-Darwin POSIX platforms ignore permissions on symlinks and swift-corelibs-foundation
+        // currently doesn't support setting the modification date, this codepath is currently a no-op
+        // on these platforms.
+        return
+#endif
+    }
+
+    func setSymlinkPermissions(_ posixPermissions: NSNumber, ofItemAtURL url: URL) throws {
+        let fileSystemRepresentation = self.fileSystemRepresentation(withPath: url.path)
+        let modeT = posixPermissions.uint16Value
+        guard lchmod(fileSystemRepresentation, mode_t(modeT)) == 0 else {
+            throw POSIXError(errno, path: url.path)
+        }
+    }
+
+    func setSymlinkModificationDate(_ modificationDate: Date, ofItemAtURL url: URL) throws {
+        let fileSystemRepresentation = self.fileSystemRepresentation(withPath: url.path)
+        var fileStat = stat()
         guard lstat(fileSystemRepresentation, &fileStat) == 0 else {
             throw POSIXError(errno, path: url.path)
         }
@@ -197,12 +212,6 @@ extension FileManager {
                 throw POSIXError(errno, path: url.path)
             }
         }
-#else
-        // Since non-Darwin POSIX platforms ignore permissions on symlinks and swift-corelibs-foundation
-        // currently doesn't support setting the modification date, this codepath is currently a no-op
-        // on these platforms.
-        return
-#endif
     }
 
     class func attributes(from entry: Entry) -> [FileAttributeKey: Any] {

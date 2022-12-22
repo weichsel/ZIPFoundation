@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testEntryWrongDataLengthErrorConditions() {
         let emptyCDS = Entry.CentralDirectoryStructure(data: Data(),
                                                        additionalDataProvider: {_ -> Data in

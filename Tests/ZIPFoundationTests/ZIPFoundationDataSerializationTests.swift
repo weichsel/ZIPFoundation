@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testReadStructureErrorConditions() {
         let processInfo = ProcessInfo.processInfo
         let fileManager = FileManager()

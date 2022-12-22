@@ -11,6 +11,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testArchiveReadErrorConditions() {
         let nonExistantURL = URL(fileURLWithPath: "/nothing")
         let nonExistantArchive = Archive(url: nonExistantURL, accessMode: .read)

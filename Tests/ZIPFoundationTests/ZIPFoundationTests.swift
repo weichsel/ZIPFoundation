@@ -313,7 +313,11 @@ extension ZIPFoundationTests {
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             ("testWriteLargeChunkErrorConditions", testWriteLargeChunkErrorConditions),
             // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
-            ("testZipItemErrorConditions", testZipItemErrorConditions)
+            ("testZipItemErrorConditions", testZipItemErrorConditions),
+            // Applying permissions on symlinks is only relevant on Darwin platforms
+            ("testSymlinkPermissionsTransferErrorConditions", testSymlinkPermissionsTransferErrorConditions),
+            // Applying file modification dates is currently unsupported in corelibs Foundation
+            ("testSymlinkModificationDateTransferErrorConditions", testSymlinkModificationDateTransferErrorConditions)
         ]
         #else
         return []
