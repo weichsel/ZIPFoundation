@@ -324,8 +324,10 @@ extension CocoaError {
                 return .fileWriteOutOfSpace
             case .EROFS:
                 return .fileWriteVolumeReadOnly
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
             case .EFTYPE:
                 return .fileReadCorruptFile
+#endif
             case .ECANCELED:
                 return .userCancelled
             default:

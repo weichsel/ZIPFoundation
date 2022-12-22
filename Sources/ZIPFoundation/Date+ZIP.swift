@@ -58,14 +58,26 @@ extension Date {
     init(timespec: timespec) {
         let seconds = 1.0e-9 * Double(timespec.tv_nsec)
         let timeIntervalSince1970 = TimeInterval(timespec.tv_sec)
-        self.init(timeIntervalSinceReferenceDate: (timeIntervalSince1970 - kCFAbsoluteTimeIntervalSince1970) + seconds)
+        let absoluteTimeIntervalSince1970 = Constants.absoluteTimeIntervalSince1970
+        self.init(timeIntervalSinceReferenceDate: (timeIntervalSince1970 - absoluteTimeIntervalSince1970) + seconds)
+    }
+}
+
+private extension Date {
+
+    enum Constants {
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        static let absoluteTimeIntervalSince1970 = kCFAbsoluteTimeIntervalSince1970
+#else
+        static let absoluteTimeIntervalSince1970: Double = 978307200.0
+#endif
     }
 }
 
 extension stat {
 
     var lastAccessDate: Date {
-#if canImport(Darwin)
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         return Date(timespec: st_atimespec)
 #else
         return Date(timespec: st_atim)
