@@ -158,30 +158,26 @@ extension FileManager {
     }
 
     func setAttributes(_ attributes: [FileAttributeKey: Any], ofItemAtURL url: URL, traverseLink: Bool = true) throws {
+        // `FileManager.setAttributes` traverses symlinks and applies the attributes to
+        // the symlink destination. Since we want to be able to create symlinks where
+        // the destination isn't available (yet), we want to directly apply entry attributes
+        // to the symlink (vs. the destination file).
         guard traverseLink == false else {
             try self.setAttributes(attributes, ofItemAtPath: url.path)
             return
         }
 
-        // `FileManager.setAttributes` traverses symlinks and applies the attributes to
-        // the symlink destination. Since we want to be able to create symlinks where
-        // the destination isn't available (yet), we want to directly apply entry attributes
-        // to the symlink (vs. the destination file).
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         let fileSystemRepresentation = self.fileSystemRepresentation(withPath: url.path)
         guard let posixPermissions = attributes[.posixPermissions] as? NSNumber else {
             throw Entry.EntryError.missingPermissionsAttributeError
         }
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+
         let modeT = posixPermissions.uint16Value
-#elseif os(Linux) || os(Android)
-        let modeT = posixPermissions.uint32Value
-#endif
         guard lchmod(fileSystemRepresentation, mode_t(modeT)) == 0 else {
             throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
         }
 
-        // Certain keys are not yet supported in swift-corelibs
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         var fileStat = stat()
         guard let modificationDate = attributes[.modificationDate] as? Date else {
             throw Entry.EntryError.missingModificationDateAttributeError
@@ -201,6 +197,11 @@ extension FileManager {
                 throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
             }
         }
+#else
+        // Since non-Darwin POSIX platforms ignore permissions on symlinks and swift-corelibs-foundation
+        // currently doesn't support setting the modification date, this codepath is currently a no-op
+        // on these platforms.
+        return
 #endif
     }
 
