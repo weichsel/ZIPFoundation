@@ -175,7 +175,7 @@ extension FileManager {
 
         let modeT = posixPermissions.uint16Value
         guard lchmod(fileSystemRepresentation, mode_t(modeT)) == 0 else {
-            throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
+            throw POSIXError(errno, path: url.path)
         }
 
         var fileStat = stat()
@@ -184,7 +184,7 @@ extension FileManager {
         }
 
         guard lstat(fileSystemRepresentation, &fileStat) == 0 else {
-            throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
+            throw POSIXError(errno, path: url.path)
         }
 
         let accessDate = fileStat.lastAccessDate
@@ -194,7 +194,7 @@ extension FileManager {
         ]
         try array.withUnsafeBufferPointer {
             guard lutimes(fileSystemRepresentation, $0.baseAddress) == 0 else {
-                throw CocoaError(posixErrorCode: errno, fileURL: url, isRead: false)
+                throw POSIXError(errno, path: url.path)
             }
         }
 #else
@@ -307,36 +307,15 @@ extension FileManager {
     }
 }
 
-extension CocoaError {
+extension POSIXError {
 
-    init(posixErrorCode: Int32, fileURL: URL, isRead: Bool) {
-        let posixCode = POSIXError.Code(rawValue: posixErrorCode)
-        var cocoaCode: CocoaError.Code {
-            switch posixCode {
-            case .EPERM, .EACCES:
-                return isRead ? .fileReadNoPermission : .fileWriteNoPermission
-            case .ENOENT:
-                return isRead ? .fileReadNoSuchFile : .fileNoSuchFile
-            case .EEXIST:
-                return .fileWriteFileExists
-            case .EFBIG:
-                return .fileReadTooLarge
-            case .ENOSPC:
-                return .fileWriteOutOfSpace
-            case .EROFS:
-                return .fileWriteVolumeReadOnly
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-            case .EFTYPE:
-                return .fileReadCorruptFile
-#endif
-            case .ECANCELED:
-                return .userCancelled
-            default:
-                return isRead ? .fileReadUnknown : .fileWriteUnknown
-            }
-        }
-        self = .init(cocoaCode, userInfo: [NSFilePathErrorKey: fileURL.path])
+    init(_ code: Int32, path: String) {
+        let errorCode = POSIXError.Code(rawValue: code) ?? .EPERM
+        self = .init(errorCode, userInfo: [NSFilePathErrorKey: path])
     }
+}
+
+extension CocoaError {
 
 #if swift(>=4.2)
 #else

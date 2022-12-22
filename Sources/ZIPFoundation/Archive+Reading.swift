@@ -36,7 +36,7 @@ extension Archive {
             try fileManager.createParentDirectoryStructure(for: url)
             let destinationRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             guard let destinationFile: FILEPointer = fopen(destinationRepresentation, "wb+") else {
-                throw CocoaError(.fileNoSuchFile)
+                throw POSIXError(errno, path: url.path)
             }
             defer { fclose(destinationFile) }
             let consumer = { _ = try Data.write(chunk: $0, to: destinationFile) }

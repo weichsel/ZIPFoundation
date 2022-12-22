@@ -133,8 +133,8 @@ extension ZIPFoundationTests {
             var overlongURL = URL(fileURLWithPath: NSTemporaryDirectory())
             overlongURL.appendPathComponent(longFileName)
             _ = try archive.extract(fileEntry, to: overlongURL)
-        } catch let error as CocoaError {
-            XCTAssert(error.code == CocoaError.fileNoSuchFile)
+        } catch let error as POSIXError {
+            XCTAssert(error.code == POSIXErrorCode.ENAMETOOLONG)
         } catch {
             XCTFail("Unexpected error while trying to extract entry to invalid URL.")
             return
