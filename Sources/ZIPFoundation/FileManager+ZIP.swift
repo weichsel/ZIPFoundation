@@ -44,7 +44,9 @@ extension FileManager {
         }
         let isDirectory = try FileManager.typeForItem(at: sourceURL) == .directory
         if isDirectory {
-            let subPaths = try self.subpathsOfDirectory(atPath: sourceURL.path)
+            var subPaths = try self.subpathsOfDirectory(atPath: sourceURL.path)
+            // Enforce an entry for the root directory to preserve its file attributes
+            if shouldKeepParent { subPaths.append("") }
             var totalUnitCount = Int64(0)
             if let progress = progress {
                 totalUnitCount = subPaths.reduce(Int64(0), {
