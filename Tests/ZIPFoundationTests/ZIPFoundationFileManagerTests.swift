@@ -171,4 +171,146 @@ extension ZIPFoundationTests {
             XCTAssertTrue(error == .unreadableArchive)
         } catch { XCTFail("Unexpected error while trying to unzip via fileManager."); return }
     }
+
+    // On Darwin platforms, we want the same behavior as the system-provided ZIP utilities.
+    // On the Mac, this includes the graphical Archive Utility as well as the `ditto`
+    // command line tool.
+    func testConsistentBehaviorWithSystemZIPUtilities() {
+#if os(macOS)
+        // We use a macOS framework bundle here because it covers a lot of file system edge cases like
+        // double-symlinked directories etc.
+        let testBundleURL = URL(fileURLWithPath: "/System/Library/Frameworks/Foundation.framework/", isDirectory: true)
+        let fileManager = FileManager()
+        let builtInZIPURL = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("zip")
+        try? fileManager.zipItem(at: testBundleURL, to: builtInZIPURL)
+
+        func shellZIP(directoryAtURL url: URL) -> URL {
+            let zipTask = Process()
+            zipTask.launchPath = "/usr/bin/ditto"
+            let tempZIPURL = URL(fileURLWithPath: NSTemporaryDirectory())
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("zip")
+            zipTask.arguments = ["-c", "-k", "--sequesterRsrc", "--keepParent", url.path, tempZIPURL.path]
+            let pipe = Pipe()
+            zipTask.standardOutput = pipe
+            zipTask.standardError = pipe
+            zipTask.launch()
+            zipTask.waitUntilExit()
+            return tempZIPURL
+        }
+
+        let shellZIPURL = shellZIP(directoryAtURL: testBundleURL)
+        let shellZIPInfos = Set(ZIPInfo.makeZIPInfos(forArchiveAtURL: shellZIPURL, mode: .shellParsing))
+        let builtInZIPInfos = Set(ZIPInfo.makeZIPInfos(forArchiveAtURL: builtInZIPURL, mode: .directoryIteration))
+        let diff = builtInZIPInfos.symmetricDifference(shellZIPInfos)
+        XCTAssert(diff.count == 0)
+#endif
+    }
+}
+
+// MARK: - Private
+
+private struct ZIPInfo: Hashable {
+
+    enum Mode {
+        case directoryIteration
+        case shellParsing
+    }
+
+    let size: size_t
+    let modificationDate: Date
+    let path: String
+
+    init(size: size_t, modificationDate: Date, path: String) {
+        self.size = size
+        self.modificationDate = modificationDate
+        self.path = path
+    }
+
+    init(logLine: String) {
+        // We are parsing the output of `unzip -ZT` here.
+        // The following assumptions must be met:
+        // - 8 columns
+        // - size field at index 3
+        // - date/time field at index 6
+        // - path field at index 7
+        let fields = logLine
+            .split(separator: " ", maxSplits: 8, omittingEmptySubsequences: true)
+            .map { String($0) }
+        self.size = size_t(fields[3]) ?? 0
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "yyyyMMdd.HHmmss"
+        let date = dateFormatter.date(from: fields[6])
+        self.modificationDate = date ?? Date()
+        self.path = fields[7].trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    static func makeZIPInfos(forArchiveAtURL url: URL, mode: Mode) -> [ZIPInfo] {
+
+        func directoryZIPInfos(forArchiveAtURL url: URL) -> [ZIPInfo] {
+            let fileManager = FileManager()
+            let tempDirectoryURL = URL(fileURLWithPath: NSTemporaryDirectory())
+                .standardizedFileURL
+                .appendingPathComponent(UUID().uuidString)
+            let keys: [URLResourceKey] = [.fileSizeKey, .creationDateKey, .isDirectoryKey, .pathKey]
+            try? fileManager.unzipItem(at: url, to: tempDirectoryURL)
+            guard let enumerator = fileManager.enumerator(at: tempDirectoryURL, includingPropertiesForKeys: keys)
+            else { return [] }
+
+            var zipInfos = [ZIPInfo]()
+            for case let fileURL as URL in enumerator {
+                guard let resourceValues = try? fileURL.resourceValues(forKeys: Set(keys)),
+                      let path = resourceValues.path,
+                      let isDirectory = resourceValues.isDirectory else { continue }
+
+                let size = resourceValues.fileSize ?? 0
+                let date = resourceValues.creationDate ?? Date()
+                let tempPath = tempDirectoryURL.path
+                let relPath = URL.makeRelativePath(fromPath: path, relativeToPath: tempPath, isDirectory: isDirectory)
+                zipInfos.append(.init(size: size, modificationDate: date, path: String(relPath)))
+            }
+            return zipInfos
+        }
+
+        func shellZIPInfos(forArchiveAtURL url: URL) -> [ZIPInfo] {
+            let unzipTask = Process()
+            unzipTask.launchPath = "/usr/bin/unzip"
+            unzipTask.arguments = ["-ZT", url.path]
+            let pipe = Pipe()
+            unzipTask.standardOutput = pipe
+            unzipTask.standardError = pipe
+            unzipTask.launch()
+            let unzipOutputData = pipe.fileHandleForReading.readDataToEndOfFile()
+            let unzipOutput = String(data: unzipOutputData, encoding: .utf8)!
+            unzipTask.waitUntilExit()
+            return unzipOutput.split(whereSeparator: \.isNewline)
+                .dropFirst(2)
+                .dropLast()
+                .map { ZIPInfo(logLine: String($0) ) }
+        }
+
+        switch mode {
+        case .directoryIteration:
+            return directoryZIPInfos(forArchiveAtURL: url)
+        case .shellParsing:
+            return shellZIPInfos(forArchiveAtURL: url)
+        }
+    }
+}
+
+private extension URL {
+
+    static func makeRelativePath(fromPath path: String, relativeToPath basePath: String, isDirectory: Bool) -> String {
+        let prefixRange = path.startIndex..<path.index(path.startIndex, offsetBy: 1)
+        return URL(fileURLWithPath: path, isDirectory: isDirectory)
+            .standardizedFileURL
+            .path
+            .replacingOccurrences(of: basePath, with: "")
+            .replacingOccurrences(of: "/private", with: "")
+            .replacingOccurrences(of: "/", with: "", range: prefixRange)
+            .appending(isDirectory ? "/" : "")
+    }
 }

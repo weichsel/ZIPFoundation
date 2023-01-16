@@ -302,6 +302,7 @@ extension ZIPFoundationTests {
             ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
             ("testZipItemProgress", testZipItemProgress),
             ("testUnzipItemProgress", testUnzipItemProgress),
+            ("testConsistentBehaviorWithSystemZIPUtilities", testConsistentBehaviorWithSystemZIPUtilities),
             ("testRemoveEntryProgress", testRemoveEntryProgress),
             ("testReplaceCurrentArchiveWithArchiveCrossLink", testReplaceCurrentArchiveWithArchiveCrossLink),
             ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
