@@ -2,7 +2,7 @@
 //  ZIPFoundationErrorConditionTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2023 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -11,6 +11,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testArchiveReadErrorConditions() {
         let nonExistantURL = URL(fileURLWithPath: "/nothing")
         let nonExistantArchive = Archive(url: nonExistantURL, accessMode: .read)
@@ -104,5 +105,10 @@ extension ZIPFoundationTests {
                                                                            additionalDataProvider: {_ -> Data in
                                                                             return Data() })
         XCTAssertNil(invalidECDRCommentLength)
+    }
+
+    func testInvalidPOSIXError() {
+        let invalidPOSIXError = POSIXError(Int32.max, path: "/")
+        XCTAssert(invalidPOSIXError.code == .EPERM)
     }
 }

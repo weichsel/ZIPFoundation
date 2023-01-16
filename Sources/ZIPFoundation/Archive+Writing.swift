@@ -2,7 +2,7 @@
 //  Archive+Writing.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2023 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -67,7 +67,7 @@ extension Archive {
         case .file:
             let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
             guard let entryFile: FILEPointer = fopen(entryFileSystemRepresentation, "rb") else {
-                throw CocoaError(.fileNoSuchFile)
+                throw POSIXError(errno, path: url.path)
             }
             defer { fclose(entryFile) }
             provider = { _, _ in return try Data.readChunk(of: bufferSize, from: entryFile) }

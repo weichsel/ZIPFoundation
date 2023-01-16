@@ -2,7 +2,7 @@
 //  FileManager+ZIP.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2023 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -44,7 +44,9 @@ extension FileManager {
         }
         let isDirectory = try FileManager.typeForItem(at: sourceURL) == .directory
         if isDirectory {
-            let subPaths = try self.subpathsOfDirectory(atPath: sourceURL.path)
+            var subPaths = try self.subpathsOfDirectory(atPath: sourceURL.path)
+            // Enforce an entry for the root directory to preserve its file attributes
+            if shouldKeepParent { subPaths.append("") }
             var totalUnitCount = Int64(0)
             if let progress = progress {
                 totalUnitCount = subPaths.reduce(Int64(0), {
@@ -98,23 +100,14 @@ extension FileManager {
         guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: preferredEncoding) else {
             throw Archive.ArchiveError.unreadableArchive
         }
-        // Defer extraction of symlinks until all files & directories have been created.
-        // This is necessary because we can't create links to files that haven't been created yet.
-        let sortedEntries = archive.sorted { (left, right) -> Bool in
-            switch (left.type, right.type) {
-            case (.directory, .file): return true
-            case (.directory, .symlink): return true
-            case (.file, .symlink): return true
-            default: return false
-            }
-        }
+
         var totalUnitCount = Int64(0)
         if let progress = progress {
-            totalUnitCount = sortedEntries.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
+            totalUnitCount = archive.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
             progress.totalUnitCount = totalUnitCount
         }
 
-        for entry in sortedEntries {
+        for entry in archive {
             let path = preferredEncoding == nil ? entry.path : entry.path(using: preferredEncoding!)
             let entryURL = destinationURL.appendingPathComponent(path)
             guard entryURL.isContained(in: destinationURL) else {
@@ -156,6 +149,73 @@ extension FileManager {
         try self.createDirectory(at: parentDirectoryURL, withIntermediateDirectories: true, attributes: nil)
     }
 
+    func transferAttributes(from entry: Entry, toItemAtURL url: URL) throws {
+        let attributes = FileManager.attributes(from: entry)
+        switch entry.type {
+        case .directory, .file:
+            try self.setAttributes(attributes, ofItemAtURL: url)
+        case .symlink:
+            try self.setAttributes(attributes, ofItemAtURL: url, traverseLink: false)
+        }
+    }
+
+    func setAttributes(_ attributes: [FileAttributeKey: Any], ofItemAtURL url: URL, traverseLink: Bool = true) throws {
+        // `FileManager.setAttributes` traverses symlinks and applies the attributes to
+        // the symlink destination. Since we want to be able to create symlinks where
+        // the destination isn't available (yet), we want to directly apply entry attributes
+        // to the symlink (vs. the destination file).
+        guard traverseLink == false else {
+            try self.setAttributes(attributes, ofItemAtPath: url.path)
+            return
+        }
+
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        guard let posixPermissions = attributes[.posixPermissions] as? NSNumber else {
+            throw Entry.EntryError.missingPermissionsAttributeError
+        }
+
+        try self.setSymlinkPermissions(posixPermissions, ofItemAtURL: url)
+
+        guard let modificationDate = attributes[.modificationDate] as? Date else {
+            throw Entry.EntryError.missingModificationDateAttributeError
+        }
+
+        try self.setSymlinkModificationDate(modificationDate, ofItemAtURL: url)
+#else
+        // Since non-Darwin POSIX platforms ignore permissions on symlinks and swift-corelibs-foundation
+        // currently doesn't support setting the modification date, this codepath is currently a no-op
+        // on these platforms.
+        return
+#endif
+    }
+
+    func setSymlinkPermissions(_ posixPermissions: NSNumber, ofItemAtURL url: URL) throws {
+        let fileSystemRepresentation = self.fileSystemRepresentation(withPath: url.path)
+        let modeT = posixPermissions.uint16Value
+        guard lchmod(fileSystemRepresentation, mode_t(modeT)) == 0 else {
+            throw POSIXError(errno, path: url.path)
+        }
+    }
+
+    func setSymlinkModificationDate(_ modificationDate: Date, ofItemAtURL url: URL) throws {
+        let fileSystemRepresentation = self.fileSystemRepresentation(withPath: url.path)
+        var fileStat = stat()
+        guard lstat(fileSystemRepresentation, &fileStat) == 0 else {
+            throw POSIXError(errno, path: url.path)
+        }
+
+        let accessDate = fileStat.lastAccessDate
+        let array = [
+            timeval(timeIntervalSince1970: accessDate.timeIntervalSince1970),
+            timeval(timeIntervalSince1970: modificationDate.timeIntervalSince1970)
+        ]
+        try array.withUnsafeBufferPointer {
+            guard lutimes(fileSystemRepresentation, $0.baseAddress) == 0 else {
+                throw POSIXError(errno, path: url.path)
+            }
+        }
+    }
+
     class func attributes(from entry: Entry) -> [FileAttributeKey: Any] {
         let centralDirectoryStructure = entry.centralDirectoryStructure
         let entryType = entry.type
@@ -164,9 +224,9 @@ extension FileManager {
         let defaultPermissions = entryType == .directory ? defaultDirectoryPermissions : defaultFilePermissions
         var attributes = [.posixPermissions: defaultPermissions] as [FileAttributeKey: Any]
         // Certain keys are not yet supported in swift-corelibs
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         attributes[.modificationDate] = Date(dateTime: (fileDate, fileTime))
-        #endif
+#endif
         let versionMadeBy = centralDirectoryStructure.versionMadeBy
         guard let osType = Entry.OSType(rawValue: UInt(versionMadeBy >> 8)) else { return attributes }
 
@@ -220,11 +280,11 @@ extension FileManager {
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         let modTimeSpec = fileStat.st_mtimespec
-        #else
+#else
         let modTimeSpec = fileStat.st_mtim
-        #endif
+#endif
 
         let timeStamp = TimeInterval(modTimeSpec.tv_sec) + TimeInterval(modTimeSpec.tv_nsec)/1000000000.0
         let modDate = Date(timeIntervalSince1970: timeStamp)
@@ -258,53 +318,15 @@ extension FileManager {
     }
 }
 
-extension Date {
-    init(dateTime: (UInt16, UInt16)) {
-        var msdosDateTime = Int(dateTime.0)
-        msdosDateTime <<= 16
-        msdosDateTime |= Int(dateTime.1)
-        var unixTime = tm()
-        unixTime.tm_sec = Int32((msdosDateTime&31)*2)
-        unixTime.tm_min = Int32((msdosDateTime>>5)&63)
-        unixTime.tm_hour = Int32((Int(dateTime.1)>>11)&31)
-        unixTime.tm_mday = Int32((msdosDateTime>>16)&31)
-        unixTime.tm_mon = Int32((msdosDateTime>>21)&15)
-        unixTime.tm_mon -= 1 // UNIX time struct month entries are zero based.
-        unixTime.tm_year = Int32(1980+(msdosDateTime>>25))
-        unixTime.tm_year -= 1900 // UNIX time structs count in "years since 1900".
-        let time = timegm(&unixTime)
-        self = Date(timeIntervalSince1970: TimeInterval(time))
-    }
+extension POSIXError {
 
-    var fileModificationDateTime: (UInt16, UInt16) {
-        return (self.fileModificationDate, self.fileModificationTime)
-    }
-
-    var fileModificationDate: UInt16 {
-        var time = time_t(self.timeIntervalSince1970)
-        guard let unixTime = gmtime(&time) else {
-            return 0
-        }
-        var year = unixTime.pointee.tm_year + 1900 // UNIX time structs count in "years since 1900".
-        // ZIP uses the MSDOS date format which has a valid range of 1980 - 2099.
-        year = year >= 1980 ? year : 1980
-        year = year <= 2099 ? year : 2099
-        let month = unixTime.pointee.tm_mon + 1 // UNIX time struct month entries are zero based.
-        let day = unixTime.pointee.tm_mday
-        return (UInt16)(day + ((month) * 32) +  ((year - 1980) * 512))
-    }
-
-    var fileModificationTime: UInt16 {
-        var time = time_t(self.timeIntervalSince1970)
-        guard let unixTime = gmtime(&time) else {
-            return 0
-        }
-        let hour = unixTime.pointee.tm_hour
-        let minute = unixTime.pointee.tm_min
-        let second = unixTime.pointee.tm_sec
-        return (UInt16)((second/2) + (minute * 32) + (hour * 2048))
+    init(_ code: Int32, path: String) {
+        let errorCode = POSIXError.Code(rawValue: code) ?? .EPERM
+        self = .init(errorCode, userInfo: [NSFilePathErrorKey: path])
     }
 }
+
+extension CocoaError {
 
 #if swift(>=4.2)
 #else
@@ -312,11 +334,10 @@ extension Date {
 #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
 #else
 
-// The swift-corelibs-foundation version of NSError.swift was missing a convenience method to create
-// error objects from error codes. (https://github.com/apple/swift-corelibs-foundation/pull/1420)
-// We have to provide an implementation for non-Darwin platforms using Swift versions < 4.2.
+    // The swift-corelibs-foundation version of NSError.swift was missing a convenience method to create
+    // error objects from error codes. (https://github.com/apple/swift-corelibs-foundation/pull/1420)
+    // We have to provide an implementation for non-Darwin platforms using Swift versions < 4.2.
 
-public extension CocoaError {
     public static func error(_ code: CocoaError.Code, userInfo: [AnyHashable: Any]? = nil, url: URL? = nil) -> Error {
         var info: [String: Any] = userInfo as? [String: Any] ?? [:]
         if let url = url {
@@ -324,10 +345,10 @@ public extension CocoaError {
         }
         return NSError(domain: NSCocoaErrorDomain, code: code.rawValue, userInfo: info)
     }
-}
 
 #endif
 #endif
+}
 
 public extension URL {
     func isContained(in parentDirectoryURL: URL) -> Bool {

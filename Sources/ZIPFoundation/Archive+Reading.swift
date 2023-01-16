@@ -2,7 +2,7 @@
 //  Archive+Reading.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2023 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -36,7 +36,7 @@ extension Archive {
             try fileManager.createParentDirectoryStructure(for: url)
             let destinationRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
             guard let destinationFile: FILEPointer = fopen(destinationRepresentation, "wb+") else {
-                throw CocoaError(.fileNoSuchFile)
+                throw POSIXError(errno, path: url.path)
             }
             defer { fclose(destinationFile) }
             let consumer = { _ = try Data.write(chunk: $0, to: destinationFile) }
@@ -60,8 +60,7 @@ extension Archive {
             checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                         progress: progress, consumer: consumer)
         }
-        let attributes = FileManager.attributes(from: entry)
-        try fileManager.setAttributes(attributes, ofItemAtPath: url.path)
+        try fileManager.transferAttributes(from: entry, toItemAtURL: url)
         return checksum
     }
 

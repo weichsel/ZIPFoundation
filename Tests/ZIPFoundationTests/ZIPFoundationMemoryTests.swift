@@ -2,7 +2,7 @@
 //  ZIPFoundationMemoryTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2023 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -16,6 +16,7 @@ import XCTest
 #if swift(>=5.0)
 
 extension ZIPFoundationTests {
+
     func testExtractUncompressedFolderEntriesFromMemory() {
         let archive = self.memoryArchive(for: #function, mode: .read)
         for entry in archive {

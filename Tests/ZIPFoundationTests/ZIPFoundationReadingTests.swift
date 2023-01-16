@@ -2,7 +2,7 @@
 //  ZIPFoundationReadingTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2021 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2023 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -12,6 +12,7 @@ import XCTest
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
+
     func testExtractUncompressedFolderEntries() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
@@ -133,8 +134,8 @@ extension ZIPFoundationTests {
             var overlongURL = URL(fileURLWithPath: NSTemporaryDirectory())
             overlongURL.appendPathComponent(longFileName)
             _ = try archive.extract(fileEntry, to: overlongURL)
-        } catch let error as CocoaError {
-            XCTAssert(error.code == CocoaError.fileNoSuchFile)
+        } catch let error as POSIXError {
+            XCTAssert(error.code == POSIXErrorCode.ENAMETOOLONG)
         } catch {
             XCTFail("Unexpected error while trying to extract entry to invalid URL.")
             return
@@ -296,5 +297,32 @@ extension ZIPFoundationTests {
         for entry in archive {
             XCTAssertEqual(entry.type, expectedData[entry.path])
         }
+    }
+
+    func testCRC32Check() {
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        do {
+            try fileManager.unzipItem(at: archive.url, to: destinationURL)
+        } catch let error as Archive.ArchiveError {
+            XCTAssert(error == Archive.ArchiveError.invalidCRC32)
+            return
+        } catch {
+            XCTFail("Extraction should fail with an archive error")
+        }
+        XCTFail("Extraction should fail")
+    }
+
+    func testTraversalAttack() {
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        do {
+            try fileManager.unzipItem(at: archive.url, to: destinationURL)
+        } catch {
+            XCTAssert((error as? CocoaError)?.code == .fileReadInvalidFileName); return
+        }
+        XCTFail("Extraction should fail")
     }
 }
