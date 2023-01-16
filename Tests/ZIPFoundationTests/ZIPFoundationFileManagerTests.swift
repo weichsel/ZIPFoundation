@@ -212,6 +212,7 @@ extension ZIPFoundationTests {
 
 // MARK: - Private
 
+#if os(macOS)
 private struct ZIPInfo: Hashable {
 
     enum Mode {
@@ -314,3 +315,4 @@ private extension URL {
             .appending(isDirectory ? "/" : "")
     }
 }
+#endif
