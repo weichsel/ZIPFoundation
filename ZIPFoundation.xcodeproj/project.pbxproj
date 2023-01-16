@@ -20,6 +20,7 @@
 		BA0CE5042746AF0C004D8DD4 /* Archive+WritingDeprecated.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0CE5032746AF0C004D8DD4 /* Archive+WritingDeprecated.swift */; };
 		BA0CE5062746AF1A004D8DD4 /* Data+CompressionDeprecated.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0CE5052746AF1A004D8DD4 /* Data+CompressionDeprecated.swift */; };
 		BA0CE5082746B369004D8DD4 /* Archive+ReadingDeprecated.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0CE5072746B369004D8DD4 /* Archive+ReadingDeprecated.swift */; };
+		BA0F722029756590006DD5DB /* ZIPFoundationFileAttributeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0F721F29756590006DD5DB /* ZIPFoundationFileAttributeTests.swift */; };
 		BA205D44273FCEB4001F9048 /* ZIPFoundationArchiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA205D43273FCEB4001F9048 /* ZIPFoundationArchiveTests.swift */; };
 		BA3716AB21F0A238006E54E6 /* ZIPFoundationProgressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */; };
 		BA58FB162951F49400892CE7 /* Date+ZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA58FB152951F49400892CE7 /* Date+ZIP.swift */; };
@@ -70,6 +71,7 @@
 		BA0CE5032746AF0C004D8DD4 /* Archive+WritingDeprecated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Archive+WritingDeprecated.swift"; sourceTree = "<group>"; };
 		BA0CE5052746AF1A004D8DD4 /* Data+CompressionDeprecated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Data+CompressionDeprecated.swift"; sourceTree = "<group>"; };
 		BA0CE5072746B369004D8DD4 /* Archive+ReadingDeprecated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+ReadingDeprecated.swift"; sourceTree = "<group>"; };
+		BA0F721F29756590006DD5DB /* ZIPFoundationFileAttributeTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ZIPFoundationFileAttributeTests.swift; sourceTree = "<group>"; };
 		BA205D43273FCEB4001F9048 /* ZIPFoundationArchiveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationArchiveTests.swift; sourceTree = "<group>"; };
 		BA3716A921F0A1AC006E54E6 /* ZIPFoundationProgressTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationProgressTests.swift; sourceTree = "<group>"; };
 		BA58FB152951F49400892CE7 /* Date+ZIP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+ZIP.swift"; sourceTree = "<group>"; };
@@ -135,6 +137,7 @@
 				590A7DAD26B0F95E00CBEFB4 /* ZIPFoundationEntryTests+ZIP64.swift */,
 				BAAF13D925CC140300070A95 /* ZIPFoundationErrorConditionTests.swift */,
 				59248AA126B6EC770078ABDA /* ZIPFoundationErrorConditionTests+ZIP64.swift */,
+				BA0F721F29756590006DD5DB /* ZIPFoundationFileAttributeTests.swift */,
 				OBJ_20 /* ZIPFoundationFileManagerTests.swift */,
 				5968EBF026D695AD0037EA62 /* ZIPFoundationFileManagerTests+ZIP64.swift */,
 				95B5A3D52367983A00D4D8FD /* ZIPFoundationMemoryTests.swift */,
@@ -306,6 +309,7 @@
 				OBJ_34 /* ZIPFoundationEntryTests.swift in Sources */,
 				BAAF13DA25CC140300070A95 /* ZIPFoundationErrorConditionTests.swift in Sources */,
 				BA205D44273FCEB4001F9048 /* ZIPFoundationArchiveTests.swift in Sources */,
+				BA0F722029756590006DD5DB /* ZIPFoundationFileAttributeTests.swift in Sources */,
 				BA3716AB21F0A238006E54E6 /* ZIPFoundationProgressTests.swift in Sources */,
 				OBJ_35 /* ZIPFoundationFileManagerTests.swift in Sources */,
 				OBJ_36 /* ZIPFoundationPerformanceTests.swift in Sources */,
