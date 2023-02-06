@@ -54,6 +54,7 @@ let memoryURLScheme = "memory"
 ///     var archive = Archive(url: archiveURL, accessMode: .update)
 ///     try archive?.addEntry("test.txt", relativeTo: baseURL, compressionMethod: .deflate)
 public final class Archive: Sequence {
+
     typealias LocalFileHeader = Entry.LocalFileHeader
     typealias DataDescriptor = Entry.DefaultDataDescriptor
     typealias ZIP64DataDescriptor = Entry.ZIP64DataDescriptor
@@ -259,7 +260,7 @@ public final class Archive: Sequence {
     /// - Parameter path: A relative file path identifying the corresponding `Entry`.
     /// - Returns: An `Entry` with the given `path`. Otherwise, `nil`.
     public subscript(path: String) -> Entry? {
-        if let encoding = preferredEncoding {
+        if let encoding = self.preferredEncoding {
             return self.first { $0.path(using: encoding) == path }
         }
         return self.first { $0.path == path }
