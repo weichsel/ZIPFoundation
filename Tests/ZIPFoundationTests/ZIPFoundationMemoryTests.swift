@@ -224,14 +224,14 @@ extension ZIPFoundationTests {
 
 extension ZIPFoundationTests {
     func memoryArchive(for testFunction: String, mode: Archive.AccessMode,
-                       preferredEncoding: String.Encoding? = nil) -> Archive {
+                       pathEncoding: String.Encoding? = nil) -> Archive {
         var sourceArchiveURL = ZIPFoundationTests.resourceDirectoryURL
         sourceArchiveURL.appendPathComponent(testFunction.replacingOccurrences(of: "()", with: ""))
         sourceArchiveURL.appendPathExtension("zip")
         do {
             let data = mode == .create ? Data() : try Data(contentsOf: sourceArchiveURL)
             guard let archive = Archive(data: data, accessMode: mode,
-                                        preferredEncoding: preferredEncoding) else {
+                                        pathEncoding: pathEncoding) else {
                                             throw Archive.ArchiveError.unreadableArchive
             }
             return archive

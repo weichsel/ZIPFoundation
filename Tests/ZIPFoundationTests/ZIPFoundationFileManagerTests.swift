@@ -125,7 +125,7 @@ extension ZIPFoundationTests {
         let archive = self.archive(for: #function, mode: .read, preferredEncoding: encoding)
         let destinationURL = self.createDirectory(for: #function)
         do {
-            try fileManager.unzipItem(at: archive.url, to: destinationURL, preferredEncoding: encoding)
+            try fileManager.unzipItem(at: archive.url, to: destinationURL, pathEncoding: encoding)
         } catch {
             XCTFail("Failed to extract item."); return
         }

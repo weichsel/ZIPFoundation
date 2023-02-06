@@ -285,7 +285,7 @@ private extension Archive {
         if self.isMemoryArchive {
             #if swift(>=5.0)
             guard let tempArchive = Archive(data: Data(), accessMode: .create,
-                                            preferredEncoding: self.preferredEncoding) else {
+                                            pathEncoding: self.pathEncoding) else {
                 throw ArchiveError.unwritableArchive
             }
             archive = tempArchive

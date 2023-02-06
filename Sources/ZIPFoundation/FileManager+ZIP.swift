@@ -89,15 +89,15 @@ extension FileManager {
     ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
-    ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
+    ///   - pathEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
-                          progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
+                          progress: Progress? = nil, pathEncoding: String.Encoding? = nil) throws {
         let fileManager = FileManager()
         guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
-        guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: preferredEncoding) else {
+        guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: pathEncoding) else {
             throw Archive.ArchiveError.unreadableArchive
         }
 
@@ -108,7 +108,7 @@ extension FileManager {
         }
 
         for entry in archive {
-            let path = preferredEncoding == nil ? entry.path : entry.path(using: preferredEncoding!)
+            let path = pathEncoding == nil ? entry.path : entry.path(using: pathEncoding!)
             let entryURL = destinationURL.appendingPathComponent(path)
             guard entryURL.isContained(in: destinationURL) else {
                 throw CocoaError(.fileReadInvalidFileName,

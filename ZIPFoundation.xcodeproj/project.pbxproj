@@ -26,6 +26,8 @@
 		BA58FB162951F49400892CE7 /* Date+ZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA58FB152951F49400892CE7 /* Date+ZIP.swift */; };
 		BA643D7A264811FB00018273 /* URL+ZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA643D79264811FB00018273 /* URL+ZIP.swift */; };
 		BA643D7C2648131C00018273 /* Archive+Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA643D7B2648131C00018273 /* Archive+Progress.swift */; };
+		BA85B4F2299160E4003F2748 /* Archive+Deprecated.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA85B4F1299160E4003F2748 /* Archive+Deprecated.swift */; };
+		BA85B4F42991614E003F2748 /* FileManager+ZIPDeprecated.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA85B4F32991614E003F2748 /* FileManager+ZIPDeprecated.swift */; };
 		BAAF13DA25CC140300070A95 /* ZIPFoundationErrorConditionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAAF13D925CC140300070A95 /* ZIPFoundationErrorConditionTests.swift */; };
 		BACE20B826F7CE6C003BA312 /* Archive+BackingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACE20B726F7CE6C003BA312 /* Archive+BackingConfiguration.swift */; };
 		BACE20BA26F7D18A003BA312 /* Archive+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACE20B926F7D18A003BA312 /* Archive+Helpers.swift */; };
@@ -77,6 +79,8 @@
 		BA58FB152951F49400892CE7 /* Date+ZIP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+ZIP.swift"; sourceTree = "<group>"; };
 		BA643D79264811FB00018273 /* URL+ZIP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URL+ZIP.swift"; sourceTree = "<group>"; };
 		BA643D7B2648131C00018273 /* Archive+Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Progress.swift"; sourceTree = "<group>"; };
+		BA85B4F1299160E4003F2748 /* Archive+Deprecated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Deprecated.swift"; sourceTree = "<group>"; };
+		BA85B4F32991614E003F2748 /* FileManager+ZIPDeprecated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileManager+ZIPDeprecated.swift"; sourceTree = "<group>"; };
 		BAAF13D925CC140300070A95 /* ZIPFoundationErrorConditionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationErrorConditionTests.swift; sourceTree = "<group>"; };
 		BACE20B726F7CE6C003BA312 /* Archive+BackingConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+BackingConfiguration.swift"; sourceTree = "<group>"; };
 		BACE20B926F7D18A003BA312 /* Archive+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Helpers.swift"; sourceTree = "<group>"; };
@@ -185,6 +189,7 @@
 			children = (
 				OBJ_11 /* Archive.swift */,
 				BACE20B726F7CE6C003BA312 /* Archive+BackingConfiguration.swift */,
+				BA85B4F1299160E4003F2748 /* Archive+Deprecated.swift */,
 				BACE20B926F7D18A003BA312 /* Archive+Helpers.swift */,
 				95B5A3D32366731B00D4D8FD /* Archive+MemoryFile.swift */,
 				BA643D7B2648131C00018273 /* Archive+Progress.swift */,
@@ -201,6 +206,7 @@
 				BACE20BC26F7D545003BA312 /* Entry+Serialization.swift */,
 				590A7DA726B0F91E00CBEFB4 /* Entry+ZIP64.swift */,
 				OBJ_15 /* FileManager+ZIP.swift */,
+				BA85B4F32991614E003F2748 /* FileManager+ZIPDeprecated.swift */,
 				BA643D79264811FB00018273 /* URL+ZIP.swift */,
 			);
 			name = ZIPFoundation;
@@ -326,6 +332,7 @@
 			buildActionMask = 0;
 			files = (
 				OBJ_48 /* Archive+Reading.swift in Sources */,
+				BA85B4F2299160E4003F2748 /* Archive+Deprecated.swift in Sources */,
 				BA0CE5062746AF1A004D8DD4 /* Data+CompressionDeprecated.swift in Sources */,
 				OBJ_49 /* Archive+Writing.swift in Sources */,
 				OBJ_50 /* Archive.swift in Sources */,
@@ -335,6 +342,7 @@
 				OBJ_52 /* Data+Serialization.swift in Sources */,
 				590A7DA826B0F91F00CBEFB4 /* Entry+ZIP64.swift in Sources */,
 				BACE20BA26F7D18A003BA312 /* Archive+Helpers.swift in Sources */,
+				BA85B4F42991614E003F2748 /* FileManager+ZIPDeprecated.swift in Sources */,
 				590A7DA626B0F8F800CBEFB4 /* Archive+ZIP64.swift in Sources */,
 				BA643D7A264811FB00018273 /* URL+ZIP.swift in Sources */,
 				BA58FB162951F49400892CE7 /* Date+ZIP.swift in Sources */,
