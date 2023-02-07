@@ -182,9 +182,9 @@ extension ZIPFoundationTests {
         do {
             try archive.addEntry(with: entryName, type: .file,
                                  uncompressedSize: Int64(size), provider: { (position, bufferSize) -> Data in
-                                    let upperBound = Swift.min(size, Int(position) + bufferSize)
-                                    let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
-                                    return data.subdata(in: range)
+                let upperBound = Swift.min(size, Int(position) + bufferSize)
+                let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
+                return data.subdata(in: range)
             })
         } catch {
             XCTFail("Failed to add large entry to uncompressed archive with error : \(error)")
@@ -206,9 +206,9 @@ extension ZIPFoundationTests {
             try archive.addEntry(with: entryName, type: .file, uncompressedSize: Int64(size),
                                  compressionMethod: .deflate,
                                  provider: { (position, bufferSize) -> Data in
-                                    let upperBound = Swift.min(size, Int(position) + bufferSize)
-                                    let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
-                                    return data.subdata(in: range)
+                let upperBound = Swift.min(size, Int(position) + bufferSize)
+                let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
+                return data.subdata(in: range)
             })
         } catch {
             XCTFail("Failed to add large entry to compressed archive with error : \(error)")
@@ -263,7 +263,6 @@ extension ZIPFoundationTests {
     }
 
     func testRemoveEntryErrorConditions() {
-        var didCatchExpectedError = false
         let archive = self.archive(for: #function, mode: .update)
         guard let entryToRemove = archive["test/data.random"] else {
             XCTFail("Failed to find entry to remove in uncompressed folder")
@@ -272,44 +271,28 @@ extension ZIPFoundationTests {
         // We don't have access to the temp archive file that Archive.remove
         // uses. To exercise the error code path, we temporarily limit the number of open files for
         // the test process to exercise the error code path here.
-        self.runWithFileDescriptorLimit(0) {
-            do {
-                try archive.remove(entryToRemove)
-            } catch let error as Archive.ArchiveError {
-                XCTAssertNotNil(error == .unwritableArchive)
-                didCatchExpectedError = true
-            } catch {
-                XCTFail("Unexpected error while trying to remove entry from unwritable archive.")
-            }
-        }
-        XCTAssertTrue(didCatchExpectedError)
-        didCatchExpectedError = false
+        XCTAssertNoThrow(try self.runWithFileDescriptorLimit(0) {
+            XCTAssertCocoaError(try archive.remove(entryToRemove), throwsErrorWithCode: .fileWriteUnknown)
+        })
         let readonlyArchive = self.archive(for: #function, mode: .read)
-        do {
-            try readonlyArchive.remove(entryToRemove)
-        } catch let error as Archive.ArchiveError {
-            XCTAssertNotNil(error == .unwritableArchive)
-            didCatchExpectedError = true
-        } catch {
-            XCTFail("Unexpected error while trying to remove entry from readonly archive.")
-        }
-        XCTAssertTrue(didCatchExpectedError)
+        XCTAssertSwiftError(try readonlyArchive.remove(entryToRemove), throws: Archive.ArchiveError.unwritableArchive)
     }
 
     func testArchiveCreateErrorConditions() {
         let existantURL = ZIPFoundationTests.tempZipDirectoryURL
-        let nonCreatableArchive = Archive(url: existantURL, accessMode: .create)
-        XCTAssertNil(nonCreatableArchive)
+        XCTAssertCocoaError(try Archive(url: existantURL, accessMode: .create),
+                            throwsErrorWithCode: .fileWriteFileExists)
         let processInfo = ProcessInfo.processInfo
         var noEndOfCentralDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         noEndOfCentralDirectoryArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
         let fullPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: defaultFilePermissions)]
         let fileManager = FileManager()
         let result = fileManager.createFile(atPath: noEndOfCentralDirectoryArchiveURL.path, contents: nil,
-                                                    attributes: fullPermissionAttributes)
+                                            attributes: fullPermissionAttributes)
         XCTAssert(result == true)
-        let noEndOfCentralDirectoryArchive = Archive(url: noEndOfCentralDirectoryArchiveURL,
-                                                     accessMode: .update)
+        // TODO: enhancement/throwingArchiveInit - throw specific error in `makeBackingConfiguration` and test for that
+        let noEndOfCentralDirectoryArchive = try? Archive(url: noEndOfCentralDirectoryArchiveURL,
+                                                          accessMode: .update)
         XCTAssertNil(noEndOfCentralDirectoryArchive)
     }
 
@@ -322,12 +305,12 @@ extension ZIPFoundationTests {
         let result = fileManager.createFile(atPath: nonUpdatableArchiveURL.path, contents: nil,
                                             attributes: noPermissionAttributes)
         XCTAssert(result == true)
-        let nonUpdatableArchive = Archive(url: nonUpdatableArchiveURL, accessMode: .update)
-        XCTAssertNil(nonUpdatableArchive)
+        XCTAssertSwiftError(try Archive(url: nonUpdatableArchiveURL, accessMode: .update),
+                            throws: Archive.ArchiveError.unwritableArchive)
     }
 
     func testReplaceCurrentArchiveWithArchiveCrossLink() {
-		#if os(macOS)
+#if os(macOS)
         let createVolumeExpectation = expectation(description: "Creation of temporary additional volume")
         let unmountVolumeExpectation = expectation(description: "Unmount temporary additional volume")
         let tempDir = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
@@ -343,18 +326,18 @@ extension ZIPFoundationTests {
                 let vol2URL = URL(fileURLWithPath: "/Volumes/\(volName)")
                 defer {
                     FileManager.default.unmountVolume(at: vol2URL, options:
-                        [.allPartitionsAndEjectDisk, .withoutUI], completionHandler: { (error) in
-                            guard error == nil else {
-                                XCTFail("\(String(describing: error))")
-                                return
-                            }
-                            unmountVolumeExpectation.fulfill()
+                                                        [.allPartitionsAndEjectDisk, .withoutUI], completionHandler: { (error) in
+                        guard error == nil else {
+                            XCTFail("\(String(describing: error))")
+                            return
+                        }
+                        unmountVolumeExpectation.fulfill()
                     })
                 }
                 let vol1ArchiveURL = tempDir.appendingPathComponent("vol1Archive")
                 let vol2ArchiveURL = vol2URL.appendingPathComponent("vol2Archive")
                 guard let vol1Archive = Archive(url: vol1ArchiveURL, accessMode: .create),
-                    let vol2Archive = Archive(url: vol2ArchiveURL, accessMode: .create) else {
+                      let vol2Archive = Archive(url: vol2ArchiveURL, accessMode: .create) else {
                     XCTFail("Failed to create test archive '\(vol2ArchiveURL)'")
                     type(of: self).tearDown()
                     return
@@ -375,6 +358,6 @@ extension ZIPFoundationTests {
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
         waitForExpectations(timeout: 30.0)
-		#endif
+#endif
     }
 }

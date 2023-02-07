@@ -40,15 +40,16 @@ extension Archive {
         #endif
     }
 
-    static func makeBackingConfiguration(for url: URL, mode: AccessMode)
-    -> BackingConfiguration? {
+    static func makeBackingConfiguration(for url: URL, mode: AccessMode) throws
+    -> BackingConfiguration {
         let fileManager = FileManager()
         switch mode {
         case .read:
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
+            // TODO: enhancement/throwingArchiveInit - throw specific error.
             guard let archiveFile = fopen(fileSystemRepresentation, "rb"),
                   let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
+                throw ArchiveError.unreadableArchive
             }
             return BackingConfiguration(file: archiveFile,
                                         endOfCentralDirectoryRecord: eocdRecord,
@@ -61,15 +62,15 @@ extension Archive {
                                                                           offsetToStartOfCentralDirectory: 0,
                                                                           zipFileCommentLength: 0,
                                                                           zipFileCommentData: Data())
-            do {
-                try endOfCentralDirectoryRecord.data.write(to: url, options: .withoutOverwriting)
-            } catch { return nil }
+
+            try endOfCentralDirectoryRecord.data.write(to: url, options: .withoutOverwriting)
             fallthrough
         case .update:
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
+            // TODO: enhancement/throwingArchiveInit - throw specific error.
             guard let archiveFile = fopen(fileSystemRepresentation, "rb+"),
                   let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
+                throw ArchiveError.unwritableArchive
             }
             fseeko(archiveFile, 0, SEEK_SET)
             return BackingConfiguration(file: archiveFile,

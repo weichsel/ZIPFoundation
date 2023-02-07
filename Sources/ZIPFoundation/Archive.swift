@@ -161,13 +161,11 @@ public final class Archive: Sequence {
     ///   - The file URL _must_ point to an existing file for `AccessMode.read`.
     ///   - The file URL _must_ point to a non-existing file for `AccessMode.create`.
     ///   - The file URL _must_ point to an existing file for `AccessMode.update`.
-    public init?(url: URL, accessMode mode: AccessMode, pathEncoding: String.Encoding? = nil) {
+    public init(url: URL, accessMode mode: AccessMode, pathEncoding: String.Encoding? = nil) throws {
         self.url = url
         self.accessMode = mode
         self.pathEncoding = pathEncoding
-        guard let config = Archive.makeBackingConfiguration(for: url, mode: mode) else {
-            return nil
-        }
+        let config = try Archive.makeBackingConfiguration(for: url, mode: mode)
         self.archiveFile = config.file
         self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
         self.zip64EndOfCentralDirectory = config.zip64EndOfCentralDirectory

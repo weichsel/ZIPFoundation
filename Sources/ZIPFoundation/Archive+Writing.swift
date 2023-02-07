@@ -298,9 +298,7 @@ private extension Archive {
             let uniqueString = ProcessInfo.processInfo.globallyUniqueString
             let tempArchiveURL = tempDir.appendingPathComponent(uniqueString)
             try manager.createParentDirectoryStructure(for: tempArchiveURL)
-            guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
-                throw ArchiveError.unwritableArchive
-            }
+            let tempArchive = try Archive(url: tempArchiveURL, accessMode: .create)
             archive = tempArchive
             url = tempDir
         }

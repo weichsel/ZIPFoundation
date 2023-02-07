@@ -11,6 +11,7 @@
 import Foundation
 
 extension FileManager {
+
     typealias CentralDirectoryStructure = Entry.CentralDirectoryStructure
 
     /// Zips the file or directory contents at the specified source URL to the destination URL.
@@ -39,9 +40,7 @@ extension FileManager {
         guard !fileManager.itemExists(at: destinationURL) else {
             throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: destinationURL.path])
         }
-        guard let archive = Archive(url: destinationURL, accessMode: .create) else {
-            throw Archive.ArchiveError.unwritableArchive
-        }
+        let archive = try Archive(url: destinationURL, accessMode: .create)
         let isDirectory = try FileManager.typeForItem(at: sourceURL) == .directory
         if isDirectory {
             var subPaths = try self.subpathsOfDirectory(atPath: sourceURL.path)
@@ -97,10 +96,7 @@ extension FileManager {
         guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
-        guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: pathEncoding) else {
-            throw Archive.ArchiveError.unreadableArchive
-        }
-
+        let archive = try Archive(url: sourceURL, accessMode: .read, pathEncoding: pathEncoding)
         var totalUnitCount = Int64(0)
         if let progress = progress {
             totalUnitCount = archive.reduce(0, { $0 + archive.totalUnitCountForReading($1) })

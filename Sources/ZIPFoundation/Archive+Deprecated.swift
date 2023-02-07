@@ -11,7 +11,7 @@ public extension Archive {
 
     @available(*, deprecated, message: "Please use the throwing initializer.")
     convenience init?(url: URL, accessMode mode: AccessMode, preferredEncoding: String.Encoding? = nil) {
-        self.init(url: url, accessMode: mode, pathEncoding: preferredEncoding)
+        try? self.init(url: url, accessMode: mode, pathEncoding: preferredEncoding)
     }
 
 #if swift(>=5.0)

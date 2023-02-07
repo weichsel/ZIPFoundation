@@ -14,8 +14,9 @@ extension ZIPFoundationTests {
 
     func testArchiveReadErrorConditions() {
         let nonExistantURL = URL(fileURLWithPath: "/nothing")
-        let nonExistantArchive = Archive(url: nonExistantURL, accessMode: .read)
-        XCTAssertNil(nonExistantArchive)
+        // TODO: enhancement/throwingArchiveInit - throw specific error in `makeBackingConfiguration` and test for that
+        XCTAssertSwiftError(try Archive(url: nonExistantURL, accessMode: .read),
+                               throws: Archive.ArchiveError.unreadableArchive)
         var unreadableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         let processInfo = ProcessInfo.processInfo
         unreadableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
@@ -24,15 +25,16 @@ extension ZIPFoundationTests {
         var result = fileManager.createFile(atPath: unreadableArchiveURL.path, contents: nil,
                                             attributes: noPermissionAttributes)
         XCTAssert(result == true)
-        let unreadableArchive = Archive(url: unreadableArchiveURL, accessMode: .read)
-        XCTAssertNil(unreadableArchive)
+        XCTAssertSwiftError(try Archive(url: unreadableArchiveURL, accessMode: .read),
+                               throws: Archive.ArchiveError.unreadableArchive)
         var noEndOfCentralDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         noEndOfCentralDirectoryArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
         let fullPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: defaultFilePermissions)]
         result = fileManager.createFile(atPath: noEndOfCentralDirectoryArchiveURL.path, contents: nil,
                                         attributes: fullPermissionAttributes)
         XCTAssert(result == true)
-        let noEndOfCentralDirectoryArchive = Archive(url: noEndOfCentralDirectoryArchiveURL,
+        // TODO: enhancement/throwingArchiveInit - throw specific error in `makeBackingConfiguration` and test for that
+        let noEndOfCentralDirectoryArchive = try? Archive(url: noEndOfCentralDirectoryArchiveURL,
                                                      accessMode: .read)
         XCTAssertNil(noEndOfCentralDirectoryArchive)
     }

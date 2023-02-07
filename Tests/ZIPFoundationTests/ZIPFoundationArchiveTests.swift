@@ -60,3 +60,36 @@ extension ZIPFoundationTests {
 #endif
     }
 }
+
+extension XCTestCase {
+
+    func XCTAssertSwiftError<T, E: Error & Equatable>(_ expression: @autoclosure () throws -> T,
+                                                      throws error: E,
+                                                      in file: StaticString = #file,
+                                                      line: UInt = #line) {
+        var thrownError: Error?
+        XCTAssertThrowsError(try expression(), file: file, line: line) { thrownError = $0}
+        XCTAssertTrue(thrownError is E, "Unexpected error type: \(type(of: thrownError))", file: file, line: line)
+        XCTAssertEqual(thrownError as? E, error, file: file, line: line)
+    }
+
+    func XCTAssertPOSIXError<T>(_ expression: @autoclosure () throws -> T,
+                                throwsErrorWithCode code: POSIXError.Code,
+                                in file: StaticString = #file,
+                                line: UInt = #line) {
+        var thrownError: POSIXError?
+        XCTAssertThrowsError(try expression(), file: file, line: line) { thrownError = $0 as? POSIXError }
+        XCTAssertNotNil(thrownError, file: file, line: line)
+        XCTAssertTrue(thrownError?.code == code, file: file, line: line)
+    }
+
+    func XCTAssertCocoaError<T>(_ expression: @autoclosure () throws -> T,
+                                throwsErrorWithCode code: CocoaError.Code,
+                                in file: StaticString = #file,
+                                line: UInt = #line) {
+        var thrownError: CocoaError?
+        XCTAssertThrowsError(try expression(), file: file, line: line) { thrownError = $0 as? CocoaError}
+        XCTAssertNotNil(thrownError, file: file, line: line)
+        XCTAssertTrue(thrownError?.code == code, file: file, line: line)
+    }
+}

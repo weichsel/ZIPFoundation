@@ -136,7 +136,7 @@ class ZIPFoundationTests: XCTestCase {
         return URL
     }
 
-    func runWithFileDescriptorLimit(_ limit: UInt64, handler: () -> Void) {
+    func runWithFileDescriptorLimit(_ limit: UInt64, handler: () throws -> Void) rethrows {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(Android)
         let fileNoFlag = RLIMIT_NOFILE
         #else
@@ -148,7 +148,7 @@ class ZIPFoundationTests: XCTestCase {
         tempRlimit.rlim_cur = rlim_t(limit)
         setrlimit(fileNoFlag, &tempRlimit)
         defer { setrlimit(fileNoFlag, &storedRlimit) }
-        handler()
+        try handler()
     }
 
     func runWithoutMemory(handler: () -> Void) {
