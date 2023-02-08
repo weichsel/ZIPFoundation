@@ -20,8 +20,7 @@ let package = Package(
         .macOS(.v10_11), .iOS(.v9), .tvOS(.v9), .watchOS(.v2)
     ],
     products: [
-        .library(name: "ZIPFoundation", targets: ["ZIPFoundation"]),
-        .library(name: "ZIPFoundationDynamic", type: .dynamic, targets: ["ZIPFoundation"])
+        .library(name: "ZIPFoundation", type: .dynamic, targets: ["ZIPFoundation"]),
     ],
     targets: targets,
     swiftLanguageVersions: [.v4, .v4_2, .v5]
