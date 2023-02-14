@@ -46,9 +46,10 @@ extension Archive {
         switch mode {
         case .read:
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            // TODO: enhancement/throwingArchiveInit - throw specific error.
-            guard let archiveFile = fopen(fileSystemRepresentation, "rb"),
-                  let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+            guard let archiveFile = fopen(fileSystemRepresentation, "rb") else {
+                throw POSIXError(errno, path: url.path)
+            }
+            guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
                 throw ArchiveError.unreadableArchive
             }
             return BackingConfiguration(file: archiveFile,
@@ -67,9 +68,10 @@ extension Archive {
             fallthrough
         case .update:
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            // TODO: enhancement/throwingArchiveInit - throw specific error.
-            guard let archiveFile = fopen(fileSystemRepresentation, "rb+"),
-                  let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+            guard let archiveFile = fopen(fileSystemRepresentation, "rb+") else {
+                throw POSIXError(errno, path: url.path)
+            }
+            guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
                 throw ArchiveError.unwritableArchive
             }
             fseeko(archiveFile, 0, SEEK_SET)

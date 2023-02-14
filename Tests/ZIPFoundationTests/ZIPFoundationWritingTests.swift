@@ -305,8 +305,7 @@ extension ZIPFoundationTests {
         let result = fileManager.createFile(atPath: nonUpdatableArchiveURL.path, contents: nil,
                                             attributes: noPermissionAttributes)
         XCTAssert(result == true)
-        XCTAssertSwiftError(try Archive(url: nonUpdatableArchiveURL, accessMode: .update),
-                            throws: Archive.ArchiveError.unwritableArchive)
+        XCTAssertPOSIXError(try Archive(url: nonUpdatableArchiveURL, accessMode: .update), throwsErrorWithCode: .EACCES)
     }
 
     func testReplaceCurrentArchiveWithArchiveCrossLink() {
@@ -325,8 +324,9 @@ extension ZIPFoundationTests {
                 }
                 let vol2URL = URL(fileURLWithPath: "/Volumes/\(volName)")
                 defer {
+                    let options: FileManager.UnmountOptions = [.allPartitionsAndEjectDisk, .withoutUI]
                     FileManager.default.unmountVolume(at: vol2URL, options:
-                                                        [.allPartitionsAndEjectDisk, .withoutUI], completionHandler: { (error) in
+                                                        options, completionHandler: { (error) in
                         guard error == nil else {
                             XCTFail("\(String(describing: error))")
                             return

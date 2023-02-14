@@ -14,9 +14,7 @@ extension ZIPFoundationTests {
 
     func testArchiveReadErrorConditions() {
         let nonExistantURL = URL(fileURLWithPath: "/nothing")
-        // TODO: enhancement/throwingArchiveInit - throw specific error in `makeBackingConfiguration` and test for that
-        XCTAssertSwiftError(try Archive(url: nonExistantURL, accessMode: .read),
-                               throws: Archive.ArchiveError.unreadableArchive)
+        XCTAssertPOSIXError(try Archive(url: nonExistantURL, accessMode: .update), throwsErrorWithCode: .ENOENT)
         var unreadableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         let processInfo = ProcessInfo.processInfo
         unreadableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
@@ -25,8 +23,7 @@ extension ZIPFoundationTests {
         var result = fileManager.createFile(atPath: unreadableArchiveURL.path, contents: nil,
                                             attributes: noPermissionAttributes)
         XCTAssert(result == true)
-        XCTAssertSwiftError(try Archive(url: unreadableArchiveURL, accessMode: .read),
-                               throws: Archive.ArchiveError.unreadableArchive)
+        XCTAssertPOSIXError(try Archive(url: unreadableArchiveURL, accessMode: .update), throwsErrorWithCode: .EACCES)
         var noEndOfCentralDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         noEndOfCentralDirectoryArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
         let fullPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: defaultFilePermissions)]
