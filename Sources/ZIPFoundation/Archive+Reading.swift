@@ -108,4 +108,23 @@ extension Archive {
         }
         return checksum
     }
+
+    /// Read a specified portion of a ZIP `Entry`
+    ///
+    /// - Parameters:
+    ///   - entry: The ZIP `Entry` to read.
+    ///   - offset: The position offset to start reading from the file specified by the Entry.
+    ///   - size: The size of the bytes to be read.
+    /// - Returns: The data containing the bytes within the range of the given offset and size.
+    /// - Throws: An error if the entry contains malformed content.
+    public func extract(
+        with entry: Entry,
+        offset: Int,
+        size: Int
+    ) throws -> Data {
+
+        fseek(archiveFile, Int(entry.dataOffset) + offset, SEEK_SET)
+
+        return try Data.readChunk(of: size, from: archiveFile)
+    }
 }

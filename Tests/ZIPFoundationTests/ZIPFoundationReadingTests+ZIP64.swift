@@ -56,6 +56,33 @@ extension ZIPFoundationTests {
         }
     }
 
+    func testReadZIP64CompressedDataAtOffset() throws {
+        let archive = self.archive(for: #function, mode: .read)
+        guard let entryA = archive["a.txt"] else { XCTFail("Failed to extract entry."); return }
+        XCTAssertEqual("1a", String(data: try archive.extract(with: entryA, offset: 0, size: 2), encoding: .utf8))
+        XCTAssertEqual("1b", String(data: try archive.extract(with: entryA, offset: 3, size: 2), encoding: .utf8))
+        XCTAssertEqual("1c", String(data: try archive.extract(with: entryA, offset: 6, size: 2), encoding: .utf8))
+        XCTAssertEqual("1d", String(data: try archive.extract(with: entryA, offset: 9, size: 2), encoding: .utf8))
+
+        guard let entryB = archive["b.txt"] else { XCTFail("Failed to extract entry."); return }
+        XCTAssertEqual("2a", String(data: try archive.extract(with: entryB, offset: 0, size: 2), encoding: .utf8))
+        XCTAssertEqual("2b", String(data: try archive.extract(with: entryB, offset: 3, size: 2), encoding: .utf8))
+        XCTAssertEqual("2c", String(data: try archive.extract(with: entryB, offset: 6, size: 2), encoding: .utf8))
+        XCTAssertEqual("2d", String(data: try archive.extract(with: entryB, offset: 9, size: 2), encoding: .utf8))
+
+        guard let entryC = archive["c.txt"] else { XCTFail("Failed to extract entry."); return }
+        XCTAssertEqual("3a", String(data: try archive.extract(with: entryC, offset: 0, size: 2), encoding: .utf8))
+        XCTAssertEqual("3b", String(data: try archive.extract(with: entryC, offset: 3, size: 2), encoding: .utf8))
+        XCTAssertEqual("3c", String(data: try archive.extract(with: entryC, offset: 6, size: 2), encoding: .utf8))
+        XCTAssertEqual("3d", String(data: try archive.extract(with: entryC, offset: 9, size: 2), encoding: .utf8))
+
+        guard let entryD = archive["d.txt"] else { XCTFail("Failed to extract entry."); return }
+        XCTAssertEqual("4a", String(data: try archive.extract(with: entryD, offset: 0, size: 2), encoding: .utf8))
+        XCTAssertEqual("4b", String(data: try archive.extract(with: entryD, offset: 3, size: 2), encoding: .utf8))
+        XCTAssertEqual("4c", String(data: try archive.extract(with: entryD, offset: 6, size: 2), encoding: .utf8))
+        XCTAssertEqual("4d", String(data: try archive.extract(with: entryD, offset: 9, size: 2), encoding: .utf8))
+    }
+
     // MARK: - Helpers
 
     private func extractEntryFromZIP64Archive(for testFunction: String, reservedFileName: String? = nil) throws {
