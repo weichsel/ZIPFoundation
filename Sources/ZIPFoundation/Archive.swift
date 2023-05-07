@@ -77,6 +77,8 @@ public final class Archive: Sequence {
         case invalidBufferSize
         /// Thrown when uncompressedSize/compressedSize exceeds `Int64.max` (Imposed by file API).
         case invalidEntrySize
+        /// Thrown when uncompressed size for a symbolic link is passed as nil
+        case missingEntrySize
         /// Thrown when the offset of local header data exceeds `Int64.max` (Imposed by file API).
         case invalidLocalHeaderDataOffset
         /// Thrown when the size of local header exceeds `Int64.max` (Imposed by file API).

@@ -44,11 +44,12 @@ extension Archive {
 
     // MARK: - Writing
 
-    func writeEntry(uncompressedSize: Int64, type: Entry.EntryType,
+    func writeEntry(uncompressedSize: Int64? = nil, type: Entry.EntryType,
                     compressionMethod: CompressionMethod, bufferSize: Int, progress: Progress? = nil,
-                    provider: Provider) throws -> (sizeWritten: Int64, crc32: CRC32) {
+                    provider: Provider) throws -> (totalRead: Int64, sizeWritten: Int64, crc32: CRC32) {
         var checksum = CRC32(0)
         var sizeWritten = Int64(0)
+        var totalRead = Int64(0)
         switch type {
         case .file:
             switch compressionMethod {
@@ -57,7 +58,7 @@ extension Archive {
                                                                      bufferSize: bufferSize,
                                                                      progress: progress, provider: provider)
             case .deflate:
-                (sizeWritten, checksum) = try self.writeCompressed(size: uncompressedSize,
+                (totalRead, sizeWritten, checksum) = try self.writeCompressed(size: uncompressedSize,
                                                                    bufferSize: bufferSize,
                                                                    progress: progress, provider: provider)
             }
@@ -65,12 +66,15 @@ extension Archive {
             _ = try provider(0, 0)
             if let progress = progress { progress.completedUnitCount = progress.totalUnitCount }
         case .symlink:
+            guard let uncompressedSize else {
+                throw ArchiveError.missingEntrySize
+            }
             let (linkSizeWritten, linkChecksum) = try self.writeSymbolicLink(size: Int(uncompressedSize),
                                                                              provider: provider)
             (sizeWritten, checksum) = (Int64(linkSizeWritten), linkChecksum)
             if let progress = progress { progress.completedUnitCount = progress.totalUnitCount }
         }
-        return (sizeWritten, checksum)
+        return (totalRead, sizeWritten, checksum)
     }
 
     func writeLocalFileHeader(path: String, compressionMethod: CompressionMethod,
@@ -206,35 +210,45 @@ extension Archive {
         return (record, zip64EOCD)
     }
 
-    func writeUncompressed(size: Int64, bufferSize: Int, progress: Progress? = nil,
+    func writeUncompressed(size: Int64?, bufferSize: Int, progress: Progress? = nil,
                            provider: Provider) throws -> (sizeWritten: Int64, checksum: CRC32) {
         var position: Int64 = 0
         var sizeWritten: Int64 = 0
         var checksum = CRC32(0)
-        while position < size {
+        var entryChunk: Data!
+        var atEnd = false
+        while !atEnd {
             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
-            let readSize = (size - position) >= bufferSize ? bufferSize : Int(size - position)
-            let entryChunk = try provider(position, readSize)
+            let remaining = size != nil ? (size! - position) : Int64(bufferSize)
+            let readSize = remaining >= bufferSize ? Int64(bufferSize) : remaining
+            entryChunk = try provider(position, Int(readSize))
             checksum = entryChunk.crc32(checksum: checksum)
             sizeWritten += Int64(try Data.write(chunk: entryChunk, to: self.archiveFile))
             position += Int64(bufferSize)
             progress?.completedUnitCount = sizeWritten
+
+            if let size, position >= size {
+                atEnd = true
+            }
+            if size == nil && entryChunk.count < readSize {
+                atEnd = true
+            }
         }
         return (sizeWritten, checksum)
     }
 
-    func writeCompressed(size: Int64, bufferSize: Int, progress: Progress? = nil,
-                         provider: Provider) throws -> (sizeWritten: Int64, checksum: CRC32) {
+    func writeCompressed(size: Int64? = nil, bufferSize: Int, progress: Progress? = nil,
+                         provider: Provider) throws -> (totalRead: Int64, sizeWritten: Int64, checksum: CRC32) {
         var sizeWritten: Int64 = 0
         let consumer: Consumer = { data in sizeWritten += Int64(try Data.write(chunk: data, to: self.archiveFile)) }
-        let checksum = try Data.compress(size: size, bufferSize: bufferSize,
+        let (totalRead, checksum) = try Data.compress(size: size, bufferSize: bufferSize,
                                          provider: { (position, size) -> Data in
                                             if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
                                             let data = try provider(position, size)
                                             progress?.completedUnitCount += Int64(data.count)
                                             return data
                                          }, consumer: consumer)
-        return(sizeWritten, checksum)
+        return(totalRead, sizeWritten, checksum)
     }
 
     func writeSymbolicLink(size: Int, provider: Provider) throws -> (sizeWritten: Int, checksum: CRC32) {

@@ -222,6 +222,32 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
+    func testCreateArchiveAddLargeCompressedEntryWithUnknownLength() {
+        let archive = self.archive(for: #function, mode: .create)
+        let size = 1024*1024*20
+        let data = Data.makeRandomData(size: size)
+        let entryName = ProcessInfo.processInfo.globallyUniqueString
+        do {
+            try archive.addEntry(with: entryName, type: .file, uncompressedSize: nil,
+                                 compressionMethod: .deflate,
+                                 provider: { (position, bufferSize) -> Data in
+                                    let upperBound = Swift.min(size, Int(position) + bufferSize)
+                                    let range = Range(uncheckedBounds: (lower: Int(position), upper: upperBound))
+                                    return data.subdata(in: range)
+            })
+        } catch {
+            XCTFail("Failed to add large entry to compressed archive with error : \(error)")
+        }
+        guard let entry = archive[entryName] else {
+            XCTFail("Failed to add large entry to compressed archive")
+            return
+        }
+        let dataCRC32 = data.crc32(checksum: 0)
+        XCTAssert(entry.checksum == dataCRC32)
+        XCTAssert(archive.checkIntegrity())
+    }
+
+
     func testRemoveUncompressedEntry() {
         let archive = self.archive(for: #function, mode: .update)
         guard let entryToRemove = archive["test/data.random"] else {
