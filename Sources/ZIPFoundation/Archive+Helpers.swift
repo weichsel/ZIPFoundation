@@ -57,6 +57,7 @@ extension Archive {
                 (sizeWritten, checksum) = try self.writeUncompressed(size: uncompressedSize,
                                                                      bufferSize: bufferSize,
                                                                      progress: progress, provider: provider)
+                totalRead = sizeWritten
             case .deflate:
                 (totalRead, sizeWritten, checksum) = try self.writeCompressed(size: uncompressedSize,
                                                                    bufferSize: bufferSize,
@@ -230,7 +231,7 @@ extension Archive {
             if let size, position >= size {
                 atEnd = true
             }
-            if size == nil && entryChunk.count < readSize {
+            if size == nil && entryChunk.count == 0 {
                 atEnd = true
             }
         }
