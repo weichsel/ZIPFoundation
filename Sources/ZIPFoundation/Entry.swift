@@ -198,7 +198,7 @@ public struct Entry: Equatable {
         }
         return size
     }
-    var dataOffset: UInt64 {
+    public var dataOffset: UInt64 {
         var dataOffset = self.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader
         dataOffset += UInt64(LocalFileHeader.size)
         dataOffset += UInt64(self.localFileHeader.fileNameLength)
