@@ -113,9 +113,7 @@ extension ZIPFoundationTests {
         } catch {
             throw ZIP64FileManagerTestsError.failedToZipItem(url: assetURL)
         }
-        guard let archive = Archive(url: fileArchiveURL, accessMode: .read) else {
-            throw ZIP64FileManagerTestsError.failedToZipItem(url: fileArchiveURL)
-        }
+        let archive = try Archive(url: fileArchiveURL, accessMode: .read)
         XCTAssertNotNil(archive[assetURL.lastPathComponent])
         XCTAssert(archive.checkIntegrity())
     }
