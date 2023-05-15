@@ -36,7 +36,7 @@ extension ZIPFoundationTests {
         XCTAssertNil(noEndOfCentralDirectoryArchive)
     }
 
-    func testArchiveIteratorErrorConditions() {
+    func testArchiveIteratorErrorConditions() throws {
         var didFailToMakeIteratorAsExpected = true
         // Construct an archive that only contains an EndOfCentralDirectoryRecord
         // with a number of entries > 0.
@@ -54,11 +54,8 @@ extension ZIPFoundationTests {
                                             contents: invalidCentralDirECDSData,
                                             attributes: nil)
         XCTAssert(result == true)
-        guard let invalidCentralDirArchive = Archive(url: invalidCentralDirArchiveURL,
-                                                     accessMode: .read) else {
-            XCTFail("Failed to read archive.")
-            return
-        }
+        let invalidCentralDirArchive = try Archive(url: invalidCentralDirArchiveURL,
+                                                   accessMode: .read)
         for _ in invalidCentralDirArchive {
             didFailToMakeIteratorAsExpected = false
         }
@@ -73,11 +70,8 @@ extension ZIPFoundationTests {
             // should fail.
             invalidLocalFHArchiveData[26] = 0xFF
             try invalidLocalFHArchiveData.write(to: invalidLocalFHArchiveURL)
-            guard let invalidLocalFHArchive = Archive(url: invalidLocalFHArchiveURL,
-                                                      accessMode: .read) else {
-                XCTFail("Failed to read local file header.")
-                return
-            }
+            let invalidLocalFHArchive = try Archive(url: invalidLocalFHArchiveURL,
+                                                    accessMode: .read)
             for _ in invalidLocalFHArchive {
                 didFailToMakeIteratorAsExpected = false
             }

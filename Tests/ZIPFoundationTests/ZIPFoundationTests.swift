@@ -80,17 +80,11 @@ class ZIPFoundationTests: XCTestCase {
                 let fileManager = FileManager()
                 try fileManager.copyItem(at: sourceArchiveURL, to: destinationArchiveURL)
             }
-            guard let archive = Archive(url: destinationArchiveURL, accessMode: mode,
-                                        preferredEncoding: preferredEncoding) else {
-                throw Archive.ArchiveError.unreadableArchive
-            }
+            let archive = try Archive(url: destinationArchiveURL, accessMode: mode,
+                                      pathEncoding: preferredEncoding)
             return archive
-        } catch Archive.ArchiveError.unreadableArchive {
-            XCTFail("Failed to get test archive '\(destinationArchiveURL.lastPathComponent)'")
-            type(of: self).tearDown()
-            preconditionFailure()
         } catch {
-            XCTFail("File system error: \(error)")
+            XCTFail("Failed to get test archive: \(error)")
             type(of: self).tearDown()
             preconditionFailure()
         }

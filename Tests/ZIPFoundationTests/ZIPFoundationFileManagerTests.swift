@@ -13,7 +13,7 @@ import XCTest
 
 extension ZIPFoundationTests {
 
-    func testZipItem() {
+    func testZipItem() throws {
         let fileManager = FileManager()
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         var fileArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
@@ -21,9 +21,7 @@ extension ZIPFoundationTests {
         do {
             try fileManager.zipItem(at: assetURL, to: fileArchiveURL)
         } catch { XCTFail("Failed to zip item at URL:\(assetURL)") }
-        guard let archive = Archive(url: fileArchiveURL, accessMode: .read) else {
-            XCTFail("Failed to read archive."); return
-        }
+        let archive = try Archive(url: fileArchiveURL, accessMode: .read)
         XCTAssertNotNil(archive[assetURL.lastPathComponent])
         XCTAssert(archive.checkIntegrity())
         var directoryURL = ZIPFoundationTests.tempZipDirectoryURL
@@ -49,13 +47,9 @@ extension ZIPFoundationTests {
             try fileManager.zipItem(at: directoryURL, to: parentDirectoryArchiveURL, shouldKeepParent: false)
             try fileManager.zipItem(at: directoryURL, to: compressedDirectoryArchiveURL, compressionMethod: .deflate)
         } catch { XCTFail("Unexpected error while trying to zip via fileManager.") }
-        guard let directoryArchive = Archive(url: directoryArchiveURL, accessMode: .read) else {
-            XCTFail("Failed to read archive."); return
-        }
+        let directoryArchive = try Archive(url: directoryArchiveURL, accessMode: .read)
         XCTAssert(directoryArchive.checkIntegrity())
-        guard let parentDirectoryArchive = Archive(url: parentDirectoryArchiveURL, accessMode: .read) else {
-            XCTFail("Failed to read archive."); return
-        }
+        let parentDirectoryArchive = try Archive(url: parentDirectoryArchiveURL, accessMode: .read)
         XCTAssert(parentDirectoryArchive.checkIntegrity())
     }
 

@@ -336,16 +336,12 @@ extension ZIPFoundationTests {
                 }
                 let vol1ArchiveURL = tempDir.appendingPathComponent("vol1Archive")
                 let vol2ArchiveURL = vol2URL.appendingPathComponent("vol2Archive")
-                guard let vol1Archive = Archive(url: vol1ArchiveURL, accessMode: .create),
-                      let vol2Archive = Archive(url: vol2ArchiveURL, accessMode: .create) else {
-                    XCTFail("Failed to create test archive '\(vol2ArchiveURL)'")
-                    type(of: self).tearDown()
-                    return
-                }
-
                 do {
+                    let vol1Archive = try Archive(url: vol1ArchiveURL, accessMode: .create)
+                    let vol2Archive = try Archive(url: vol2ArchiveURL, accessMode: .create)
                     try vol1Archive.replaceCurrentArchive(with: vol2Archive)
                 } catch {
+                    type(of: self).tearDown()
                     XCTFail("\(String(describing: error))")
                     return
                 }

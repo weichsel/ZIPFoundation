@@ -151,7 +151,7 @@ extension ZIPFoundationTests {
         }
     }
 
-    func testCorruptFileErrorConditions() {
+    func testCorruptFileErrorConditions() throws {
         let archiveURL = self.resourceURL(for: #function, pathExtension: "zip")
         let fileManager = FileManager()
         let destinationFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: archiveURL.path)
@@ -163,10 +163,7 @@ extension ZIPFoundationTests {
             // detects the failure when reading the stream
             _ = try Data.write(chunk: Data(count: 512*1024), to: destinationFile)
             fclose(destinationFile)
-            guard let archive = Archive(url: archiveURL, accessMode: .read) else {
-                XCTFail("Failed to read archive.")
-                return
-            }
+            let archive = try Archive(url: archiveURL, accessMode: .read)
             guard let entry = archive["data.random"] else {
                 XCTFail("Failed to read entry.")
                 return
