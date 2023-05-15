@@ -82,8 +82,8 @@ extension Archive {
     }
 
     #if swift(>=5.0)
-    static func makeBackingConfiguration(for data: Data, mode: AccessMode)
-    -> BackingConfiguration? {
+    static func makeBackingConfiguration(for data: Data, mode: AccessMode) throws
+    -> BackingConfiguration {
         let posixMode: String
         switch mode {
         case .read: posixMode = "rb"
@@ -91,12 +91,14 @@ extension Archive {
         case .update: posixMode = "rb+"
         }
         let memoryFile = MemoryFile(data: data)
-        guard let archiveFile = memoryFile.open(mode: posixMode) else { return nil }
+        guard let archiveFile = memoryFile.open(mode: posixMode) else {
+            throw ArchiveError.unreadableArchive
+        }
 
         switch mode {
         case .read:
             guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
+                throw ArchiveError.missingEndOfCentralDirectoryRecord
             }
 
             return BackingConfiguration(file: archiveFile,
@@ -117,7 +119,7 @@ extension Archive {
             fallthrough
         case .update:
             guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
+                throw ArchiveError.missingEndOfCentralDirectoryRecord
             }
 
             fseeko(archiveFile, 0, SEEK_SET)

@@ -221,10 +221,11 @@ extension Archive {
         fclose(self.archiveFile)
         if self.isMemoryArchive {
             #if swift(>=5.0)
-            guard let data = archive.data,
-                  let config = Archive.makeBackingConfiguration(for: data, mode: .update) else {
+            guard let data = archive.data else {
                 throw ArchiveError.unwritableArchive
             }
+
+            let config = try Archive.makeBackingConfiguration(for: data, mode: .update)
             self.archiveFile = config.file
             self.memoryFile = config.memoryFile
             self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
@@ -284,11 +285,8 @@ private extension Archive {
         var url: URL?
         if self.isMemoryArchive {
             #if swift(>=5.0)
-            guard let tempArchive = Archive(data: Data(), accessMode: .create,
-                                            pathEncoding: self.pathEncoding) else {
-                throw ArchiveError.unwritableArchive
-            }
-            archive = tempArchive
+            archive = try Archive(data: Data(), accessMode: .create,
+                                  pathEncoding: self.pathEncoding)
             #else
             fatalError("Memory archives are unsupported.")
             #endif

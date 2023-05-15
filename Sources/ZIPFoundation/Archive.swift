@@ -189,16 +189,15 @@ public final class Archive: Sequence {
     /// - Note:
     ///   - The backing `data` _must_ contain a valid ZIP archive for `AccessMode.read` and `AccessMode.update`.
     ///   - The backing `data` _must_ be empty (or omitted) for `AccessMode.create`.
-    public init?(data: Data = Data(), accessMode mode: AccessMode, pathEncoding: String.Encoding? = nil) {
-        guard let url = URL(string: "\(memoryURLScheme)://"),
-              let config = Archive.makeBackingConfiguration(for: data, mode: mode) else {
-            // TODO: enhancement/throwingArchiveInit - make in-memory archive init `throwing`
-            return nil
+    public init(data: Data = Data(), accessMode mode: AccessMode, pathEncoding: String.Encoding? = nil) throws {
+        guard let url = URL(string: "\(memoryURLScheme)://") else {
+            throw ArchiveError.unreadableArchive
         }
 
         self.url = url
         self.accessMode = mode
         self.pathEncoding = pathEncoding
+        let config = try Archive.makeBackingConfiguration(for: data, mode: mode)
         self.archiveFile = config.file
         self.memoryFile = config.memoryFile
         self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
