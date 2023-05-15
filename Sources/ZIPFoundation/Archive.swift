@@ -192,6 +192,7 @@ public final class Archive: Sequence {
     public init?(data: Data = Data(), accessMode mode: AccessMode, pathEncoding: String.Encoding? = nil) {
         guard let url = URL(string: "\(memoryURLScheme)://"),
               let config = Archive.makeBackingConfiguration(for: data, mode: mode) else {
+            // TODO: enhancement/throwingArchiveInit - make in-memory archive init `throwing`
             return nil
         }
 
