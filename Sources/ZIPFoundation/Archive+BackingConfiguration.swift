@@ -50,7 +50,7 @@ extension Archive {
                 throw POSIXError(errno, path: url.path)
             }
             guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                throw ArchiveError.unreadableArchive
+                throw ArchiveError.missingEndOfCentralDirectoryRecord
             }
             return BackingConfiguration(file: archiveFile,
                                         endOfCentralDirectoryRecord: eocdRecord,
@@ -72,7 +72,7 @@ extension Archive {
                 throw POSIXError(errno, path: url.path)
             }
             guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                throw ArchiveError.unwritableArchive
+                throw ArchiveError.missingEndOfCentralDirectoryRecord
             }
             fseeko(archiveFile, 0, SEEK_SET)
             return BackingConfiguration(file: archiveFile,

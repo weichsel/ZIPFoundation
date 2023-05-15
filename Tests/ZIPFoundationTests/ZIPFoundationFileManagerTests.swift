@@ -151,7 +151,7 @@ extension ZIPFoundationTests {
             try fileManager.unzipItem(at: nonZipArchiveURL, to: destinationURL)
             XCTFail("Error when trying to unzip non-archive not raised")
         } catch let error as Archive.ArchiveError {
-            XCTAssertTrue(error == .unreadableArchive)
+            XCTAssertTrue(error == .missingEndOfCentralDirectoryRecord)
         } catch { XCTFail("Unexpected error while trying to unzip via fileManager."); return }
     }
 
