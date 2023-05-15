@@ -108,31 +108,29 @@ extension ZIPFoundationTests {
             XCTFail("Failed to remove entry from memory archive with error : \(error)")
         }
         XCTAssert(archive.checkIntegrity())
-        var didCatchExpectedError = false
         // Trigger the code path that is taken if funopen() fails
         // We can only do this on Apple platforms
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
-        self.runWithoutMemory {
-            do {
-                try archive.remove(entryToRemove)
-            } catch {
-                didCatchExpectedError = true
-            }
+        let entryRemoval = {
+            self.XCTAssertSwiftError(try archive.remove(entryToRemove),
+                                     throws: Archive.ArchiveError.unreadableArchive)
         }
-        XCTAssert(didCatchExpectedError)
+        self.runWithoutMemory {
+            try? entryRemoval()
+        }
         let data = Data.makeRandomData(size: 1024)
         let emptyArchive = try Archive(accessMode: .create)
         let replacementArchive = try Archive(data: data, accessMode: .create)
-        didCatchExpectedError = false
         // Trigger the error code path that is taken when no temporary archive
         // can be created during replacement
         replacementArchive.memoryFile = nil
-        do {
-            try emptyArchive.replaceCurrentArchive(with: replacementArchive)
-        } catch {
-            didCatchExpectedError = true
+        let archiveReplacement = {
+            self.XCTAssertSwiftError(try emptyArchive.replaceCurrentArchive(with: replacementArchive),
+                                     throws: Archive.ArchiveError.unwritableArchive)
         }
-        XCTAssert(didCatchExpectedError)
+        self.runWithoutMemory {
+            try? archiveReplacement()
+        }
         #endif
     }
 

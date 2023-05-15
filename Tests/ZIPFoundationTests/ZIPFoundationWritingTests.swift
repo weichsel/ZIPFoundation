@@ -99,34 +99,25 @@ extension ZIPFoundationTests {
     }
 
     func testCreateArchiveAddEntryErrorConditions() {
-        var didCatchExpectedError = false
         let archive = self.archive(for: #function, mode: .create)
         let tempPath = NSTemporaryDirectory()
         var nonExistantURL = URL(fileURLWithPath: tempPath)
         nonExistantURL.appendPathComponent("invalid.path")
         let nonExistantRelativePath = nonExistantURL.lastPathComponent
         let nonExistantBaseURL = nonExistantURL.deletingLastPathComponent()
-        do {
-            try archive.addEntry(with: nonExistantRelativePath, relativeTo: nonExistantBaseURL)
-        } catch let error as CocoaError {
-            XCTAssert(error.code == .fileReadNoSuchFile)
-            didCatchExpectedError = true
-        } catch {
-            XCTFail("Unexpected error while trying to add non-existant file to an archive.")
-        }
-        XCTAssertTrue(didCatchExpectedError)
+        XCTAssertCocoaError(try archive.addEntry(with: nonExistantRelativePath, relativeTo: nonExistantBaseURL),
+                            throwsErrorWithCode: .fileReadNoSuchFile)
         // Cover the error code path when `fopen` fails during entry addition.
         let assetURL = self.resourceURL(for: #function, pathExtension: "txt")
-        self.runWithFileDescriptorLimit(0) {
-            do {
-                let relativePath = assetURL.lastPathComponent
-                let baseURL = assetURL.deletingLastPathComponent()
-                try archive.addEntry(with: relativePath, relativeTo: baseURL)
-            } catch {
-                didCatchExpectedError = true
-            }
+        let entryAddition = {
+            let relativePath = assetURL.lastPathComponent
+            let baseURL = assetURL.deletingLastPathComponent()
+            self.XCTAssertPOSIXError(try archive.addEntry(with: relativePath, relativeTo: baseURL),
+                                     throwsErrorWithCode: .EMFILE)
         }
-        XCTAssertTrue(didCatchExpectedError)
+        self.runWithFileDescriptorLimit(0) {
+            try? entryAddition()
+        }
     }
 
     func testArchiveAddEntryErrorConditions() {
