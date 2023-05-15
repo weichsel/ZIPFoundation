@@ -143,11 +143,13 @@ extension ZIPFoundationTests {
         // Trigger the code path that is taken if funopen() fails
         // We can only do this on Apple platforms
         #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
-        var unallocatableArchive: Archive?
-        self.runWithoutMemory {
-            unallocatableArchive = Archive(data: data, accessMode: .read)
+        let archiveCreation = {
+            self.XCTAssertSwiftError(try Archive(data: data, accessMode: .read),
+                                throws: Archive.ArchiveError.unreadableArchive)
         }
-        XCTAssertNil(unallocatableArchive)
+        self.runWithoutMemory {
+            try? archiveCreation()
+        }
         #endif
     }
 
