@@ -290,10 +290,8 @@ extension ZIPFoundationTests {
         let result = fileManager.createFile(atPath: noEndOfCentralDirectoryArchiveURL.path, contents: nil,
                                             attributes: fullPermissionAttributes)
         XCTAssert(result == true)
-        // TODO: enhancement/throwingArchiveInit - throw specific error in `makeBackingConfiguration` and test for that
-        let noEndOfCentralDirectoryArchive = try? Archive(url: noEndOfCentralDirectoryArchiveURL,
-                                                          accessMode: .update)
-        XCTAssertNil(noEndOfCentralDirectoryArchive)
+        XCTAssertSwiftError(try Archive(url: noEndOfCentralDirectoryArchiveURL, accessMode: .update),
+                            throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
     }
 
     func testArchiveUpdateErrorConditions() {
