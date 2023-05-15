@@ -35,7 +35,7 @@ extension ZIPFoundationTests {
         } catch { XCTFail("Failed to create parent directory.") }
     }
 
-    func testTemporaryReplacementDirectoryURL() {
+    func testTemporaryReplacementDirectoryURL() throws {
         let archive = self.archive(for: #function, mode: .create)
         var tempURLs = Set<URL>()
         defer { for url in tempURLs { try? FileManager.default.removeItem(at: url) } }
@@ -50,11 +50,7 @@ extension ZIPFoundationTests {
         // Also cover the fallback codepath in the helper method to generate a unique temp URL.
         // In-memory archives have no filesystem representation and therefore don't need a per-volume
         // temp URL.
-        guard let memoryArchive = Archive(data: Data(), accessMode: .create) else {
-            XCTFail("Temporary memory archive creation failed.")
-            return
-        }
-
+        let memoryArchive = try Archive(data: Data(), accessMode: .create)
         let memoryTempURL = URL.temporaryReplacementDirectoryURL(for: memoryArchive)
         XCTAssertNotNil(memoryTempURL, "Temporary URL creation for in-memory archive failed.")
 #endif
