@@ -316,9 +316,13 @@ extension FileManager {
 
 extension POSIXError {
 
-    init(_ code: Int32, path: String) {
+    init(_ code: Int32, path: String? = nil) {
         let errorCode = POSIXError.Code(rawValue: code) ?? .EPERM
-        self = .init(errorCode, userInfo: [NSFilePathErrorKey: path])
+        if let path = path {
+            self = .init(errorCode, userInfo: [NSFilePathErrorKey: path])
+        } else {
+            self = .init(errorCode)
+        }
     }
 }
 

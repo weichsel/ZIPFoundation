@@ -74,7 +74,11 @@ extension XCTestCase {
                                 in file: StaticString = #file,
                                 line: UInt = #line) {
         var thrownError: POSIXError?
-        XCTAssertThrowsError(try expression(), file: file, line: line) { thrownError = $0 as? POSIXError }
+        XCTAssertThrowsError(try expression(), file: file, line: line) {
+            // This cast is necessary on non-Darwin platforms. Error bridging behaves slightly different there.
+            let nsError = $0 as NSError
+            thrownError = POSIXError(Int32(nsError.code), path: nsError.userInfo[NSFilePathErrorKey] as? String)
+        }
         XCTAssertNotNil(thrownError, file: file, line: line)
         XCTAssertTrue(thrownError?.code == code, file: file, line: line)
     }
@@ -84,7 +88,11 @@ extension XCTestCase {
                                 in file: StaticString = #file,
                                 line: UInt = #line) {
         var thrownError: CocoaError?
-        XCTAssertThrowsError(try expression(), file: file, line: line) { thrownError = $0 as? CocoaError}
+        XCTAssertThrowsError(try expression(), file: file, line: line) {
+            // This cast is necessary on non-Darwin platforms. Error bridging behaves slightly different there.
+            let nsError = $0 as NSError
+            thrownError = CocoaError(CocoaError.Code(rawValue: nsError.code), userInfo: nsError.userInfo)
+        }
         XCTAssertNotNil(thrownError, file: file, line: line)
         XCTAssertTrue(thrownError?.code == code, file: file, line: line)
     }
