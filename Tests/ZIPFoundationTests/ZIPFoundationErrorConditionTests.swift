@@ -15,15 +15,9 @@ extension ZIPFoundationTests {
     func testArchiveReadErrorConditions() {
         let nonExistantURL = URL(fileURLWithPath: "/nothing")
         XCTAssertPOSIXError(try Archive(url: nonExistantURL, accessMode: .update), throwsErrorWithCode: .ENOENT)
-        var unreadableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         let processInfo = ProcessInfo.processInfo
-        unreadableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
-        let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
         let fileManager = FileManager()
-        var result = fileManager.createFile(atPath: unreadableArchiveURL.path, contents: nil,
-                                            attributes: noPermissionAttributes)
-        XCTAssert(result == true)
-        XCTAssertPOSIXError(try Archive(url: unreadableArchiveURL, accessMode: .update), throwsErrorWithCode: .EACCES)
+        var result = false
         var noEndOfCentralDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         noEndOfCentralDirectoryArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
         let fullPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: defaultFilePermissions)]
@@ -32,6 +26,16 @@ extension ZIPFoundationTests {
         XCTAssert(result == true)
         XCTAssertSwiftError(try Archive(url: noEndOfCentralDirectoryArchiveURL, accessMode: .read),
                             throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
+        self.runWithUnprivilegedUser {
+            var unreadableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+            unreadableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
+            let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
+            result = fileManager.createFile(atPath: unreadableArchiveURL.path, contents: nil,
+                                                attributes: noPermissionAttributes)
+            XCTAssert(result == true)
+            XCTAssertPOSIXError(try Archive(url: unreadableArchiveURL, accessMode: .update),
+                                throwsErrorWithCode: .EACCES)
+        }
     }
 
     func testArchiveIteratorErrorConditions() throws {

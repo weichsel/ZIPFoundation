@@ -130,6 +130,20 @@ class ZIPFoundationTests: XCTestCase {
         return URL
     }
 
+    func runWithUnprivilegedUser(handler: () throws -> Void) {
+        let originalUID = getuid()
+        let originalGID = getgid()
+        defer {
+            setgid(originalGID)
+            setuid(originalUID)
+        }
+        guard let user = getpwnam("nobody") else { return }
+
+        let gid = user.pointee.pw_gid
+        let uid = user.pointee.pw_uid
+        guard 0 == setgid(gid), 0 == setuid(uid) else { return }
+    }
+
     func runWithFileDescriptorLimit(_ limit: UInt64, handler: () throws -> Void) rethrows {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(Android)
         let fileNoFlag = RLIMIT_NOFILE
@@ -350,9 +364,7 @@ extension Archive {
                 isCorrect = checksum == entry.checksum
                 guard isCorrect else { break }
             }
-        } catch {
-            return false
-        }
+        } catch { return false }
         return isCorrect
     }
 }
@@ -362,7 +374,7 @@ extension Data {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         let bytes = [UInt32](repeating: 0, count: size).map { _ in UInt32.random(in: 0...UInt32.max) }
         #else
-            let bytes = [UInt32](repeating: 0, count: size).map { _ in random() }
+        let bytes = [UInt32](repeating: 0, count: size).map { _ in random() }
         #endif
         return Data(bytes: bytes, count: size)
     }
@@ -377,7 +389,6 @@ extension NSUserScriptTask {
         #!/bin/bash
         hdiutil create -size 5m -fs HFS+ -type SPARSEBUNDLE -ov -volname "\(volumeName)" "\(dmgURL.path)"
         hdiutil attach -nobrowse "\(dmgURL.appendingPathExtension("sparsebundle").path)"
-
         """
         try script.write(to: scriptURL, atomically: false, encoding: .utf8)
         let permissions = NSNumber(value: Int16(0o770))

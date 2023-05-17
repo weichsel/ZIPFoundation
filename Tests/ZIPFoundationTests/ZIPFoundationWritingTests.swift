@@ -286,15 +286,18 @@ extension ZIPFoundationTests {
     }
 
     func testArchiveUpdateErrorConditions() {
-        var nonUpdatableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
-        let processInfo = ProcessInfo.processInfo
-        nonUpdatableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
-        let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
-        let fileManager = FileManager()
-        let result = fileManager.createFile(atPath: nonUpdatableArchiveURL.path, contents: nil,
-                                            attributes: noPermissionAttributes)
-        XCTAssert(result == true)
-        XCTAssertPOSIXError(try Archive(url: nonUpdatableArchiveURL, accessMode: .update), throwsErrorWithCode: .EACCES)
+        self.runWithUnprivilegedUser {
+            var nonUpdatableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+            let processInfo = ProcessInfo.processInfo
+            nonUpdatableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
+            let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
+            let fileManager = FileManager()
+            let result = fileManager.createFile(atPath: nonUpdatableArchiveURL.path, contents: nil,
+                                                attributes: noPermissionAttributes)
+            XCTAssert(result == true)
+            XCTAssertPOSIXError(try Archive(url: nonUpdatableArchiveURL, accessMode: .update),
+                                throwsErrorWithCode: .EACCES)
+        }
     }
 
     func testReplaceCurrentArchiveWithArchiveCrossLink() {
