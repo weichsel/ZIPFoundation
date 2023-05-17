@@ -63,7 +63,6 @@ extension Archive {
                                                                           offsetToStartOfCentralDirectory: 0,
                                                                           zipFileCommentLength: 0,
                                                                           zipFileCommentData: Data())
-
             try endOfCentralDirectoryRecord.data.write(to: url, options: .withoutOverwriting)
             fallthrough
         case .update:
