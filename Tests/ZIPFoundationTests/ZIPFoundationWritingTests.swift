@@ -285,15 +285,22 @@ extension ZIPFoundationTests {
                             throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
     }
 
-    func testArchiveUpdateErrorConditions() {
+    func testArchiveUpdateErrorConditions() throws {
         var nonUpdatableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+        nonUpdatableArchiveURL.appendPathComponent("nopermission", isDirectory: true)
+        let fileManager = FileManager()
+        let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
+        try fileManager.createDirectory(at: nonUpdatableArchiveURL, withIntermediateDirectories: true)
         let processInfo = ProcessInfo.processInfo
         nonUpdatableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
-        let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
-        let fileManager = FileManager()
         let result = fileManager.createFile(atPath: nonUpdatableArchiveURL.path, contents: nil,
                                             attributes: noPermissionAttributes)
         XCTAssert(result == true)
+        // On non-Darwin systems, `fopen` can succeed even if a file has no permissions but the directory
+        // permissions are sufficient. To ensure the same behavior as on Darwin platforms, we also set
+        // restrictive directory permissions here.
+        try fileManager.setAttributes(noPermissionAttributes,
+                                      ofItemAtPath: nonUpdatableArchiveURL.deletingLastPathComponent().path)
         XCTAssertPOSIXError(try Archive(url: nonUpdatableArchiveURL, accessMode: .update), throwsErrorWithCode: .EACCES)
     }
 

@@ -12,17 +12,24 @@ import XCTest
 
 extension ZIPFoundationTests {
 
-    func testArchiveReadErrorConditions() {
+    func testArchiveReadErrorConditions() throws {
         let nonExistantURL = URL(fileURLWithPath: "/nothing")
         XCTAssertPOSIXError(try Archive(url: nonExistantURL, accessMode: .update), throwsErrorWithCode: .ENOENT)
         var unreadableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+        unreadableArchiveURL.appendPathComponent("nopermission", isDirectory: true)
+        let fileManager = FileManager()
+        let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
+        try fileManager.createDirectory(at: unreadableArchiveURL, withIntermediateDirectories: true)
         let processInfo = ProcessInfo.processInfo
         unreadableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
-        let noPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: Int16(0o000))]
-        let fileManager = FileManager()
         var result = fileManager.createFile(atPath: unreadableArchiveURL.path, contents: nil,
                                             attributes: noPermissionAttributes)
         XCTAssert(result == true)
+        // On non-Darwin systems, `fopen` can succeed even if a file has no permissions but the directory
+        // permissions are sufficient. To ensure the same behavior as on Darwin platforms, we also set
+        // restrictive directory permissions here.
+        try fileManager.setAttributes(noPermissionAttributes,
+                                      ofItemAtPath: unreadableArchiveURL.deletingLastPathComponent().path)
         XCTAssertPOSIXError(try Archive(url: unreadableArchiveURL, accessMode: .update), throwsErrorWithCode: .EACCES)
         var noEndOfCentralDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
         noEndOfCentralDirectoryArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
