@@ -286,7 +286,7 @@ extension ZIPFoundationTests {
     }
 
     func testArchiveUpdateErrorConditions() {
-        self.runWithUnprivilegedUser {
+        self.runWithUnprivilegedGroup {
             var nonUpdatableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
             let processInfo = ProcessInfo.processInfo
             nonUpdatableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)

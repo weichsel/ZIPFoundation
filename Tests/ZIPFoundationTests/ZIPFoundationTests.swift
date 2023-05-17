@@ -130,18 +130,13 @@ class ZIPFoundationTests: XCTestCase {
         return URL
     }
 
-    func runWithUnprivilegedUser(handler: () throws -> Void) {
-        let originalUID = getuid()
+    func runWithUnprivilegedGroup(handler: () throws -> Void) {
         let originalGID = getgid()
-        defer {
-            setgid(originalGID)
-            setuid(originalUID)
-        }
+        defer { setgid(originalGID) }
         guard let user = getpwnam("nobody") else { return }
 
         let gid = user.pointee.pw_gid
-        let uid = user.pointee.pw_uid
-        guard 0 == setgid(gid), 0 == setuid(uid) else { return }
+        guard 0 == setgid(gid) else { return }
     }
 
     func runWithFileDescriptorLimit(_ limit: UInt64, handler: () throws -> Void) rethrows {
