@@ -129,7 +129,10 @@ extension Data {
                     if let baseAddress = rawBufferPointer.baseAddress {
                         let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
                         stream.src_ptr = pointer.advanced(by: sourceData.count - stream.src_size)
-                        let flags = sourceData.count < bufferSize ? Int32(COMPRESSION_STREAM_FINALIZE.rawValue) : 0
+                        var flags: Int32 = 0
+                        if (size == nil && sourceData.count == 0) || (size != nil && sourceData.count < bufferSize) {
+                            flags = Int32(COMPRESSION_STREAM_FINALIZE.rawValue)
+                        }
                         status = compression_stream_process(&stream, flags)
                     }
                 }
