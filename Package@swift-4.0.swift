@@ -1,7 +1,7 @@
 // swift-tools-version:4.0
 import PackageDescription
 
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(xrOS)
 let dependencies: [Package.Dependency] = []
 #else
 let dependencies: [Package.Dependency] = [.package(url: "https://github.com/IBM-Swift/CZlib.git", .exact("0.1.2"))]
