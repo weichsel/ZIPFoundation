@@ -111,7 +111,7 @@ extension ZIPFoundationTests {
         var didCatchExpectedError = false
         // Trigger the code path that is taken if funopen() fails
         // We can only do this on Apple platforms
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         self.runWithoutMemory {
             do {
                 try archive.remove(entryToRemove)
@@ -145,7 +145,7 @@ extension ZIPFoundationTests {
         XCTAssertNil(invalidArchive)
         // Trigger the code path that is taken if funopen() fails
         // We can only do this on Apple platforms
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         var unallocatableArchive: Archive?
         self.runWithoutMemory {
             unallocatableArchive = Archive(data: data, accessMode: .read)

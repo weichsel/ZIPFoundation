@@ -169,7 +169,7 @@ extension FileManager {
             return
         }
 
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(visionOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         guard let posixPermissions = attributes[.posixPermissions] as? NSNumber else {
             throw Entry.EntryError.missingPermissionsAttributeError
         }
@@ -224,7 +224,7 @@ extension FileManager {
         let defaultPermissions = entryType == .directory ? defaultDirectoryPermissions : defaultFilePermissions
         var attributes = [.posixPermissions: defaultPermissions] as [FileAttributeKey: Any]
         // Certain keys are not yet supported in swift-corelibs
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(visionOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         attributes[.modificationDate] = Date(dateTime: (fileDate, fileTime))
 #endif
         let versionMadeBy = centralDirectoryStructure.versionMadeBy
@@ -280,7 +280,7 @@ extension FileManager {
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(visionOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let modTimeSpec = fileStat.st_mtimespec
 #else
         let modTimeSpec = fileStat.st_mtim
@@ -331,7 +331,7 @@ extension CocoaError {
 #if swift(>=4.2)
 #else
 
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(visionOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
 #else
 
     // The swift-corelibs-foundation version of NSError.swift was missing a convenience method to create

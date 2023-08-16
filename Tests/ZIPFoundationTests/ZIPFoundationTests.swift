@@ -152,7 +152,7 @@ class ZIPFoundationTests: XCTestCase {
     }
 
     func runWithoutMemory(handler: () -> Void) {
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let systemAllocator = CFAllocatorGetDefault().takeUnretainedValue()
         CFAllocatorSetDefault(kCFAllocatorNull)
         defer { CFAllocatorSetDefault(systemAllocator) }
@@ -179,7 +179,7 @@ class ZIPFoundationTests: XCTestCase {
 extension ZIPFoundationTests {
     // From https://oleb.net/blog/2017/03/keeping-xctest-in-sync/
     func testLinuxTestSuiteIncludesAllTests() {
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
             let thisClass = type(of: self)
             let linuxCount = thisClass.allTests.count
             let darwinCount = Int(thisClass.defaultTestSuite.testCaseCount)
@@ -296,7 +296,7 @@ extension ZIPFoundationTests {
     }
 
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         return [
             ("testFileModificationDate", testFileModificationDate),
             ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
