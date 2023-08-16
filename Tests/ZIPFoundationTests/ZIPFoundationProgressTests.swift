@@ -10,7 +10,7 @@
 import XCTest
 @testable import ZIPFoundation
 
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(xrOS)
 extension ZIPFoundationTests {
 
     func testArchiveAddUncompressedEntryProgress() {
