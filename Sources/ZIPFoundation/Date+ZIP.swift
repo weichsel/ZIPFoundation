@@ -66,7 +66,7 @@ extension Date {
 private extension Date {
 
     enum Constants {
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         static let absoluteTimeIntervalSince1970 = kCFAbsoluteTimeIntervalSince1970
 #else
         static let absoluteTimeIntervalSince1970: Double = 978307200.0
@@ -77,7 +77,7 @@ private extension Date {
 extension stat {
 
     var lastAccessDate: Date {
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         return Date(timespec: st_atimespec)
 #else
         return Date(timespec: st_atim)

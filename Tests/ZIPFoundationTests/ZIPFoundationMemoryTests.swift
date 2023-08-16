@@ -110,7 +110,7 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
         // Trigger the code path that is taken if funopen() fails
         // We can only do this on Apple platforms
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let entryRemoval = {
             self.XCTAssertSwiftError(try archive.remove(entryToRemove),
                                      throws: Archive.ArchiveError.unreadableArchive)
@@ -140,11 +140,12 @@ extension ZIPFoundationTests {
                             throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
         // Trigger the code path that is taken if funopen() fails
         // We can only do this on Apple platforms
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let archiveCreation = {
             self.XCTAssertSwiftError(try Archive(data: data, accessMode: .read),
                                 throws: Archive.ArchiveError.unreadableArchive)
         }
+
         self.runWithoutMemory {
             try? archiveCreation()
         }
