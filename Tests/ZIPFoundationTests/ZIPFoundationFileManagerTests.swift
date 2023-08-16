@@ -202,10 +202,11 @@ extension ZIPFoundationTests {
         }
 
         let shellZIPURL = shellZIP(directoryAtURL: testBundleURL)
-        let shellZIPInfos = Set(ZIPInfo.makeZIPInfos(forArchiveAtURL: shellZIPURL, mode: .shellParsing))
-        let builtInZIPInfos = Set(ZIPInfo.makeZIPInfos(forArchiveAtURL: builtInZIPURL, mode: .directoryIteration))
-        let diff = builtInZIPInfos.symmetricDifference(shellZIPInfos)
-        XCTAssert(diff.count == 0)
+        let shellZIPInfos = ZIPInfo.makeZIPInfos(forArchiveAtURL: shellZIPURL, mode: .shellParsing)
+            .sorted { $0.path < $1.path }
+        let builtInZIPInfos = ZIPInfo.makeZIPInfos(forArchiveAtURL: builtInZIPURL, mode: .directoryIteration)
+            .sorted { $0.path < $1.path }
+        XCTAssert(shellZIPInfos == builtInZIPInfos)
 #endif
     }
 }
@@ -299,6 +300,22 @@ private struct ZIPInfo: Hashable {
         case .shellParsing:
             return shellZIPInfos(forArchiveAtURL: url)
         }
+    }
+}
+
+extension ZIPInfo: Equatable {
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        let hasSamePath = lhs.path == rhs.path
+        let hasSameSize = lhs.size == rhs.size
+        // ZIP date/timesstamps have very low resolution. We have to compare with some leeway.
+        let startDate = lhs.modificationDate.addingTimeInterval(-2)
+        let endDate = lhs.modificationDate.addingTimeInterval(+2)
+        let dateRange = startDate...endDate
+        let hasSameDate = dateRange.contains(rhs.modificationDate)
+        return hasSamePath &&
+               hasSameSize &&
+               hasSameDate
     }
 }
 
