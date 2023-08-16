@@ -84,7 +84,15 @@ extension XCTestCase {
                                 in file: StaticString = #file,
                                 line: UInt = #line) {
         var thrownError: CocoaError?
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         XCTAssertThrowsError(try expression(), file: file, line: line) { thrownError = $0 as? CocoaError}
+        #else
+        XCTAssertThrowsError(try expression(), file: file, line: line) {
+            // For unknown reasons, some errors in the `NSCocoaErrorDomain` can't be cast to `CocoaError` on Linux.
+            // We manually re-create them here as `CocoaError` to work around this.
+            thrownError = CocoaError(.init(rawValue: ($0 as NSError).code))
+        }
+        #endif
         XCTAssertNotNil(thrownError, file: file, line: line)
         XCTAssertTrue(thrownError?.code == code, file: file, line: line)
     }
