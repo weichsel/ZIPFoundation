@@ -117,7 +117,7 @@ extension ZIPFoundationTests {
             return
         }
         XCTAssertNotNil(fileEntry)
-        XCTAssertCocoaError(_ = try archive.extract(fileEntry, to: archive.url),
+        XCTAssertCocoaError(try archive.extract(fileEntry, to: archive.url),
                             throwsErrorWithCode: .fileWriteFileExists)
         guard let linkEntry = archive["testZipItemLink"] else {
             XCTFail("Failed to obtain test asset from archive.")
@@ -135,7 +135,7 @@ extension ZIPFoundationTests {
             return
         }
         XCTAssertNotNil(linkEntry)
-        XCTAssertCocoaError(_ = try archive.extract(linkEntry, to: archive.url),
+        XCTAssertCocoaError(try archive.extract(linkEntry, to: archive.url),
                             throwsErrorWithCode: .fileWriteFileExists)
     }
 

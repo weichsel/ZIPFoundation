@@ -136,10 +136,10 @@ extension ZIPFoundationTests {
             XCTFail("Failed to create file URL."); return
         }
 
-        XCTAssertCocoaError(_ = try FileManager.fileModificationDateTimeForItem(at: nonFileURL),
+        XCTAssertCocoaError(try FileManager.fileModificationDateTimeForItem(at: nonFileURL),
                             throwsErrorWithCode: CocoaError.fileReadNoSuchFile)
         let nonExistantURL = URL(fileURLWithPath: "/nonexistant")
-        XCTAssertCocoaError(_ = try FileManager.fileModificationDateTimeForItem(at: nonExistantURL),
+        XCTAssertCocoaError(try FileManager.fileModificationDateTimeForItem(at: nonExistantURL),
                             throwsErrorWithCode: CocoaError.fileReadNoSuchFile)
         let msDOSDate = Date(timeIntervalSince1970: TimeInterval(Int.min)).fileModificationDate
         XCTAssert(msDOSDate == 0)
@@ -153,19 +153,19 @@ extension ZIPFoundationTests {
 
     func testFileSizeHelperMethods() {
         let nonExistantURL = URL(fileURLWithPath: "/nonexistant")
-        XCTAssertCocoaError(_ = try FileManager.fileSizeForItem(at: nonExistantURL),
+        XCTAssertCocoaError(try FileManager.fileSizeForItem(at: nonExistantURL),
                             throwsErrorWithCode: CocoaError.fileReadNoSuchFile)
     }
 
     func testFileTypeHelperMethods() {
         let nonExistantURL = URL(fileURLWithPath: "/nonexistant")
-        XCTAssertCocoaError(_ = try FileManager.typeForItem(at: nonExistantURL),
+        XCTAssertCocoaError(try FileManager.typeForItem(at: nonExistantURL),
                             throwsErrorWithCode: CocoaError.fileReadNoSuchFile)
         guard let nonFileURL = URL(string: "https://www.peakstep.com") else {
             XCTFail("Failed to create test URL."); return
         }
 
-        XCTAssertCocoaError(_ = try FileManager.typeForItem(at: nonFileURL),
+        XCTAssertCocoaError(try FileManager.typeForItem(at: nonFileURL),
                             throwsErrorWithCode: CocoaError.fileReadNoSuchFile)
     }
 
