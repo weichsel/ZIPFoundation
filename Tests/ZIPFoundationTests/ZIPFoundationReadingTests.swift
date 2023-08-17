@@ -164,7 +164,6 @@ extension ZIPFoundationTests {
         }
     }
 
-
     func testInvalidCompressionMethodErrorConditions() {
         let archive = self.archive(for: #function, mode: .read)
         guard let entry = archive[".DS_Store"] else {
@@ -281,6 +280,7 @@ extension ZIPFoundationTests {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)
         let destinationURL = self.createDirectory(for: #function)
-        XCTAssertCocoaError(try fileManager.unzipItem(at: archive.url, to: destinationURL), throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: archive.url, to: destinationURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
     }
 }
