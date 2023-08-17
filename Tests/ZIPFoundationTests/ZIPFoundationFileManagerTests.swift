@@ -130,29 +130,16 @@ extension ZIPFoundationTests {
         existingURL.appendPathComponent("test")
         existingURL.appendPathComponent("faust.txt")
         let fileManager = FileManager()
-        do {
-            try fileManager.unzipItem(at: nonexistantArchiveURL, to: ZIPFoundationTests.tempZipDirectoryURL)
-            XCTFail("Error when unzipping non-existant archive not raised")
-        } catch let error as CocoaError {
-            XCTAssertTrue(error.code == CocoaError.fileReadNoSuchFile)
-        } catch { XCTFail("Unexpected error while trying to unzip via fileManager."); return }
-        do {
-            try fileManager.createParentDirectoryStructure(for: existingURL)
-            fileManager.createFile(atPath: existingURL.path, contents: Data(), attributes: nil)
-            try fileManager.unzipItem(at: existingArchiveURL, to: destinationURL)
-            XCTFail("Error when unzipping archive to existing destination not raised")
-        } catch let error as CocoaError {
-            XCTAssertTrue(error.code == CocoaError.fileWriteFileExists)
-        } catch {
-            XCTFail("Unexpected error while trying to unzip via fileManager."); return
-        }
+        XCTAssertCocoaError(try fileManager.unzipItem(at: nonexistantArchiveURL,
+                                                      to: ZIPFoundationTests.tempZipDirectoryURL),
+                            throwsErrorWithCode: .fileReadNoSuchFile)
+        try? fileManager.createParentDirectoryStructure(for: existingURL)
+        fileManager.createFile(atPath: existingURL.path, contents: Data(), attributes: nil)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: existingArchiveURL, to: destinationURL),
+                            throwsErrorWithCode: .fileWriteFileExists)
         let nonZipArchiveURL = self.resourceURL(for: #function, pathExtension: "png")
-        do {
-            try fileManager.unzipItem(at: nonZipArchiveURL, to: destinationURL)
-            XCTFail("Error when trying to unzip non-archive not raised")
-        } catch let error as Archive.ArchiveError {
-            XCTAssertTrue(error == .missingEndOfCentralDirectoryRecord)
-        } catch { XCTFail("Unexpected error while trying to unzip via fileManager."); return }
+        XCTAssertSwiftError(try fileManager.unzipItem(at: nonZipArchiveURL, to: destinationURL),
+                            throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
     }
 
     // On Darwin platforms, we want the same behavior as the system-provided ZIP utilities.

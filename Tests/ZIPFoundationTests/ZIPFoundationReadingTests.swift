@@ -117,14 +117,8 @@ extension ZIPFoundationTests {
             return
         }
         XCTAssertNotNil(fileEntry)
-        do {
-            _ = try archive.extract(fileEntry, to: archive.url)
-        } catch let error as CocoaError {
-            XCTAssert(error.code == CocoaError.fileWriteFileExists)
-        } catch {
-            XCTFail("Unexpected error while trying to extract entry to existing URL.")
-            return
-        }
+        XCTAssertCocoaError(_ = try archive.extract(fileEntry, to: archive.url),
+                            throwsErrorWithCode: .fileWriteFileExists)
         guard let linkEntry = archive["testZipItemLink"] else {
             XCTFail("Failed to obtain test asset from archive.")
             return
@@ -141,14 +135,8 @@ extension ZIPFoundationTests {
             return
         }
         XCTAssertNotNil(linkEntry)
-        do {
-            _ = try archive.extract(linkEntry, to: archive.url)
-        } catch let error as CocoaError {
-            XCTAssert(error.code == CocoaError.fileWriteFileExists)
-        } catch {
-            XCTFail("Unexpected error while trying to extract link entry to existing URL.")
-            return
-        }
+        XCTAssertCocoaError(_ = try archive.extract(linkEntry, to: archive.url),
+                            throwsErrorWithCode: .fileWriteFileExists)
     }
 
     func testCorruptFileErrorConditions() throws {
