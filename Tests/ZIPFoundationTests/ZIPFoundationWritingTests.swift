@@ -121,18 +121,12 @@ extension ZIPFoundationTests {
     }
 
     func testArchiveAddEntryErrorConditions() {
-        var didCatchExpectedError = false
         let readonlyArchive = self.archive(for: #function, mode: .read)
-        do {
-            try readonlyArchive.addEntry(with: "Test", type: .directory,
-                                         uncompressedSize: Int64(0), provider: { _, _ in return Data()})
-        } catch let error as Archive.ArchiveError {
-            XCTAssert(error == .unwritableArchive)
-            didCatchExpectedError = true
-        } catch {
-            XCTFail("Unexpected error while trying to add an entry to a readonly archive.")
-        }
-        XCTAssertTrue(didCatchExpectedError)
+        XCTAssertSwiftError(try readonlyArchive.addEntry(with: "Test",
+                                                         type: .directory,
+                                                         uncompressedSize: Int64(0),
+                                                         provider: { _, _ in return Data() }),
+                            throws: Archive.ArchiveError.unwritableArchive)
     }
 
     func testCreateArchiveAddZeroSizeUncompressedEntry() {
