@@ -61,7 +61,7 @@ extension ZIPFoundationTests {
         // unwritable files.
         fclose(file)
         XCTAssertSwiftError(try Data.write(chunk: Data(count: 10), to: file),
-                            throws: Data.DataError.unreadableFile)
+                            throws: Data.DataError.unwritableFile)
     }
 
     func testCRC32Calculation() {
