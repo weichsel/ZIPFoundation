@@ -273,7 +273,6 @@ extension ZIPFoundationTests {
         let destinationURL = self.createDirectory(for: #function)
         XCTAssertSwiftError(try fileManager.unzipItem(at: archive.url, to: destinationURL),
                             throws: Archive.ArchiveError.invalidCRC32)
-        XCTFail("Extraction should fail")
     }
 
     func testTraversalAttack() {
