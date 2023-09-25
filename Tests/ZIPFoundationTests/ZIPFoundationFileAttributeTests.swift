@@ -103,7 +103,7 @@ extension ZIPFoundationTests {
         } catch {
             XCTFail("Unexpected error while trying to transfer symlink attributes")
         }
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         do {
             var resourceValues = URLResourceValues()
             resourceValues.isUserImmutable = true
