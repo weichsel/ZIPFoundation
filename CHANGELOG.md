@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.9.17](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.17)
+
+### Added
+ - Added visionOS support
+ - Added Xcode privacy manifest
+ - Added throwing initializers for `Archive`
+ 
+### Updated
+ - Improved symlink handling
+ - Improved forwarding of underlying errors
+
 ## [0.9.16](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.16)
 
 ### Added
