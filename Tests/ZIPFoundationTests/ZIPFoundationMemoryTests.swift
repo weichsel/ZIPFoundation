@@ -96,7 +96,7 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
-    func testUpdateArchiveRemoveUncompressedEntryFromMemory() {
+    func testUpdateArchiveRemoveUncompressedEntryFromMemory() throws {
         let archive = self.memoryArchive(for: #function, mode: .update)
         XCTAssert(archive.checkIntegrity())
         guard let entryToRemove = archive["original"] else {
@@ -108,49 +108,47 @@ extension ZIPFoundationTests {
             XCTFail("Failed to remove entry from memory archive with error : \(error)")
         }
         XCTAssert(archive.checkIntegrity())
-        var didCatchExpectedError = false
         // Trigger the code path that is taken if funopen() fails
         // We can only do this on Apple platforms
         #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
+        let entryRemoval = {
+            self.XCTAssertSwiftError(try archive.remove(entryToRemove),
+                                     throws: Archive.ArchiveError.unreadableArchive)
+        }
         self.runWithoutMemory {
-            do {
-                try archive.remove(entryToRemove)
-            } catch {
-                didCatchExpectedError = true
-            }
+            try? entryRemoval()
         }
-        XCTAssert(didCatchExpectedError)
-        let emptyArchive = Archive(accessMode: .create)
         let data = Data.makeRandomData(size: 1024)
-        guard let replacementArchive = Archive(data: data, accessMode: .create) else {
-            XCTFail("Failed to create replacement archive.")
-            return
-        }
-        didCatchExpectedError = false
+        let emptyArchive = try Archive(accessMode: .create)
+        let replacementArchive = try Archive(data: data, accessMode: .create)
         // Trigger the error code path that is taken when no temporary archive
         // can be created during replacement
         replacementArchive.memoryFile = nil
-        do {
-            try emptyArchive?.replaceCurrentArchive(with: replacementArchive)
-        } catch {
-            didCatchExpectedError = true
+        let archiveReplacement = {
+            self.XCTAssertSwiftError(try emptyArchive.replaceCurrentArchive(with: replacementArchive),
+                                     throws: Archive.ArchiveError.unwritableArchive)
         }
-        XCTAssert(didCatchExpectedError)
+        self.runWithoutMemory {
+            try? archiveReplacement()
+        }
         #endif
     }
 
-    func testMemoryArchiveErrorConditions() {
+    func testMemoryArchiveErrorConditions() throws {
         let data = Data.makeRandomData(size: 1024)
-        let invalidArchive = Archive(data: data, accessMode: .read)
-        XCTAssertNil(invalidArchive)
+        XCTAssertSwiftError(try Archive(data: data, accessMode: .read),
+                            throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
         // Trigger the code path that is taken if funopen() fails
         // We can only do this on Apple platforms
         #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
-        var unallocatableArchive: Archive?
-        self.runWithoutMemory {
-            unallocatableArchive = Archive(data: data, accessMode: .read)
+        let archiveCreation = {
+            self.XCTAssertSwiftError(try Archive(data: data, accessMode: .read),
+                                throws: Archive.ArchiveError.unreadableArchive)
         }
-        XCTAssertNil(unallocatableArchive)
+
+        self.runWithoutMemory {
+            try? archiveCreation()
+        }
         #endif
     }
 
@@ -223,17 +221,16 @@ extension ZIPFoundationTests {
 // MARK: - Helpers
 
 extension ZIPFoundationTests {
+
     func memoryArchive(for testFunction: String, mode: Archive.AccessMode,
-                       preferredEncoding: String.Encoding? = nil) -> Archive {
+                       pathEncoding: String.Encoding? = nil) -> Archive {
         var sourceArchiveURL = ZIPFoundationTests.resourceDirectoryURL
         sourceArchiveURL.appendPathComponent(testFunction.replacingOccurrences(of: "()", with: ""))
         sourceArchiveURL.appendPathExtension("zip")
         do {
             let data = mode == .create ? Data() : try Data(contentsOf: sourceArchiveURL)
-            guard let archive = Archive(data: data, accessMode: mode,
-                                        preferredEncoding: preferredEncoding) else {
-                                            throw Archive.ArchiveError.unreadableArchive
-            }
+            let archive = try Archive(data: data, accessMode: mode,
+                                  pathEncoding: pathEncoding)
             return archive
         } catch {
             XCTFail("Failed to open memory archive for '\(sourceArchiveURL.lastPathComponent)'")

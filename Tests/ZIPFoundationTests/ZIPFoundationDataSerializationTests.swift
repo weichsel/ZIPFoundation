@@ -43,13 +43,8 @@ extension ZIPFoundationTests {
         // Close the file to exercise the error path during readChunk that deals with
         // unreadable file data.
         fclose(file)
-        do {
-            _ = try Data.readChunk(of: 10, from: file)
-        } catch let error as Data.DataError {
-            XCTAssert(error == .unreadableFile)
-        } catch {
-            XCTFail("Unexpected error while testing to read from a closed file.")
-        }
+        XCTAssertSwiftError(try Data.readChunk(of: 10, from: file),
+                            throws: Data.DataError.unreadableFile)
     }
 
     func testWriteChunkErrorConditions() {
@@ -65,14 +60,8 @@ extension ZIPFoundationTests {
         // Close the file to exercise the error path during writeChunk that deals with
         // unwritable files.
         fclose(file)
-        do {
-            let dataWritten = try Data.write(chunk: Data(count: 10), to: file)
-            XCTAssert(dataWritten == 0)
-        } catch let error as Data.DataError {
-            XCTAssert(error == .unwritableFile)
-        } catch {
-            XCTFail("Unexpected error while testing to write into a closed file.")
-        }
+        XCTAssertSwiftError(try Data.write(chunk: Data(count: 10), to: file),
+                            throws: Data.DataError.unwritableFile)
     }
 
     func testCRC32Calculation() {
@@ -120,13 +109,7 @@ extension ZIPFoundationTests {
         // Close the file to exercise the error path during writeChunk that deals with
         // unwritable files.
         fclose(file)
-        do {
-            let dataWritten = try Data.writeLargeChunk(data, size: 1024, bufferSize: 256, to: file)
-            XCTAssert(dataWritten == 0)
-        } catch let error as Data.DataError {
-            XCTAssert(error == .unwritableFile)
-        } catch {
-            XCTFail("Unexpected error while testing to write into a closed file.")
-        }
+        XCTAssertSwiftError(try Data.writeLargeChunk(data, size: 1024, bufferSize: 256, to: file),
+                            throws: Data.DataError.unwritableFile)
     }
 }
