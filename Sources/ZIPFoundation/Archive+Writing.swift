@@ -57,7 +57,7 @@ extension Archive {
         let type = try FileManager.typeForItem(at: fileURL)
         // symlinks do not need to be readable
         guard type == .symlink || fileManager.isReadableFile(atPath: fileURL.path) else {
-            throw CocoaError(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: url.path])
+            throw CocoaError(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: fileURL.path])
         }
         let modDate = try FileManager.fileModificationDateTimeForItem(at: fileURL)
         let uncompressedSize = type == .directory ? 0 : try FileManager.fileSizeForItem(at: fileURL)
