@@ -52,41 +52,21 @@ extension ZIPFoundationTests {
     func testSymlinkPermissionsTransferErrorConditions() {
         let fileManager = FileManager()
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
-        do {
-            try fileManager.setAttributes([:], ofItemAtURL: assetURL, traverseLink: false)
-        } catch let error as Entry.EntryError {
-            XCTAssert(error == Entry.EntryError.missingPermissionsAttributeError)
-        } catch {
-            XCTFail("Unexpected error while trying to transfer symlink attributes")
-        }
+        XCTAssertSwiftError(try fileManager.setAttributes([:], ofItemAtURL: assetURL, traverseLink: false),
+                            throws: Entry.EntryError.missingPermissionsAttributeError)
         let permissions = NSNumber(value: Int16(0o753))
         let tempPath = NSTemporaryDirectory()
         var nonExistantURL = URL(fileURLWithPath: tempPath)
         nonExistantURL.appendPathComponent("invalid.path")
-        do {
-            try fileManager.setAttributes([.posixPermissions: permissions],
-                                          ofItemAtURL: nonExistantURL, traverseLink: false)
-        } catch let error as POSIXError {
-            XCTAssert(error.code == .ENOENT)
-        } catch {
-            XCTFail("Unexpected error while trying to transfer symlink attributes")
-        }
-        do {
-            try fileManager.setAttributes([.posixPermissions: permissions],
-                                          ofItemAtURL: assetURL, traverseLink: false)
-        } catch let error as Entry.EntryError {
-            XCTAssert(error == Entry.EntryError.missingModificationDateAttributeError)
-        } catch {
-            XCTFail("Unexpected error while trying to transfer symlink attributes")
-        }
-        do {
-            try fileManager.setAttributes([.posixPermissions: permissions, .modificationDate: Date()],
-                                          ofItemAtURL: nonExistantURL, traverseLink: false)
-        } catch let error as POSIXError {
-            XCTAssert(error.code == .ENOENT)
-        } catch {
-            XCTFail("Unexpected error while trying to transfer symlink attributes")
-        }
+        XCTAssertPOSIXError(try fileManager.setAttributes([.posixPermissions: permissions],
+                                                          ofItemAtURL: nonExistantURL, traverseLink: false),
+                            throwsErrorWithCode: .ENOENT)
+        XCTAssertSwiftError(try fileManager.setAttributes([.posixPermissions: permissions],
+                                                          ofItemAtURL: assetURL, traverseLink: false),
+                            throws: Entry.EntryError.missingModificationDateAttributeError)
+        XCTAssertPOSIXError( try fileManager.setAttributes([.posixPermissions: permissions, .modificationDate: Date()],
+                                                           ofItemAtURL: nonExistantURL, traverseLink: false),
+                             throwsErrorWithCode: .ENOENT)
     }
 
     func testSymlinkModificationDateTransferErrorConditions() {
@@ -95,30 +75,18 @@ extension ZIPFoundationTests {
         let tempPath = NSTemporaryDirectory()
         var nonExistantURL = URL(fileURLWithPath: tempPath)
         nonExistantURL.appendPathComponent("invalid.path")
-        do {
-            try fileManager.setSymlinkModificationDate(Date(),
-                                                       ofItemAtURL: nonExistantURL)
-        } catch let error as POSIXError {
-            XCTAssert(error.code == .ENOENT)
-        } catch {
-            XCTFail("Unexpected error while trying to transfer symlink attributes")
-        }
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        do {
-            var resourceValues = URLResourceValues()
-            resourceValues.isUserImmutable = true
+        XCTAssertPOSIXError(try fileManager.setSymlinkModificationDate(Date(), ofItemAtURL: nonExistantURL),
+                            throwsErrorWithCode: .ENOENT)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
+        var resourceValues = URLResourceValues()
+        resourceValues.isUserImmutable = true
+        try? assetURL.setResourceValues(resourceValues)
+        defer {
+            resourceValues.isUserImmutable = false
             try? assetURL.setResourceValues(resourceValues)
-            defer {
-                resourceValues.isUserImmutable = false
-                try? assetURL.setResourceValues(resourceValues)
-            }
-            try fileManager.setSymlinkModificationDate(Date(),
-                                                       ofItemAtURL: assetURL)
-        } catch let error as POSIXError {
-            XCTAssert(error.code == .EPERM)
-        } catch {
-            XCTFail("Unexpected error while trying to transfer symlink attributes")
         }
+        XCTAssertPOSIXError(try fileManager.setSymlinkModificationDate(Date(), ofItemAtURL: assetURL),
+                            throwsErrorWithCode: .EPERM)
 #endif
     }
 
@@ -135,15 +103,12 @@ extension ZIPFoundationTests {
         guard let nonFileURL = URL(string: "https://www.peakstep.com/") else {
             XCTFail("Failed to create file URL."); return
         }
+
+        XCTAssertCocoaError(try FileManager.fileModificationDateTimeForItem(at: nonFileURL),
+                            throwsErrorWithCode: CocoaError.fileReadNoSuchFile)
         let nonExistantURL = URL(fileURLWithPath: "/nonexistant")
-        do {
-            _ = try FileManager.fileModificationDateTimeForItem(at: nonFileURL)
-            _ = try FileManager.fileModificationDateTimeForItem(at: nonExistantURL)
-        } catch let error as CocoaError {
-            XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
-        } catch {
-            XCTFail("Unexpected error while trying to retrieve file modification date")
-        }
+        XCTAssertCocoaError(try FileManager.fileModificationDateTimeForItem(at: nonExistantURL),
+                            throwsErrorWithCode: CocoaError.fileReadNoSuchFile)
         let msDOSDate = Date(timeIntervalSince1970: TimeInterval(Int.min)).fileModificationDate
         XCTAssert(msDOSDate == 0)
         let msDOSTime = Date(timeIntervalSince1970: TimeInterval(Int.min)).fileModificationTime
@@ -156,32 +121,20 @@ extension ZIPFoundationTests {
 
     func testFileSizeHelperMethods() {
         let nonExistantURL = URL(fileURLWithPath: "/nonexistant")
-        do {
-            _ = try FileManager.fileSizeForItem(at: nonExistantURL)
-        } catch let error as CocoaError {
-            XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
-        } catch { XCTFail("Unexpected error while trying to retrieve file size") }
+        XCTAssertCocoaError(try FileManager.fileSizeForItem(at: nonExistantURL),
+                            throwsErrorWithCode: CocoaError.fileReadNoSuchFile)
     }
 
     func testFileTypeHelperMethods() {
         let nonExistantURL = URL(fileURLWithPath: "/nonexistant")
-        do {
-            _ = try FileManager.typeForItem(at: nonExistantURL)
-        } catch let error as CocoaError {
-            XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
-        } catch {
-            XCTFail("Unexpected error while trying to retrieve file type")
-        }
+        XCTAssertCocoaError(try FileManager.typeForItem(at: nonExistantURL),
+                            throwsErrorWithCode: CocoaError.fileReadNoSuchFile)
         guard let nonFileURL = URL(string: "https://www.peakstep.com") else {
             XCTFail("Failed to create test URL."); return
         }
-        do {
-            _ = try FileManager.typeForItem(at: nonFileURL)
-        } catch let error as CocoaError {
-            XCTAssert(error.code == CocoaError.fileReadNoSuchFile)
-        } catch {
-            XCTFail("Unexpected error while trying to retrieve file type")
-        }
+
+        XCTAssertCocoaError(try FileManager.typeForItem(at: nonFileURL),
+                            throwsErrorWithCode: CocoaError.fileReadNoSuchFile)
     }
 
     func testFileModificationDate() {

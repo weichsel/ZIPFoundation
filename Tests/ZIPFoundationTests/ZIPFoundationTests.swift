@@ -80,17 +80,11 @@ class ZIPFoundationTests: XCTestCase {
                 let fileManager = FileManager()
                 try fileManager.copyItem(at: sourceArchiveURL, to: destinationArchiveURL)
             }
-            guard let archive = Archive(url: destinationArchiveURL, accessMode: mode,
-                                        preferredEncoding: preferredEncoding) else {
-                throw Archive.ArchiveError.unreadableArchive
-            }
+            let archive = try Archive(url: destinationArchiveURL, accessMode: mode,
+                                      pathEncoding: preferredEncoding)
             return archive
-        } catch Archive.ArchiveError.unreadableArchive {
-            XCTFail("Failed to get test archive '\(destinationArchiveURL.lastPathComponent)'")
-            type(of: self).tearDown()
-            preconditionFailure()
         } catch {
-            XCTFail("File system error: \(error)")
+            XCTFail("Failed to get test archive: \(error)")
             type(of: self).tearDown()
             preconditionFailure()
         }
@@ -136,8 +130,17 @@ class ZIPFoundationTests: XCTestCase {
         return URL
     }
 
-    func runWithFileDescriptorLimit(_ limit: UInt64, handler: () -> Void) {
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(Android)
+    func runWithUnprivilegedGroup(handler: () throws -> Void) {
+        let originalGID = getgid()
+        defer { setgid(originalGID) }
+        guard let user = getpwnam("nobody") else { return }
+
+        let gid = user.pointee.pw_gid
+        guard 0 == setgid(gid) else { return }
+    }
+
+    func runWithFileDescriptorLimit(_ limit: UInt64, handler: () throws -> Void) rethrows {
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(visionOS) || os(Android)
         let fileNoFlag = RLIMIT_NOFILE
         #else
         let fileNoFlag = Int32(RLIMIT_NOFILE.rawValue)
@@ -148,11 +151,11 @@ class ZIPFoundationTests: XCTestCase {
         tempRlimit.rlim_cur = rlim_t(limit)
         setrlimit(fileNoFlag, &tempRlimit)
         defer { setrlimit(fileNoFlag, &storedRlimit) }
-        handler()
+        try handler()
     }
 
     func runWithoutMemory(handler: () -> Void) {
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let systemAllocator = CFAllocatorGetDefault().takeUnretainedValue()
         CFAllocatorSetDefault(kCFAllocatorNull)
         defer { CFAllocatorSetDefault(systemAllocator) }
@@ -179,7 +182,7 @@ class ZIPFoundationTests: XCTestCase {
 extension ZIPFoundationTests {
     // From https://oleb.net/blog/2017/03/keeping-xctest-in-sync/
     func testLinuxTestSuiteIncludesAllTests() {
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
             let thisClass = type(of: self)
             let linuxCount = thisClass.allTests.count
             let darwinCount = Int(thisClass.defaultTestSuite.testCaseCount)
@@ -296,7 +299,7 @@ extension ZIPFoundationTests {
     }
 
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
-        #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         return [
             ("testFileModificationDate", testFileModificationDate),
             ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
@@ -356,19 +359,17 @@ extension Archive {
                 isCorrect = checksum == entry.checksum
                 guard isCorrect else { break }
             }
-        } catch {
-            return false
-        }
+        } catch { return false }
         return isCorrect
     }
 }
 
 extension Data {
     static func makeRandomData(size: Int) -> Data {
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(visionOS)
         let bytes = [UInt32](repeating: 0, count: size).map { _ in UInt32.random(in: 0...UInt32.max) }
         #else
-            let bytes = [UInt32](repeating: 0, count: size).map { _ in random() }
+        let bytes = [UInt32](repeating: 0, count: size).map { _ in random() }
         #endif
         return Data(bytes: bytes, count: size)
     }
@@ -383,7 +384,6 @@ extension NSUserScriptTask {
         #!/bin/bash
         hdiutil create -size 5m -fs HFS+ -type SPARSEBUNDLE -ov -volname "\(volumeName)" "\(dmgURL.path)"
         hdiutil attach -nobrowse "\(dmgURL.appendingPathExtension("sparsebundle").path)"
-
         """
         try script.write(to: scriptURL, atomically: false, encoding: .utf8)
         let permissions = NSNumber(value: Int16(0o770))

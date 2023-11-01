@@ -11,6 +11,7 @@
 import Foundation
 
 extension FileManager {
+
     typealias CentralDirectoryStructure = Entry.CentralDirectoryStructure
 
     /// Zips the file or directory contents at the specified source URL to the destination URL.
@@ -39,9 +40,7 @@ extension FileManager {
         guard !fileManager.itemExists(at: destinationURL) else {
             throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: destinationURL.path])
         }
-        guard let archive = Archive(url: destinationURL, accessMode: .create) else {
-            throw Archive.ArchiveError.unwritableArchive
-        }
+        let archive = try Archive(url: destinationURL, accessMode: .create)
         let isDirectory = try FileManager.typeForItem(at: sourceURL) == .directory
         if isDirectory {
             var subPaths = try self.subpathsOfDirectory(atPath: sourceURL.path)
@@ -89,18 +88,15 @@ extension FileManager {
     ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
-    ///   - preferredEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
+    ///   - pathEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
-                          progress: Progress? = nil, preferredEncoding: String.Encoding? = nil) throws {
+                          progress: Progress? = nil, pathEncoding: String.Encoding? = nil) throws {
         let fileManager = FileManager()
         guard fileManager.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
-        guard let archive = Archive(url: sourceURL, accessMode: .read, preferredEncoding: preferredEncoding) else {
-            throw Archive.ArchiveError.unreadableArchive
-        }
-
+        let archive = try Archive(url: sourceURL, accessMode: .read, pathEncoding: pathEncoding)
         var totalUnitCount = Int64(0)
         if let progress = progress {
             totalUnitCount = archive.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
@@ -108,7 +104,7 @@ extension FileManager {
         }
 
         for entry in archive {
-            let path = preferredEncoding == nil ? entry.path : entry.path(using: preferredEncoding!)
+            let path = pathEncoding == nil ? entry.path : entry.path(using: pathEncoding!)
             let entryURL = destinationURL.appendingPathComponent(path)
             guard entryURL.isContained(in: destinationURL) else {
                 throw CocoaError(.fileReadInvalidFileName,
@@ -169,7 +165,7 @@ extension FileManager {
             return
         }
 
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         guard let posixPermissions = attributes[.posixPermissions] as? NSNumber else {
             throw Entry.EntryError.missingPermissionsAttributeError
         }
@@ -224,7 +220,7 @@ extension FileManager {
         let defaultPermissions = entryType == .directory ? defaultDirectoryPermissions : defaultFilePermissions
         var attributes = [.posixPermissions: defaultPermissions] as [FileAttributeKey: Any]
         // Certain keys are not yet supported in swift-corelibs
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         attributes[.modificationDate] = Date(dateTime: (fileDate, fileTime))
 #endif
         let versionMadeBy = centralDirectoryStructure.versionMadeBy
@@ -280,7 +276,7 @@ extension FileManager {
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let modTimeSpec = fileStat.st_mtimespec
 #else
         let modTimeSpec = fileStat.st_mtim
@@ -331,7 +327,7 @@ extension CocoaError {
 #if swift(>=4.2)
 #else
 
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
 #else
 
     // The swift-corelibs-foundation version of NSError.swift was missing a convenience method to create

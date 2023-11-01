@@ -40,15 +40,17 @@ extension Archive {
         #endif
     }
 
-    static func makeBackingConfiguration(for url: URL, mode: AccessMode)
-    -> BackingConfiguration? {
+    static func makeBackingConfiguration(for url: URL, mode: AccessMode) throws
+    -> BackingConfiguration {
         let fileManager = FileManager()
         switch mode {
         case .read:
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            guard let archiveFile = fopen(fileSystemRepresentation, "rb"),
-                  let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
+            guard let archiveFile = fopen(fileSystemRepresentation, "rb") else {
+                throw POSIXError(errno, path: url.path)
+            }
+            guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+                throw ArchiveError.missingEndOfCentralDirectoryRecord
             }
             return BackingConfiguration(file: archiveFile,
                                         endOfCentralDirectoryRecord: eocdRecord,
@@ -61,15 +63,15 @@ extension Archive {
                                                                           offsetToStartOfCentralDirectory: 0,
                                                                           zipFileCommentLength: 0,
                                                                           zipFileCommentData: Data())
-            do {
-                try endOfCentralDirectoryRecord.data.write(to: url, options: .withoutOverwriting)
-            } catch { return nil }
+            try endOfCentralDirectoryRecord.data.write(to: url, options: .withoutOverwriting)
             fallthrough
         case .update:
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-            guard let archiveFile = fopen(fileSystemRepresentation, "rb+"),
-                  let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
+            guard let archiveFile = fopen(fileSystemRepresentation, "rb+") else {
+                throw POSIXError(errno, path: url.path)
+            }
+            guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
+                throw ArchiveError.missingEndOfCentralDirectoryRecord
             }
             fseeko(archiveFile, 0, SEEK_SET)
             return BackingConfiguration(file: archiveFile,
@@ -79,8 +81,8 @@ extension Archive {
     }
 
     #if swift(>=5.0)
-    static func makeBackingConfiguration(for data: Data, mode: AccessMode)
-    -> BackingConfiguration? {
+    static func makeBackingConfiguration(for data: Data, mode: AccessMode) throws
+    -> BackingConfiguration {
         let posixMode: String
         switch mode {
         case .read: posixMode = "rb"
@@ -88,12 +90,14 @@ extension Archive {
         case .update: posixMode = "rb+"
         }
         let memoryFile = MemoryFile(data: data)
-        guard let archiveFile = memoryFile.open(mode: posixMode) else { return nil }
+        guard let archiveFile = memoryFile.open(mode: posixMode) else {
+            throw ArchiveError.unreadableArchive
+        }
 
         switch mode {
         case .read:
             guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
+                throw ArchiveError.missingEndOfCentralDirectoryRecord
             }
 
             return BackingConfiguration(file: archiveFile,
@@ -114,7 +118,7 @@ extension Archive {
             fallthrough
         case .update:
             guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {
-                return nil
+                throw ArchiveError.missingEndOfCentralDirectoryRecord
             }
 
             fseeko(archiveFile, 0, SEEK_SET)

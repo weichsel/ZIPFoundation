@@ -57,7 +57,7 @@ extension Archive {
         let type = try FileManager.typeForItem(at: fileURL)
         // symlinks do not need to be readable
         guard type == .symlink || fileManager.isReadableFile(atPath: fileURL.path) else {
-            throw CocoaError(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: url.path])
+            throw CocoaError(.fileReadNoPermission, userInfo: [NSFilePathErrorKey: fileURL.path])
         }
         let modDate = try FileManager.fileModificationDateTimeForItem(at: fileURL)
         let uncompressedSize = type == .directory ? 0 : try FileManager.fileSizeForItem(at: fileURL)
@@ -221,10 +221,11 @@ extension Archive {
         fclose(self.archiveFile)
         if self.isMemoryArchive {
             #if swift(>=5.0)
-            guard let data = archive.data,
-                  let config = Archive.makeBackingConfiguration(for: data, mode: .update) else {
+            guard let data = archive.data else {
                 throw ArchiveError.unwritableArchive
             }
+
+            let config = try Archive.makeBackingConfiguration(for: data, mode: .update)
             self.archiveFile = config.file
             self.memoryFile = config.memoryFile
             self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
@@ -232,7 +233,7 @@ extension Archive {
             #endif
         } else {
             let fileManager = FileManager()
-            #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+            #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
             do {
                 _ = try fileManager.replaceItemAt(self.url, withItemAt: archive.url)
             } catch {
@@ -284,11 +285,8 @@ private extension Archive {
         var url: URL?
         if self.isMemoryArchive {
             #if swift(>=5.0)
-            guard let tempArchive = Archive(data: Data(), accessMode: .create,
-                                            preferredEncoding: self.preferredEncoding) else {
-                throw ArchiveError.unwritableArchive
-            }
-            archive = tempArchive
+            archive = try Archive(data: Data(), accessMode: .create,
+                                  pathEncoding: self.pathEncoding)
             #else
             fatalError("Memory archives are unsupported.")
             #endif
@@ -298,9 +296,7 @@ private extension Archive {
             let uniqueString = ProcessInfo.processInfo.globallyUniqueString
             let tempArchiveURL = tempDir.appendingPathComponent(uniqueString)
             try manager.createParentDirectoryStructure(for: tempArchiveURL)
-            guard let tempArchive = Archive(url: tempArchiveURL, accessMode: .create) else {
-                throw ArchiveError.unwritableArchive
-            }
+            let tempArchive = try Archive(url: tempArchiveURL, accessMode: .create)
             archive = tempArchive
             url = tempDir
         }

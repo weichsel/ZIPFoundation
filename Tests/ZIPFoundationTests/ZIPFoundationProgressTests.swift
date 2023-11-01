@@ -10,7 +10,7 @@
 import XCTest
 @testable import ZIPFoundation
 
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
 extension ZIPFoundationTests {
 
     func testArchiveAddUncompressedEntryProgress() {
@@ -111,7 +111,7 @@ extension ZIPFoundationTests {
         }
     }
 
-    func testZipItemProgress() {
+    func testZipItemProgress() throws {
         let fileManager = FileManager()
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         var fileArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
@@ -148,12 +148,10 @@ extension ZIPFoundationTests {
             } catch { didSucceed = false }
         }
         self.wait(for: [fileExpectation, directoryExpectation], timeout: 20.0)
-        guard let archive = Archive(url: fileArchiveURL, accessMode: .read),
-              let directoryArchive = Archive(url: directoryArchiveURL, accessMode: .read) else {
-            XCTFail("Failed to read archive.") ; return
-        }
         XCTAssert(didSucceed)
+        let archive = try Archive(url: fileArchiveURL, accessMode: .read)
         XCTAssert(archive.checkIntegrity())
+        let directoryArchive = try Archive(url: directoryArchiveURL, accessMode: .read)
         XCTAssert(directoryArchive.checkIntegrity())
     }
 

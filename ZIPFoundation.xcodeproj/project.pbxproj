@@ -26,6 +26,9 @@
 		BA58FB162951F49400892CE7 /* Date+ZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA58FB152951F49400892CE7 /* Date+ZIP.swift */; };
 		BA643D7A264811FB00018273 /* URL+ZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA643D79264811FB00018273 /* URL+ZIP.swift */; };
 		BA643D7C2648131C00018273 /* Archive+Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA643D7B2648131C00018273 /* Archive+Progress.swift */; };
+		BA85B4F2299160E4003F2748 /* Archive+Deprecated.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA85B4F1299160E4003F2748 /* Archive+Deprecated.swift */; };
+		BA85B4F42991614E003F2748 /* FileManager+ZIPDeprecated.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA85B4F32991614E003F2748 /* FileManager+ZIPDeprecated.swift */; };
+		BA9AFCCA2ABB645F00A1268C /* PrivacyInfo.xcprivacy in CopyFiles */ = {isa = PBXBuildFile; fileRef = BA9AFCC82ABB643E00A1268C /* PrivacyInfo.xcprivacy */; };
 		BAAF13DA25CC140300070A95 /* ZIPFoundationErrorConditionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAAF13D925CC140300070A95 /* ZIPFoundationErrorConditionTests.swift */; };
 		BACE20B826F7CE6C003BA312 /* Archive+BackingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACE20B726F7CE6C003BA312 /* Archive+BackingConfiguration.swift */; };
 		BACE20BA26F7D18A003BA312 /* Archive+Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACE20B926F7D18A003BA312 /* Archive+Helpers.swift */; };
@@ -57,6 +60,19 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		BA9AFCC92ABB645100A1268C /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+				BA9AFCCA2ABB645F00A1268C /* PrivacyInfo.xcprivacy in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		590A7DA526B0F8F800CBEFB4 /* Archive+ZIP64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Archive+ZIP64.swift"; sourceTree = "<group>"; };
 		590A7DA726B0F91E00CBEFB4 /* Entry+ZIP64.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Entry+ZIP64.swift"; sourceTree = "<group>"; };
@@ -77,6 +93,9 @@
 		BA58FB152951F49400892CE7 /* Date+ZIP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+ZIP.swift"; sourceTree = "<group>"; };
 		BA643D79264811FB00018273 /* URL+ZIP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "URL+ZIP.swift"; sourceTree = "<group>"; };
 		BA643D7B2648131C00018273 /* Archive+Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Progress.swift"; sourceTree = "<group>"; };
+		BA85B4F1299160E4003F2748 /* Archive+Deprecated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Deprecated.swift"; sourceTree = "<group>"; };
+		BA85B4F32991614E003F2748 /* FileManager+ZIPDeprecated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileManager+ZIPDeprecated.swift"; sourceTree = "<group>"; };
+		BA9AFCC82ABB643E00A1268C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BAAF13D925CC140300070A95 /* ZIPFoundationErrorConditionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationErrorConditionTests.swift; sourceTree = "<group>"; };
 		BACE20B726F7CE6C003BA312 /* Archive+BackingConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+BackingConfiguration.swift"; sourceTree = "<group>"; };
 		BACE20B926F7D18A003BA312 /* Archive+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Helpers.swift"; sourceTree = "<group>"; };
@@ -119,6 +138,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		BA9AFCC72ABB642000A1268C /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BA9AFCC82ABB643E00A1268C /* PrivacyInfo.xcprivacy */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		OBJ_16 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
@@ -183,8 +210,10 @@
 		OBJ_8 /* ZIPFoundation */ = {
 			isa = PBXGroup;
 			children = (
+				BA9AFCC72ABB642000A1268C /* Resources */,
 				OBJ_11 /* Archive.swift */,
 				BACE20B726F7CE6C003BA312 /* Archive+BackingConfiguration.swift */,
+				BA85B4F1299160E4003F2748 /* Archive+Deprecated.swift */,
 				BACE20B926F7D18A003BA312 /* Archive+Helpers.swift */,
 				95B5A3D32366731B00D4D8FD /* Archive+MemoryFile.swift */,
 				BA643D7B2648131C00018273 /* Archive+Progress.swift */,
@@ -201,6 +230,7 @@
 				BACE20BC26F7D545003BA312 /* Entry+Serialization.swift */,
 				590A7DA726B0F91E00CBEFB4 /* Entry+ZIP64.swift */,
 				OBJ_15 /* FileManager+ZIP.swift */,
+				BA85B4F32991614E003F2748 /* FileManager+ZIPDeprecated.swift */,
 				BA643D79264811FB00018273 /* URL+ZIP.swift */,
 			);
 			name = ZIPFoundation;
@@ -216,6 +246,7 @@
 			buildPhases = (
 				OBJ_47 /* Sources */,
 				OBJ_55 /* Frameworks */,
+				BA9AFCC92ABB645100A1268C /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -326,6 +357,7 @@
 			buildActionMask = 0;
 			files = (
 				OBJ_48 /* Archive+Reading.swift in Sources */,
+				BA85B4F2299160E4003F2748 /* Archive+Deprecated.swift in Sources */,
 				BA0CE5062746AF1A004D8DD4 /* Data+CompressionDeprecated.swift in Sources */,
 				OBJ_49 /* Archive+Writing.swift in Sources */,
 				OBJ_50 /* Archive.swift in Sources */,
@@ -335,6 +367,7 @@
 				OBJ_52 /* Data+Serialization.swift in Sources */,
 				590A7DA826B0F91F00CBEFB4 /* Entry+ZIP64.swift in Sources */,
 				BACE20BA26F7D18A003BA312 /* Archive+Helpers.swift in Sources */,
+				BA85B4F42991614E003F2748 /* FileManager+ZIPDeprecated.swift in Sources */,
 				590A7DA626B0F8F800CBEFB4 /* Archive+ZIP64.swift in Sources */,
 				BA643D7A264811FB00018273 /* URL+ZIP.swift in Sources */,
 				BA58FB162951F49400892CE7 /* Date+ZIP.swift in Sources */,
@@ -402,7 +435,7 @@
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = "";
-				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
+				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator xrsimulator xros";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.0;
@@ -488,7 +521,7 @@
 				OTHER_SWIFT_FLAGS = "-DXcode";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = "";
-				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator";
+				SUPPORTED_PLATFORMS = "macosx iphoneos iphonesimulator appletvos appletvsimulator watchos watchsimulator xrsimulator xros";
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				SWIFT_VERSION = 4.0;
 				TVOS_DEPLOYMENT_TARGET = 12.0;
@@ -501,7 +534,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CURRENT_PROJECT_VERSION = 0.9.16;
+				CURRENT_PROJECT_VERSION = 0.9.17;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_TESTABILITY = YES;
@@ -526,7 +559,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CURRENT_PROJECT_VERSION = 0.9.16;
+				CURRENT_PROJECT_VERSION = 0.9.17;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				ENABLE_TESTABILITY = YES;
