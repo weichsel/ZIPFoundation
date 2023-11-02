@@ -74,7 +74,7 @@ extension Data {
         return checksum
     }
 
-    static func readChunk(of size: Int, from file: FILEPointer) throws -> Data {
+    public static func readChunk(of size: Int, from file: FILEPointer) throws -> Data {
         let alignment = MemoryLayout<UInt>.alignment
         #if swift(>=4.1)
         let bytes = UnsafeMutableRawPointer.allocate(byteCount: size, alignment: alignment)
