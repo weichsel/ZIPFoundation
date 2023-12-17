@@ -254,6 +254,7 @@ extension ZIPFoundationTests {
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
             ("testTemporaryReplacementDirectoryURL", testTemporaryReplacementDirectoryURL),
             ("testSimpleTraversalAttack", testSimpleTraversalAttack),
+            ("testPathDelimiterTraversalAttack", testPathDelimiterTraversalAttack),
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
