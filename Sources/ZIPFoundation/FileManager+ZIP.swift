@@ -350,6 +350,10 @@ public extension URL {
     func isContained(in parentDirectoryURL: URL) -> Bool {
         // Ensure this URL is contained in the passed in URL
         let parentDirectoryURL = URL(fileURLWithPath: parentDirectoryURL.path, isDirectory: true).standardized
-        return self.standardized.absoluteString.hasPrefix(parentDirectoryURL.absoluteString)
+        let sanitizedEntryPathURL: URL = {
+            let sanitizedPath = self.path.replacingOccurrences(of: "//", with: "/")
+            return URL(fileURLWithPath: sanitizedPath)
+        }()
+        return sanitizedEntryPathURL.standardized.absoluteString.hasPrefix(parentDirectoryURL.absoluteString)
     }
 }
