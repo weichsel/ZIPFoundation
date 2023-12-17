@@ -282,4 +282,12 @@ extension ZIPFoundationTests {
         XCTAssertCocoaError(try fileManager.unzipItem(at: archive.url, to: destinationURL),
                             throwsErrorWithCode: .fileReadInvalidFileName)
     }
+
+    func testPathDelimiterTraversalAttack() {
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: archive.url, to: destinationURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+    }
 }
