@@ -275,7 +275,7 @@ extension ZIPFoundationTests {
                             throws: Archive.ArchiveError.invalidCRC32)
     }
 
-    func testTraversalAttack() {
+    func testSimpleTraversalAttack() {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)
         let destinationURL = self.createDirectory(for: #function)
