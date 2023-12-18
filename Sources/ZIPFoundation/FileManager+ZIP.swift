@@ -355,11 +355,13 @@ public extension URL {
         // with the parent directory shorthand `..` to bypass our containment check.
         // When a malicious entry path like e.g. `/../secret.txt` gets appended to the destination 
         // directory URL (e.g. `file:///tmp/`), the resulting URL `file:///tmp//../secret.txt` gets expanded
-        // to `file:///tmp/secret` when using `URL.standardized`.
+        // to `file:///tmp/secret` when using `URL.standardized`. This URL would pass the check performed
+        // in `isContained(in:)`.
         // Lower level API like POSIX `fopen` - which is used at a later point during extraction - expands
         // `/tmp//../secret.txt` to `/secret.txt` though. This would lead to an escape to the parent directory.
         // To avoid that, we replicate the behavior of `fopen`s path expansion and replace all double delimiters
         // with single delimiters.
+        // More details: https://github.com/weichsel/ZIPFoundation/issues/281
         let sanitizedEntryPathURL: URL = {
             let sanitizedPath = self.path.replacingOccurrences(of: "//", with: "/")
             return URL(fileURLWithPath: sanitizedPath)
