@@ -118,16 +118,16 @@ class ZIPFoundationTests: XCTestCase {
 
     func createDirectory(for testFunction: String) -> URL {
         let fileManager = FileManager()
-        var URL = ZIPFoundationTests.tempZipDirectoryURL
-        URL = URL.appendingPathComponent(self.pathComponent(for: testFunction))
+        var url = ZIPFoundationTests.tempZipDirectoryURL
+        url = url.appendingPathComponent(self.pathComponent(for: testFunction), isDirectory: true)
         do {
-            try fileManager.createDirectory(at: URL, withIntermediateDirectories: true, attributes: nil)
+            try fileManager.createDirectory(at: url, withIntermediateDirectories: true, attributes: nil)
         } catch {
             XCTFail("Failed to get create directory for test function:\(testFunction)")
             type(of: self).tearDown()
             preconditionFailure()
         }
-        return URL
+        return url
     }
 
     func runWithUnprivilegedGroup(handler: () throws -> Void) {
@@ -253,7 +253,8 @@ extension ZIPFoundationTests {
             ("testRemoveEntryErrorConditions", testRemoveEntryErrorConditions),
             ("testRemoveUncompressedEntry", testRemoveUncompressedEntry),
             ("testTemporaryReplacementDirectoryURL", testTemporaryReplacementDirectoryURL),
-            ("testTraversalAttack", testTraversalAttack),
+            ("testSimpleTraversalAttack", testSimpleTraversalAttack),
+            ("testPathDelimiterTraversalAttack", testPathDelimiterTraversalAttack),
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
