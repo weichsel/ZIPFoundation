@@ -258,6 +258,7 @@ extension ZIPFoundationTests {
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
+            ("testUnzipUncontainedSymlink", testUnzipUncontainedSymlink),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
         ] + zip64Tests + darwinOnlyTests + swift5OnlyTests

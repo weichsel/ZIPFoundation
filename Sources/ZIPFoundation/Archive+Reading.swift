@@ -54,6 +54,13 @@ extension Archive {
             }
             let consumer = { (data: Data) in
                 guard let linkPath = String(data: data, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
+
+                let parentURL = url.deletingLastPathComponent()
+                let isAbsolutePath = (linkPath as NSString).isAbsolutePath
+                let linkURL = isAbsolutePath ? URL(fileURLWithPath: linkPath) : URL(fileURLWithPath: linkPath, relativeTo: parentURL)
+                let isContained = linkURL.isContained(in: parentURL)
+                guard isContained else { throw ArchiveError.uncontainedSymlink }
+
                 try fileManager.createParentDirectoryStructure(for: url)
                 try fileManager.createSymbolicLink(atPath: url.path, withDestinationPath: linkPath)
             }

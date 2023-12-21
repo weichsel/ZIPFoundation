@@ -142,6 +142,14 @@ extension ZIPFoundationTests {
                             throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
     }
 
+    func testUnzipUncontainedSymlink() {
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        XCTAssertSwiftError(try fileManager.unzipItem(at: archive.url, to: destinationURL),
+                            throws: Archive.ArchiveError.uncontainedSymlink)
+    }
+
     // On Darwin platforms, we want the same behavior as the system-provided ZIP utilities.
     // On the Mac, this includes the graphical Archive Utility as well as the `ditto`
     // command line tool.

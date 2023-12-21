@@ -90,6 +90,8 @@ public final class Archive: Sequence {
         case invalidCentralDirectoryEntryCount
         /// Thrown when an archive does not contain the required End of Central Directory Record.
         case missingEndOfCentralDirectoryRecord
+        /// Thrown when an entry contains a symlink pointing to a path outside the destination directory.
+        case uncontainedSymlink
     }
 
     /// The access mode for an `Archive`.
