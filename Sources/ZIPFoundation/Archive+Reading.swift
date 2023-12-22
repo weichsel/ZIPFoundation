@@ -18,10 +18,12 @@ extension Archive {
     ///   - url: The destination file URL.
     ///   - bufferSize: The maximum size of the read buffer and the decompression buffer (if needed).
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
+    ///   - allowUncontainedSymlinks: Optional flag to allow symlinks that point to paths outside the destination.
     ///   - progress: A progress object that can be used to track or cancel the extract operation.
     /// - Returns: The checksum of the processed content or 0 if the `skipCRC32` flag was set to `true`.
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
-    public func extract(_ entry: Entry, to url: URL, bufferSize: Int = defaultReadChunkSize, skipCRC32: Bool = false,
+    public func extract(_ entry: Entry, to url: URL, bufferSize: Int = defaultReadChunkSize, 
+                        skipCRC32: Bool = false, allowUncontainedSymlinks: Bool = false,
                         progress: Progress? = nil) throws -> CRC32 {
         guard bufferSize > 0 else {
             throw ArchiveError.invalidBufferSize
@@ -30,7 +32,7 @@ extension Archive {
         var checksum = CRC32(0)
         switch entry.type {
         case .file:
-            guard !fileManager.itemExists(at: url) else {
+            guard fileManager.itemExists(at: url) == false else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
             try fileManager.createParentDirectoryStructure(for: url)
@@ -49,7 +51,7 @@ extension Archive {
             checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                         progress: progress, consumer: consumer)
         case .symlink:
-            guard !fileManager.itemExists(at: url) else {
+            guard fileManager.itemExists(at: url) == false else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
             let consumer = { (data: Data) in
@@ -58,7 +60,7 @@ extension Archive {
                 let parentURL = url.deletingLastPathComponent()
                 let isAbsolutePath = (linkPath as NSString).isAbsolutePath
                 let linkURL = URL(fileURLWithPath: linkPath, relativeTo: isAbsolutePath ? nil : parentURL)
-                let isContained = linkURL.isContained(in: parentURL)
+                let isContained = allowUncontainedSymlinks || linkURL.isContained(in: parentURL)
                 guard isContained else { throw ArchiveError.uncontainedSymlink }
 
                 try fileManager.createParentDirectoryStructure(for: url)
