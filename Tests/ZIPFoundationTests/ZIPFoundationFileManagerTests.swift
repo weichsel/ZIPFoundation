@@ -97,7 +97,7 @@ extension ZIPFoundationTests {
         for entry in archive {
             let directoryURL = destinationURL.appendingPathComponent(entry.path)
             itemsExist = fileManager.itemExists(at: directoryURL)
-            if !itemsExist { break }
+            if itemsExist == false { break }
         }
         XCTAssert(itemsExist)
     }
@@ -142,12 +142,24 @@ extension ZIPFoundationTests {
                             throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
     }
 
-    func testUnzipUncontainedSymlink() {
+    func testUnzipUncontainedSymlink() throws {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)
         let destinationURL = self.createDirectory(for: #function)
         XCTAssertSwiftError(try fileManager.unzipItem(at: archive.url, to: destinationURL),
                             throws: Archive.ArchiveError.uncontainedSymlink)
+
+        var linkArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+        linkArchiveURL.appendPathComponent(self.archiveName(for: #function))
+        let linkURL = linkArchiveURL.deletingLastPathComponent()
+        let linkTarget = linkURL.path
+        let linkArchive = try XCTUnwrap(try? Archive(url: linkArchiveURL, accessMode: .create))
+        try? linkArchive.addEntry(with: "link", type: .symlink, uncompressedSize: Int64(4),
+                                  provider: { (_, _) -> Data in
+            return linkTarget.data(using: .utf8) ?? Data()
+        })
+        try? fileManager.unzipItem(at: linkArchiveURL, to: destinationURL, allowUncontainedSymlinks: true)
+        XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("link")))
     }
 
     // On Darwin platforms, we want the same behavior as the system-provided ZIP utilities.
