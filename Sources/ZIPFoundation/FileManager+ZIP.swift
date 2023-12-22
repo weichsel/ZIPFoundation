@@ -91,7 +91,7 @@ extension FileManager {
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
     ///   - pathEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
-    public func unzipItem(at sourceURL: URL, to destinationURL: URL, 
+    public func unzipItem(at sourceURL: URL, to destinationURL: URL,
                           skipCRC32: Bool = false, allowUncontainedSymlinks: Bool = false,
                           progress: Progress? = nil, pathEncoding: String.Encoding? = nil) throws {
         let fileManager = FileManager()
@@ -116,11 +116,11 @@ extension FileManager {
             if let progress = progress {
                 let entryProgress = archive.makeProgressForReading(entry)
                 progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
-                crc32 = try archive.extract(entry, to: entryURL, 
+                crc32 = try archive.extract(entry, to: entryURL,
                                             skipCRC32: skipCRC32, allowUncontainedSymlinks: allowUncontainedSymlinks,
                                             progress: entryProgress)
             } else {
-                crc32 = try archive.extract(entry, to: entryURL, 
+                crc32 = try archive.extract(entry, to: entryURL,
                                             skipCRC32: skipCRC32, allowUncontainedSymlinks: allowUncontainedSymlinks)
             }
 
