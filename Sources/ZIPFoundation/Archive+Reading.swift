@@ -57,7 +57,7 @@ extension Archive {
 
                 let parentURL = url.deletingLastPathComponent()
                 let isAbsolutePath = (linkPath as NSString).isAbsolutePath
-                let linkURL = isAbsolutePath ? URL(fileURLWithPath: linkPath) : URL(fileURLWithPath: linkPath, relativeTo: parentURL)
+                let linkURL = URL(fileURLWithPath: linkPath, relativeTo: isAbsolutePath ? nil : parentURL)
                 let isContained = linkURL.isContained(in: parentURL)
                 guard isContained else { throw ArchiveError.uncontainedSymlink }
 
