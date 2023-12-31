@@ -2,7 +2,7 @@
 //  ZIPFoundationTests.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2023 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2024 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -258,6 +258,7 @@ extension ZIPFoundationTests {
             ("testUnzipItem", testUnzipItem),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
+            ("testUnzipUncontainedSymlink", testUnzipUncontainedSymlink),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
         ] + zip64Tests + darwinOnlyTests + swift5OnlyTests

@@ -2,7 +2,7 @@
 //  FileManager+ZIP.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2023 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2024 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -87,10 +87,12 @@ extension FileManager {
     ///   - sourceURL: The file URL pointing to an existing ZIP file.
     ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
+    ///   - allowUncontainedSymlinks: Optional flag to allow symlinks that point to paths outside the destination.
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
     ///   - pathEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
-    public func unzipItem(at sourceURL: URL, to destinationURL: URL, skipCRC32: Bool = false,
+    public func unzipItem(at sourceURL: URL, to destinationURL: URL,
+                          skipCRC32: Bool = false, allowUncontainedSymlinks: Bool = false,
                           progress: Progress? = nil, pathEncoding: String.Encoding? = nil) throws {
         let fileManager = FileManager()
         guard fileManager.itemExists(at: sourceURL) else {
@@ -114,9 +116,12 @@ extension FileManager {
             if let progress = progress {
                 let entryProgress = archive.makeProgressForReading(entry)
                 progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
-                crc32 = try archive.extract(entry, to: entryURL, skipCRC32: skipCRC32, progress: entryProgress)
+                crc32 = try archive.extract(entry, to: entryURL,
+                                            skipCRC32: skipCRC32, allowUncontainedSymlinks: allowUncontainedSymlinks,
+                                            progress: entryProgress)
             } else {
-                crc32 = try archive.extract(entry, to: entryURL, skipCRC32: skipCRC32)
+                crc32 = try archive.extract(entry, to: entryURL,
+                                            skipCRC32: skipCRC32, allowUncontainedSymlinks: allowUncontainedSymlinks)
             }
 
             func verifyChecksumIfNecessary() throws {

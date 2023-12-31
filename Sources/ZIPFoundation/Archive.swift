@@ -2,7 +2,7 @@
 //  Archive.swift
 //  ZIPFoundation
 //
-//  Copyright © 2017-2023 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Copyright © 2017-2024 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
 //  Released under the MIT License.
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
@@ -90,6 +90,8 @@ public final class Archive: Sequence {
         case invalidCentralDirectoryEntryCount
         /// Thrown when an archive does not contain the required End of Central Directory Record.
         case missingEndOfCentralDirectoryRecord
+        /// Thrown when an entry contains a symlink pointing to a path outside the destination directory.
+        case uncontainedSymlink
     }
 
     /// The access mode for an `Archive`.
