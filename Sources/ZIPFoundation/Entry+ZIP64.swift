@@ -104,7 +104,7 @@ extension Entry.ZIP64ExtendedInformation {
 
     init?(data: Data, fields: [Field]) {
         let headerLength = 4
-        let tmpDataSize:UInt16 = data.scanValue(start: 2)
+        let tmpDataSize: UInt16 = data.scanValue(start: 2)
         guard Int(tmpDataSize) + headerLength == data.count else {
             return nil
         }
