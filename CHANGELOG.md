@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.9.18](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.18)
+
+### Added
+ - Added ability to enforce symlink containment
+
+### Updated
+ - Fixed path escape vulnerability
+ - Fixed platform requirement warnings
+ - Improved error info when encountering permission errors
+
 ## [0.9.17](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.17)
 
 ### Added
