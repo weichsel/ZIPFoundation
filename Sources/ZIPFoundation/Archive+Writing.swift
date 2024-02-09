@@ -113,14 +113,16 @@ extension Archive {
     ///   - progress: A progress object that can be used to track or cancel the add operation.
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
     /// - Throws: An error if the source data is invalid or the receiver is not writable.
-    public func addEntry(with path: String, type: Entry.EntryType, uncompressedSize: Int64,
+    public func addEntry(with path: String, type: Entry.EntryType, uncompressedSize: Int64? = nil,
                          modificationDate: Date = Date(), permissions: UInt16? = nil,
                          compressionMethod: CompressionMethod = .none, bufferSize: Int = defaultWriteChunkSize,
                          progress: Progress? = nil, provider: Provider) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
         // Directories and symlinks cannot be compressed
         let compressionMethod = type == .file ? compressionMethod : .none
-        progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : uncompressedSize
+        if let uncompressedSize {
+            progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : uncompressedSize
+        }
         let (eocdRecord, zip64EOCD) = (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory)
         guard self.offsetToStartOfCentralDirectory <= .max else { throw ArchiveError.invalidCentralDirectoryOffset }
         var startOfCD = Int64(self.offsetToStartOfCentralDirectory)
@@ -134,17 +136,17 @@ extension Archive {
         do {
             // Local File Header
             var localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
-                                                                size: (UInt64(uncompressedSize), 0), checksum: 0,
+                                                                size: (UInt64(uncompressedSize ?? 0), 0), checksum: 0,
                                                                 modificationDateTime: modDateTime)
             // File Data
-            let (written, checksum) = try self.writeEntry(uncompressedSize: uncompressedSize, type: type,
+            let (totalRead, written, checksum) = try self.writeEntry(uncompressedSize: uncompressedSize, type: type,
                                                           compressionMethod: compressionMethod, bufferSize: bufferSize,
                                                           progress: progress, provider: provider)
             startOfCD = Int64(ftello(self.archiveFile))
             // Write the local file header a second time. Now with compressedSize (if applicable) and a valid checksum.
             fseeko(self.archiveFile, off_t(fileHeaderStart), SEEK_SET)
             localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
-                                                            size: (UInt64(uncompressedSize), UInt64(written)),
+                                                            size: (UInt64(uncompressedSize ?? totalRead), UInt64(written)),
                                                             checksum: checksum, modificationDateTime: modDateTime)
             // Central Directory
             fseeko(self.archiveFile, off_t(startOfCD), SEEK_SET)
