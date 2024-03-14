@@ -16,5 +16,5 @@ Pod::Spec.new do |s|
   s.visionos.deployment_target = '1.0'
 
   s.source_files = 'Sources/ZIPFoundation/*.swift'
-  s.resource = 'Sources/ZIPFoundation/Resources/PrivacyInfo.xcprivacy'
+  s.resource_bundles = {'ZIPFoundation_Privacy' => ['Sources/ZIPFoundation/Resources/PrivacyInfo.xcprivacy']}
 end
