@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.19](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.19)
+
+### Updated
+ - Fixed privacy manifest
+ - Fixed deprecation warning in package manifest
+ - Fixed resource bundling instruction in the podspec
+
 ## [0.9.18](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.18)
 
 ### Added
