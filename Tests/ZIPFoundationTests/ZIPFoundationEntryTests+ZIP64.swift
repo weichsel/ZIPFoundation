@@ -132,7 +132,7 @@ extension ZIPFoundationTests {
         let invalidExtraField2 = ZIP64ExtendedInformation(data: Data(extraFieldBytesMissingByte),
                                                           fields: [.compressedSize, .uncompressedSize])
         XCTAssertNil(invalidExtraField2)
-        let extraFieldBytesWithWrongFields: [UInt8] = [0x01, 0x00, 0x10, 0x00, 0x0a, 0x00, 0x00, 0x00,
+        let extraFieldBytesWithWrongFields: [UInt8] = [0x01, 0x00, 0x0a, 0x00, 0x0a, 0x00, 0x00, 0x00,
                                                        0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00,
                                                        0x00, 0x00, 0x00, 0x00]
         let invalidExtraField3 = ZIP64ExtendedInformation(data: Data(extraFieldBytesWithWrongFields),
