@@ -42,11 +42,16 @@ class MemoryFile {
         let result = fopencookie(cookie.toOpaque(), mode, stubs)
         #endif
         if append {
-            fseeko(result, 0, SEEK_END)
+            if let unwrappedResult = result {
+                fseeko(unwrappedResult, 0, SEEK_END)
+            } else {
+                return nil
+            }
         }
         return result
     }
 }
+
 
 private extension MemoryFile {
     func readData(buffer: UnsafeMutableRawBufferPointer) -> Int {
