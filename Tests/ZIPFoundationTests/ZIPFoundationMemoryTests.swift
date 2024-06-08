@@ -143,7 +143,7 @@ extension ZIPFoundationTests {
         #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let archiveCreation = {
             self.XCTAssertSwiftError(try Archive(data: data, accessMode: .read),
-                                throws: Archive.ArchiveError.unreadableArchive)
+                                     throws: Archive.ArchiveError.unreadableArchive)
         }
 
         self.runWithoutMemory {
