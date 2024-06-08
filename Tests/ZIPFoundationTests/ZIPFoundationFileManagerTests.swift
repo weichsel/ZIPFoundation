@@ -156,7 +156,7 @@ extension ZIPFoundationTests {
         let linkArchive = try XCTUnwrap(try? Archive(url: linkArchiveURL, accessMode: .create))
         try? linkArchive.addEntry(with: "link", type: .symlink, uncompressedSize: Int64(4),
                                   provider: { (_, _) -> Data in
-            return linkTarget.data(using: .utf8) ?? Data()
+            return Data(linkTarget.utf8)
         })
         try? fileManager.unzipItem(at: linkArchiveURL, to: destinationURL, allowUncontainedSymlinks: true)
         XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("link")))

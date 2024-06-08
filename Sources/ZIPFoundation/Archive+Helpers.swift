@@ -77,8 +77,7 @@ extension Archive {
                               size: (uncompressed: UInt64, compressed: UInt64), checksum: CRC32,
                               modificationDateTime: (UInt16, UInt16)) throws -> LocalFileHeader {
         // We always set Bit 11 in generalPurposeBitFlag, which indicates an UTF-8 encoded path.
-        guard let fileNameData = path.data(using: .utf8) else { throw ArchiveError.invalidEntryPath }
-
+        let fileNameData = Data(path.utf8)
         var uncompressedSizeOfLFH = UInt32(0)
         var compressedSizeOfLFH = UInt32(0)
         var extraFieldLength = UInt16(0)

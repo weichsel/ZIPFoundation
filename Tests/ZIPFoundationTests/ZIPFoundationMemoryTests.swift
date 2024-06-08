@@ -153,7 +153,7 @@ extension ZIPFoundationTests {
     }
 
     func testReadOnlyFile() {
-        let file = MemoryFile(data: "ABCDEabcde".data(using: .utf8)!).open(mode: "r")
+        let file = MemoryFile(data: Data("ABCDEabcde".utf8)).open(mode: "r")
         var chars: [UInt8] = [0, 0, 0]
         XCTAssertEqual(fread(&chars, 1, 2, file), 2)
         XCTAssertEqual(String(Unicode.Scalar(chars[0])), "A")
@@ -171,7 +171,7 @@ extension ZIPFoundationTests {
     }
 
     func testReadOnlySlicedFile() {
-        let originalData = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".data(using: .utf8)!
+        let originalData = Data("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".utf8)
         let slice = originalData[10..<originalData.count]
         let file = MemoryFile(data: slice).open(mode: "r")
         var chars: [UInt8] = [0, 0, 0]
@@ -188,18 +188,18 @@ extension ZIPFoundationTests {
         XCTAssertEqual(fwrite("5678", 1, 4, file), 4)
         XCTAssertEqual(fwrite("9", 1, 1, file), 1)
         XCTAssertEqual(fflush(file), 0)
-        XCTAssertEqual(mem.data, "01256789".data(using: .utf8))
+        XCTAssertEqual(mem.data, Data("01256789".utf8))
     }
 
     func testReadWriteFile() {
-        let mem = MemoryFile(data: "witch".data(using: .utf8)!)
+        let mem = MemoryFile(data: Data("witch".utf8))
         let file = mem.open(mode: "r+")
         XCTAssertEqual(fseek(file, 1, SEEK_CUR), 0)
         XCTAssertEqual(fwrite("a", 1, 1, file), 1)
         XCTAssertEqual(fseek(file, 0, SEEK_END), 0)
         XCTAssertEqual(fwrite("face", 1, 4, file), 4)
         XCTAssertEqual(fflush(file), 0)
-        XCTAssertEqual(mem.data, "watchface".data(using: .utf8))
+        XCTAssertEqual(mem.data, Data("watchface".utf8))
         // Also exercise the codepath where we explicitly seek beyond `data.count`
         XCTAssertEqual(fseek(file, 10, SEEK_SET), 0)
         XCTAssertEqual(fwrite("x", 1, 1, file), 1)
@@ -210,11 +210,11 @@ extension ZIPFoundationTests {
     }
 
     func testAppendFile() {
-        let mem = MemoryFile(data: "anti".data(using: .utf8)!)
+        let mem = MemoryFile(data: Data("anti".utf8))
         let file = mem.open(mode: "a+")
         XCTAssertEqual(fwrite("cipation", 1, 8, file), 8)
         XCTAssertEqual(fflush(file), 0)
-        XCTAssertEqual(mem.data, "anticipation".data(using: .utf8))
+        XCTAssertEqual(mem.data, Data("anticipation".utf8))
     }
 }
 
