@@ -14,6 +14,7 @@ extension ZIPFoundationTests {
 
     func testArchiveReadErrorConditions() {
         let nonExistantURL = URL(fileURLWithPath: "/nothing")
+        XCTAssertPOSIXError(try Archive(url: nonExistantURL, accessMode: .read), throwsErrorWithCode: .ENOENT)
         XCTAssertPOSIXError(try Archive(url: nonExistantURL, accessMode: .update), throwsErrorWithCode: .ENOENT)
         let processInfo = ProcessInfo.processInfo
         let fileManager = FileManager()
