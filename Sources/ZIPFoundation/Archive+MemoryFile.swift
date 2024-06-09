@@ -98,6 +98,7 @@ private func closeStub(_ cookie: UnsafeMutableRawPointer?) -> Int32 {
 }
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Android)
+
 private func readStub(_ cookie: UnsafeMutableRawPointer?,
                       _ bytePtr: UnsafeMutablePointer<Int8>?,
                       _ count: Int32) -> Int32 {

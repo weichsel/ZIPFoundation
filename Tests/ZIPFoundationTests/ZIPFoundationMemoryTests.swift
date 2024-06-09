@@ -114,13 +114,13 @@ extension ZIPFoundationTests {
         let data = Data.makeRandomData(size: 1024)
         XCTAssertSwiftError(try Archive(data: data, accessMode: .read),
                             throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
-//        let archive = self.memoryArchive(for: #function, mode: .create)
-//        let replacementArchive = self.memoryArchive(for: #function, mode: .read)
-//        replacementArchive.memoryFile = nil
-//        XCTAssertSwiftError(
-//            try archive.replaceCurrentArchive(with: replacementArchive),
-//            throws: Archive.ArchiveError.unwritableArchive
-//        )
+        let archive = self.memoryArchive(for: #function, mode: .create)
+        let replacementArchive = self.memoryArchive(for: #function, mode: .read)
+        //replacementArchive.memoryFile = nil
+        XCTAssertSwiftError(
+            try archive.replaceCurrentArchive(with: replacementArchive),
+            throws: Archive.ArchiveError.unwritableArchive
+        )
     }
 
     func testReadOnlyFile() {
@@ -192,9 +192,8 @@ extension ZIPFoundationTests {
         sourceArchiveURL.appendPathExtension("zip")
         do {
             let data = mode == .create ? Data() : try Data(contentsOf: sourceArchiveURL)
-            let archive = try Archive(data: data, accessMode: mode,
-                                  pathEncoding: pathEncoding)
-            return archive
+            return try Archive(data: data, accessMode: mode,
+                               pathEncoding: pathEncoding)
         } catch {
             XCTFail("Failed to open memory archive for '\(sourceArchiveURL.lastPathComponent)'")
             type(of: self).tearDown()
