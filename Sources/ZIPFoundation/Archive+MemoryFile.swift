@@ -17,39 +17,35 @@ extension Archive {
 #if swift(>=5.0)
 
 extension Archive {
+
+    class MemoryFile {
+
+        private(set) var data: Data
+        private var offset = 0
+
+        init(data: Data = Data()) {
+            self.data = data
+        }
+
+        func open(mode: AccessMode) -> FILEPointer {
+            let cookie = Unmanaged.passRetained(self)
+            #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Android)
+            let result = mode.isWritable
+                ? funopen(cookie.toOpaque(), readStub, writeStub, seekStub, closeStub)!
+                : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)!
+            #else
+            let stubs = cookie_io_functions_t(read: readStub, write: writeStub, seek: seekStub, close: closeStub)
+            let result = fopencookie(cookie.toOpaque(), mode, stubs)!
+            #endif
+            return result
+        }
+    }
+
     /// Returns a `Data` object containing a representation of the receiver.
     public var data: Data? { return self.memoryFile?.data }
 }
 
-class MemoryFile {
-
-    private(set) var data: Data
-    private var offset = 0
-
-    init(data: Data = Data()) {
-        self.data = data
-    }
-
-    func open(mode: String) -> FILEPointer {
-        let cookie = Unmanaged.passRetained(self)
-        let writable = mode.count > 0 && (mode.first! != "r" || mode.last! == "+")
-        let append = mode.count > 0 && mode.first! == "a"
-        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Android)
-        let result = writable
-            ? funopen(cookie.toOpaque(), readStub, writeStub, seekStub, closeStub)!
-            : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)!
-        #else
-        let stubs = cookie_io_functions_t(read: readStub, write: writeStub, seek: seekStub, close: closeStub)
-        let result = fopencookie(cookie.toOpaque(), mode, stubs)!
-        #endif
-        if append {
-            fseeko(result, 0, SEEK_END)
-        }
-        return result
-    }
-}
-
-private extension MemoryFile {
+private extension Archive.MemoryFile {
 
     func readData(buffer: UnsafeMutableRawBufferPointer) -> Int {
         let size = min(buffer.count, data.count-offset)
@@ -90,13 +86,13 @@ private extension MemoryFile {
     }
 }
 
-private func fileFromCookie(cookie: UnsafeRawPointer) -> MemoryFile {
-    return Unmanaged<MemoryFile>.fromOpaque(cookie).takeUnretainedValue()
+private func fileFromCookie(cookie: UnsafeRawPointer) -> Archive.MemoryFile {
+    return Unmanaged<Archive.MemoryFile>.fromOpaque(cookie).takeUnretainedValue()
 }
 
 private func closeStub(_ cookie: UnsafeMutableRawPointer?) -> Int32 {
     if let cookie = cookie {
-        Unmanaged<MemoryFile>.fromOpaque(cookie).release()
+        Unmanaged<Archive.MemoryFile>.fromOpaque(cookie).release()
     }
     return 0
 }

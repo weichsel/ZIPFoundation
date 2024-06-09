@@ -102,6 +102,8 @@ public final class Archive: Sequence {
         case read
         /// Indicates that a newly instantiated `Archive` should update an existing backing file.
         case update
+
+        var isWritable: Bool { self != .read }
     }
 
     /// The version of an `Archive`
