@@ -104,6 +104,14 @@ public final class Archive: Sequence {
         case update
 
         var isWritable: Bool { self != .read }
+
+        var posixMode: String {
+            switch self {
+            case .read: return "rb"
+            case .create: return "wb+"
+            case .update: return "rb+"
+            }
+        }
     }
 
     /// The version of an `Archive`
