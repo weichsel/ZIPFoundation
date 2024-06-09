@@ -40,7 +40,7 @@ class MemoryFile {
             : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)!
         #else
         let stubs = cookie_io_functions_t(read: readStub, write: writeStub, seek: seekStub, close: closeStub)
-        let result = fopencookie(cookie.toOpaque(), mode, stubs)
+        let result = fopencookie(cookie.toOpaque(), mode, stubs)!
         #endif
         if append {
             fseeko(result, 0, SEEK_END)
