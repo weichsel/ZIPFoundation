@@ -106,7 +106,7 @@ extension Entry.ZIP64ExtendedInformation {
     init?(data: Data, fields: [Field]) {
         let headerLength = 4
         guard fields.reduce(0, { $0 + $1.size }) + headerLength == data.count else { return nil }
-        
+
         var readOffset = headerLength
         func value<T>(of field: Field) -> T where T: BinaryInteger {
             if fields.contains(field), readOffset + field.size <= data.count {
@@ -119,10 +119,10 @@ extension Entry.ZIP64ExtendedInformation {
         }
 
         self.dataSize = data.scanValue(start: 2)
-        self.uncompressedSize = try value(of: .uncompressedSize)
-        self.compressedSize = try value(of: .compressedSize)
-        self.relativeOffsetOfLocalHeader = try value(of: .relativeOffsetOfLocalHeader)
-        self.diskNumberStart = try value(of: .diskNumberStart)
+        self.uncompressedSize = value(of: .uncompressedSize)
+        self.compressedSize = value(of: .compressedSize)
+        self.relativeOffsetOfLocalHeader = value(of: .relativeOffsetOfLocalHeader)
+        self.diskNumberStart = value(of: .diskNumberStart)
     }
 
     init?(zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, offset: UInt64) {
