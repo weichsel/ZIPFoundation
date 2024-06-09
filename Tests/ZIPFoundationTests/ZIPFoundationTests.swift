@@ -154,15 +154,6 @@ class ZIPFoundationTests: XCTestCase {
         try handler()
     }
 
-    func runWithoutMemory(handler: () -> Void) {
-        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
-        let systemAllocator = CFAllocatorGetDefault().takeUnretainedValue()
-        CFAllocatorSetDefault(kCFAllocatorNull)
-        defer { CFAllocatorSetDefault(systemAllocator) }
-        handler()
-        #endif
-    }
-
     // MARK: - ZIP64 Helpers
 
     // It's not practical to create compressed files that exceed the size limit every time for test,

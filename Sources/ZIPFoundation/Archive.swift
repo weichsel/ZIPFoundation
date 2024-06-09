@@ -192,10 +192,7 @@ public final class Archive: Sequence {
     ///   - The backing `data` _must_ contain a valid ZIP archive for `AccessMode.read` and `AccessMode.update`.
     ///   - The backing `data` _must_ be empty (or omitted) for `AccessMode.create`.
     public init(data: Data = Data(), accessMode mode: AccessMode, pathEncoding: String.Encoding? = nil) throws {
-        guard let url = URL(string: "\(memoryURLScheme)://") else {
-            throw ArchiveError.unreadableArchive
-        }
-
+        let url = URL(string: "\(memoryURLScheme)://")!
         self.url = url
         self.accessMode = mode
         self.pathEncoding = pathEncoding

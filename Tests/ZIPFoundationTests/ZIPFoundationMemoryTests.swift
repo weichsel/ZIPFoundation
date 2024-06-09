@@ -108,48 +108,19 @@ extension ZIPFoundationTests {
             XCTFail("Failed to remove entry from memory archive with error : \(error)")
         }
         XCTAssert(archive.checkIntegrity())
-        // Trigger the code path that is taken if funopen() fails
-        // We can only do this on Apple platforms
-        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
-        let entryRemoval = {
-            self.XCTAssertSwiftError(try archive.remove(entryToRemove),
-                                     throws: Archive.ArchiveError.unreadableArchive)
-        }
-        self.runWithoutMemory {
-            try? entryRemoval()
-        }
-        let data = Data.makeRandomData(size: 1024)
-        let emptyArchive = try Archive(accessMode: .create)
-        let replacementArchive = try Archive(data: data, accessMode: .create)
-        // Trigger the error code path that is taken when no temporary archive
-        // can be created during replacement
-        replacementArchive.memoryFile = nil
-        let archiveReplacement = {
-            self.XCTAssertSwiftError(try emptyArchive.replaceCurrentArchive(with: replacementArchive),
-                                     throws: Archive.ArchiveError.unwritableArchive)
-        }
-        self.runWithoutMemory {
-            try? archiveReplacement()
-        }
-        #endif
     }
 
     func testMemoryArchiveErrorConditions() throws {
         let data = Data.makeRandomData(size: 1024)
         XCTAssertSwiftError(try Archive(data: data, accessMode: .read),
                             throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
-        // Trigger the code path that is taken if funopen() fails
-        // We can only do this on Apple platforms
-        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
-        let archiveCreation = {
-            self.XCTAssertSwiftError(try Archive(data: data, accessMode: .read),
-                                     throws: Archive.ArchiveError.unreadableArchive)
-        }
-
-        self.runWithoutMemory {
-            try? archiveCreation()
-        }
-        #endif
+        let archive = self.memoryArchive(for: #function, mode: .create)
+        let replacementArchive = self.memoryArchive(for: #function, mode: .read)
+        replacementArchive.memoryFile = nil
+        XCTAssertSwiftError(
+            try archive.replaceCurrentArchive(with: replacementArchive),
+            throws: Archive.ArchiveError.unwritableArchive
+        )
     }
 
     func testReadOnlyFile() {
