@@ -121,6 +121,15 @@ extension ZIPFoundationTests {
             try archive.replaceCurrentArchive(with: replacementArchive),
             throws: Archive.ArchiveError.unwritableArchive
         )
+
+        var noEndOfCentralDirectoryArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
+        noEndOfCentralDirectoryArchiveURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
+        let fullPermissionAttributes = [FileAttributeKey.posixPermissions: NSNumber(value: defaultFilePermissions)]
+        FileManager().createFile(atPath: noEndOfCentralDirectoryArchiveURL.path, contents: nil,
+                                 attributes: fullPermissionAttributes)
+        let noEOCDArchiveData = try Data(contentsOf: noEndOfCentralDirectoryArchiveURL)
+        XCTAssertSwiftError(try Archive(data: noEOCDArchiveData, accessMode: .update),
+                            throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
     }
 
     func testReadOnlyFile() {
