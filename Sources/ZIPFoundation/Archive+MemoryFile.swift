@@ -122,6 +122,18 @@ private func seekStub(_ cookie: UnsafeMutableRawPointer?,
 }
 
 #else
+
+extension Archive.AccessMode {
+
+    var posixMode: String {
+        switch self {
+        case .read: return "rb"
+        case .create: return "wb+"
+        case .update: return "rb+"
+        }
+    }
+}
+
 private func readStub(_ cookie: UnsafeMutableRawPointer?,
                       _ bytePtr: UnsafeMutablePointer<Int8>?,
                       _ count: Int) -> Int {
