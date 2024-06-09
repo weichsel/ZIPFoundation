@@ -131,7 +131,11 @@ public final class Archive: Sequence {
     public let url: URL
     /// Access mode for an archive file.
     public let accessMode: AccessMode
-    var archiveFile: FILEPointer
+    var archiveFile: FILEPointer {
+        willSet {
+            fclose(self.archiveFile)
+        }
+    }
     var endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
     var zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?
     var pathEncoding: String.Encoding?

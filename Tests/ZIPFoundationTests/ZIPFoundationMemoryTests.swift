@@ -117,10 +117,10 @@ extension ZIPFoundationTests {
         let archive = self.memoryArchive(for: #function, mode: .create)
         let replacementArchive = self.memoryArchive(for: #function, mode: .read)
         replacementArchive.memoryFile = nil
-//        XCTAssertSwiftError(
-//            try archive.replaceCurrentArchive(with: replacementArchive),
-//            throws: Archive.ArchiveError.unwritableArchive
-//        )
+        XCTAssertSwiftError(
+            try archive.replaceCurrentArchive(with: replacementArchive),
+            throws: Archive.ArchiveError.unwritableArchive
+        )
     }
 
     func testReadOnlyFile() {

@@ -50,25 +50,25 @@ private extension Archive.MemoryFile {
     func readData(buffer: UnsafeMutableRawBufferPointer) -> Int {
         let size = min(buffer.count, data.count-offset)
         let start = data.startIndex
-        data.copyBytes(to: buffer.bindMemory(to: UInt8.self), from: start+offset..<start+offset+size)
-        offset += size
+        self.data.copyBytes(to: buffer.bindMemory(to: UInt8.self), from: start+offset..<start+offset+size)
+        self.offset += size
         return size
     }
 
     func writeData(buffer: UnsafeRawBufferPointer) -> Int {
-        let start = data.startIndex
-        if offset < data.count && offset+buffer.count > data.count {
-            data.removeSubrange(start+offset..<start+data.count)
+        let start = self.data.startIndex
+        if self.offset < self.data.count && self.offset+buffer.count > self.data.count {
+            self.data.removeSubrange(start+self.offset..<start+self.data.count)
         } else if offset > data.count {
-            data.append(Data(count: offset-data.count))
+            self.data.append(Data(count: self.offset-self.data.count))
         }
-        if offset == data.count {
-            data.append(buffer.bindMemory(to: UInt8.self))
+        if self.offset == self.data.count {
+            self.data.append(buffer.bindMemory(to: UInt8.self))
         } else {
-            let start = data.startIndex // May have changed in earlier mutation
-            data.replaceSubrange(start+offset..<start+offset+buffer.count, with: buffer.bindMemory(to: UInt8.self))
+            let start = self.data.startIndex // May have changed in earlier mutation
+            self.data.replaceSubrange(start+self.offset..<start+self.offset+buffer.count, with: buffer.bindMemory(to: UInt8.self))
         }
-        offset += buffer.count
+        self.offset += buffer.count
         return buffer.count
     }
 

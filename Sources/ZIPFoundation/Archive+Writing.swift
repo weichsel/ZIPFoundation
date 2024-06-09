@@ -218,7 +218,6 @@ extension Archive {
     }
 
     func replaceCurrentArchive(with archive: Archive) throws {
-        fclose(self.archiveFile)
         if self.isMemoryArchive {
             #if swift(>=5.0)
             guard let data = archive.data else {
@@ -246,6 +245,7 @@ extension Archive {
             #endif
             let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: self.url.path)
             guard let file = fopen(fileSystemRepresentation, "rb+") else { throw ArchiveError.unreadableArchive }
+
             self.archiveFile = file
         }
     }
