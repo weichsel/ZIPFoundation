@@ -90,10 +90,7 @@ extension Archive {
         case .update: posixMode = "rb+"
         }
         let memoryFile = MemoryFile(data: data)
-        guard let archiveFile = memoryFile.open(mode: posixMode) else {
-            throw ArchiveError.unreadableArchive
-        }
-
+        let archiveFile = memoryFile.open(mode: posixMode)
         switch mode {
         case .read:
             guard let (eocdRecord, zip64EOCD) = Archive.scanForEndOfCentralDirectoryRecord(in: archiveFile) else {

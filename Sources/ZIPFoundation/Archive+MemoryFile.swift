@@ -22,6 +22,7 @@ extension Archive {
 }
 
 class MemoryFile {
+
     private(set) var data: Data
     private var offset = 0
 
@@ -29,14 +30,14 @@ class MemoryFile {
         self.data = data
     }
 
-    func open(mode: String) -> FILEPointer? {
+    func open(mode: String) -> FILEPointer {
         let cookie = Unmanaged.passRetained(self)
         let writable = mode.count > 0 && (mode.first! != "r" || mode.last! == "+")
         let append = mode.count > 0 && mode.first! == "a"
         #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Android)
         let result = writable
-            ? funopen(cookie.toOpaque(), readStub, writeStub, seekStub, closeStub)
-            : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)
+            ? funopen(cookie.toOpaque(), readStub, writeStub, seekStub, closeStub)!
+            : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)!
         #else
         let stubs = cookie_io_functions_t(read: readStub, write: writeStub, seek: seekStub, close: closeStub)
         let result = fopencookie(cookie.toOpaque(), mode, stubs)
@@ -49,6 +50,7 @@ class MemoryFile {
 }
 
 private extension MemoryFile {
+
     func readData(buffer: UnsafeMutableRawBufferPointer) -> Int {
         let size = min(buffer.count, data.count-offset)
         let start = data.startIndex
