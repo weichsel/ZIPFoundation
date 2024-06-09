@@ -66,7 +66,10 @@ private extension Archive.MemoryFile {
             self.data.append(buffer.bindMemory(to: UInt8.self))
         } else {
             let start = self.data.startIndex // May have changed in earlier mutation
-            self.data.replaceSubrange(start+self.offset..<start+self.offset+buffer.count, with: buffer.bindMemory(to: UInt8.self))
+            self.data.replaceSubrange(
+                start+self.offset..<start+self.offset+buffer.count,
+                with: buffer.bindMemory(to: UInt8.self)
+            )
         }
         self.offset += buffer.count
         return buffer.count
