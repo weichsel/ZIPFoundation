@@ -297,14 +297,11 @@ public final class Archive: Sequence {
 
     private static func scanForZIP64EndOfCentralDirectory(in file: FILEPointer, eocdOffset: UInt64)
     -> ZIP64EndOfCentralDirectory? {
-        guard UInt64(ZIP64EndOfCentralDirectoryLocator.size) < eocdOffset else {
-            return nil
-        }
+        guard UInt64(ZIP64EndOfCentralDirectoryLocator.size) < eocdOffset else { return nil }
+        
         let locatorOffset = eocdOffset - UInt64(ZIP64EndOfCentralDirectoryLocator.size)
+        guard UInt64(ZIP64EndOfCentralDirectoryRecord.size) < locatorOffset else { return nil }
 
-        guard UInt64(ZIP64EndOfCentralDirectoryRecord.size) < locatorOffset else {
-            return nil
-        }
         let recordOffset = locatorOffset - UInt64(ZIP64EndOfCentralDirectoryRecord.size)
         guard let locator: ZIP64EndOfCentralDirectoryLocator = Data.readStruct(from: file, at: locatorOffset),
               let record: ZIP64EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: recordOffset) else {

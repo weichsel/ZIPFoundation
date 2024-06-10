@@ -27,6 +27,9 @@ extension ZIPFoundationTests {
         XCTAssert(result == true)
         XCTAssertSwiftError(try Archive(url: noEndOfCentralDirectoryArchiveURL, accessMode: .read),
                             throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
+        let invalidEndOfCentralDirectoryArchiveURL = self.resourceURL(for: #function, pathExtension: "zip")
+        XCTAssertSwiftError(try Archive(url: invalidEndOfCentralDirectoryArchiveURL, accessMode: .read),
+                            throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
         self.runWithUnprivilegedGroup {
             var unreadableArchiveURL = ZIPFoundationTests.tempZipDirectoryURL
             unreadableArchiveURL.appendPathComponent(processInfo.globallyUniqueString)
