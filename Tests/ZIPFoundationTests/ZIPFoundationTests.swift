@@ -369,6 +369,7 @@ extension Data {
 
 #if os(macOS)
 extension NSUserScriptTask {
+
     static func makeVolumeCreationTask(at tempDir: URL, volumeName: String) throws -> NSUserScriptTask {
         let scriptURL = tempDir.appendingPathComponent("createVol.sh", isDirectory: false)
         let dmgURL = tempDir.appendingPathComponent(volumeName).appendingPathExtension("dmg")
