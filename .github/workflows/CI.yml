@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/swiftlint.yml'
+      - '.swiftlint.yml'
+      - '**/*.swift'
+
+jobs:
+  SwiftLint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: SwiftLint
+        uses: norio-nomura/action-swiftlint@3.2.1
+        with:
+          args: --strict
+
+  Xcode:
+    strategy:
+      matrix:
+        xcode_version: ['14.3.1', '15.0.1', '15.1', '15.2', '15.3', '15.4']
+    runs-on: macos-latest
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_${{ matrix.xcode_version }}.app
+    steps:
+      - uses: actions/checkout@v2
+      - run: swift -version
+      - run: swift test -c release -Xswiftc -enable-testing
+
+  Linux:
+    strategy:
+      matrix:
+        tag: ['5.1', '5.2', '5.3', '5.4', '5.5', '5.6', '5.7', '5.8', '5.9', '5.10']
+    runs-on: ubuntu-latest
+    container:
+      image: swift:${{ matrix.tag }}
+    steps:
+      - uses: actions/checkout@v2
+      - run: swift test -c release -Xswiftc -enable-testing
+
+  Coverage:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: swift test -c release -Xswiftc -enable-testing --enable-code-coverage
+      - run: find .build/release/codecov/ -name "*.profraw" -print0 | xargs -0 xcrun llvm-profdata merge -sparse -o .build/release/codecov/default.profdata
+      - run: xcrun llvm-cov export -summary-only -ignore-filename-regex 'ZIPFoundationTests|resource_bundle_accessor.swift|.*Deprecated.*$' .build/release/ZIPFoundationPackageTests.xctest/Contents/MacOS/ZIPFoundationPackageTests -instr-profile .build/release/codecov/default.profdata > .build/coverage.json
+      - run: (cat .build/coverage.json|jq '.data[0]["totals"]["lines"]["percent"]' | grep -Eq  "100") && { exit 0; } || { echo 'Please make sure that the test suite covers all framework code paths.'; exit 1; }

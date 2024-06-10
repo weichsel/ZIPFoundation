@@ -22,9 +22,7 @@ extension ZIPFoundationTests {
                                  0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
         guard let cds = Entry.CentralDirectoryStructure(data: Data(cdsBytes),
                                                         additionalDataProvider: { count -> Data in
-            guard let pathData = "/".data(using: .utf8) else {
-                throw AdditionalDataError.encodingError
-            }
+            let pathData = Data("/".utf8)
             XCTAssert(count == pathData.count)
             return pathData
         }) else {

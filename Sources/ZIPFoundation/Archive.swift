@@ -102,6 +102,9 @@ public final class Archive: Sequence {
         case read
         /// Indicates that a newly instantiated `Archive` should update an existing backing file.
         case update
+
+        /// Indicates that the archive can be written to.
+        var isWritable: Bool { self != .read }
     }
 
     /// The version of an `Archive`
@@ -129,7 +132,11 @@ public final class Archive: Sequence {
     public let url: URL
     /// Access mode for an archive file.
     public let accessMode: AccessMode
-    var archiveFile: FILEPointer
+    var archiveFile: FILEPointer {
+        willSet {
+            fclose(self.archiveFile)
+        }
+    }
     var endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
     var zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?
     var pathEncoding: String.Encoding?
@@ -174,7 +181,7 @@ public final class Archive: Sequence {
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
-#if swift(>=5.0)
+    #if swift(>=5.0)
     var memoryFile: MemoryFile?
 
     /// Initializes a new in-memory ZIP `Archive`.
@@ -192,10 +199,7 @@ public final class Archive: Sequence {
     ///   - The backing `data` _must_ contain a valid ZIP archive for `AccessMode.read` and `AccessMode.update`.
     ///   - The backing `data` _must_ be empty (or omitted) for `AccessMode.create`.
     public init(data: Data = Data(), accessMode mode: AccessMode, pathEncoding: String.Encoding? = nil) throws {
-        guard let url = URL(string: "\(memoryURLScheme)://") else {
-            throw ArchiveError.unreadableArchive
-        }
-
+        let url = URL(string: "\(memoryURLScheme)://")!
         self.url = url
         self.accessMode = mode
         self.pathEncoding = pathEncoding
@@ -205,7 +209,7 @@ public final class Archive: Sequence {
         self.endOfCentralDirectoryRecord = config.endOfCentralDirectoryRecord
         self.zip64EndOfCentralDirectory = config.zip64EndOfCentralDirectory
     }
-#endif
+    #endif
 
     deinit {
         fclose(self.archiveFile)
@@ -293,14 +297,11 @@ public final class Archive: Sequence {
 
     private static func scanForZIP64EndOfCentralDirectory(in file: FILEPointer, eocdOffset: UInt64)
     -> ZIP64EndOfCentralDirectory? {
-        guard UInt64(ZIP64EndOfCentralDirectoryLocator.size) < eocdOffset else {
-            return nil
-        }
-        let locatorOffset = eocdOffset - UInt64(ZIP64EndOfCentralDirectoryLocator.size)
+        guard UInt64(ZIP64EndOfCentralDirectoryLocator.size) < eocdOffset else { return nil }
 
-        guard UInt64(ZIP64EndOfCentralDirectoryRecord.size) < locatorOffset else {
-            return nil
-        }
+        let locatorOffset = eocdOffset - UInt64(ZIP64EndOfCentralDirectoryLocator.size)
+        guard UInt64(ZIP64EndOfCentralDirectoryRecord.size) < locatorOffset else { return nil }
+
         let recordOffset = locatorOffset - UInt64(ZIP64EndOfCentralDirectoryRecord.size)
         guard let locator: ZIP64EndOfCentralDirectoryLocator = Data.readStruct(from: file, at: locatorOffset),
               let record: ZIP64EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: recordOffset) else {

@@ -67,7 +67,7 @@ extension ZIPFoundationTests {
                                      0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         let zip64DataDescriptor = Entry.ZIP64DataDescriptor(data: Data(zip64DDBytes),
                                                             additionalDataProvider: {_ -> Data in
-                                                                return Data() })
+            return Data() })
         XCTAssertEqual(zip64DataDescriptor?.uncompressedSize, 10)
         XCTAssertEqual(zip64DataDescriptor?.compressedSize, 10)
     }
@@ -85,13 +85,11 @@ extension ZIPFoundationTests {
                                  0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
         guard let cds = Entry.CentralDirectoryStructure(data: Data(cdsBytes),
                                                         additionalDataProvider: { count -> Data in
-                                                            guard let name = "/".data(using: .utf8) else {
-                                                                throw AdditionalDataError.encodingError
-                                                            }
-                                                            let extra = name + Data(extraFieldBytesIncludingSizeFields)
-                                                            XCTAssert(count == extra.count)
-                                                            return extra
-                                                        }) else {
+            let name = Data("/".utf8)
+            let extra = name + Data(extraFieldBytesIncludingSizeFields)
+            XCTAssert(count == extra.count)
+            return extra
+        }) else {
             XCTFail("Failed to read central directory structure."); return
         }
         XCTAssertNotNil(cds.extraFields)
@@ -104,8 +102,8 @@ extension ZIPFoundationTests {
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         guard let lfh = Entry.LocalFileHeader(data: Data(lfhBytes),
                                               additionalDataProvider: { _ -> Data in
-                                                return Data()
-                                              }) else {
+            return Data()
+        }) else {
             XCTFail("Failed to read local file header."); return
         }
         guard let entry = Entry(centralDirectoryStructure: cds, localFileHeader: lfh) else {

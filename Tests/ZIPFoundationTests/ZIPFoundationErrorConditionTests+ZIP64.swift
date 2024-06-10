@@ -19,10 +19,10 @@ extension ZIPFoundationTests {
                                                                                 numberOfEntries: 0)
         XCTAssertSwiftError(
             try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
-                                                                   startOfCentralDirectory: 0,
-                                                                   startOfEndOfCentralDirectory: 0,
-                                                                   operation: .add),
-                            throws: Archive.ArchiveError.invalidCentralDirectorySize)
+                                                   startOfCentralDirectory: 0,
+                                                   startOfEndOfCentralDirectory: 0,
+                                                   operation: .add),
+            throws: Archive.ArchiveError.invalidCentralDirectorySize)
     }
 
     func testWriteEOCDWithTooLargeCentralDirectoryOffset() {
@@ -31,10 +31,10 @@ extension ZIPFoundationTests {
                                                                                 numberOfEntries: .max)
         XCTAssertSwiftError(
             try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
-                                                                   startOfCentralDirectory: 0,
-                                                                   startOfEndOfCentralDirectory: 0,
-                                                                   operation: .add),
-                            throws: Archive.ArchiveError.invalidCentralDirectoryEntryCount)
+                                                   startOfCentralDirectory: 0,
+                                                   startOfEndOfCentralDirectory: 0,
+                                                   operation: .add),
+            throws: Archive.ArchiveError.invalidCentralDirectoryEntryCount)
     }
 
     // MARK: - Helper
@@ -65,12 +65,10 @@ extension ZIPFoundationTests {
                                  0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
         guard let cds = Entry.CentralDirectoryStructure(data: Data(cdsBytes),
                                                         additionalDataProvider: { count -> Data in
-                                                            guard let pathData = "/".data(using: .utf8) else {
-                                                                throw AdditionalDataError.encodingError
-                                                            }
-                                                            XCTAssert(count == pathData.count)
-                                                            return pathData
-                                                        }) else {
+            let pathData = Data("/".utf8)
+            XCTAssert(count == pathData.count)
+            return pathData
+        }) else {
             XCTFail("Failed to read central directory structure.")
             return nil
         }

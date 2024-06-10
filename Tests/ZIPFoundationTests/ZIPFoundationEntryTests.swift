@@ -159,16 +159,14 @@ extension ZIPFoundationTests {
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0xb0, 0x11, 0x00, 0x00, 0x00, 0x00]
         let cds = Entry.CentralDirectoryStructure(data: Data(cdsBytes)) { _ -> Data in
-            guard let pathData = "/".data(using: .utf8) else { throw AdditionalDataError.encodingError }
-            return pathData
+            return Data("/".utf8)
         }
         let lfhBytes: [UInt8] = [0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x08, 0x08,
                                  0x08, 0x00, 0xab, 0x85, 0x77, 0x47, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x01, 0x00, 0x00, 0x00]
         let lfh = Entry.LocalFileHeader(data: Data(lfhBytes)) { _ -> Data in
-            guard let pathData = "/".data(using: .utf8) else { throw AdditionalDataError.encodingError }
-            return pathData
+            return Data("/".utf8)
         }
         guard let central = cds else {
             XCTFail("Failed to read central directory structure.")
