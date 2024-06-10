@@ -299,12 +299,12 @@ extension FileManager {
         }
 
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-        var stat = stat()
-        lstat(entryFileSystemRepresentation, &stat)
-        guard stat.st_size >= 0 else { throw CocoaError(.fileReadTooLarge, userInfo: [NSFilePathErrorKey: url.path]) }
+        var stats = stat()
+        lstat(entryFileSystemRepresentation, &stats)
+        guard stats.st_size >= 0 else { throw CocoaError(.fileReadTooLarge, userInfo: [NSFilePathErrorKey: url.path]) }
 
         // `st_size` is a signed int value
-        return Int64(stat.st_size)
+        return Int64(stats.st_size)
     }
 
     class func typeForItem(at url: URL) throws -> Entry.EntryType {
