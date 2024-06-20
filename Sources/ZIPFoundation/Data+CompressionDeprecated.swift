@@ -17,7 +17,8 @@ public extension Data {
                          provider: (_ position: Int, _ size: Int) throws -> Data,
                          consumer: Consumer) throws -> CRC32 {
         let newProvider: Provider = { try provider(Int($0), $1) }
-        return try self.compress(size: Int64(size), bufferSize: bufferSize, provider: newProvider, consumer: consumer)
+        let (_, crc) = try self.compress(size: Int64(size), bufferSize: bufferSize, provider: newProvider, consumer: consumer)
+        return crc
     }
 
     @available(*, deprecated, message: "Please use `Int64` for `size` and provider `position`.")
