@@ -65,7 +65,7 @@ extension Date {
 
 private extension Date {
 
-    enum Constants {
+    enum Constants: Sendable {
 #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         static let absoluteTimeIntervalSince1970 = kCFAbsoluteTimeIntervalSince1970
 #else

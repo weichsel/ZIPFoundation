@@ -13,7 +13,7 @@ import Foundation
 let zip64EOCDRecordStructSignature = 0x06064b50
 let zip64EOCDLocatorStructSignature = 0x07064b50
 
-enum ExtraFieldHeaderID: UInt16 {
+enum ExtraFieldHeaderID: UInt16, Sendable {
     case zip64ExtendedInformation = 0x0001
 }
 

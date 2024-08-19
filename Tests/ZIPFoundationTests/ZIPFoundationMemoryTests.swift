@@ -115,7 +115,7 @@ extension ZIPFoundationTests {
             self.XCTAssertSwiftError(try archive.remove(entryToRemove),
                                      throws: Archive.ArchiveError.unreadableArchive)
         }
-        self.runWithoutMemory {
+        self.runWithoutMemory { // NOTE: This tests causes EXC_BAD_ACCESS
             try? entryRemoval()
         }
         let data = Data.makeRandomData(size: 1024)
@@ -146,7 +146,7 @@ extension ZIPFoundationTests {
                                 throws: Archive.ArchiveError.unreadableArchive)
         }
 
-        self.runWithoutMemory {
+        self.runWithoutMemory { // NOTE: This tests causes EXC_BAD_ACCESS
             try? archiveCreation()
         }
         #endif

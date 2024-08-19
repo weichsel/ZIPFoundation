@@ -11,7 +11,7 @@
 import Foundation
 
 extension Archive {
-    enum ModifyOperation: Int {
+    enum ModifyOperation: Int, Sendable {
         case remove = -1
         case add = 1
     }

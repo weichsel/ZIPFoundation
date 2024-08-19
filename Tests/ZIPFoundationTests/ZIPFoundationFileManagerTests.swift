@@ -153,7 +153,7 @@ extension ZIPFoundationTests {
         linkArchiveURL.appendPathComponent(self.archiveName(for: #function))
         let linkURL = linkArchiveURL.deletingLastPathComponent()
         let linkTarget = linkURL.path
-        let linkArchive = try XCTUnwrap(try? Archive(url: linkArchiveURL, accessMode: .create))
+        let linkArchive = try XCTUnwrap(try Archive(url: linkArchiveURL, accessMode: .create, pathEncoding: nil))
         try? linkArchive.addEntry(with: "link", type: .symlink, uncompressedSize: Int64(4),
                                   provider: { (_, _) -> Data in
             return linkTarget.data(using: .utf8) ?? Data()
@@ -206,7 +206,7 @@ extension ZIPFoundationTests {
 #if os(macOS)
 private struct ZIPInfo: Hashable {
 
-    enum Mode {
+    enum Mode: Sendable {
         case directoryIteration
         case shellParsing
     }

@@ -13,12 +13,12 @@ import XCTest
 
 extension ZIPFoundationTests {
 
-    private enum StoreType {
+    private enum StoreType: Sendable {
         case memory
         case file
     }
 
-    private enum ZIP64ReadingTestsError: Error, CustomStringConvertible {
+    private enum ZIP64ReadingTestsError: Error, CustomStringConvertible, Sendable {
         case failedToReadEntry(name: String)
         case failedToExtractEntry(type: StoreType)
 

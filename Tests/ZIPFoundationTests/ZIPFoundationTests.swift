@@ -11,7 +11,7 @@
 import XCTest
 @testable import ZIPFoundation
 
-enum AdditionalDataError: Error {
+enum AdditionalDataError: Error, Sendable {
     case encodingError
     case invalidDataError
 }

@@ -10,13 +10,13 @@
 
 import Foundation
 
-protocol ExtensibleDataField {
+protocol ExtensibleDataField: Sendable {
     var headerID: UInt16 { get }
     var dataSize: UInt16 { get }
 }
 
 extension Entry {
-    enum EntryError: Error {
+    enum EntryError: Error, Sendable {
         case invalidDataError
         case missingPermissionsAttributeError
         case missingModificationDateAttributeError
@@ -63,7 +63,7 @@ extension Entry.CentralDirectoryStructure {
 }
 
 extension Entry.ZIP64ExtendedInformation {
-    enum Field {
+    enum Field: Sendable {
         case uncompressedSize
         case compressedSize
         case relativeOffsetOfLocalHeader

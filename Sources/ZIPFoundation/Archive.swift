@@ -61,7 +61,7 @@ public final class Archive: Sequence {
     typealias CentralDirectoryStructure = Entry.CentralDirectoryStructure
 
     /// An error that occurs during reading, creating or updating a ZIP file.
-    public enum ArchiveError: Error {
+    public enum ArchiveError: Error, Sendable {
         /// Thrown when an archive file is either damaged or inaccessible.
         case unreadableArchive
         /// Thrown when an archive is either opened with AccessMode.read or the destination file is unwritable.
@@ -95,7 +95,7 @@ public final class Archive: Sequence {
     }
 
     /// The access mode for an `Archive`.
-    public enum AccessMode: UInt {
+    public enum AccessMode: UInt, Sendable {
         /// Indicates that a newly instantiated `Archive` should create its backing file.
         case create
         /// Indicates that a newly instantiated `Archive` should read from an existing backing file.
@@ -105,7 +105,7 @@ public final class Archive: Sequence {
     }
 
     /// The version of an `Archive`
-    enum Version: UInt16 {
+    enum Version: UInt16, Sendable {
         /// The minimum version for deflate compressed archives
         case v20 = 20
         /// The minimum version for archives making use of ZIP64 extensions

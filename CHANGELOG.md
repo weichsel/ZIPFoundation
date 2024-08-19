@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.9.19 - KUDIT VERSION - concurrency issues with enums and sendable.
+
 ## [0.9.19](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.19)
 
 ### Updated

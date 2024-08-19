@@ -17,7 +17,7 @@ import CoreFoundation
 /// Entries are identified by their `path`.
 public struct Entry: Equatable {
     /// The type of an `Entry` in a ZIP `Archive`.
-    public enum EntryType: Int {
+    public enum EntryType: Int, Sendable {
         /// Indicates a regular file.
         case file
         /// Indicates a directory.
@@ -37,14 +37,14 @@ public struct Entry: Equatable {
         }
     }
 
-    enum OSType: UInt {
+    enum OSType: UInt, Sendable {
         case msdos = 0
         case unix = 3
         case osx = 19
         case unused = 20
     }
 
-    struct LocalFileHeader: DataSerializable {
+    struct LocalFileHeader: DataSerializable, Sendable {
         let localFileHeaderSignature = UInt32(localFileHeaderStructSignature)
         let versionNeededToExtract: UInt16
         let generalPurposeBitFlag: UInt16

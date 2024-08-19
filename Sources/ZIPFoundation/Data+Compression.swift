@@ -15,7 +15,7 @@ import zlib
 #endif
 
 /// The compression method of an `Entry` in a ZIP `Archive`.
-public enum CompressionMethod: UInt16 {
+public enum CompressionMethod: UInt16, Sendable {
     /// Indicates that an `Entry` has no compression applied to its contents.
     case none = 0
     /// Indicates that contents of an `Entry` have been compressed with a zlib compatible Deflate algorithm.
@@ -38,7 +38,7 @@ public typealias Consumer = (_ data: Data) throws -> Void
 public typealias Provider = (_ position: Int64, _ size: Int) throws -> Data
 
 extension Data {
-    enum CompressionError: Error {
+    enum CompressionError: Error, Sendable {
         case invalidStream
         case corruptedData
     }

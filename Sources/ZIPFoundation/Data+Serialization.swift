@@ -23,7 +23,7 @@ protocol DataSerializable {
 }
 
 extension Data {
-    public enum DataError: Error {
+    public enum DataError: Error, Sendable {
         case unreadableFile
         case unwritableFile
     }
