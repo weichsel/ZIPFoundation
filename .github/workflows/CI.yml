@@ -34,11 +34,9 @@ jobs:
       matrix:
         tag: ['5.1', '5.2', '5.3', '5.4', '5.5', '5.6', '5.7', '5.8', '5.9', '5.10']
     runs-on: ubuntu-latest
-    container:
-      image: swift:${{ matrix.tag }}
     steps:
       - uses: actions/checkout@v2
-      - run: swift test -c release -Xswiftc -enable-testing
+      - run: docker run --rm -v $(pwd):/workdir -w /workdir swift:${{ matrix.tag }} swift test -c release -Xswiftc -enable-testing
 
   Coverage:
     runs-on: macos-latest
