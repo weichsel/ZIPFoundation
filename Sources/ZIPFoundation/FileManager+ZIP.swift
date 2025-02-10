@@ -153,7 +153,15 @@ extension FileManager {
     func transferAttributes(from entry: Entry, toItemAtURL url: URL) throws {
         let attributes = FileManager.attributes(from: entry)
         switch entry.type {
-        case .directory, .file:
+        case .directory:
+            // If the directory in the zip file had read-only permissions when it was added, one of the
+            // key-value pairs in "attributes" will be <NSFilePosixPermissions: 365>, which is 555 in octal,
+            // or "r-xr-xr-x". If that attribute gets applied, the directory cannot be written to
+            // anymore and won't get its contents. This strips that attribute off.
+            let attribsWithoutReadonly = attributes.filter {
+                !($0.key == .posixPermissions && ($0.value as? Int) == 365)}
+            try self.setAttributes(attribsWithoutReadonly, ofItemAtURL: url)
+        case .file:
             try self.setAttributes(attributes, ofItemAtURL: url)
         case .symlink:
             try self.setAttributes(attributes, ofItemAtURL: url, traverseLink: false)
