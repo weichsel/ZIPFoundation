@@ -180,24 +180,30 @@ extension Archive {
                 return (sizeOfCD - UInt64(-cdDataLengthChange), numberOfTotalEntries - UInt64(-countChange))
             }
         }()
-        let sizeOfCDForEOCD = updatedSizeOfCD >= maxSizeOfCentralDirectory
-            ? UInt32.max
-            : UInt32(updatedSizeOfCD)
-        let numberOfTotalEntriesForEOCD = updatedNumberOfEntries >= maxTotalNumberOfEntries
-            ? UInt16.max
-            : UInt16(updatedNumberOfEntries)
-        let offsetOfCDForEOCD = startOfCentralDirectory >= maxOffsetOfCentralDirectory
-            ? UInt32.max
-            : UInt32(startOfCentralDirectory)
+        return try writeEndOfCentralDirectory(totalNumberOfEntries: updatedNumberOfEntries,
+                                              sizeOfCentralDirectory: updatedSizeOfCD,
+                                              offsetOfCentralDirectory: startOfCentralDirectory,
+                                              offsetOfEndOfCentralDirectory: startOfEndOfCentralDirectory)
+    }
+    
+    func writeEndOfCentralDirectory(totalNumberOfEntries: UInt64,
+                                    sizeOfCentralDirectory: UInt64,
+                                    offsetOfCentralDirectory: UInt64,
+                                    offsetOfEndOfCentralDirectory: UInt64) throws -> EndOfCentralDirectoryStructure {
+        var record = self.endOfCentralDirectoryRecord
+        let sizeOfCDForEOCD = sizeOfCentralDirectory >= maxSizeOfCentralDirectory ? UInt32.max : UInt32(sizeOfCentralDirectory)
+        let numberOfTotalEntriesForEOCD = totalNumberOfEntries >= maxTotalNumberOfEntries ? UInt16.max : UInt16(totalNumberOfEntries)
+        let offsetOfCDForEOCD = offsetOfCentralDirectory >= maxOffsetOfCentralDirectory ? UInt32.max : UInt32(offsetOfCentralDirectory)
         // ZIP64 End of Central Directory
         var zip64EOCD: ZIP64EndOfCentralDirectory?
         if numberOfTotalEntriesForEOCD == .max || offsetOfCDForEOCD == .max || sizeOfCDForEOCD == .max {
-            zip64EOCD = try self.writeZIP64EOCD(totalNumberOfEntries: updatedNumberOfEntries,
-                                                sizeOfCentralDirectory: updatedSizeOfCD,
-                                                offsetOfCentralDirectory: startOfCentralDirectory,
-                                                offsetOfEndOfCentralDirectory: startOfEndOfCentralDirectory)
+            zip64EOCD = try self.writeZIP64EOCD(totalNumberOfEntries: totalNumberOfEntries,
+                                                sizeOfCentralDirectory: sizeOfCentralDirectory,
+                                                offsetOfCentralDirectory: offsetOfCentralDirectory,
+                                                offsetOfEndOfCentralDirectory: offsetOfEndOfCentralDirectory)
         }
-        record = EndOfCentralDirectoryRecord(record: record, numberOfEntriesOnDisk: numberOfTotalEntriesForEOCD,
+        record = EndOfCentralDirectoryRecord(record: record,
+                                             numberOfEntriesOnDisk: numberOfTotalEntriesForEOCD,
                                              numberOfEntriesInCentralDirectory: numberOfTotalEntriesForEOCD,
                                              updatedSizeOfCentralDirectory: sizeOfCDForEOCD,
                                              startOfCentralDirectory: offsetOfCDForEOCD)

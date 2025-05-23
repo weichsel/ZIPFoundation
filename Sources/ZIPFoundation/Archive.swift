@@ -92,6 +92,8 @@ public final class Archive: Sequence {
         case missingEndOfCentralDirectoryRecord
         /// Thrown when an entry contains a symlink pointing to a path outside the destination directory.
         case uncontainedSymlink
+        
+        case unknownError
     }
 
     /// The access mode for an `Archive`.
@@ -250,8 +252,11 @@ public final class Archive: Sequence {
                 directoryIndex += UInt64(centralDirStruct.fileCommentLength)
                 index += 1
             }
-            return Entry(centralDirectoryStructure: centralDirStruct, localFileHeader: localFileHeader,
-                         dataDescriptor: dataDescriptor, zip64DataDescriptor: zip64DataDescriptor)
+            return Entry(centralDirectoryStructure: centralDirStruct, 
+                         directoryIndex: directoryIndex,
+                         localFileHeader: localFileHeader,
+                         dataDescriptor: dataDescriptor, 
+                         zip64DataDescriptor: zip64DataDescriptor)
         }
     }
 

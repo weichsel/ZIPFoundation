@@ -322,6 +322,48 @@ extension ZIPFoundationTests {
         }
         XCTAssertEqual(entry4.zip64ExtendedInformation?.relativeOffsetOfLocalHeader, entry3OriginalOffset)
     }
+
+    func testRemoveMultipleEntriesFromZIP64ArchiveWithRewrite() {
+        // testRemoveEntryWithZIP64ExtendedInformation.zip/
+        //   ├─ data1.random (size: 64 * 32)
+        //   ├─ data2.random (size: 64 * 32)
+        //   ├─ data3.random (size: 64 * 32) [headerID: 1, dataSize: 8, ..0..0, relativeOffsetOfLocalHeader: 4180, ..0]
+        //   ├─ data4.random (size: 64 * 32) [headerID: 1, dataSize: 8, ..0..0, relativeOffsetOfLocalHeader: 6270, ..0]
+        self.mockIntMaxValues()
+        defer { self.resetIntMaxValues() }
+        let archive = self.archive(for: #function, mode: .update)
+        
+        // Get non-consecutive entries for rewrite test
+        guard let entry1 = archive["data1.random"],
+              let entry3 = archive["data3.random"] else {
+            XCTFail("Failed to retrieve ZIP64 format entries from archive")
+            return
+        }
+        
+        let entriesToRemove = [entry1, entry3]
+        let initialEntryCount = Array(archive).count
+        let entryPaths = entriesToRemove.map { $0.path }
+        
+        do {
+            try archive.remove(entriesToRemove)
+        } catch {
+            XCTFail("Failed to remove multiple non-consecutive ZIP64 entries with error: \(error)")
+        }
+        
+        XCTAssert(archive.checkIntegrity())
+        XCTAssertEqual(Array(archive).count, initialEntryCount - 2, "Should have removed exactly 2 entries")
+        XCTAssertNotNil(archive.zip64EndOfCentralDirectory, "Should still have ZIP64 EOCD")
+        
+        // Verify removed entries are no longer accessible
+        for path in entryPaths {
+            XCTAssertNil(archive[path], "Entry \(path) should be removed from archive")
+        }
+        
+        // Verify remaining entries are still accessible
+        XCTAssertNotNil(archive["data2.random"], "data2.random should still be accessible")
+        XCTAssertNotNil(archive["data4.random"], "data4.random should still be accessible")
+    }
+
 }
 
 extension Archive {

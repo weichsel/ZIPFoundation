@@ -198,7 +198,7 @@ public struct Entry: Equatable {
         }
         return size
     }
-    var dataOffset: UInt64 {
+    public var dataOffset: UInt64 {
         var dataOffset = self.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader
         dataOffset += UInt64(LocalFileHeader.size)
         dataOffset += UInt64(self.localFileHeader.fileNameLength)
@@ -206,6 +206,7 @@ public struct Entry: Equatable {
         return dataOffset
     }
     let centralDirectoryStructure: CentralDirectoryStructure
+    let directoryIndex: UInt64  // Offset of the entry start in the central directory (from the start of the archive)
     let localFileHeader: LocalFileHeader
     let dataDescriptor: DefaultDataDescriptor?
     let zip64DataDescriptor: ZIP64DataDescriptor?
@@ -218,12 +219,14 @@ public struct Entry: Equatable {
     }
 
     init?(centralDirectoryStructure: CentralDirectoryStructure,
+          directoryIndex: UInt64,
           localFileHeader: LocalFileHeader,
           dataDescriptor: DefaultDataDescriptor? = nil,
           zip64DataDescriptor: ZIP64DataDescriptor? = nil) {
         // We currently don't support encrypted archives
         guard !centralDirectoryStructure.isEncrypted else { return nil }
         self.centralDirectoryStructure = centralDirectoryStructure
+        self.directoryIndex = directoryIndex
         self.localFileHeader = localFileHeader
         self.dataDescriptor = dataDescriptor
         self.zip64DataDescriptor = zip64DataDescriptor

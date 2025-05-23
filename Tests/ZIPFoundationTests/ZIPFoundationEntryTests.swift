@@ -110,7 +110,9 @@ extension ZIPFoundationTests {
             XCTFail("Failed to read local file header.")
             return
         }
-        guard let entry = Entry(centralDirectoryStructure: central, localFileHeader: local) else {
+        guard let entry = Entry(centralDirectoryStructure: central, 
+                                directoryIndex: 0, // not required for test
+                                localFileHeader: local) else {
             XCTFail("Failed to read entry.")
             return
         }
@@ -142,7 +144,9 @@ extension ZIPFoundationTests {
             XCTFail("Failed to read local file header.")
             return
         }
-        guard let entry = Entry(centralDirectoryStructure: central, localFileHeader: local) else {
+        guard let entry = Entry(centralDirectoryStructure: central, 
+                                directoryIndex: 0, // not required for test
+                                localFileHeader: local) else {
             XCTFail("Failed to read entry.")
             return
         }
@@ -176,7 +180,9 @@ extension ZIPFoundationTests {
             XCTFail("Failed to read local file header.")
             return
         }
-        guard let entry = Entry(centralDirectoryStructure: central, localFileHeader: local) else {
+        guard let entry = Entry(centralDirectoryStructure: central,
+                                directoryIndex: 0, // not required for test
+                                localFileHeader: local) else {
             XCTFail("Failed to read entry.")
             return
         }
