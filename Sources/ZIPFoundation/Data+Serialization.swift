@@ -29,12 +29,9 @@ extension Data {
     }
 
     func scanValue<T>(start: Int) -> T {
-        let subdata = self.subdata(in: start..<start+MemoryLayout<T>.size)
-        #if swift(>=5.0)
-        return subdata.withUnsafeBytes { $0.load(as: T.self) }
-        #else
-        return subdata.withUnsafeBytes { $0.pointee }
-        #endif
+        return self.withUnsafeBytes {
+            $0.loadUnaligned(fromByteOffset: start, as: T.self)
+        }
     }
 
     static func readStruct<T>(from file: FILEPointer, at offset: UInt64)
@@ -84,6 +81,7 @@ extension Data {
         let bytesRead = fread(bytes, 1, size, file)
         let error = ferror(file)
         if error > 0 {
+            bytes.deallocate()
             throw DataError.unreadableFile
         }
         #if swift(>=4.1)

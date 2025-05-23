@@ -6,8 +6,8 @@
 [![Platform](https://img.shields.io/badge/Platforms-macOS%20|%20iOS%20|%20tvOS%20|%20watchOS%20|%20visionOS%20|%20Linux-lightgrey.svg)](https://github.com/weichsel/ZIPFoundation)
 [![Twitter](https://img.shields.io/badge/twitter-@weichsel-blue.svg?style=flat)](http://twitter.com/weichsel)
 
-ZIP Foundation is a library to create, read and modify ZIP archive files.  
-It is written in Swift and based on [Apple's libcompression](https://developer.apple.com/documentation/compression) for high performance and energy efficiency.  
+ZIP Foundation is a library to create, read and modify ZIP archive files.
+It is written in Swift and based on [Apple's libcompression](https://developer.apple.com/documentation/compression) for high performance and energy efficiency.
 To learn more about the performance characteristics of the framework, you can read [this blog post](https://thomas.zoechling.me/journal/2017/07/ZIPFoundation.html).
 
 - [Features](#features)
@@ -168,9 +168,7 @@ let fileManager = FileManager()
 let currentWorkingPath = fileManager.currentDirectoryPath
 var archiveURL = URL(fileURLWithPath: currentWorkingPath)
 archiveURL.appendPathComponent("archive.zip")
-guard let archive = Archive(url: archiveURL, accessMode: .read) else  {
-    return
-}
+let archive = try Archive(url: archiveURL, accessMode: .read)
 guard let entry = archive["file.txt"] else {
     return
 }
@@ -190,12 +188,11 @@ You can find detailed information about that parameters in the method's document
 To create a new `Archive`, pass in a non-existing file URL and `AccessMode.create`.
 
 ```swift
+let fileManager = FileManager()
 let currentWorkingPath = fileManager.currentDirectoryPath
 var archiveURL = URL(fileURLWithPath: currentWorkingPath)
 archiveURL.appendPathComponent("newArchive.zip")
-guard let archive = Archive(url: archiveURL, accessMode: .create) else  {
-    return
-}
+let archive = try Archive(url: archiveURL, accessMode: .create)
 ```
 
 ### Adding and Removing Entries
@@ -209,9 +206,7 @@ let fileManager = FileManager()
 let currentWorkingPath = fileManager.currentDirectoryPath
 var archiveURL = URL(fileURLWithPath: currentWorkingPath)
 archiveURL.appendPathComponent("archive.zip")
-guard let archive = Archive(url: archiveURL, accessMode: .update) else  {
-    return
-}
+let archive = try Archive(url: archiveURL, accessMode: .update)
 var fileURL = URL(fileURLWithPath: currentWorkingPath)
 fileURL.appendPathComponent("file.txt")
 do {
@@ -256,9 +251,9 @@ You can also add entries from an in-memory data source. To do this you have to p
 ```swift
 let string = "abcdefghijkl"
 guard let data = string.data(using: .utf8) else { return }
-try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: UInt64(data.count), bufferSize: 4, provider: { (position, size) -> Data in
+try? archive.addEntry(with: "fromMemory.txt", type: .file, uncompressedSize: Int64(data.count), bufferSize: 4, provider: { (position, size) -> Data in
     // This will be called until `data` is exhausted (3x in this case).
-    return data.subdata(in: position..<position+size)
+    return data.subdata(in: Data.Index(position)..<Int(position)+size)
 })
 ```
 The closure is called until enough data has been provided to create an entry of `uncompressedSize`. The closure receives `position` and `size` arguments 
@@ -274,11 +269,11 @@ To _create_ an in-memory archive, the `data` parameter can be omitted:
 
 ```swift
 let string = "Some string!"
-guard let archive = Archive(accessMode: .create),
-        let data = string.data(using: .utf8) else { return }
-    try? archive.addEntry(with: "inMemory.txt", type: .file, uncompressedSize: UInt64(data.count), bufferSize: 4, provider: { (position, size) -> Data in
-        return data.subdata(in: position..<position+size)
-    })
+let archive = try Archive(accessMode: .create)
+guard let data = string.data(using: .utf8) else { return }
+try archive.addEntry(with: "inMemory.txt", type: .file, uncompressedSize: Int64(data.count), bufferSize: 4, provider: { (position, size) -> Data in
+    return data.subdata(in: Data.Index(position)..<Int(position)+size)
+})
 let archiveData = archive.data
 ```
 

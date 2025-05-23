@@ -276,7 +276,6 @@ private struct ZIPInfo: Hashable {
             unzipTask.standardError = pipe
             unzipTask.launch()
             let unzipOutputData = pipe.fileHandleForReading.readDataToEndOfFile()
-            // swiftlint:disable:next non_optional_string_data_conversion
             let unzipOutput = String(data: unzipOutputData, encoding: .utf8)!
             unzipTask.waitUntilExit()
             return unzipOutput.split(whereSeparator: \.isNewline)

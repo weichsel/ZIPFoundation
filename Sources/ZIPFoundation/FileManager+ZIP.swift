@@ -224,10 +224,7 @@ extension FileManager {
         let fileDate = centralDirectoryStructure.lastModFileDate
         let defaultPermissions = entryType == .directory ? defaultDirectoryPermissions : defaultFilePermissions
         var attributes = [.posixPermissions: defaultPermissions] as [FileAttributeKey: Any]
-        // Certain keys are not yet supported in swift-corelibs
-#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         attributes[.modificationDate] = Date(dateTime: (fileDate, fileTime))
-#endif
         let versionMadeBy = centralDirectoryStructure.versionMadeBy
         guard let osType = Entry.OSType(rawValue: UInt(versionMadeBy >> 8)) else { return attributes }
 

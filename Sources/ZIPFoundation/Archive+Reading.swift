@@ -55,7 +55,6 @@ extension Archive {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
             let consumer = { (data: Data) in
-                // swiftlint:disable:next non_optional_string_data_conversion
                 guard let linkPath = String(data: data, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
 
                 let parentURL = url.deletingLastPathComponent()

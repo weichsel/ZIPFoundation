@@ -251,7 +251,9 @@ extension ZIPFoundationTests {
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testUnzipUncontainedSymlink", testUnzipUncontainedSymlink),
             ("testZipItem", testZipItem),
-            ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests)
+            ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests),
+            ("testFileModificationDate", testFileModificationDate),
+            ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods)
         ] + zip64Tests + darwinOnlyTests + swift5OnlyTests
     }
 
@@ -294,8 +296,6 @@ extension ZIPFoundationTests {
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
         #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         return [
-            ("testFileModificationDate", testFileModificationDate),
-            ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
             ("testZipItemProgress", testZipItemProgress),
             ("testUnzipItemProgress", testUnzipItemProgress),
             ("testConsistentBehaviorWithSystemZIPUtilities", testConsistentBehaviorWithSystemZIPUtilities),
