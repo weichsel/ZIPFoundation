@@ -263,36 +263,131 @@ extension ZIPFoundationTests {
         XCTAssertSwiftError(try readonlyArchive.remove(entryToRemove), throws: Archive.ArchiveError.unwritableArchive)
     }
 
-    func testRemoveFromEntryUncompressed() {
+    func testRemoveMultipleEntriesWithTruncation() {
         let archive = self.archive(for: #function, mode: .update)
-        guard let entryToRemove = archive["test/faust.txt"] else {
-            XCTFail("Failed to find entry to remove in uncompressed folder"); return
-        }
+        // Get entries that should be at the end of the archive for truncation optimization
+        let allEntries = Array(archive)
+        let sortedEntries = allEntries.sorted { $0.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader < $1.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader }
+        
+        // Take the last 2 entries for truncation test
+        let entriesToRemove = Array(sortedEntries.suffix(2))
+        XCTAssertTrue(entriesToRemove.count == 2, "Should have 2 entries to remove for truncation test")
+        
+        let initialEntryCount = allEntries.count
+        let entryPaths = entriesToRemove.map { $0.path }
+        
         do {
-            try archive.removeAllEntries(fromEntry: entryToRemove)
+            try archive.remove(entriesToRemove)
         } catch {
-            XCTFail("Failed to remove entries from uncompressed folder archive with error : \(error)")
+            XCTFail("Failed to remove multiple entries with truncation with error: \(error)")
         }
+        
         XCTAssert(archive.checkIntegrity())
-        XCTAssertNotNil(archive["test/empty/"])
-        XCTAssertNil(archive["test/faust.txt"])
-        XCTAssertNil(archive["test/nested/deep/another.random"])
+        XCTAssertEqual(Array(archive).count, initialEntryCount - 2, "Should have removed exactly 2 entries")
+        
+        // Verify removed entries are no longer accessible
+        for path in entryPaths {
+            XCTAssertNil(archive[path], "Entry \(path) should be removed from archive")
+        }
     }
 
-    func testRemoveFromEntryCompressed() {
+    func testRemoveMultipleEntriesWithRewrite() {
         let archive = self.archive(for: #function, mode: .update)
-        guard let entryToRemove = archive["test/faust.txt"] else {
-            XCTFail("Failed to find entry to remove in uncompressed folder"); return
+        
+        // Get non-consecutive entries that will require the rewrite method
+        guard let firstEntry = archive["test/data.random"],
+              let secondEntry = archive["test/empty/"] else {
+            XCTFail("Failed to find test entries for non-consecutive removal")
+            return
         }
+        
+        let entriesToRemove = [firstEntry, secondEntry]
+        let initialEntryCount = Array(archive).count
+        let entryPaths = entriesToRemove.map { $0.path }
+        
         do {
-            try archive.removeAllEntries(fromEntry: entryToRemove)
+            try archive.remove(entriesToRemove)
         } catch {
-            XCTFail("Failed to remove entries from uncompressed folder archive with error : \(error)")
+            XCTFail("Failed to remove multiple non-consecutive entries with error: \(error)")
         }
+        
         XCTAssert(archive.checkIntegrity())
-        XCTAssertNotNil(archive["test/empty/"])
-        XCTAssertNil(archive["test/faust.txt"])
-        XCTAssertNil(archive["test/nested/deep/another.random"])
+        XCTAssertEqual(Array(archive).count, initialEntryCount - 2, "Should have removed exactly 2 entries")
+        
+        // Verify removed entries are no longer accessible
+        for path in entryPaths {
+            XCTAssertNil(archive[path], "Entry \(path) should be removed from archive")
+        }
+    }
+
+    func testRemoveMultipleEntriesEmptyArray() {
+        let archive = self.archive(for: #function, mode: .update)
+        let initialEntryCount = Array(archive).count
+        
+        do {
+            try archive.remove([])
+        } catch {
+            XCTFail("Failed to handle empty array removal with error: \(error)")
+        }
+        
+        XCTAssert(archive.checkIntegrity())
+        XCTAssertEqual(Array(archive).count, initialEntryCount, "Should not remove any entries when given empty array")
+    }
+
+    func testRemoveMultipleEntriesSingleEntry() {
+        let archive = self.archive(for: #function, mode: .update)
+        guard let entryToRemove = archive["test/data.random"] else {
+            XCTFail("Failed to find entry to remove")
+            return
+        }
+        
+        let initialEntryCount = Array(archive).count
+        let entryPath = entryToRemove.path
+        
+        do {
+            try archive.remove([entryToRemove])
+        } catch {
+            XCTFail("Failed to remove single entry via batch API with error: \(error)")
+        }
+        
+        XCTAssert(archive.checkIntegrity())
+        XCTAssertEqual(Array(archive).count, initialEntryCount - 1, "Should have removed exactly 1 entry")
+        XCTAssertNil(archive[entryPath], "Entry should be removed from archive")
+    }
+
+    func testRemoveMultipleEntriesErrorConditions() {
+        let readonlyArchive = self.archive(for: #function, mode: .read)
+        let allEntries = Array(readonlyArchive)
+        guard let entry = allEntries.first else {
+            XCTFail("Failed to find entry in readonly archive")
+            return
+        }
+        
+        XCTAssertSwiftError(try readonlyArchive.remove([entry]), 
+                           throws: Archive.ArchiveError.unwritableArchive)
+    }
+
+    func testRemoveMultipleEntriesProgress() {
+        let archive = self.archive(for: #function, mode: .update)
+        let allEntries = Array(archive)
+        
+        // Take first 3 entries for progress testing
+        let entriesToRemove = Array(allEntries.prefix(3))
+        XCTAssertTrue(entriesToRemove.count >= 2, "Should have at least 2 entries for progress test")
+        
+        let progress = Progress(totalUnitCount: 0)
+        var initialCompletedCount: Int64 = 0
+        
+        do {
+            initialCompletedCount = progress.completedUnitCount
+            try archive.remove(entriesToRemove, progress: progress)
+        } catch {
+            XCTFail("Failed to remove entries with progress tracking with error: \(error)")
+        }
+        
+        XCTAssert(archive.checkIntegrity())
+        XCTAssertGreaterThan(progress.totalUnitCount, 0, "Progress should have been updated with total work")
+        XCTAssertGreaterThan(progress.completedUnitCount, initialCompletedCount, "Progress should have been updated with completed work")
     }
 
     func testArchiveCreateErrorConditions() {
