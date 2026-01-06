@@ -119,8 +119,14 @@ public struct Entry: Equatable {
     }
     /// The `path` of the receiver within a ZIP `Archive`.
     public var path: String {
-        let encoding = self.centralDirectoryStructure.usesUTF8PathEncoding ? String.Encoding.utf8 : .codepage437
-        return self.path(using: encoding)
+        if self.centralDirectoryStructure.usesUTF8PathEncoding {
+            return self.path(using: .utf8)
+        } else {
+            // If encoding not determined, then try to detect to improve the compatibility.
+            var convertedString: NSString?
+            NSString.stringEncoding(for: self.centralDirectoryStructure.fileNameData, convertedString: &convertedString, usedLossyConversion: nil)
+            return String(convertedString ?? "")
+        }
     }
     /// The file attributes of the receiver as key/value pairs.
     ///
