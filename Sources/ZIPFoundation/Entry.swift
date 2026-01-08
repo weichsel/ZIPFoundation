@@ -122,10 +122,18 @@ public struct Entry: Equatable {
         if self.centralDirectoryStructure.usesUTF8PathEncoding {
             return self.path(using: .utf8)
         } else {
-            // If encoding not determined, then try to detect to improve the compatibility.
+            #if os(Linux)
+            return self.path(using: .codepage437)
+            #else
+            // If encoding not determined, detect the string encoding to improve the compatibility.
             var convertedString: NSString?
-            NSString.stringEncoding(for: self.centralDirectoryStructure.fileNameData, convertedString: &convertedString, usedLossyConversion: nil)
+            NSString.stringEncoding(
+                for: self.centralDirectoryStructure.fileNameData,
+                convertedString: &convertedString,
+                usedLossyConversion: nil
+            )
             return String(convertedString ?? "")
+            #endif
         }
     }
     /// The file attributes of the receiver as key/value pairs.
