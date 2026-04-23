@@ -118,22 +118,18 @@ extension AppleDoublePayload {
     func encode() -> Data {
         var output = Data()
 
-        let hasFinderInfo = (finderInfo?.isEmpty == false) || !extendedAttributes.isEmpty
-        let hasResourceFork = (resourceFork?.isEmpty == false)
-        var numEntries: UInt16 = 0
-        if hasFinderInfo { numEntries += 1 }
-        if hasResourceFork { numEntries += 1 }
+        // Apple always emits both FinderInfo and ResourceFork descriptors (with length=0 for absent
+        // sections). Archive Utility relies on this shape and ignores containers missing either one.
+        let numEntries: UInt16 = 2
 
-        // Build the FinderInfo + optional xattr section in memory first so we know its size.
+        // Always emit a 32-byte FinderInfo section (zero-filled when absent), matching Apple's layout.
         var finderInfoSection = Data()
-        if hasFinderInfo {
-            var finderInfoBytes = Data(count: AppleDouble.finderInfoSize)
-            if let fi = finderInfo {
-                let copyLen = min(fi.count, AppleDouble.finderInfoSize)
-                finderInfoBytes.replaceSubrange(0..<copyLen, with: fi.prefix(copyLen))
-            }
-            finderInfoSection.append(finderInfoBytes)
+        var finderInfoBytes = Data(count: AppleDouble.finderInfoSize)
+        if let fi = finderInfo {
+            let copyLen = min(fi.count, AppleDouble.finderInfoSize)
+            finderInfoBytes.replaceSubrange(0..<copyLen, with: fi.prefix(copyLen))
         }
+        finderInfoSection.append(finderInfoBytes)
 
         let headerPlusEntriesSize = AppleDouble.headerSize + Int(numEntries) * AppleDouble.entryDescriptorSize
         let finderInfoOffset = headerPlusEntriesSize
@@ -160,7 +156,10 @@ extension AppleDoublePayload {
                 attrOffsets.append(dataStart + dataLength)
                 dataLength += value.count
             }
-            let totalSize = AppleDouble.attrHeaderBaseSize + entriesSize + dataLength
+            // Apple encodes `total_size` as the absolute file offset of the end of the xattr data
+            // (equivalently: where the resource fork begins, or EOF when no resource fork).
+            // xnu's xattr reader validates this field; a wrong value causes all xattrs to be ignored.
+            let totalSize = dataStart + dataLength
 
             // Attr header
             var attrSection = Data()
@@ -213,21 +212,17 @@ extension AppleDoublePayload {
         if filler.count < 16 { output.append(Data(count: 16 - filler.count)) }
         output.appendBE16(numEntries)
 
-        // Entry descriptors — FinderInfo first if present, then ResourceFork.
-        if hasFinderInfo {
-            output.appendBE32(AppleDouble.EntryID.finderInfo.rawValue)
-            output.appendBE32(UInt32(finderInfoOffset))
-            output.appendBE32(UInt32(finderInfoLength))
-        }
-        if hasResourceFork {
-            output.appendBE32(AppleDouble.EntryID.resourceFork.rawValue)
-            output.appendBE32(UInt32(resourceForkOffset))
-            output.appendBE32(UInt32(resourceForkLength))
-        }
+        // Entry descriptors — FinderInfo first, then ResourceFork (both always present).
+        output.appendBE32(AppleDouble.EntryID.finderInfo.rawValue)
+        output.appendBE32(UInt32(finderInfoOffset))
+        output.appendBE32(UInt32(finderInfoLength))
+        output.appendBE32(AppleDouble.EntryID.resourceFork.rawValue)
+        output.appendBE32(UInt32(resourceForkOffset))
+        output.appendBE32(UInt32(resourceForkLength))
 
         // Payload sections.
         output.append(finderInfoSection)
-        if hasResourceFork, let rf = resourceFork { output.append(rf) }
+        if let rf = resourceFork, !rf.isEmpty { output.append(rf) }
 
         return output
     }
@@ -287,10 +282,12 @@ extension AppleDoublePayload {
         guard fullData.readBE32(at: attrMagicOffset) == AppleDouble.attrMagic else {
             return (finderInfo, [])
         }
+        // `total_size` is the absolute file offset of the end of the xattr data section (where the
+        // resource fork begins, or EOF when no resource fork). See the encoder for details.
         let totalSize = Int(fullData.readBE32(at: attrMagicOffset + 8))
         let dataStart = Int(fullData.readBE32(at: attrMagicOffset + 12))
         let numAttrs = Int(fullData.readBE16(at: attrMagicOffset + 34))
-        guard attrMagicOffset + totalSize <= fullData.count else { return (finderInfo, []) }
+        guard totalSize <= fullData.count else { return (finderInfo, []) }
         guard dataStart <= fullData.count else { return (finderInfo, []) }
         var entryCursor = attrMagicOffset + AppleDouble.attrHeaderBaseSize
         var results: [(name: String, data: Data)] = []
