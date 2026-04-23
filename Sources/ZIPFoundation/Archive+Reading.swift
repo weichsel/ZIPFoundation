@@ -21,12 +21,18 @@ extension Archive {
     ///   - symlinksValidWithin: Any symlink target that resolves outside this URL is rejected for security reasons.
     ///                          Pass `.rootFS` to allow symlinks to point anywhere on the filesystem.
     ///   - progress: A progress object that can be used to track or cancel the extract operation.
+    ///   - preservesAppleMetadata: On Darwin platforms, look up the matching `__MACOSX/.../._<name>`
+    ///                             AppleDouble companion entry in the archive (if any) and apply its
+    ///                             extended attributes, Finder info, and resource fork to the file at
+    ///                             `url` after extraction. No-op when `entry` is itself a companion.
+    ///                             Default is `true`.
     /// - Returns: The checksum of the processed content or 0 if the `skipCRC32` flag was set to `true`.
     /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
     public func extract(_ entry: Entry, to url: URL, bufferSize: Int = defaultReadChunkSize,
                         skipCRC32: Bool = false,
                         symlinksValidWithin: URL? = nil,
-                        progress: Progress? = nil) throws -> CRC32 {
+                        progress: Progress? = nil,
+                        preservesAppleMetadata: Bool = true) throws -> CRC32 {
         guard bufferSize > 0 else {
             throw ArchiveError.invalidBufferSize
         }
@@ -72,7 +78,34 @@ extension Archive {
                                         progress: progress, consumer: consumer)
         }
         try fileManager.transferAttributes(from: entry, toItemAtURL: url)
+        if preservesAppleMetadata {
+            try self.applyAppleDoubleCompanionIfPresent(for: entry, to: url, bufferSize: bufferSize,
+                                                        skipCRC32: skipCRC32)
+        }
         return checksum
+    }
+
+    // MARK: - AppleDouble helpers
+
+    /// Looks up the `__MACOSX/.../._<name>` companion for `entry` within the archive and, if found,
+    /// applies the encoded Apple metadata to the file at `url`. No-op when `entry` is itself a
+    /// companion, when no companion exists, or on non-Darwin platforms.
+    func applyAppleDoubleCompanionIfPresent(for entry: Entry, to url: URL,
+                                            bufferSize: Int = defaultReadChunkSize,
+                                            skipCRC32: Bool = false) throws {
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
+        // Companion entries do not have companions of their own.
+        guard FileManager.realEntryPath(fromAppleDoubleCompanionPath: entry.path) == nil else { return }
+        guard let companionPath = FileManager.appleDoubleCompanionPath(forEntryPath: entry.path) else { return }
+        guard let companion = self[companionPath] else { return }
+        var buffer = Data()
+        _ = try self.extract(companion, bufferSize: bufferSize, skipCRC32: skipCRC32,
+                             consumer: { buffer.append($0) })
+        guard let payload = AppleDoublePayload.decode(buffer) else { return }
+        FileManager.applyAppleDoublePayload(payload, to: url)
+#else
+        _ = (entry, url, bufferSize, skipCRC32)
+#endif
     }
 
     /// Read a ZIP `Entry` from the receiver and forward its contents to a `Consumer` closure.
