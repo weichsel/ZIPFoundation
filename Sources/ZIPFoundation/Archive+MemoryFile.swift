@@ -39,13 +39,18 @@ extension Archive {
                 ? funopen(cookie.toOpaque(), readStub, writeStub, seekStub, closeStub)
                 : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)
             else { throw MemoryFileError.invalidMemoryFile }
-            #elseif os(Windows)
+            #elseif os(Windows) || os(Android)
             // Windows MSVC ships no `funopen` / `fopencookie` userspace
-            // FILE-stream API. Fall back to a `tmpfile()`-backed disk
-            // file so the memory-archive code path still compiles. This
-            // costs a write+read round-trip on every operation; embed
+            // FILE-stream API. Bionic has `fopencookie` since API 23,
+            // but the Swift Android SDK doesn't expose
+            // `cookie_io_functions_t` through the `Android` / `Bionic`
+            // module — calls don't compile.
+            //
+            // Both fall back to a `tmpfile()`-backed disk file so the
+            // memory-archive code path still compiles. Costs a
+            // write+read round-trip on every operation; embed
             // memory-archive support here only as a degraded last resort
-            // until we ship a CreateFileMapping-based replacement.
+            // until we ship a platform-native replacement.
             cookie.release()
             guard let result = tmpfile() else {
                 throw MemoryFileError.invalidMemoryFile
@@ -55,11 +60,7 @@ extension Archive {
             self.data.withUnsafeBytes { _ = fwrite($0.baseAddress, 1, self.data.count, result) }
             rewind(result)
             #else
-            // Bionic exposes both `funopen` and `fopencookie`, but
-            // `funopen` is `__INTRODUCED_IN(28)` while `fopencookie` is
-            // available on API 23+. Use the lower-bar one so packages
-            // can link against Android NDKs that target older API
-            // levels.
+            // Linux glibc / Musl: use `fopencookie` directly.
             let stubs = cookie_io_functions_t(read: readStub, write: writeStub, seek: seekStub, close: closeStub)
             guard let result = fopencookie(cookie.toOpaque(), mode.posixMode, stubs)
             else { throw MemoryFileError.invalidMemoryFile }
