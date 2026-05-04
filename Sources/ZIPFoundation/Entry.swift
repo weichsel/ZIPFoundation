@@ -9,7 +9,9 @@
 //
 
 import Foundation
-import CoreFoundation
+#if canImport(CoreFoundation)
+import CoreFoundation  // Apple-only umbrella; not present on Linux/Windows.
+#endif
 #if canImport(Android)
 import Android
 #elseif canImport(Bionic)
@@ -334,18 +336,25 @@ extension Entry.CentralDirectoryStructure {
 
 extension String.Encoding {
 
+    #if canImport(CoreFoundation)
     static let codepage437: Self = {
         let dosLatinUS = 0x400
         let dosLatinUSEncoding = CFStringEncoding(dosLatinUS)
         let dosLatinUSStringEncoding = CFStringConvertEncodingToNSStringEncoding(dosLatinUSEncoding)
         return String.Encoding(rawValue: dosLatinUSStringEncoding)
     }()
+    #else
+    // Windows / Android have no CoreFoundation. Use the same raw value
+    // as the Apple/Linux branch so equality checks work; the actual
+    // decoding falls back to `cp437Lookup` below.
+    static let codepage437 = String.Encoding(rawValue: 0x400)
+    #endif
 }
 
 extension String {
 
     init(pathData: Data, encoding: String.Encoding) {
-        #if os(Linux)
+        #if os(Linux) || os(Windows) || os(Android)
         if encoding == .codepage437 {
             self.init()
             for byte in pathData {
@@ -357,7 +366,7 @@ extension String {
         self = String(data: pathData, encoding: encoding) ?? ""
     }
 
-    #if os(Linux)
+    #if os(Linux) || os(Windows) || os(Android)
     // Source: https://en.wikipedia.org/wiki/Code_page_437#Character_set
     private static let cp437Lookup: [UnicodeScalar] = [
         0x0000, 0x263A, 0x263B, 0x2665, 0x2666, 0x2663, 0x2660, 0x2022,
