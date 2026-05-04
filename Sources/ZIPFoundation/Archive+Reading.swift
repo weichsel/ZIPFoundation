@@ -9,6 +9,11 @@
 //
 
 import Foundation
+#if canImport(Android)
+import Android
+#elseif canImport(Bionic)
+import Bionic
+#endif
 
 extension Archive {
     /// Read a ZIP `Entry` from the receiver and write it to `url`.

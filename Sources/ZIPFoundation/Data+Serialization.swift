@@ -9,6 +9,11 @@
 //
 
 import Foundation
+#if canImport(Android)
+import Android
+#elseif canImport(Bionic)
+import Bionic
+#endif
 
 #if os(Android)
 public typealias FILEPointer = OpaquePointer

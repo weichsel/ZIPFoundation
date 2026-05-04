@@ -9,6 +9,11 @@
 //
 
 import Foundation
+#if canImport(Android)
+import Android
+#elseif canImport(Bionic)
+import Bionic
+#endif
 
 /// The default chunk size when reading entry data from an archive.
 public let defaultReadChunkSize = Int(16*1024)

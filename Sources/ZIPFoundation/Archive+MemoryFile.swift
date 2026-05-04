@@ -9,6 +9,11 @@
 //
 
 import Foundation
+#if canImport(Android)
+import Android
+#elseif canImport(Bionic)
+import Bionic
+#endif
 
 extension Archive {
     var isMemoryArchive: Bool { return self.url.scheme == memoryURLScheme }
