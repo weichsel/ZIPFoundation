@@ -292,7 +292,7 @@ public final class Archive: Sequence {
         guard archiveLength >= 0 else { return nil }
 
         while eocdOffset == 0 && index < maxDirectoryEndOffset && index <= archiveLength {
-            fseeko(file, off_t(archiveLength - index), SEEK_SET)
+            fseeko(file, zip_off_t(archiveLength - index), SEEK_SET)
             var potentialDirectoryEndTag: UInt32 = UInt32()
             fread(&potentialDirectoryEndTag, 1, MemoryLayout<UInt32>.size, file)
             if potentialDirectoryEndTag == UInt32(endOfCentralDirectoryStructSignature) {

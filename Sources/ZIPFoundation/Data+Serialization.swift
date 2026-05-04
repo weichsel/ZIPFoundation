@@ -15,7 +15,10 @@ import Android
 import Bionic
 #endif
 
-#if os(Android)
+// Windows MSVC + Bionic both import `FILE` as an opaque struct;
+// Apple's stdio + glibc/musl import it as a typed `FILE` so we can
+// take a typed pointer. Pick the right shape per host.
+#if os(Android) || os(Windows)
 public typealias FILEPointer = OpaquePointer
 #else
 public typealias FILEPointer = UnsafeMutablePointer<FILE>
@@ -42,7 +45,7 @@ extension Data {
     static func readStruct<T>(from file: FILEPointer, at offset: UInt64)
     -> T? where T: DataSerializable {
         guard offset <= .max else { return nil }
-        fseeko(file, off_t(offset), SEEK_SET)
+        fseeko(file, zip_off_t(offset), SEEK_SET)
         guard let data = try? self.readChunk(of: T.size, from: file) else {
             return nil
         }

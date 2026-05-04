@@ -98,7 +98,7 @@ extension Archive {
         var checksum = CRC32(0)
         let localFileHeader = entry.localFileHeader
         guard entry.dataOffset <= .max else { throw ArchiveError.invalidLocalHeaderDataOffset }
-        fseeko(self.archiveFile, off_t(entry.dataOffset), SEEK_SET)
+        fseeko(self.archiveFile, zip_off_t(entry.dataOffset), SEEK_SET)
         progress?.totalUnitCount = self.totalUnitCountForReading(entry)
         switch entry.type {
         case .file:

@@ -39,6 +39,21 @@ extension Archive {
                 ? funopen(cookie.toOpaque(), readStub, writeStub, seekStub, closeStub)
                 : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)
             else { throw MemoryFileError.invalidMemoryFile }
+            #elseif os(Windows)
+            // Windows MSVC ships no `funopen` / `fopencookie` userspace
+            // FILE-stream API. Fall back to a `tmpfile()`-backed disk
+            // file so the memory-archive code path still compiles. This
+            // costs a write+read round-trip on every operation; embed
+            // memory-archive support here only as a degraded last resort
+            // until we ship a CreateFileMapping-based replacement.
+            cookie.release()
+            guard let result = tmpfile() else {
+                throw MemoryFileError.invalidMemoryFile
+            }
+            // Pre-populate the temp file with whatever bytes the caller
+            // already supplied (read mode); writes mutate the temp file.
+            self.data.withUnsafeBytes { _ = fwrite($0.baseAddress, 1, self.data.count, result) }
+            rewind(result)
             #else
             // Bionic exposes both `funopen` and `fopencookie`, but
             // `funopen` is `__INTRODUCED_IN(28)` while `fopencookie` is
