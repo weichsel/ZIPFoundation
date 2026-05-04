@@ -76,8 +76,23 @@ public func ftruncate(_ fd: Int32, _ length: Int64) -> Int32 {
 // Cross-platform "ZIP file offset" alias. Lets call sites write
 // `fseeko(file, zip_off_t(offset), SEEK_SET)` once and have it expand
 // to the right 64-bit signed integer on every host.
+//
+// `off_t` is provided by Darwin / Glibc / Bionic on those platforms;
+// the explicit imports here keep this file standalone (no transitive
+// reliance on `import Foundation` from elsewhere in the module).
 #if os(Windows)
 public typealias zip_off_t = Int64
 #else
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#elseif canImport(Musl)
+import Musl
+#elseif canImport(Android)
+import Android
+#elseif canImport(Bionic)
+import Bionic
+#endif
 public typealias zip_off_t = off_t
 #endif
