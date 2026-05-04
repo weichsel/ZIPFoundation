@@ -11,8 +11,12 @@
 #ifndef zlib_shim_h 
 #define zlib_shim_h
 
-#import <stdio.h>
-#import <zlib.h>
+// `#include` instead of `#import`: clang on MSVC parses `#import` as
+// the Microsoft type-library directive (not the Apple-style header
+// once-include) and rejects it. `#include` works identically here on
+// every other clang flavour.
+#include <stdio.h>
+#include <zlib.h>
 
 // [zlib] provide 64-bit offset functions if _LARGEFILE64_SOURCE defined
 #ifndef _LARGEFILE64_SOURCE
