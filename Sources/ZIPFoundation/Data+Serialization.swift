@@ -15,10 +15,10 @@ import Android
 import Bionic
 #endif
 
-// Windows MSVC + Bionic both import `FILE` as an opaque struct;
-// Apple's stdio + glibc/musl import it as a typed `FILE` so we can
-// take a typed pointer. Pick the right shape per host.
-#if os(Android) || os(Windows)
+// Bionic imports `FILE` as opaque; everywhere else (including Windows
+// MSVC, where it's `_iobuf`) it's a typed struct so we can take a
+// typed pointer.
+#if os(Android)
 public typealias FILEPointer = OpaquePointer
 #else
 public typealias FILEPointer = UnsafeMutablePointer<FILE>

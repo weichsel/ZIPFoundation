@@ -352,10 +352,19 @@ extension FileManager {
         guard url.isFileURL, fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
+#if os(Windows)
+        // Windows has no `lstat`, and reparse-point detection isn't
+        // worth the Win32 dance for our archive use case. Distinguish
+        // file vs directory via FileManager; symlinks fall back to .file.
+        var isDir: ObjCBool = false
+        _ = fileManager.fileExists(atPath: url.path, isDirectory: &isDir)
+        return isDir.boolValue ? .directory : .file
+#else
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
         return Entry.EntryType(mode: mode_t(fileStat.st_mode))
+#endif
     }
 }
 

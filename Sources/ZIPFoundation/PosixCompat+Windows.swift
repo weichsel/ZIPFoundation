@@ -56,10 +56,11 @@ public func timegm(_ tm: UnsafeMutablePointer<tm>) -> time_t {
 // shim takes `Int64` directly because WinSDK imports `off_t` as
 // `Int32`, which would silently truncate ZIP offsets >2 GiB. Call
 // sites cast via `zip_off_t` (defined below) so the same source
-// expression works on every platform. The stream argument is an
-// `OpaquePointer` because `FILE` imports as opaque from the MSVC SDK.
+// expression works on every platform. `FILE` is `_iobuf` on MSVC,
+// imported as a typed struct, so we use `UnsafeMutablePointer<FILE>`
+// here to match `_fseeki64`'s declared signature.
 @inlinable
-public func fseeko(_ stream: OpaquePointer, _ offset: Int64, _ whence: Int32) -> Int32 {
+public func fseeko(_ stream: UnsafeMutablePointer<FILE>, _ offset: Int64, _ whence: Int32) -> Int32 {
     return _fseeki64(stream, offset, whence)
 }
 
