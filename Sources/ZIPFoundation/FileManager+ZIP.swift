@@ -186,10 +186,24 @@ extension FileManager {
         }
 
         try self.setSymlinkModificationDate(modificationDate, ofItemAtURL: url)
+#elseif os(Linux)
+        // Permission bits on symlinks are ignored by the Linux kernel, so the
+        // archive's stored permissions for symlinks have nothing to attach to
+        // — `lchmod` is effectively a no-op even when Glibc exposes it. The
+        // modification date *is* respected though: `lutimes` writes to the
+        // symlink itself rather than its target, and Glibc has shipped it
+        // since 2.6. swift-corelibs-foundation's `setAttributes` doesn't
+        // round-trip `.modificationDate` for symlinks today, so we go
+        // straight to the libc syscall here to preserve mtime parity with
+        // Apple platforms when extracting.
+        guard let modificationDate = attributes[.modificationDate] as? Date else {
+            throw Entry.EntryError.missingModificationDateAttributeError
+        }
+
+        try self.setSymlinkModificationDate(modificationDate, ofItemAtURL: url)
 #else
-        // Since non-Darwin POSIX platforms ignore permissions on symlinks and swift-corelibs-foundation
-        // currently doesn't support setting the modification date, this codepath is currently a no-op
-        // on these platforms.
+        // Bionic and Windows lack a fully equivalent symlink-targeted
+        // `lutimes`; leave this codepath as a no-op there.
         return
 #endif
     }
