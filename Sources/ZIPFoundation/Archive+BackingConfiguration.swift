@@ -111,7 +111,12 @@ extension Archive {
                                                                           zipFileCommentLength: 0,
                                                                           zipFileCommentData: Data())
             _ = endOfCentralDirectoryRecord.data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
-                fwrite(buffer.baseAddress, buffer.count, 1, archiveFile) // Errors handled during read
+                // Bionic's `fwrite` takes a non-optional `UnsafeRawPointer`,
+                // so guard the empty-buffer case rather than relying on
+                // Glibc/Darwin's IUO bridge.
+                if let baseAddress = buffer.baseAddress, buffer.count > 0 {
+                    fwrite(baseAddress, buffer.count, 1, archiveFile) // Errors handled during read
+                }
             }
             fallthrough
         case .update:
