@@ -19,13 +19,12 @@ let targets: [Target] = [
         name: "ZIPFoundation",
         dependencies: ["CZLib"],
         cSettings: [.define("_GNU_SOURCE", to: "1")],
-        // Per-platform link library. Windows vcpkg installs `zlib.lib`,
-        // Linux ships `libz.so`. Android intentionally omitted —
-        // explicit `-lz` there appears to displace the action's CRT
-        // setup, breaking executable links with `__libc_init`. The
-        // Android NDK auto-links libz transitively via Bionic anyway.
+        // Per-platform link library. Windows vcpkg installs `zlib.lib`
+        // so we link `zlib`; Linux / Android ship `libz.so` aka `-lz`.
+        // Apple takes the canImport(Compression) branch above and
+        // doesn't reach here.
         linkerSettings: [
-            .linkedLibrary("z", .when(platforms: [.linux])),
+            .linkedLibrary("z", .when(platforms: [.linux, .android])),
             .linkedLibrary("zlib", .when(platforms: [.windows])),
         ]),
     .testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
