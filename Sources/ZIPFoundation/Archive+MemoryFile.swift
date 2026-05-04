@@ -57,7 +57,13 @@ extension Archive {
             }
             // Pre-populate the temp file with whatever bytes the caller
             // already supplied (read mode); writes mutate the temp file.
-            self.data.withUnsafeBytes { _ = fwrite($0.baseAddress, 1, self.data.count, result) }
+            // Bionic imports `fwrite`'s first arg as non-Optional, so
+            // unwrap before calling.
+            self.data.withUnsafeBytes { buffer in
+                if let base = buffer.baseAddress, buffer.count > 0 {
+                    _ = fwrite(base, 1, buffer.count, result)
+                }
+            }
             rewind(result)
             #else
             // Linux glibc / Musl: use `fopencookie` directly.
