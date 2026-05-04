@@ -64,6 +64,15 @@ public func fseeko(_ stream: UnsafeMutablePointer<FILE>, _ offset: Int64, _ when
     return _fseeki64(stream, offset, whence)
 }
 
+// `ftello(3)` companion to `fseeko` — returns the current 64-bit
+// stream offset. Maps to `_ftelli64` on Windows. Call sites already
+// wrap the result in `Int64(ftello(...))` so a 64-bit return type
+// works without further changes.
+@inlinable
+public func ftello(_ stream: UnsafeMutablePointer<FILE>) -> Int64 {
+    return _ftelli64(stream)
+}
+
 // `ftruncate(2)` shim — Windows has `_chsize_s` (or `_chsize` for the
 // 32-bit form). `_chsize_s` returns 0 on success, non-zero on failure;
 // match POSIX's 0/-1 contract.
