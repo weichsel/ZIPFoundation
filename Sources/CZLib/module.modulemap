@@ -10,6 +10,9 @@
 
 module CZlib {
     header "shim.h"
-    link "z"
+    // Linker library is added per-platform via the CZLib target's
+    // `linkerSettings` in Package.swift instead of `link "z"` here.
+    // Windows vcpkg installs `zlib.lib` (no leading-z alias); the
+    // Linux/Android conventions ship `libz.so` aka `-lz`.
     export *
 }
