@@ -110,11 +110,40 @@ extension FileManager {
                           skipCRC32: Bool = false, symlinksValidWithin: URL? = nil,
                           progress: Progress? = nil, pathEncoding: String.Encoding? = nil,
                           preservesAppleMetadata: Bool = true) throws {
-        let fileManager = FileManager()
-        guard fileManager.itemExists(at: sourceURL) else {
+        guard self.itemExists(at: sourceURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
         let archive = try Archive(url: sourceURL, accessMode: .read, pathEncoding: pathEncoding)
+        try self.unzipItem(archive, to: destinationURL,
+                           skipCRC32: skipCRC32, symlinksValidWithin: symlinksValidWithin,
+                           progress: progress, pathEncoding: pathEncoding,
+                           preservesAppleMetadata: preservesAppleMetadata)
+    }
+
+    /// Unzips the contents of an already-opened `Archive` to the destination URL.
+    ///
+    /// Equivalent to `unzipItem(at:to:...)` but accepts an existing `Archive` instead of
+    /// constructing one from a source URL. Useful when the archive is already in memory
+    /// (e.g. opened from `Data`) or has been opened for other purposes.
+    ///
+    /// - Parameters:
+    ///   - archive: An open `Archive` to extract from.
+    ///   - destinationURL: The file URL that identifies the destination directory of the unzip operation.
+    ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
+    ///   - symlinksValidWithin: Any symlink target that resolves outside this URL is rejected for security reasons.
+    ///                          Pass `.rootFS` to allow symlinks to point anywhere on the filesystem.
+    ///   - progress: A progress object that can be used to track or cancel the unzip operation.
+    ///   - pathEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
+    ///   - preservesAppleMetadata: When `true`, `__MACOSX/.../._<name>` AppleDouble companion entries
+    ///                             are not written to disk. On Darwin, their extended attributes and
+    ///                             resource forks are applied to the corresponding real files instead.
+    ///                             When `false`, those entries are extracted verbatim as regular files.
+    ///                             Default is `true`.
+    /// - Throws: Throws an error if the destination URL is not writable.
+    public func unzipItem(_ archive: Archive, to destinationURL: URL,
+                          skipCRC32: Bool = false, symlinksValidWithin: URL? = nil,
+                          progress: Progress? = nil, pathEncoding: String.Encoding? = nil,
+                          preservesAppleMetadata: Bool = true) throws {
         var totalUnitCount = Int64(0)
         let symlinksValidWithin = symlinksValidWithin ?? destinationURL
         if let progress = progress {
@@ -188,7 +217,7 @@ extension FileManager {
         if preservesAppleMetadata {
             for (path, payload) in pendingAppleDouble {
                 let targetURL = destinationURL.appendingPathComponent(path)
-                guard fileManager.itemExists(at: targetURL) else { continue }
+                guard self.itemExists(at: targetURL) else { continue }
                 FileManager.applyAppleDoublePayload(payload, to: targetURL)
             }
         }
