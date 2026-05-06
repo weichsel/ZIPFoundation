@@ -21,7 +21,7 @@ extension Archive {
         let file: FILEPointer
         let endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
         let zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?
-        #if swift(>=5.0)
+        #if swift(>=5.0) && !os(Windows) && !os(Android)
         let memoryFile: MemoryFile?
 
         init(file: FILEPointer,
@@ -87,7 +87,7 @@ extension Archive {
         }
     }
 
-    #if swift(>=5.0)
+    #if swift(>=5.0) && !os(Windows) && !os(Android)
     static func makeBackingConfiguration(for data: Data, mode: AccessMode) throws
     -> BackingConfiguration {
         let memoryFile = MemoryFile(data: data)
@@ -111,12 +111,7 @@ extension Archive {
                                                                           zipFileCommentLength: 0,
                                                                           zipFileCommentData: Data())
             _ = endOfCentralDirectoryRecord.data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
-                // Bionic's `fwrite` takes a non-optional `UnsafeRawPointer`,
-                // so guard the empty-buffer case rather than relying on
-                // Glibc/Darwin's IUO bridge.
-                if let baseAddress = buffer.baseAddress, buffer.count > 0 {
-                    fwrite(baseAddress, buffer.count, 1, archiveFile) // Errors handled during read
-                }
+                fwrite(buffer.baseAddress, buffer.count, 1, archiveFile) // Errors handled during read
             }
             fallthrough
         case .update:

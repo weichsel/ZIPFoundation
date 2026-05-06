@@ -9,17 +9,17 @@
 //
 
 import Foundation
-#if canImport(Android)
-import Android
-#elseif canImport(Bionic)
-import Bionic
-#endif
 
 extension Archive {
     var isMemoryArchive: Bool { return self.url.scheme == memoryURLScheme }
 }
 
-#if swift(>=5.0)
+// In-memory archives rely on a `FILE*`-shaped userspace stream API:
+// `funopen` on Apple, `fopencookie` on Linux glibc. Windows MSVC has
+// no equivalent, and the Swift Android SDK does not expose Bionic's
+// `fopencookie` cookie struct. The feature is therefore unavailable
+// on Windows / Android — file-backed archives continue to work.
+#if swift(>=5.0) && !os(Windows) && !os(Android)
 
 extension Archive {
 
@@ -39,34 +39,7 @@ extension Archive {
                 ? funopen(cookie.toOpaque(), readStub, writeStub, seekStub, closeStub)
                 : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)
             else { throw MemoryFileError.invalidMemoryFile }
-            #elseif os(Windows) || os(Android)
-            // Windows MSVC ships no `funopen` / `fopencookie` userspace
-            // FILE-stream API. Bionic has `fopencookie` since API 23,
-            // but the Swift Android SDK doesn't expose
-            // `cookie_io_functions_t` through the `Android` / `Bionic`
-            // module — calls don't compile.
-            //
-            // Both fall back to a `tmpfile()`-backed disk file so the
-            // memory-archive code path still compiles. Costs a
-            // write+read round-trip on every operation; embed
-            // memory-archive support here only as a degraded last resort
-            // until we ship a platform-native replacement.
-            cookie.release()
-            guard let result = tmpfile() else {
-                throw MemoryFileError.invalidMemoryFile
-            }
-            // Pre-populate the temp file with whatever bytes the caller
-            // already supplied (read mode); writes mutate the temp file.
-            // Bionic imports `fwrite`'s first arg as non-Optional, so
-            // unwrap before calling.
-            self.data.withUnsafeBytes { buffer in
-                if let base = buffer.baseAddress, buffer.count > 0 {
-                    _ = fwrite(base, 1, buffer.count, result)
-                }
-            }
-            rewind(result)
             #else
-            // Linux glibc / Musl: use `fopencookie` directly.
             let stubs = cookie_io_functions_t(read: readStub, write: writeStub, seek: seekStub, close: closeStub)
             guard let result = fopencookie(cookie.toOpaque(), mode.posixMode, stubs)
             else { throw MemoryFileError.invalidMemoryFile }
