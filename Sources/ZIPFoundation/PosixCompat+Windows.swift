@@ -20,6 +20,11 @@
 //      but ZIPFoundation only writes / reads it through ZIP archive
 //      external-file-attribute fields, so a numeric stand-in is enough.
 //
+// The aliases below intentionally match POSIX names (`mode_t`, `S_IFMT`,
+// `timegm`, …) so call sites read identically across platforms — the
+// SwiftLint identifier/type-name rules are disabled here for that reason.
+//
+// swiftlint:disable identifier_name type_name
 
 #if os(Windows)
 
@@ -31,7 +36,7 @@ public typealias mode_t = UInt16
 // `<sys/stat.h>` POSIX file-mode bits — values match the Linux/Apple
 // definitions so external-file-attribute round-trips with archives
 // created on those platforms preserve the type bits exactly.
-public let S_IFMT:  mode_t = 0o170000
+public let S_IFMT: mode_t = 0o170000
 public let S_IFREG: mode_t = 0o100000
 public let S_IFDIR: mode_t = 0o040000
 public let S_IFLNK: mode_t = 0o120000
@@ -48,8 +53,8 @@ public typealias POSIXTimeval = timeval
 // `timegm(3)` — Windows ships the same conversion as `_mkgmtime`. Both
 // take a calendar `tm` in UTC and produce a `time_t`.
 @inlinable
-public func timegm(_ tm: UnsafeMutablePointer<tm>) -> time_t {
-    return _mkgmtime(tm)
+public func timegm(_ time: UnsafeMutablePointer<tm>) -> time_t {
+    return _mkgmtime(time)
 }
 
 // `fseeko(3)` with a 64-bit offset. Windows has `_fseeki64`. The
@@ -77,8 +82,8 @@ public func ftello(_ stream: UnsafeMutablePointer<FILE>) -> Int64 {
 // 32-bit form). `_chsize_s` returns 0 on success, non-zero on failure;
 // match POSIX's 0/-1 contract.
 @inlinable
-public func ftruncate(_ fd: Int32, _ length: Int64) -> Int32 {
-    return _chsize_s(fd, length) == 0 ? 0 : -1
+public func ftruncate(_ descriptor: Int32, _ length: Int64) -> Int32 {
+    return _chsize_s(descriptor, length) == 0 ? 0 : -1
 }
 
 #endif
@@ -106,3 +111,4 @@ import Bionic
 #endif
 public typealias zip_off_t = off_t
 #endif
+// swiftlint:enable identifier_name type_name

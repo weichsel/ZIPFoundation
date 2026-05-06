@@ -276,25 +276,17 @@ extension FileManager {
         return externalFileAttributes
     }
 
+#if !os(Windows)
+    // POSIX implementations of the metadata helpers below. The Windows
+    // fallbacks live in `FileManager+ZIPWindows.swift` — `lstat` /
+    // `st_mtim*` aren't available there.
     class func permissionsForItem(at URL: URL) throws -> UInt16 {
-#if os(Windows)
-        // Windows has no POSIX permission bits to inspect. Return the
-        // type-appropriate default — same fall-through any non-Unix
-        // origin would land on (msdos / unused branches in `permissions`).
-        var isDir: ObjCBool = false
-        let exists = FileManager().fileExists(atPath: URL.path, isDirectory: &isDir)
-        guard exists else {
-            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: URL.path])
-        }
-        return isDir.boolValue ? defaultDirectoryPermissions : defaultFilePermissions
-#else
         let fileManager = FileManager()
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: URL.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
         let permissions = fileStat.st_mode
         return UInt16(permissions)
-#endif
     }
 
     class func fileModificationDateTimeForItem(at url: URL) throws -> Date {
@@ -302,14 +294,6 @@ extension FileManager {
         guard fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
-#if os(Windows)
-        // `attributesOfItem` reads the same Win32 file metadata as
-        // `_stat64` but doesn't expose nanosecond precision — fine
-        // here since ZIP's MS-DOS time format is two-second-granular
-        // anyway.
-        let attrs = try fileManager.attributesOfItem(atPath: url.path)
-        return (attrs[.modificationDate] as? Date) ?? Date()
-#else
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
@@ -322,7 +306,6 @@ extension FileManager {
         let timeStamp = TimeInterval(modTimeSpec.tv_sec) + TimeInterval(modTimeSpec.tv_nsec)/1000000000.0
         let modDate = Date(timeIntervalSince1970: timeStamp)
         return modDate
-#endif
     }
 
     class func fileSizeForItem(at url: URL) throws -> Int64 {
@@ -330,13 +313,6 @@ extension FileManager {
         guard fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
-#if os(Windows)
-        let attrs = try fileManager.attributesOfItem(atPath: url.path)
-        guard let size = attrs[.size] as? NSNumber else {
-            throw CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
-        }
-        return size.int64Value
-#else
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var stats = stat()
         lstat(entryFileSystemRepresentation, &stats)
@@ -344,7 +320,6 @@ extension FileManager {
 
         // `st_size` is a signed int value
         return Int64(stats.st_size)
-#endif
     }
 
     class func typeForItem(at url: URL) throws -> Entry.EntryType {
@@ -352,20 +327,12 @@ extension FileManager {
         guard url.isFileURL, fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
-#if os(Windows)
-        // Windows has no `lstat`, and reparse-point detection isn't
-        // worth the Win32 dance for our archive use case. Distinguish
-        // file vs directory via FileManager; symlinks fall back to .file.
-        var isDir: ObjCBool = false
-        _ = fileManager.fileExists(atPath: url.path, isDirectory: &isDir)
-        return isDir.boolValue ? .directory : .file
-#else
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
         lstat(entryFileSystemRepresentation, &fileStat)
         return Entry.EntryType(mode: mode_t(fileStat.st_mode))
-#endif
     }
+#endif
 }
 
 extension POSIXError {
