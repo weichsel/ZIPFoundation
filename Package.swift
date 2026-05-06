@@ -25,7 +25,7 @@ let targets: [Target] = [
         // doesn't reach here.
         linkerSettings: [
             .linkedLibrary("z", .when(platforms: [.linux, .android])),
-            .linkedLibrary("zlib", .when(platforms: [.windows])),
+            .linkedLibrary("zlib", .when(platforms: [.windows]))
         ]),
     .testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
 ]
