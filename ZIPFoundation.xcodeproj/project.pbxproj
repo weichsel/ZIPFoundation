@@ -32,7 +32,7 @@
 		BA85B4F42991614E003F2748 /* FileManager+ZIPDeprecated.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA85B4F32991614E003F2748 /* FileManager+ZIPDeprecated.swift */; };
 		BA9AFCCA2ABB645F00A1268C /* PrivacyInfo.xcprivacy in CopyFiles */ = {isa = PBXBuildFile; fileRef = BA9AFCC82ABB643E00A1268C /* PrivacyInfo.xcprivacy */; };
 		BAA134902F23E6F800C20E01 /* Error+ZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA1348F2F23E6F800C20E01 /* Error+ZIP.swift */; };
-		BAA134922F23E7B000C20E01 /* PosixCompat+Windows.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA134912F23E7B000C20E01 /* PosixCompat+Windows.swift */; };
+		BAA134922F23E7B000C20E01 /* Shims+Windows.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA134912F23E7B000C20E01 /* Shims+Windows.swift */; };
 		BAA134942F23F1C200C20E01 /* String+ZIP.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAA134932F23F1C200C20E01 /* String+ZIP.swift */; };
 		BAAF13DA25CC140300070A95 /* ZIPFoundationErrorConditionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAAF13D925CC140300070A95 /* ZIPFoundationErrorConditionTests.swift */; };
 		BACE20B826F7CE6C003BA312 /* Archive+BackingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BACE20B726F7CE6C003BA312 /* Archive+BackingConfiguration.swift */; };
@@ -104,7 +104,7 @@
 		BA85B4F32991614E003F2748 /* FileManager+ZIPDeprecated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FileManager+ZIPDeprecated.swift"; sourceTree = "<group>"; };
 		BA9AFCC82ABB643E00A1268C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BAA1348F2F23E6F800C20E01 /* Error+ZIP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Error+ZIP.swift"; sourceTree = "<group>"; };
-		BAA134912F23E7B000C20E01 /* PosixCompat+Windows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PosixCompat+Windows.swift"; sourceTree = "<group>"; };
+		BAA134912F23E7B000C20E01 /* Shims+Windows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Shims+Windows.swift"; sourceTree = "<group>"; };
 		BAA134932F23F1C200C20E01 /* String+ZIP.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+ZIP.swift"; sourceTree = "<group>"; };
 		BAAF13D925CC140300070A95 /* ZIPFoundationErrorConditionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationErrorConditionTests.swift; sourceTree = "<group>"; };
 		BACE20B726F7CE6C003BA312 /* Archive+BackingConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+BackingConfiguration.swift"; sourceTree = "<group>"; };
@@ -244,7 +244,7 @@
 				BAA1348F2F23E6F800C20E01 /* Error+ZIP.swift */,
 				OBJ_15 /* FileManager+ZIP.swift */,
 				BA85B4F32991614E003F2748 /* FileManager+ZIPDeprecated.swift */,
-				BAA134912F23E7B000C20E01 /* PosixCompat+Windows.swift */,
+				BAA134912F23E7B000C20E01 /* Shims+Windows.swift */,
 				BAA134932F23F1C200C20E01 /* String+ZIP.swift */,
 				BA643D79264811FB00018273 /* URL+ZIP.swift */,
 			);
@@ -392,7 +392,7 @@
 				BAA134902F23E6F800C20E01 /* Error+ZIP.swift in Sources */,
 				BA0CE5042746AF0C004D8DD4 /* Archive+WritingDeprecated.swift in Sources */,
 				OBJ_54 /* FileManager+ZIP.swift in Sources */,
-				BAA134922F23E7B000C20E01 /* PosixCompat+Windows.swift in Sources */,
+				BAA134922F23E7B000C20E01 /* Shims+Windows.swift in Sources */,
 				BAA134942F23F1C200C20E01 /* String+ZIP.swift in Sources */,
 				BA643D7C2648131C00018273 /* Archive+Progress.swift in Sources */,
 				BA0CE5082746B369004D8DD4 /* Archive+ReadingDeprecated.swift in Sources */,
