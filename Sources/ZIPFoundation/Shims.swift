@@ -38,29 +38,24 @@
 import Foundation
 import WinSDK
 
-public typealias mode_t = UInt16
+typealias mode_t = UInt16
 
 // `<sys/stat.h>` POSIX file-mode bits — values match the Linux/Apple
 // definitions so external-file-attribute round-trips with archives
 // created on those platforms preserve the type bits exactly.
-public let S_IFMT: mode_t = 0o170000
-public let S_IFREG: mode_t = 0o100000
-public let S_IFDIR: mode_t = 0o040000
-public let S_IFLNK: mode_t = 0o120000
+let S_IFMT: mode_t = 0o170000
+let S_IFREG: mode_t = 0o100000
+let S_IFDIR: mode_t = 0o040000
+let S_IFLNK: mode_t = 0o120000
 
 // `suseconds_t` is the POSIX type for the microsecond field of `timeval`.
 // On Windows the WinSock `timeval.tv_usec` is `LONG`, so a 32-bit signed
 // integer matches binary-layout-wise.
-public typealias suseconds_t = Int32
-
-// Use the WinSock `timeval` struct under a POSIX-shaped alias so the
-// call sites in `Date+ZIP.swift`/`FileManager+ZIP.swift` work unchanged.
-public typealias POSIXTimeval = timeval
+typealias suseconds_t = Int32
 
 // `timegm(3)` — Windows ships the same conversion as `_mkgmtime`. Both
 // take a calendar `tm` in UTC and produce a `time_t`.
-@inlinable
-public func timegm(_ time: UnsafeMutablePointer<tm>) -> time_t {
+func timegm(_ time: UnsafeMutablePointer<tm>) -> time_t {
     return _mkgmtime(time)
 }
 
@@ -71,8 +66,7 @@ public func timegm(_ time: UnsafeMutablePointer<tm>) -> time_t {
 // expression works on every platform. `FILE` is `_iobuf` on MSVC,
 // imported as a typed struct, so we use `UnsafeMutablePointer<FILE>`
 // here to match `_fseeki64`'s declared signature.
-@inlinable
-public func fseeko(_ stream: UnsafeMutablePointer<FILE>, _ offset: Int64, _ whence: Int32) -> Int32 {
+func fseeko(_ stream: UnsafeMutablePointer<FILE>, _ offset: Int64, _ whence: Int32) -> Int32 {
     return _fseeki64(stream, offset, whence)
 }
 
@@ -80,16 +74,14 @@ public func fseeko(_ stream: UnsafeMutablePointer<FILE>, _ offset: Int64, _ when
 // stream offset. Maps to `_ftelli64` on Windows. Call sites already
 // wrap the result in `Int64(ftello(...))` so a 64-bit return type
 // works without further changes.
-@inlinable
-public func ftello(_ stream: UnsafeMutablePointer<FILE>) -> Int64 {
+func ftello(_ stream: UnsafeMutablePointer<FILE>) -> Int64 {
     return _ftelli64(stream)
 }
 
 // `ftruncate(2)` shim — Windows has `_chsize_s` (or `_chsize` for the
 // 32-bit form). `_chsize_s` returns 0 on success, non-zero on failure;
 // match POSIX's 0/-1 contract.
-@inlinable
-public func ftruncate(_ descriptor: Int32, _ length: Int64) -> Int32 {
+func ftruncate(_ descriptor: Int32, _ length: Int64) -> Int32 {
     return _chsize_s(descriptor, length) == 0 ? 0 : -1
 }
 
@@ -104,7 +96,7 @@ public func ftruncate(_ descriptor: Int32, _ length: Int64) -> Int32 {
 // transitive reliance on `import Foundation` from elsewhere in the
 // module).
 #if os(Windows)
-public typealias zip_off_t = Int64
+typealias zip_off_t = Int64
 #else
 #if canImport(Darwin)
 import Darwin
@@ -115,6 +107,6 @@ import Musl
 #elseif canImport(Android)
 import Android
 #endif
-public typealias zip_off_t = off_t
+typealias zip_off_t = off_t
 #endif
 // swiftlint:enable identifier_name type_name
