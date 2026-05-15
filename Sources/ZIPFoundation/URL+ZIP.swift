@@ -12,6 +12,10 @@ import Foundation
 
 extension URL {
 
+    /// A file URL representing the root of the local filesystem (`/`).
+    /// Can be used to indicate that symlinks may point anywhere on the filesystem during extraction.
+    public static var rootFS: URL { URL(fileURLWithPath: "/") }
+
     static func temporaryReplacementDirectoryURL(for archive: Archive) -> URL {
         #if swift(>=5.0) || os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         if archive.url.isFileURL,
@@ -25,13 +29,7 @@ extension URL {
             ProcessInfo.processInfo.globallyUniqueString)
     }
 
-    /// A file URL representing the root of the local filesystem (`/`).
-    /// Can be used to indicate that symlinks may point anywhere on the filesystem during extraction.
-    public static var rootFS: URL {
-        URL(fileURLWithPath: "/")
-    }
-
-    public func isContained(in parentDirectoryURL: URL) -> Bool {
+    func isContained(in parentDirectoryURL: URL) -> Bool {
         // Ensure this URL is contained in the passed in URL
         let parentDirectoryURL = URL(fileURLWithPath: parentDirectoryURL.path, isDirectory: true).standardized
         // Maliciously crafted ZIP files can contain entries using a prepended path delimiter `/` in combination
