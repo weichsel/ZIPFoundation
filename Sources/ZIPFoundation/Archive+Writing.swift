@@ -28,14 +28,20 @@ extension Archive {
     ///                        By default, no compression will be applied.
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
     ///   - progress: A progress object that can be used to track or cancel the add operation.
+    ///   - preservesAppleMetadata: On Darwin platforms, also add a parallel `__MACOSX/.../._<name>`
+    ///                             AppleDouble companion entry that encodes the file's extended
+    ///                             attributes, Finder info, and resource fork. No-op on other
+    ///                             platforms and for companion paths themselves. Default is `true`.
     /// - Throws: An error if the source file cannot be read or the receiver is not writable.
     public func addEntry(with path: String, relativeTo baseURL: URL,
                          compressionMethod: CompressionMethod = .none,
-                         bufferSize: Int = defaultWriteChunkSize, progress: Progress? = nil) throws {
+                         bufferSize: Int = defaultWriteChunkSize, progress: Progress? = nil,
+                         preservesAppleMetadata: Bool = true) throws {
         let fileURL = baseURL.appendingPathComponent(path)
 
         try self.addEntry(with: path, fileURL: fileURL, compressionMethod: compressionMethod,
-                          bufferSize: bufferSize, progress: progress)
+                          bufferSize: bufferSize, progress: progress,
+                          preservesAppleMetadata: preservesAppleMetadata)
     }
 
     /// Write files, directories or symlinks to the receiver.
@@ -47,9 +53,14 @@ extension Archive {
     ///                        By default, no compression will be applied.
     ///   - bufferSize: The maximum size of the write buffer and the compression buffer (if needed).
     ///   - progress: A progress object that can be used to track or cancel the add operation.
+    ///   - preservesAppleMetadata: On Darwin platforms, also add a parallel `__MACOSX/.../._<name>`
+    ///                             AppleDouble companion entry that encodes the file's extended
+    ///                             attributes, Finder info, and resource fork. No-op on other
+    ///                             platforms and for companion paths themselves. Default is `true`.
     /// - Throws: An error if the source file cannot be read or the receiver is not writable.
     public func addEntry(with path: String, fileURL: URL, compressionMethod: CompressionMethod = .none,
-                         bufferSize: Int = defaultWriteChunkSize, progress: Progress? = nil) throws {
+                         bufferSize: Int = defaultWriteChunkSize, progress: Progress? = nil,
+                         preservesAppleMetadata: Bool = true) throws {
         let fileManager = FileManager()
         guard fileManager.itemExists(at: fileURL) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: fileURL.path])
@@ -95,6 +106,41 @@ extension Archive {
                               compressionMethod: compressionMethod, bufferSize: bufferSize,
                               progress: progress, provider: provider)
         }
+        if preservesAppleMetadata {
+            try self.addAppleDoubleCompanionIfNeeded(for: path, fileURL: fileURL,
+                                                     compressionMethod: compressionMethod,
+                                                     bufferSize: bufferSize)
+        }
+    }
+
+    // MARK: - AppleDouble helpers
+
+    /// Reads Apple-specific metadata (xattrs, Finder info, resource fork) from the item at
+    /// `fileURL` and, if any is present, writes an AppleDouble companion entry at
+    /// `__MACOSX/.../._<name>`. Has no effect for paths that are already `__MACOSX/` companions
+    /// themselves, or on non-Darwin platforms (where source files have no Apple metadata to read).
+    func addAppleDoubleCompanionIfNeeded(for entryPath: String, fileURL: URL,
+                                         compressionMethod: CompressionMethod,
+                                         bufferSize: Int = defaultWriteChunkSize) throws {
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
+        guard let companionPath = FileManager.appleDoubleCompanionPath(forEntryPath: entryPath) else { return }
+        guard let payload = FileManager.readAppleDoublePayload(at: fileURL) else { return }
+        let data = payload.encode()
+        let modDate = (try? FileManager.fileModificationDateTimeForItem(at: fileURL)) ?? Date()
+        try self.addEntry(with: companionPath, type: .file,
+                          uncompressedSize: Int64(data.count),
+                          modificationDate: modDate,
+                          permissions: defaultFilePermissions,
+                          compressionMethod: compressionMethod,
+                          bufferSize: bufferSize,
+                          provider: { position, chunkSize -> Data in
+                              let start = Int(position)
+                              let end = Swift.min(start + chunkSize, data.count)
+                              return data.subdata(in: start..<end)
+                          })
+#else
+        _ = (entryPath, fileURL, compressionMethod, bufferSize)
+#endif
     }
 
     /// Write files, directories or symlinks to the receiver.

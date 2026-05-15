@@ -95,6 +95,11 @@ extension ZIPFoundationTests {
         }
         var itemsExist = false
         for entry in archive {
+            // With `preservesAppleMetadata: true` (default), `__MACOSX/.../._<name>` companion
+            // entries are consumed as metadata rather than extracted to disk.
+            if entry.path.hasPrefix(FileManager.macOSXDirectoryName + "/")
+                || entry.path == FileManager.macOSXDirectoryName
+                || entry.path == FileManager.macOSXDirectoryName + "/" { continue }
             let directoryURL = destinationURL.appendingPathComponent(entry.path)
             itemsExist = fileManager.itemExists(at: directoryURL)
             if itemsExist == false { break }
@@ -114,7 +119,11 @@ extension ZIPFoundationTests {
         }
         var itemsExist = false
         for entry in archive {
-            let directoryURL = destinationURL.appendingPathComponent(entry.path(using: encoding))
+            let path = entry.path(using: encoding)
+            if path.hasPrefix(FileManager.macOSXDirectoryName + "/")
+                || path == FileManager.macOSXDirectoryName
+                || path == FileManager.macOSXDirectoryName + "/" { continue }
+            let directoryURL = destinationURL.appendingPathComponent(path)
             itemsExist = fileManager.itemExists(at: directoryURL)
             if !itemsExist { break }
         }

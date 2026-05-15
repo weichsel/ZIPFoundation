@@ -254,7 +254,12 @@ extension ZIPFoundationTests {
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests),
             ("testFileModificationDate", testFileModificationDate),
             ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
-            ("testInvalidSymlinkCompressionMethodErrorConditions", testInvalidSymlinkCompressionMethodErrorConditions)
+            ("testInvalidSymlinkCompressionMethodErrorConditions", testInvalidSymlinkCompressionMethodErrorConditions),
+            ("testAppleDoubleCompanionPathDerivation", testAppleDoubleCompanionPathDerivation),
+            ("testRealEntryPathFromCompanion", testRealEntryPathFromCompanion),
+            ("testAppleDoubleEncodingRoundTrip", testAppleDoubleEncodingRoundTrip),
+            ("testAppleDoubleEncodingEmptyFinderInfoIgnored", testAppleDoubleEncodingEmptyFinderInfoIgnored),
+            ("testAppleDoubleDecodeRejectsBadMagic", testAppleDoubleDecodeRejectsBadMagic)
         ] + zip64Tests + darwinOnlyTests + swift5OnlyTests
     }
 
@@ -320,7 +325,19 @@ extension ZIPFoundationTests {
             // Applying permissions on symlinks is only relevant on Darwin platforms
             ("testSymlinkPermissionsTransferErrorConditions", testSymlinkPermissionsTransferErrorConditions),
             // Applying file modification dates is currently unsupported in corelibs Foundation
-            ("testSymlinkModificationDateTransferErrorConditions", testSymlinkModificationDateTransferErrorConditions)
+            ("testSymlinkModificationDateTransferErrorConditions", testSymlinkModificationDateTransferErrorConditions),
+            // AppleDouble xattr/resource-fork round-tripping is only wired up on Darwin.
+            ("testZipItemPreservesXattrsOnDarwin", testZipItemPreservesXattrsOnDarwin),
+            ("testZipItemPreservesResourceForkOnDarwin", testZipItemPreservesResourceForkOnDarwin),
+            ("testUnzipItemWithPreservesAppleMetadataFalse", testUnzipItemWithPreservesAppleMetadataFalse),
+            ("testArchiveAddEntryAddsCompanionOnDarwin", testArchiveAddEntryAddsCompanionOnDarwin),
+            ("testArchiveAddEntryRespectsPreservesAppleMetadataFalse",
+             testArchiveAddEntryRespectsPreservesAppleMetadataFalse),
+            ("testArchiveExtractAppliesCompanion", testArchiveExtractAppliesCompanion),
+            ("testArchiveExtractWithoutPreservesAppleMetadataSkipsCompanion",
+             testArchiveExtractWithoutPreservesAppleMetadataSkipsCompanion),
+            ("testArchiveExtractCompanionEntryItselfIsNotReinterpreted",
+             testArchiveExtractCompanionEntryItselfIsNotReinterpreted)
         ]
         #else
         return []

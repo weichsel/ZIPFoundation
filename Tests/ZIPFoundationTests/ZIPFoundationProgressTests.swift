@@ -171,6 +171,9 @@ extension ZIPFoundationTests {
             }
             var itemsExist = false
             for entry in archive {
+                if entry.path.hasPrefix(FileManager.macOSXDirectoryName + "/")
+                    || entry.path == FileManager.macOSXDirectoryName
+                    || entry.path == FileManager.macOSXDirectoryName + "/" { continue }
                 let directoryURL = destinationURL.appendingPathComponent(entry.path)
                 itemsExist = fileManager.itemExists(at: directoryURL)
                 if !itemsExist { break }
