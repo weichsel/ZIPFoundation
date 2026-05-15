@@ -276,33 +276,29 @@ extension FileManager {
 
     class func permissionsForItem(at URL: URL) throws -> UInt16 {
         let attributes = try zipAttributesOfItem(at: URL)
-        guard let permissions = attributes[.posixPermissions] as? NSNumber else {
-            throw Entry.EntryError.missingPermissionsAttributeError
-        }
+        let missingPermissionsError = Entry.EntryError.missingPermissionsAttributeError
+        guard let permissions = attributes[.posixPermissions] as? NSNumber else { throw missingPermissionsError }
         return permissions.uint16Value
     }
 
     class func fileModificationDateTimeForItem(at url: URL) throws -> Date {
         let attributes = try zipAttributesOfItem(at: url)
-        guard let modificationDate = attributes[.modificationDate] as? Date else {
-            throw Entry.EntryError.missingModificationDateAttributeError
-        }
+        let missingModificationDateError = Entry.EntryError.missingModificationDateAttributeError
+        guard let modificationDate = attributes[.modificationDate] as? Date else { throw missingModificationDateError }
         return modificationDate
     }
 
     class func fileSizeForItem(at url: URL) throws -> Int64 {
         let attributes = try zipAttributesOfItem(at: url)
-        guard let size = attributes[.size] as? NSNumber else {
-            throw CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
-        }
+        let fileReadUnknownError = CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
+        guard let size = attributes[.size] as? NSNumber else { throw fileReadUnknownError }
         return size.int64Value
     }
 
     class func typeForItem(at url: URL) throws -> Entry.EntryType {
         let attributes = try zipAttributesOfItem(at: url)
-        guard let type = attributes[.type] as? FileAttributeType else {
-            throw CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
-        }
+        let fileReadUnknownError = CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
+        guard let type = attributes[.type] as? FileAttributeType else { throw fileReadUnknownError }
         return entryType(for: type)
     }
 
@@ -337,9 +333,7 @@ extension FileManager {
 #else
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
-        guard lstat(entryFileSystemRepresentation, &fileStat) == 0 else {
-            throw POSIXError(errno, path: url.path)
-        }
+        guard lstat(entryFileSystemRepresentation, &fileStat) == 0 else { throw POSIXError(errno, path: url.path) }
 #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let modTimeSpec = fileStat.st_mtimespec
 #else
@@ -348,9 +342,8 @@ extension FileManager {
         let timeStamp = TimeInterval(modTimeSpec.tv_sec) + TimeInterval(modTimeSpec.tv_nsec)/1000000000.0
         let modificationDate = Date(timeIntervalSince1970: timeStamp)
         let type = Entry.EntryType(mode: mode_t(fileStat.st_mode))
-        guard fileStat.st_size >= 0 else {
-            throw CocoaError(.fileReadTooLarge, userInfo: [NSFilePathErrorKey: url.path])
-        }
+        let fileReadTooLargeError = CocoaError(.fileReadTooLarge, userInfo: [NSFilePathErrorKey: url.path])
+        guard fileStat.st_size >= 0 else { throw fileReadTooLargeError }
         // `st_size` is a signed int value
         let size = Int64(fileStat.st_size)
         return [.posixPermissions: NSNumber(value: UInt16(fileStat.st_mode)), .modificationDate: modificationDate,
