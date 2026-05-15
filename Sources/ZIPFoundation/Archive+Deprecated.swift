@@ -2,7 +2,10 @@
 //  Archive+Deprecated.swift
 //  ZIPFoundation
 //
-//  Created by Thomas Zoechling on 06.02.23.
+//  Copyright © 2017-2026 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Released under the MIT License.
+//
+//  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
 //
 
 import Foundation
