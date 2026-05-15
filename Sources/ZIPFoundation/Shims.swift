@@ -7,6 +7,7 @@
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
 //
+
 //  POSIX compatibility shims plus the cross-platform `zip_off_t` alias.
 //  The Windows-only block below lets ZIPFoundation's archive-mode
 //  bookkeeping (file vs directory vs symlink) and timestamp arithmetic
@@ -19,17 +20,17 @@
 //  These shims match POSIX semantics only as far as ZIPFoundation needs
 //  them — they're not a general-purpose POSIX-on-Windows port:
 //
-//    • Symlink-aware wrappers (`lchmod`, `lutimes`, `lstat`) are *not*
-//      shimmed; the call sites that use them are already Apple-gated
-//      via `#if os(macOS)…` so they never reach Windows.
-//    • `S_IFLNK` is the POSIX bit pattern (`0o120000`); Windows has no
-//      true equivalent (junctions / reparse points are different beasts),
-//      but ZIPFoundation only writes / reads it through ZIP archive
-//      external-file-attribute fields, so a numeric stand-in is enough.
+//  - Symlink-aware wrappers (`lchmod`, `lutimes`, `lstat`) are *not*
+//    shimmed; the call sites that use them are already Apple-gated
+//    via `#if os(macOS)…` so they never reach Windows.
+//  - `S_IFLNK` is the POSIX bit pattern (`0o120000`); Windows has no
+//    true equivalent (junctions / reparse points are different beasts),
+//    but ZIPFoundation only writes / reads it through ZIP archive
+//    external-file-attribute fields, so a numeric stand-in is enough.
 //
-// The aliases below intentionally match POSIX names (`mode_t`, `S_IFMT`,
-// `timegm`, …) so call sites read identically across platforms — the
-// SwiftLint identifier/type-name rules are disabled here for that reason.
+//  The aliases below intentionally match POSIX names (`mode_t`, `S_IFMT`,
+//  `timegm`, …) so call sites read identically across platforms — the
+//  SwiftLint identifier/type-name rules are disabled here for that reason.
 //
 // swiftlint:disable identifier_name type_name
 
