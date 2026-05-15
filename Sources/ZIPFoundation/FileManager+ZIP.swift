@@ -275,7 +275,7 @@ extension FileManager {
     }
 
     class func permissionsForItem(at URL: URL) throws -> UInt16 {
-        let attributes = try zipFileAttributes(at: URL)
+        let attributes = try zipAttributesOfItem(at: URL)
         guard let permissions = attributes[.posixPermissions] as? NSNumber else {
             throw Entry.EntryError.missingPermissionsAttributeError
         }
@@ -283,7 +283,7 @@ extension FileManager {
     }
 
     class func fileModificationDateTimeForItem(at url: URL) throws -> Date {
-        let attributes = try zipFileAttributes(at: url)
+        let attributes = try zipAttributesOfItem(at: url)
         guard let modificationDate = attributes[.modificationDate] as? Date else {
             throw Entry.EntryError.missingModificationDateAttributeError
         }
@@ -291,7 +291,7 @@ extension FileManager {
     }
 
     class func fileSizeForItem(at url: URL) throws -> Int64 {
-        let attributes = try zipFileAttributes(at: url)
+        let attributes = try zipAttributesOfItem(at: url)
         guard let size = attributes[.size] as? NSNumber else {
             throw CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
         }
@@ -299,14 +299,14 @@ extension FileManager {
     }
 
     class func typeForItem(at url: URL) throws -> Entry.EntryType {
-        let attributes = try zipFileAttributes(at: url)
+        let attributes = try zipAttributesOfItem(at: url)
         guard let type = attributes[.type] as? FileAttributeType else {
             throw CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
         }
         return entryType(for: type)
     }
 
-    class func zipFileAttributes(at url: URL) throws -> [FileAttributeKey: Any] {
+    class func zipAttributesOfItem(at url: URL) throws -> [FileAttributeKey: Any] {
         let fileManager = FileManager()
         guard url.isFileURL, fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
