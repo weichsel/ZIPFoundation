@@ -328,7 +328,7 @@ extension ZIPFoundationTests {
     }
 
     static var swift5OnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
-        #if swift(>=5.0)
+        #if swift(>=5.0) && !os(Windows) && !os(Android)
         return [
             ("testCreateArchiveAddUncompressedEntryToMemory", testCreateArchiveAddUncompressedEntryToMemory),
             ("testCreateArchiveAddCompressedEntryToMemory", testCreateArchiveAddCompressedEntryToMemory),
