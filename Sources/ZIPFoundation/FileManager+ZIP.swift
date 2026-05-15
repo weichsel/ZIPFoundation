@@ -274,102 +274,106 @@ extension FileManager {
         return externalFileAttributes
     }
 
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux) || os(Android)
     class func permissionsForItem(at URL: URL) throws -> UInt16 {
-        let attributes = try zipAttributesOfItem(at: URL)
-        let missingPermissionsError = Entry.EntryError.missingPermissionsAttributeError
-        guard let permissions = attributes[.posixPermissions] as? NSNumber else { throw missingPermissionsError }
-        return permissions.uint16Value
+        let fileManager = FileManager()
+        let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: URL.path)
+        var fileStat = stat()
+        lstat(entryFileSystemRepresentation, &fileStat)
+        let permissions = fileStat.st_mode
+        return UInt16(permissions)
     }
 
     class func fileModificationDateTimeForItem(at url: URL) throws -> Date {
-        let attributes = try zipAttributesOfItem(at: url)
-        let missingModificationDateError = Entry.EntryError.missingModificationDateAttributeError
-        guard let modificationDate = attributes[.modificationDate] as? Date else { throw missingModificationDateError }
-        return modificationDate
-    }
-
-    class func fileSizeForItem(at url: URL) throws -> Int64 {
-        let attributes = try zipAttributesOfItem(at: url)
-        let fileReadUnknownError = CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
-        guard let size = attributes[.size] as? NSNumber else { throw fileReadUnknownError }
-        return size.int64Value
-    }
-
-    class func typeForItem(at url: URL) throws -> Entry.EntryType {
-        let attributes = try zipAttributesOfItem(at: url)
-        let fileReadUnknownError = CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
-        guard let type = attributes[.type] as? FileAttributeType else { throw fileReadUnknownError }
-        return entryType(for: type)
-    }
-
-    class func zipAttributesOfItem(at url: URL) throws -> [FileAttributeKey: Any] {
         let fileManager = FileManager()
-        guard url.isFileURL, fileManager.itemExists(at: url) else {
+        guard fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
-#if os(Windows)
-        // Windows has no `lstat`, and reparse-point detection isn't worth
-        // the Win32 dance for our archive use case. Distinguish file vs
-        // directory via FileManager; symlinks fall back to .file.
-        var isDir: ObjCBool = false
-        _ = fileManager.fileExists(atPath: url.path, isDirectory: &isDir)
-        let entryType: Entry.EntryType = isDir.boolValue ? .directory : .file
-        let permissions = isDir.boolValue ? defaultDirectoryPermissions : defaultFilePermissions
-        // `attributesOfItem` reads the same Win32 file metadata as `_stat64`
-        // but doesn't expose nanosecond precision — fine here since ZIP's
-        // MS-DOS time format is two-second-granular anyway.
-        let attrs = try fileManager.attributesOfItem(atPath: url.path)
-        let modificationDate = (attrs[.modificationDate] as? Date) ?? Date()
-        let size: Int64
-        if entryType == .directory {
-            size = 0
-        } else if let sizeNumber = attrs[.size] as? NSNumber {
-            size = sizeNumber.int64Value
-        } else {
-            throw CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
-        }
-        return [.posixPermissions: NSNumber(value: permissions), .modificationDate: modificationDate,
-                .size: NSNumber(value: size), .type: fileAttributeType(for: entryType)]
-#else
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
-        guard lstat(entryFileSystemRepresentation, &fileStat) == 0 else { throw POSIXError(errno, path: url.path) }
+        lstat(entryFileSystemRepresentation, &fileStat)
 #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let modTimeSpec = fileStat.st_mtimespec
 #else
         let modTimeSpec = fileStat.st_mtim
 #endif
+
         let timeStamp = TimeInterval(modTimeSpec.tv_sec) + TimeInterval(modTimeSpec.tv_nsec)/1000000000.0
-        let modificationDate = Date(timeIntervalSince1970: timeStamp)
-        let type = Entry.EntryType(mode: mode_t(fileStat.st_mode))
-        let fileReadTooLargeError = CocoaError(.fileReadTooLarge, userInfo: [NSFilePathErrorKey: url.path])
-        guard fileStat.st_size >= 0 else { throw fileReadTooLargeError }
+        let modDate = Date(timeIntervalSince1970: timeStamp)
+        return modDate
+    }
+
+    class func fileSizeForItem(at url: URL) throws -> Int64 {
+        let fileManager = FileManager()
+        guard fileManager.itemExists(at: url) else {
+            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
+        }
+
+        let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
+        var stats = stat()
+        lstat(entryFileSystemRepresentation, &stats)
+        guard stats.st_size >= 0 else { throw CocoaError(.fileReadTooLarge, userInfo: [NSFilePathErrorKey: url.path]) }
+
         // `st_size` is a signed int value
-        let size = Int64(fileStat.st_size)
-        return [.posixPermissions: NSNumber(value: UInt16(fileStat.st_mode)), .modificationDate: modificationDate,
-                .size: NSNumber(value: size), .type: fileAttributeType(for: type)]
+        return Int64(stats.st_size)
+    }
+
+    class func typeForItem(at url: URL) throws -> Entry.EntryType {
+        let fileManager = FileManager()
+        guard url.isFileURL, fileManager.itemExists(at: url) else {
+            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
+        }
+        let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
+        var fileStat = stat()
+        lstat(entryFileSystemRepresentation, &fileStat)
+        return Entry.EntryType(mode: mode_t(fileStat.st_mode))
+    }
+#elseif os(Windows)
+    // Windows has no `lstat`, and reparse-point detection isn't worth the
+    // Win32 dance for our archive use case. Permissions fall back to the
+    // module defaults, mod-times come from `attributesOfItem` (no nanosecond
+    // precision — fine for ZIP's two-second-granular MS-DOS time format),
+    // and symlinks are reported as `.file`.
+
+    class func permissionsForItem(at URL: URL) throws -> UInt16 {
+        let fileManager = FileManager()
+        var isDir: ObjCBool = false
+        _ = fileManager.fileExists(atPath: URL.path, isDirectory: &isDir)
+        return isDir.boolValue ? defaultDirectoryPermissions : defaultFilePermissions
+    }
+
+    class func fileModificationDateTimeForItem(at url: URL) throws -> Date {
+        let fileManager = FileManager()
+        guard fileManager.itemExists(at: url) else {
+            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
+        }
+        let attrs = try fileManager.attributesOfItem(atPath: url.path)
+        return (attrs[.modificationDate] as? Date) ?? Date()
+    }
+
+    class func fileSizeForItem(at url: URL) throws -> Int64 {
+        let fileManager = FileManager()
+        guard fileManager.itemExists(at: url) else {
+            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
+        }
+        var isDir: ObjCBool = false
+        _ = fileManager.fileExists(atPath: url.path, isDirectory: &isDir)
+        if isDir.boolValue { return 0 }
+        let attrs = try fileManager.attributesOfItem(atPath: url.path)
+        guard let size = attrs[.size] as? NSNumber else {
+            throw CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
+        }
+        return size.int64Value
+    }
+
+    class func typeForItem(at url: URL) throws -> Entry.EntryType {
+        let fileManager = FileManager()
+        guard url.isFileURL, fileManager.itemExists(at: url) else {
+            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
+        }
+        var isDir: ObjCBool = false
+        _ = fileManager.fileExists(atPath: url.path, isDirectory: &isDir)
+        return isDir.boolValue ? .directory : .file
+    }
 #endif
-    }
-
-    class func entryType(for fileAttributeType: FileAttributeType) -> Entry.EntryType {
-        switch fileAttributeType {
-        case .typeDirectory:
-            return .directory
-        case .typeSymbolicLink:
-            return .symlink
-        default:
-            return .file
-        }
-    }
-
-    class func fileAttributeType(for entryType: Entry.EntryType) -> FileAttributeType {
-        switch entryType {
-        case .directory:
-            return .typeDirectory
-        case .symlink:
-            return .typeSymbolicLink
-        case .file:
-            return .typeRegular
-        }
-    }
 }
