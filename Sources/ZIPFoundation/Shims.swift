@@ -107,6 +107,8 @@ import Glibc
 import Musl
 #elseif canImport(Android)
 import Android
+#else
+#error("Unsupported platform: ZIPFoundation needs a C library that exposes off_t.")
 #endif
 typealias zip_off_t = off_t
 #endif

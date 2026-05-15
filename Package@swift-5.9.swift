@@ -1,8 +1,8 @@
 // swift-tools-version:5.9
 import PackageDescription
 
-let zlibPlatforms: [Platform] = [.linux, .openbsd, .android, .windows]
-let unixZlibPlatforms: [Platform] = [.linux, .openbsd, .android]
+let zlibPlatforms: [Platform] = [.linux, .android, .windows]
+let unixZlibPlatforms: [Platform] = [.linux, .android]
 
 let package = Package(
     name: "ZIPFoundation",
