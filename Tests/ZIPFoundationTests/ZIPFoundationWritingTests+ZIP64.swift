@@ -47,14 +47,14 @@ extension ZIPFoundationTests {
             }
             // Central Directory and Extra Field
             let cdOffset: UInt64 = lfhSize + size
-            fseeko(archiveFile, off_t(cdOffset), SEEK_SET)
+            fseeko(archiveFile, zip_off_t(cdOffset), SEEK_SET)
             let cdSize = checkCentralDirectoryAndExtraField(entry: entry, dataSize: size,
                                                             entryNameLength: entryName.count) { size in
                 try Data.readChunk(of: size, from: archiveFile)
             }
             // ZIP64 End of Central Directory
             let zip64EOCDOffset: UInt64 = cdOffset + cdSize
-            fseeko(archiveFile, off_t(zip64EOCDOffset), SEEK_SET)
+            fseeko(archiveFile, zip_off_t(zip64EOCDOffset), SEEK_SET)
             let zip64EOCDSize = checkZIP64EndOfCentralDirectory(archive: archive, cdSize: cdSize, cdOffset: cdOffset,
                                                                 zip64EOCDOffset: zip64EOCDOffset) { size in
                 try Data.readChunk(of: size, from: archiveFile)
@@ -62,7 +62,7 @@ extension ZIPFoundationTests {
             // End of Central Directory
             let eocdOffset = zip64EOCDOffset + zip64EOCDSize
             let eocdSize = 22
-            fseeko(archiveFile, off_t(eocdOffset), SEEK_SET)
+            fseeko(archiveFile, zip_off_t(eocdOffset), SEEK_SET)
             let eocdData = try Data.readChunk(of: eocdSize, from: archiveFile)
             XCTAssertEqual(eocdData.scanValue(start: 16), UInt32.max)
         } catch {
