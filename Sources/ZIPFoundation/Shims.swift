@@ -1,5 +1,5 @@
 //
-//  Shims+Windows.swift
+//  Shims.swift
 //  ZIPFoundation
 //
 //  Copyright © 2017-2026 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
@@ -7,12 +7,14 @@
 //
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
 //
-//  Windows-only POSIX compatibility shims. ZIPFoundation's archive-mode
+//  POSIX compatibility shims plus the cross-platform `zip_off_t` alias.
+//  The Windows-only block below lets ZIPFoundation's archive-mode
 //  bookkeeping (file vs directory vs symlink) and timestamp arithmetic
 //  use POSIX type names (`mode_t`, `S_IFLNK`, `timeval`, `suseconds_t`)
 //  and functions (`fseeko`, `timegm`) that the MSVC-flavoured Swift
-//  toolchain doesn't expose. The shims here let the same call sites
-//  compile on Windows with no `#if os(Windows)` peppering at every use.
+//  toolchain doesn't expose — without `#if os(Windows)` peppering at
+//  every call site. The tail of the file then defines `zip_off_t` on
+//  every platform so seek/truncate offsets stay 64-bit-correct.
 //
 //  These shims match POSIX semantics only as far as ZIPFoundation needs
 //  them — they're not a general-purpose POSIX-on-Windows port:

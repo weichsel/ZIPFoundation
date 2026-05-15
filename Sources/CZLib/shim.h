@@ -8,7 +8,7 @@
 //  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
 //
 
-#ifndef zlib_shim_h 
+#ifndef zlib_shim_h
 #define zlib_shim_h
 
 // `#include` instead of `#import`: clang on MSVC parses `#import` as
