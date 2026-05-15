@@ -274,117 +274,109 @@ extension FileManager {
         return externalFileAttributes
     }
 
-#if !os(Windows)
-    // POSIX implementations of the metadata helpers below. The Windows
-    // fallbacks live in `FileManager+ZIPWindows.swift` — `lstat` /
-    // `st_mtim*` aren't available there.
     class func permissionsForItem(at URL: URL) throws -> UInt16 {
-        let fileManager = FileManager()
-        let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: URL.path)
-        var fileStat = stat()
-        lstat(entryFileSystemRepresentation, &fileStat)
-        let permissions = fileStat.st_mode
-        return UInt16(permissions)
+        let attributes = try zipAttributesOfItem(at: URL)
+        guard let permissions = attributes[.posixPermissions] as? NSNumber else {
+            throw Entry.EntryError.missingPermissionsAttributeError
+        }
+        return permissions.uint16Value
     }
 
     class func fileModificationDateTimeForItem(at url: URL) throws -> Date {
+        let attributes = try zipAttributesOfItem(at: url)
+        guard let modificationDate = attributes[.modificationDate] as? Date else {
+            throw Entry.EntryError.missingModificationDateAttributeError
+        }
+        return modificationDate
+    }
+
+    class func fileSizeForItem(at url: URL) throws -> Int64 {
+        let attributes = try zipAttributesOfItem(at: url)
+        guard let size = attributes[.size] as? NSNumber else {
+            throw CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
+        }
+        return size.int64Value
+    }
+
+    class func typeForItem(at url: URL) throws -> Entry.EntryType {
+        let attributes = try zipAttributesOfItem(at: url)
+        guard let type = attributes[.type] as? FileAttributeType else {
+            throw CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
+        }
+        return entryType(for: type)
+    }
+
+    class func zipAttributesOfItem(at url: URL) throws -> [FileAttributeKey: Any] {
         let fileManager = FileManager()
-        guard fileManager.itemExists(at: url) else {
+        guard url.isFileURL, fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
         }
+#if os(Windows)
+        // Windows has no `lstat`, and reparse-point detection isn't worth
+        // the Win32 dance for our archive use case. Distinguish file vs
+        // directory via FileManager; symlinks fall back to .file.
+        var isDir: ObjCBool = false
+        _ = fileManager.fileExists(atPath: url.path, isDirectory: &isDir)
+        let entryType: Entry.EntryType = isDir.boolValue ? .directory : .file
+        let permissions = isDir.boolValue ? defaultDirectoryPermissions : defaultFilePermissions
+        // `attributesOfItem` reads the same Win32 file metadata as `_stat64`
+        // but doesn't expose nanosecond precision — fine here since ZIP's
+        // MS-DOS time format is two-second-granular anyway.
+        let attrs = try fileManager.attributesOfItem(atPath: url.path)
+        let modificationDate = (attrs[.modificationDate] as? Date) ?? Date()
+        let size: Int64
+        if entryType == .directory {
+            size = 0
+        } else if let sizeNumber = attrs[.size] as? NSNumber {
+            size = sizeNumber.int64Value
+        } else {
+            throw CocoaError(.fileReadUnknown, userInfo: [NSFilePathErrorKey: url.path])
+        }
+        return [.posixPermissions: NSNumber(value: permissions), .modificationDate: modificationDate,
+                .size: NSNumber(value: size), .type: fileAttributeType(for: entryType)]
+#else
         let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
-        lstat(entryFileSystemRepresentation, &fileStat)
+        guard lstat(entryFileSystemRepresentation, &fileStat) == 0 else {
+            throw POSIXError(errno, path: url.path)
+        }
 #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let modTimeSpec = fileStat.st_mtimespec
 #else
         let modTimeSpec = fileStat.st_mtim
 #endif
-
         let timeStamp = TimeInterval(modTimeSpec.tv_sec) + TimeInterval(modTimeSpec.tv_nsec)/1000000000.0
-        let modDate = Date(timeIntervalSince1970: timeStamp)
-        return modDate
-    }
-
-    class func fileSizeForItem(at url: URL) throws -> Int64 {
-        let fileManager = FileManager()
-        guard fileManager.itemExists(at: url) else {
-            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
+        let modificationDate = Date(timeIntervalSince1970: timeStamp)
+        let type = Entry.EntryType(mode: mode_t(fileStat.st_mode))
+        guard fileStat.st_size >= 0 else {
+            throw CocoaError(.fileReadTooLarge, userInfo: [NSFilePathErrorKey: url.path])
         }
-        let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-        var stats = stat()
-        lstat(entryFileSystemRepresentation, &stats)
-        guard stats.st_size >= 0 else { throw CocoaError(.fileReadTooLarge, userInfo: [NSFilePathErrorKey: url.path]) }
-
         // `st_size` is a signed int value
-        return Int64(stats.st_size)
+        let size = Int64(fileStat.st_size)
+        return [.posixPermissions: NSNumber(value: UInt16(fileStat.st_mode)), .modificationDate: modificationDate,
+                .size: NSNumber(value: size), .type: fileAttributeType(for: type)]
+#endif
     }
 
-    class func typeForItem(at url: URL) throws -> Entry.EntryType {
-        let fileManager = FileManager()
-        guard url.isFileURL, fileManager.itemExists(at: url) else {
-            throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
+    class func entryType(for fileAttributeType: FileAttributeType) -> Entry.EntryType {
+        switch fileAttributeType {
+        case .typeDirectory:
+            return .directory
+        case .typeSymbolicLink:
+            return .symlink
+        default:
+            return .file
         }
-        let entryFileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: url.path)
-        var fileStat = stat()
-        lstat(entryFileSystemRepresentation, &fileStat)
-        return Entry.EntryType(mode: mode_t(fileStat.st_mode))
     }
-#endif
-}
 
-extension POSIXError {
-
-    init(_ code: Int32, path: String) {
-        let errorCode = POSIXError.Code(rawValue: code) ?? .EPERM
-        self = .init(errorCode, userInfo: [NSFilePathErrorKey: path])
-    }
-}
-
-extension CocoaError {
-
-#if swift(>=4.2)
-#else
-
-#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
-#else
-
-    // The swift-corelibs-foundation version of NSError.swift was missing a convenience method to create
-    // error objects from error codes. (https://github.com/apple/swift-corelibs-foundation/pull/1420)
-    // We have to provide an implementation for non-Darwin platforms using Swift versions < 4.2.
-
-    public static func error(_ code: CocoaError.Code, userInfo: [AnyHashable: Any]? = nil, url: URL? = nil) -> Error {
-        var info: [String: Any] = userInfo as? [String: Any] ?? [:]
-        if let url = url {
-            info[NSURLErrorKey] = url
+    class func fileAttributeType(for entryType: Entry.EntryType) -> FileAttributeType {
+        switch entryType {
+        case .directory:
+            return .typeDirectory
+        case .symlink:
+            return .typeSymbolicLink
+        case .file:
+            return .typeRegular
         }
-        return NSError(domain: NSCocoaErrorDomain, code: code.rawValue, userInfo: info)
-    }
-
-#endif
-#endif
-}
-
-public extension URL {
-
-    func isContained(in parentDirectoryURL: URL) -> Bool {
-        // Ensure this URL is contained in the passed in URL
-        let parentDirectoryURL = URL(fileURLWithPath: parentDirectoryURL.path, isDirectory: true).standardized
-        // Maliciously crafted ZIP files can contain entries using a prepended path delimiter `/` in combination
-        // with the parent directory shorthand `..` to bypass our containment check.
-        // When a malicious entry path like e.g. `/../secret.txt` gets appended to the destination 
-        // directory URL (e.g. `file:///tmp/`), the resulting URL `file:///tmp//../secret.txt` gets expanded
-        // to `file:///tmp/secret` when using `URL.standardized`. This URL would pass the check performed
-        // in `isContained(in:)`.
-        // Lower level API like POSIX `fopen` - which is used at a later point during extraction - expands
-        // `/tmp//../secret.txt` to `/secret.txt` though. This would lead to an escape to the parent directory.
-        // To avoid that, we replicate the behavior of `fopen`s path expansion and replace all double delimiters
-        // with single delimiters.
-        // More details: https://github.com/weichsel/ZIPFoundation/issues/281
-        let sanitizedEntryPathURL: URL = {
-            let sanitizedPath = self.path.replacingOccurrences(of: "//", with: "/")
-            return URL(fileURLWithPath: sanitizedPath)
-        }()
-        return sanitizedEntryPathURL.standardized.absoluteString.hasPrefix(parentDirectoryURL.absoluteString)
     }
 }

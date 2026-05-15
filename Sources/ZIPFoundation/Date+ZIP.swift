@@ -2,7 +2,10 @@
 //  Date+ZIP.swift
 //  ZIPFoundation
 //
-//  Created by Thomas Zoechling on 20.12.22.
+//  Copyright © 2017-2026 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Released under the MIT License.
+//
+//  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
 //
 
 import Foundation
@@ -58,12 +61,7 @@ extension Date {
         self = Date(timeIntervalSince1970: TimeInterval(time))
     }
 
-    #if !os(Windows)
-    // `timespec` (and `stat`'s nanosecond-resolution mtim/atim fields)
-    // is a POSIX-only type; the Windows MSVC CRT only ships
-    // second-resolution `__time64_t` fields. The corresponding
-    // `lastAccessDate` extension below is also Apple-gated, so this
-    // initialiser only ever gets called from non-Windows code paths.
+    #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux) || os(Android)
     init(timespec: timespec) {
         let seconds = 1.0e-9 * Double(timespec.tv_nsec)
         let timeIntervalSince1970 = TimeInterval(timespec.tv_sec)
@@ -84,7 +82,7 @@ private extension Date {
     }
 }
 
-#if !os(Windows)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux) || os(Android)
 extension stat {
 
     var lastAccessDate: Date {

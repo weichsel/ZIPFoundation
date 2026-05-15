@@ -1,21 +1,51 @@
 //
-//  Entry+CodePage437.swift
+//  String+ZIP.swift
 //  ZIPFoundation
 //
-//  Codepage-437 → Unicode lookup used on platforms without `CFStringEncoding`
-//  (Linux / Windows / Android). On Apple platforms the Foundation /
-//  CoreFoundation pair handles cp437 natively; the lookup here matches that
-//  behaviour byte-for-byte for archives created on legacy MS-DOS toolchains.
+//  Copyright © 2017-2026 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Released under the MIT License.
 //
-//  Source: https://en.wikipedia.org/wiki/Code_page_437#Character_set
+//  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
 //
-
-#if os(Linux) || os(Windows) || os(Android)
 
 import Foundation
 
+extension String.Encoding {
+
+    #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
+    static let codepage437: Self = {
+        let dosLatinUS = 0x400
+        let dosLatinUSEncoding = CFStringEncoding(dosLatinUS)
+        let dosLatinUSStringEncoding = CFStringConvertEncodingToNSStringEncoding(dosLatinUSEncoding)
+        return String.Encoding(rawValue: dosLatinUSStringEncoding)
+    }()
+    #else
+    static let codepage437 = String.Encoding(rawValue: 0x400)
+    #endif
+}
+
 extension String {
 
+    // Codepage-437 to Unicode lookup used on platforms without `CFStringEncoding`
+    // (Linux / Windows / Android). On Apple platforms the Foundation /
+    // CoreFoundation pair handles cp437 natively; the lookup here matches that
+    // behavior byte-for-byte for archives created on legacy MS-DOS toolchains.
+    //
+    // Source: https://en.wikipedia.org/wiki/Code_page_437#Character_set
+    init(pathData: Data, encoding: String.Encoding) {
+        #if os(Linux) || os(Windows) || os(Android)
+        if encoding == .codepage437 {
+            self.init()
+            for byte in pathData {
+                self.unicodeScalars.append(Self.cp437Lookup[Int(byte)])
+            }
+            return
+        }
+        #endif
+        self = String(data: pathData, encoding: encoding) ?? ""
+    }
+
+    #if os(Linux) || os(Windows) || os(Android)
     static let cp437Lookup: [UnicodeScalar] = [
         0x0000, 0x263A, 0x263B, 0x2665, 0x2666, 0x2663, 0x2660, 0x2022,
         0x25D8, 0x25CB, 0x25D9, 0x2642, 0x2640, 0x266A, 0x266B, 0x263C,
@@ -50,6 +80,5 @@ extension String {
         0x2261, 0x00B1, 0x2265, 0x2264, 0x2329, 0x2321, 0x00F7, 0x2248,
         0x00B0, 0x2219, 0x00B7, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0
     ].map { UnicodeScalar($0)! }
+    #endif
 }
-
-#endif

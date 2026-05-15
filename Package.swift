@@ -1,7 +1,4 @@
-// swift-tools-version:5.3
-// 5.3 is the minimum version that supports `.when(platforms:)` for
-// linkerSettings, which we need to map zlib's library name correctly
-// across Linux (`-lz`) / Windows (`zlib.lib`).
+// swift-tools-version:5.0
 import PackageDescription
 
 #if canImport(Compression)
@@ -19,14 +16,7 @@ let targets: [Target] = [
         name: "ZIPFoundation",
         dependencies: ["CZLib"],
         cSettings: [.define("_GNU_SOURCE", to: "1")],
-        // Per-platform link library. Windows vcpkg installs `zlib.lib`
-        // so we link `zlib`; Linux / Android ship `libz.so` aka `-lz`.
-        // Apple takes the canImport(Compression) branch above and
-        // doesn't reach here.
-        linkerSettings: [
-            .linkedLibrary("z", .when(platforms: [.linux, .android])),
-            .linkedLibrary("zlib", .when(platforms: [.windows]))
-        ]),
+        linkerSettings: [.linkedLibrary("z")]),
     .testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
 ]
 #endif

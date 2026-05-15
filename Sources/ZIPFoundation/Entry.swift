@@ -331,33 +331,3 @@ extension Entry.CentralDirectoryStructure {
         return UInt64(relativeOffsetOfLocalHeader)
     }
 }
-
-extension String.Encoding {
-
-    #if canImport(CoreFoundation)
-    static let codepage437: Self = {
-        let dosLatinUS = 0x400
-        let dosLatinUSEncoding = CFStringEncoding(dosLatinUS)
-        let dosLatinUSStringEncoding = CFStringConvertEncodingToNSStringEncoding(dosLatinUSEncoding)
-        return String.Encoding(rawValue: dosLatinUSStringEncoding)
-    }()
-    #else
-    static let codepage437 = String.Encoding(rawValue: 0x400)
-    #endif
-}
-
-extension String {
-
-    init(pathData: Data, encoding: String.Encoding) {
-        #if os(Linux) || os(Windows) || os(Android)
-        if encoding == .codepage437 {
-            self.init()
-            for byte in pathData {
-                self.unicodeScalars.append(Self.cp437Lookup[Int(byte)])
-            }
-            return
-        }
-        #endif
-        self = String(data: pathData, encoding: encoding) ?? ""
-    }
-}
