@@ -68,6 +68,7 @@ extension ZIPFoundationTests {
     }
 
     func testSymlinkModificationDateTransferErrorConditions() {
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let fileManager = FileManager()
         var assetURL = self.resourceURL(for: #function, pathExtension: "png")
         let tempPath = NSTemporaryDirectory()
@@ -75,7 +76,6 @@ extension ZIPFoundationTests {
         nonExistantURL.appendPathComponent("invalid.path")
         XCTAssertPOSIXError(try fileManager.setSymlinkModificationDate(Date(), ofItemAtURL: nonExistantURL),
                             throwsErrorWithCode: .ENOENT)
-#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         var resourceValues = URLResourceValues()
         resourceValues.isUserImmutable = true
         try? assetURL.setResourceValues(resourceValues)
