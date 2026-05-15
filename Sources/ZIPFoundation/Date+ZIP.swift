@@ -8,8 +8,6 @@
 import Foundation
 #if canImport(Android)
 import Android
-#elseif canImport(Bionic)
-import Bionic
 #endif
 
 extension Date {

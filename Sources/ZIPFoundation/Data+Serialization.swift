@@ -11,13 +11,11 @@
 import Foundation
 #if canImport(Android)
 import Android
-#elseif canImport(Bionic)
-import Bionic
 #endif
 
-// Bionic imports `FILE` as opaque; everywhere else (including Windows
-// MSVC, where it's `_iobuf`) it's a typed struct so we can take a
-// typed pointer.
+// The Swift Android SDK imports `FILE` as opaque; everywhere else
+// (including Windows MSVC, where it's `_iobuf`) it's a typed struct so
+// we can take a typed pointer.
 #if os(Android)
 public typealias FILEPointer = OpaquePointer
 #else

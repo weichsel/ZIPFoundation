@@ -92,9 +92,10 @@ public func ftruncate(_ descriptor: Int32, _ length: Int64) -> Int32 {
 // `fseeko(file, zip_off_t(offset), SEEK_SET)` once and have it expand
 // to the right 64-bit signed integer on every host.
 //
-// `off_t` is provided by Darwin / Glibc / Bionic on those platforms;
-// the explicit imports here keep this file standalone (no transitive
-// reliance on `import Foundation` from elsewhere in the module).
+// `off_t` is provided by Darwin / Glibc / Musl / Android on those
+// platforms; the explicit imports here keep this file standalone (no
+// transitive reliance on `import Foundation` from elsewhere in the
+// module).
 #if os(Windows)
 public typealias zip_off_t = Int64
 #else
@@ -106,8 +107,6 @@ import Glibc
 import Musl
 #elseif canImport(Android)
 import Android
-#elseif canImport(Bionic)
-import Bionic
 #endif
 public typealias zip_off_t = off_t
 #endif

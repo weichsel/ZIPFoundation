@@ -14,8 +14,6 @@ import CoreFoundation
 #endif
 #if canImport(Android)
 import Android
-#elseif canImport(Bionic)
-import Bionic
 #endif
 
 /// A value that represents a file, a directory or a symbolic link within a ZIP `Archive`.

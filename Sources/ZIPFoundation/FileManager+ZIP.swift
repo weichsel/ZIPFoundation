@@ -11,8 +11,6 @@
 import Foundation
 #if canImport(Android)
 import Android
-#elseif canImport(Bionic)
-import Bionic
 #endif
 
 extension FileManager {
@@ -201,9 +199,9 @@ extension FileManager {
 
 #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
     // `lchmod` and `lutimes` are Apple-only (Glibc gained `lchmod` in 2.32 but
-    // the Linux kernel ignores permission bits on symlinks; Bionic ships
-    // neither). Match the Apple-gated call sites above and only define the
-    // helpers where they're usable.
+    // the Linux kernel ignores permission bits on symlinks; the Swift Android
+    // SDK ships neither). Match the Apple-gated call sites above and only
+    // define the helpers where they're usable.
     func setSymlinkPermissions(_ posixPermissions: NSNumber, ofItemAtURL url: URL) throws {
         let fileSystemRepresentation = self.fileSystemRepresentation(withPath: url.path)
         let modeT = posixPermissions.uint16Value
