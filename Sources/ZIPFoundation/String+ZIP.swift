@@ -12,7 +12,7 @@ import Foundation
 
 extension String.Encoding {
 
-    #if canImport(CoreFoundation)
+    #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
     static let codepage437: Self = {
         let dosLatinUS = 0x400
         let dosLatinUSEncoding = CFStringEncoding(dosLatinUS)
