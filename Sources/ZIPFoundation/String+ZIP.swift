@@ -20,6 +20,10 @@ extension String.Encoding {
         return String.Encoding(rawValue: dosLatinUSStringEncoding)
     }()
     #else
+    // Sentinel value — Foundation on non-Apple platforms does not recognize this
+    // raw value as an encoding. Decoding is routed through `cp437Lookup` in the
+    // `init(pathData:encoding:)` initializer below; passing this encoding to any
+    // other Foundation API will yield nil/empty results.
     static let codepage437 = String.Encoding(rawValue: 0x400)
     #endif
 }
