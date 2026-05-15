@@ -306,7 +306,7 @@ extension FileManager {
         return entryType(for: type)
     }
 
-    private class func zipFileAttributes(at url: URL) throws -> [FileAttributeKey: Any] {
+    class func zipFileAttributes(at url: URL) throws -> [FileAttributeKey: Any] {
         let fileManager = FileManager()
         guard url.isFileURL, fileManager.itemExists(at: url) else {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: url.path])
@@ -358,7 +358,7 @@ extension FileManager {
 #endif
     }
 
-    private class func entryType(for fileAttributeType: FileAttributeType) -> Entry.EntryType {
+    class func entryType(for fileAttributeType: FileAttributeType) -> Entry.EntryType {
         switch fileAttributeType {
         case .typeDirectory:
             return .directory
@@ -369,7 +369,7 @@ extension FileManager {
         }
     }
 
-    private class func fileAttributeType(for entryType: Entry.EntryType) -> FileAttributeType {
+    class func fileAttributeType(for entryType: Entry.EntryType) -> FileAttributeType {
         switch entryType {
         case .directory:
             return .typeDirectory

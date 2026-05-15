@@ -13,7 +13,7 @@ import Foundation
 import XCTest
 @testable import ZIPFoundation
 
-#if swift(>=5.0) && !os(Windows) && !os(Android)
+#if swift(>=5.0) && (os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux))
 
 extension ZIPFoundationTests {
 

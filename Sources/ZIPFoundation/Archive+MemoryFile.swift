@@ -15,11 +15,9 @@ extension Archive {
 }
 
 // In-memory archives rely on a `FILE*`-shaped userspace stream API:
-// `funopen` on Apple, `fopencookie` on Linux glibc. Windows MSVC has
-// no equivalent, and the Swift Android SDK does not expose the
-// `fopencookie` cookie struct. The feature is therefore unavailable
-// on Windows / Android — file-backed archives continue to work.
-#if swift(>=5.0) && !os(Windows) && !os(Android)
+// `funopen` on Apple, `fopencookie` on Linux glibc. File-backed archives
+// continue to work on platforms without a compatible userspace stream API.
+#if swift(>=5.0) && (os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux))
 
 extension Archive {
 

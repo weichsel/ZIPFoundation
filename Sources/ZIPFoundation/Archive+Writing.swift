@@ -233,7 +233,7 @@ extension Archive {
 
     func replaceCurrentArchive(with archive: Archive) throws {
         if self.isMemoryArchive {
-            #if swift(>=5.0) && !os(Windows) && !os(Android)
+            #if swift(>=5.0) && (os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux))
             guard let data = archive.data else {
                 throw ArchiveError.unwritableArchive
             }
@@ -298,7 +298,7 @@ private extension Archive {
         var archive: Archive
         var url: URL?
         if self.isMemoryArchive {
-            #if swift(>=5.0) && !os(Windows) && !os(Android)
+            #if swift(>=5.0) && (os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux))
             archive = try Archive(data: Data(), accessMode: .create,
                                   pathEncoding: self.pathEncoding)
             #else

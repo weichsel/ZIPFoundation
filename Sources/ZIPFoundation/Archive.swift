@@ -190,7 +190,7 @@ public final class Archive: Sequence {
         setvbuf(self.archiveFile, nil, _IOFBF, Int(defaultPOSIXBufferSize))
     }
 
-    #if swift(>=5.0) && !os(Windows) && !os(Android)
+    #if swift(>=5.0) && (os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux))
     var memoryFile: MemoryFile?
 
     /// Initializes a new in-memory ZIP `Archive`.
