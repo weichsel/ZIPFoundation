@@ -77,7 +77,7 @@ extension ZIPFoundationTests {
             let lfhExtraFieldOffset = 30 + entryNameLength
             let lfhSize = lfhExtraFieldOffset + 20
             let lfhData = try readData(lfhSize)
-            XCTAssertEqual(lfhData.scanValue(start: 4), Archive.Version.v45)
+            XCTAssertEqual(lfhData.scanValue(start: 4), Archive.Version.v45.rawValue)
             XCTAssertEqual(lfhData.scanValue(start: 18), UInt32.max)
             XCTAssertEqual(lfhData.scanValue(start: 22), UInt32.max)
             XCTAssertEqual(lfhData.scanValue(start: lfhExtraFieldOffset), UInt16(1))
@@ -101,7 +101,7 @@ extension ZIPFoundationTests {
             let relativeCDExtraFieldOffset = 46 + entryNameLength
             let cdSize = relativeCDExtraFieldOffset + 20
             let cdData = try readData(cdSize)
-            XCTAssertEqual(cdData.scanValue(start: 6), Archive.Version.v45)
+            XCTAssertEqual(cdData.scanValue(start: 6), Archive.Version.v45.rawValue)
             XCTAssertEqual(cdData.scanValue(start: 20), UInt32.max)
             XCTAssertEqual(cdData.scanValue(start: 24), UInt32.max)
             XCTAssertEqual(cdData.scanValue(start: relativeCDExtraFieldOffset), UInt16(1))
