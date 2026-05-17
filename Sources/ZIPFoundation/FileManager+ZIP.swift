@@ -205,7 +205,7 @@ extension FileManager {
 
         try self.setSymlinkModificationDate(modificationDate, ofItemAtURL: url)
 #else
-        // Bionic and Windows lack a fully equivalent symlink-targeted
+        // Some platforms lack a fully equivalent symlink-targeted
         // `lutimes`; leave this codepath as a no-op there.
         return
 #endif
