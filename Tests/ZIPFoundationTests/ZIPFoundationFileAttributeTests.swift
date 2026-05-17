@@ -74,9 +74,17 @@ extension ZIPFoundationTests {
                             throws: Entry.EntryError.missingModificationDateAttributeError)
         XCTAssertPOSIXError(try fileManager.setSymlinkModificationDate(Date(), ofItemAtURL: nonExistentURL),
                             throwsErrorWithCode: .ENOENT)
-        XCTAssertPOSIXError(try fileManager.setAttributes([.posixPermissions: providedPermissions, .modificationDate: Date()],
-                                                          ofItemAtURL: nonExistentURL, traverseLink: false),
-                             throwsErrorWithCode: .ENOENT)
+        XCTAssertPOSIXError(
+            try fileManager.setAttributes(
+                [
+                    .posixPermissions: providedPermissions,
+                    .modificationDate: Date()
+                ],
+                ofItemAtURL: nonExistentURL,
+                traverseLink: false
+            ),
+            throwsErrorWithCode: .ENOENT
+        )
 #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         var resourceValues = URLResourceValues()
         resourceValues.isUserImmutable = true
