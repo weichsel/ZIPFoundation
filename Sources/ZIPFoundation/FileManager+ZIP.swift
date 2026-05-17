@@ -223,7 +223,9 @@ extension FileManager {
             throw POSIXError(errno, path: url.path)
         }
     }
+#endif
 
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux)
     func setSymlinkModificationDate(_ modificationDate: Date, ofItemAtURL url: URL) throws {
         let fileSystemRepresentation = self.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
