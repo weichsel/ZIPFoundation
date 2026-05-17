@@ -59,12 +59,6 @@ extension ZIPFoundationTests {
         XCTAssertPOSIXError(try fileManager.setAttributes([.posixPermissions: permissions],
                                                           ofItemAtURL: nonExistantURL, traverseLink: false),
                             throwsErrorWithCode: .ENOENT)
-        XCTAssertSwiftError(try fileManager.setAttributes([.posixPermissions: permissions],
-                                                          ofItemAtURL: assetURL, traverseLink: false),
-                            throws: Entry.EntryError.missingModificationDateAttributeError)
-        XCTAssertPOSIXError( try fileManager.setAttributes([.posixPermissions: permissions, .modificationDate: Date()],
-                                                           ofItemAtURL: nonExistantURL, traverseLink: false),
-                             throwsErrorWithCode: .ENOENT)
     }
 
     func testSymlinkModificationDateTransferErrorConditions() {
@@ -74,8 +68,15 @@ extension ZIPFoundationTests {
         let tempPath = NSTemporaryDirectory()
         var nonExistantURL = URL(fileURLWithPath: tempPath)
         nonExistantURL.appendPathComponent("invalid.path")
+        let requiredPermissions = NSNumber(value: Int16(0o753))
+        XCTAssertSwiftError(try fileManager.setAttributes([.posixPermissions: requiredPermissions],
+                                                          ofItemAtURL: assetURL, traverseLink: false),
+                            throws: Entry.EntryError.missingModificationDateAttributeError)
         XCTAssertPOSIXError(try fileManager.setSymlinkModificationDate(Date(), ofItemAtURL: nonExistantURL),
                             throwsErrorWithCode: .ENOENT)
+        XCTAssertPOSIXError( try fileManager.setAttributes([.posixPermissions: requiredPermissions, .modificationDate: Date()],
+                                                           ofItemAtURL: nonExistantURL, traverseLink: false),
+                             throwsErrorWithCode: .ENOENT)
 #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         var resourceValues = URLResourceValues()
         resourceValues.isUserImmutable = true
