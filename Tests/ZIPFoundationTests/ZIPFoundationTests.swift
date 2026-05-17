@@ -255,7 +255,7 @@ extension ZIPFoundationTests {
             ("testFileModificationDate", testFileModificationDate),
             ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
             ("testInvalidSymlinkCompressionMethodErrorConditions", testInvalidSymlinkCompressionMethodErrorConditions)
-        ] + zip64Tests + darwinOnlyTests + swift5OnlyTests
+        ] + zip64Tests + darwinOnlyTests + posixOnlyTests + swift5OnlyTests
     }
 
     static var zip64Tests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
@@ -318,8 +318,16 @@ extension ZIPFoundationTests {
             // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
             ("testZipItemErrorConditions", testZipItemErrorConditions),
             // Applying permissions on symlinks is only relevant on Darwin platforms
-            ("testSymlinkPermissionsTransferErrorConditions", testSymlinkPermissionsTransferErrorConditions),
-            // Applying file modification dates is currently unsupported in corelibs Foundation
+            ("testSymlinkPermissionsTransferErrorConditions", testSymlinkPermissionsTransferErrorConditions)
+        ]
+        #else
+        return []
+        #endif
+    }
+
+    static var posixOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
+        #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux)
+        return [
             ("testSymlinkModificationDateTransferErrorConditions", testSymlinkModificationDateTransferErrorConditions)
         ]
         #else

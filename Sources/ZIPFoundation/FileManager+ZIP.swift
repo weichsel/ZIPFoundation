@@ -205,7 +205,7 @@ extension FileManager {
 
         try self.setSymlinkModificationDate(modificationDate, ofItemAtURL: url)
 #else
-        // Bionic and Windows lack a fully equivalent symlink-targeted
+        // Some platforms lack a fully equivalent symlink-targeted
         // `lutimes`; leave this codepath as a no-op there.
         return
 #endif
@@ -223,7 +223,9 @@ extension FileManager {
             throw POSIXError(errno, path: url.path)
         }
     }
+#endif
 
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux)
     func setSymlinkModificationDate(_ modificationDate: Date, ofItemAtURL url: URL) throws {
         let fileSystemRepresentation = self.fileSystemRepresentation(withPath: url.path)
         var fileStat = stat()
