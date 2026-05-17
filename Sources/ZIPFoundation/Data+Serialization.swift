@@ -9,7 +9,13 @@
 //
 
 import Foundation
+#if canImport(Android)
+import Android
+#endif
 
+// The Swift Android SDK imports `FILE` as opaque; everywhere else
+// (including Windows MSVC, where it's `_iobuf`) it's a typed struct so
+// we can take a typed pointer.
 #if os(Android)
 public typealias FILEPointer = OpaquePointer
 #else
@@ -37,7 +43,7 @@ extension Data {
     static func readStruct<T>(from file: FILEPointer, at offset: UInt64)
     -> T? where T: DataSerializable {
         guard offset <= .max else { return nil }
-        fseeko(file, off_t(offset), SEEK_SET)
+        fseeko(file, zip_off_t(offset), SEEK_SET)
         guard let data = try? self.readChunk(of: T.size, from: file) else {
             return nil
         }

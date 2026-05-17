@@ -14,7 +14,10 @@ extension Archive {
     var isMemoryArchive: Bool { return self.url.scheme == memoryURLScheme }
 }
 
-#if swift(>=5.0)
+// In-memory archives rely on a `FILE*`-shaped userspace stream API:
+// `funopen` on Apple, `fopencookie` on Linux glibc. File-backed archives
+// continue to work on platforms without a compatible userspace stream API.
+#if swift(>=5.0) && (os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux))
 
 extension Archive {
 
@@ -29,7 +32,7 @@ extension Archive {
 
         func open(mode: AccessMode) throws -> FILEPointer {
             let cookie = Unmanaged.passRetained(self)
-            #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Android)
+            #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
             guard let result = mode.isWritable
                 ? funopen(cookie.toOpaque(), readStub, writeStub, seekStub, closeStub)
                 : funopen(cookie.toOpaque(), readStub, nil, seekStub, closeStub)
@@ -106,7 +109,7 @@ private func closeStub(_ cookie: UnsafeMutableRawPointer?) -> Int32 {
     return 0
 }
 
-#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Android)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
 
 private func readStub(_ cookie: UnsafeMutableRawPointer?,
                       _ bytePtr: UnsafeMutablePointer<Int8>?,

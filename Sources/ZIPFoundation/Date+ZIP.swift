@@ -2,10 +2,16 @@
 //  Date+ZIP.swift
 //  ZIPFoundation
 //
-//  Created by Thomas Zoechling on 20.12.22.
+//  Copyright © 2017-2026 Thomas Zoechling, https://www.peakstep.com and the ZIP Foundation project authors.
+//  Released under the MIT License.
+//
+//  See https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE for license information.
 //
 
 import Foundation
+#if canImport(Android)
+import Android
+#endif
 
 extension Date {
 
@@ -55,12 +61,14 @@ extension Date {
         self = Date(timeIntervalSince1970: TimeInterval(time))
     }
 
+    #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux) || os(Android)
     init(timespec: timespec) {
         let seconds = 1.0e-9 * Double(timespec.tv_nsec)
         let timeIntervalSince1970 = TimeInterval(timespec.tv_sec)
         let absoluteTimeIntervalSince1970 = Constants.absoluteTimeIntervalSince1970
         self.init(timeIntervalSinceReferenceDate: (timeIntervalSince1970 - absoluteTimeIntervalSince1970) + seconds)
     }
+    #endif
 }
 
 private extension Date {
@@ -74,6 +82,7 @@ private extension Date {
     }
 }
 
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux) || os(Android)
 extension stat {
 
     var lastAccessDate: Date {
@@ -92,3 +101,4 @@ extension timeval {
         self.init(tv_sec: time_t(integral), tv_usec: suseconds_t(1.0e6 * fractional))
     }
 }
+#endif

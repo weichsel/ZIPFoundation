@@ -1,21 +1,8 @@
 // swift-tools-version:5.9
 import PackageDescription
 
-#if canImport(Compression)
-let targets: [Target] = [
-    .target(name: "ZIPFoundation",
-            resources: [
-                .copy("Resources/PrivacyInfo.xcprivacy")
-            ]),
-    .testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
-]
-#else
-let targets: [Target] = [
-    .systemLibrary(name: "CZLib", pkgConfig: "zlib", providers: [.brew(["zlib"]), .apt(["zlib"])]),
-    .target(name: "ZIPFoundation", dependencies: ["CZLib"], cSettings: [.define("_GNU_SOURCE", to: "1")]),
-    .testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
-]
-#endif
+let zlibPlatforms: [Platform] = [.linux, .android, .windows]
+let unixZlibPlatforms: [Platform] = [.linux, .android]
 
 let package = Package(
     name: "ZIPFoundation",
@@ -25,6 +12,27 @@ let package = Package(
     products: [
         .library(name: "ZIPFoundation", targets: ["ZIPFoundation"])
     ],
-    targets: targets,
+    targets: [
+        .target(
+            name: "ZIPFoundation",
+            dependencies: [
+                .target(name: "CZLib", condition: .when(platforms: zlibPlatforms))
+            ],
+            resources: [
+                .copy("Resources/PrivacyInfo.xcprivacy")
+            ],
+            cSettings: [
+                .define("_GNU_SOURCE", to: "1", .when(platforms: unixZlibPlatforms))
+            ],
+            linkerSettings: [
+                .linkedLibrary("z", .when(platforms: unixZlibPlatforms)),
+                .linkedLibrary("zlib", .when(platforms: [.windows]))
+            ]),
+        .systemLibrary(
+            name: "CZLib",
+            pkgConfig: "zlib",
+            providers: [.brew(["zlib"]), .apt(["zlib"])]),
+        .testTarget(name: "ZIPFoundationTests", dependencies: ["ZIPFoundation"])
+    ],
     swiftLanguageVersions: [.v4, .v4_2, .v5]
 )

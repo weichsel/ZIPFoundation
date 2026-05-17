@@ -9,6 +9,9 @@
 //
 
 import Foundation
+#if canImport(Android)
+import Android
+#endif
 
 extension Archive {
 
@@ -16,7 +19,7 @@ extension Archive {
         let file: FILEPointer
         let endOfCentralDirectoryRecord: EndOfCentralDirectoryRecord
         let zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?
-        #if swift(>=5.0)
+        #if swift(>=5.0) && (os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux))
         let memoryFile: MemoryFile?
 
         init(file: FILEPointer,
@@ -82,7 +85,7 @@ extension Archive {
         }
     }
 
-    #if swift(>=5.0)
+    #if swift(>=5.0) && (os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux))
     static func makeBackingConfiguration(for data: Data, mode: AccessMode) throws
     -> BackingConfiguration {
         let memoryFile = MemoryFile(data: data)

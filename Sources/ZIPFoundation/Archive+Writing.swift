@@ -9,6 +9,9 @@
 //
 
 import Foundation
+#if canImport(Android)
+import Android
+#endif
 
 extension Archive {
     enum ModifyOperation: Int {
@@ -124,10 +127,10 @@ extension Archive {
         let (eocdRecord, zip64EOCD) = (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory)
         guard self.offsetToStartOfCentralDirectory <= .max else { throw ArchiveError.invalidCentralDirectoryOffset }
         var startOfCD = Int64(self.offsetToStartOfCentralDirectory)
-        fseeko(self.archiveFile, off_t(startOfCD), SEEK_SET)
+        fseeko(self.archiveFile, zip_off_t(startOfCD), SEEK_SET)
         let existingSize = self.sizeOfCentralDirectory
         let existingData = try Data.readChunk(of: Int(existingSize), from: self.archiveFile)
-        fseeko(self.archiveFile, off_t(startOfCD), SEEK_SET)
+        fseeko(self.archiveFile, zip_off_t(startOfCD), SEEK_SET)
         let fileHeaderStart = Int64(ftello(self.archiveFile))
         guard fileHeaderStart >= 0 else { throw ArchiveError.unwritableArchive }
 
@@ -146,12 +149,12 @@ extension Archive {
             guard startOfCD >= 0 else { throw ArchiveError.unwritableArchive }
 
             // Write the local file header a second time. Now with compressedSize (if applicable) and a valid checksum.
-            fseeko(self.archiveFile, off_t(fileHeaderStart), SEEK_SET)
+            fseeko(self.archiveFile, zip_off_t(fileHeaderStart), SEEK_SET)
             localFileHeader = try self.writeLocalFileHeader(path: path, compressionMethod: compressionMethod,
                                                             size: (UInt64(uncompressedSize), UInt64(written)),
                                                             checksum: checksum, modificationDateTime: modDateTime)
             // Central Directory
-            fseeko(self.archiveFile, off_t(startOfCD), SEEK_SET)
+            fseeko(self.archiveFile, zip_off_t(startOfCD), SEEK_SET)
             _ = try Data.writeLargeChunk(existingData, size: existingSize, bufferSize: bufferSize, to: archiveFile)
             let permissions = permissions ?? (type == .directory ? defaultDirectoryPermissions : defaultFilePermissions)
             let externalAttributes = FileManager.externalFileAttributesForEntry(of: type, permissions: permissions)
@@ -191,7 +194,7 @@ extension Archive {
             let cds = currentEntry.centralDirectoryStructure
             if currentEntry != entry {
                 let entryStart = cds.effectiveRelativeOffsetOfLocalHeader
-                fseeko(self.archiveFile, off_t(entryStart), SEEK_SET)
+                fseeko(self.archiveFile, zip_off_t(entryStart), SEEK_SET)
                 let provider: Provider = { (_, chunkSize) -> Data in
                     return try Data.readChunk(of: chunkSize, from: self.archiveFile)
                 }
@@ -230,7 +233,7 @@ extension Archive {
 
     func replaceCurrentArchive(with archive: Archive) throws {
         if self.isMemoryArchive {
-            #if swift(>=5.0)
+            #if swift(>=5.0) && (os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux))
             guard let data = archive.data else {
                 throw ArchiveError.unwritableArchive
             }
@@ -280,8 +283,8 @@ private extension Archive {
                   _ bufferSize: Int, _ endOfCentralDirRecord: EndOfCentralDirectoryRecord,
                   _ zip64EndOfCentralDirectory: ZIP64EndOfCentralDirectory?) throws {
         fflush(self.archiveFile)
-        ftruncate(fileno(self.archiveFile), off_t(localFileHeaderStart))
-        fseeko(self.archiveFile, off_t(localFileHeaderStart), SEEK_SET)
+        ftruncate(fileno(self.archiveFile), zip_off_t(localFileHeaderStart))
+        fseeko(self.archiveFile, zip_off_t(localFileHeaderStart), SEEK_SET)
         _ = try Data.writeLargeChunk(existingCentralDirectory.data, size: existingCentralDirectory.size,
                                      bufferSize: bufferSize, to: archiveFile)
         _ = try Data.write(chunk: existingCentralDirectory.data, to: self.archiveFile)
@@ -295,7 +298,7 @@ private extension Archive {
         var archive: Archive
         var url: URL?
         if self.isMemoryArchive {
-            #if swift(>=5.0)
+            #if swift(>=5.0) && (os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux))
             archive = try Archive(data: Data(), accessMode: .create,
                                   pathEncoding: self.pathEncoding)
             #else
