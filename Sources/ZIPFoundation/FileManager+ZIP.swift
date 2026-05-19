@@ -98,6 +98,11 @@ extension FileManager {
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
     ///   - symlinksValidWithin: Any symlink target that resolves outside this URL is rejected for security reasons.
     ///                          Pass `.rootFS` to allow symlinks to point anywhere on the filesystem.
+    ///   - maxExtractedBytes: Optional cap on the cumulative number of decompressed bytes produced across
+    ///                        all entries (and AppleDouble companions). `ArchiveError.extractedByteLimitExceeded`
+    ///                        is thrown if the limit is crossed. Use this to defend against zip bombs when
+    ///                        extracting untrusted archives. Partial output on disk is not cleaned up on
+    ///                        throw — the caller is responsible for that. Default is `nil` (no limit).
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
     ///   - pathEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     ///   - preservesAppleMetadata: When `true`, `__MACOSX/.../._<name>` AppleDouble companion entries
@@ -108,6 +113,7 @@ extension FileManager {
     /// - Throws: Throws an error if the source item does not exist or the destination URL is not writable.
     public func unzipItem(at sourceURL: URL, to destinationURL: URL,
                           skipCRC32: Bool = false, symlinksValidWithin: URL? = nil,
+                          maxExtractedBytes: Int64? = nil,
                           progress: Progress? = nil, pathEncoding: String.Encoding? = nil,
                           preservesAppleMetadata: Bool = true) throws {
         guard self.itemExists(at: sourceURL) else {
@@ -116,6 +122,7 @@ extension FileManager {
         let archive = try Archive(url: sourceURL, accessMode: .read, pathEncoding: pathEncoding)
         try self.unzipItem(archive, to: destinationURL,
                            skipCRC32: skipCRC32, symlinksValidWithin: symlinksValidWithin,
+                           maxExtractedBytes: maxExtractedBytes,
                            progress: progress, pathEncoding: pathEncoding,
                            preservesAppleMetadata: preservesAppleMetadata)
     }
@@ -132,6 +139,11 @@ extension FileManager {
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
     ///   - symlinksValidWithin: Any symlink target that resolves outside this URL is rejected for security reasons.
     ///                          Pass `.rootFS` to allow symlinks to point anywhere on the filesystem.
+    ///   - maxExtractedBytes: Optional cap on the cumulative number of decompressed bytes produced across
+    ///                        all entries (and AppleDouble companions). `ArchiveError.extractedByteLimitExceeded`
+    ///                        is thrown if the limit is crossed. Use this to defend against zip bombs when
+    ///                        extracting untrusted archives. Partial output on disk is not cleaned up on
+    ///                        throw — the caller is responsible for that. Default is `nil` (no limit).
     ///   - progress: A progress object that can be used to track or cancel the unzip operation.
     ///   - pathEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     ///   - preservesAppleMetadata: When `true`, `__MACOSX/.../._<name>` AppleDouble companion entries
@@ -142,6 +154,7 @@ extension FileManager {
     /// - Throws: Throws an error if the destination URL is not writable.
     public func unzipItem(_ archive: Archive, to destinationURL: URL,
                           skipCRC32: Bool = false, symlinksValidWithin: URL? = nil,
+                          maxExtractedBytes: Int64? = nil,
                           progress: Progress? = nil, pathEncoding: String.Encoding? = nil,
                           preservesAppleMetadata: Bool = true) throws {
         var totalUnitCount = Int64(0)
@@ -150,6 +163,9 @@ extension FileManager {
             totalUnitCount = archive.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
             progress.totalUnitCount = totalUnitCount
         }
+
+        // Single budget shared across every per-entry extract so the cap is cumulative, not per-entry.
+        let budget = maxExtractedBytes.map { Archive.ByteBudget(limit: $0) }
 
         // Companion AppleDouble entries may appear in any order relative to their paired real
         // entries. We buffer the parsed payloads and apply them after the main extraction pass.
@@ -167,7 +183,8 @@ extension FileManager {
                 }
                 if let pairedPath = FileManager.realEntryPath(fromAppleDoubleCompanionPath: path) {
                     var buffer = Data()
-                    let consumer: Consumer = { buffer.append($0) }
+                    let rawConsumer: Consumer = { buffer.append($0) }
+                    let consumer = budget?.wrap(rawConsumer) ?? rawConsumer
                     if let progress = progress {
                         let entryProgress = archive.makeProgressForReading(entry)
                         progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
@@ -196,12 +213,14 @@ extension FileManager {
                 crc32 = try archive.extract(entry, to: entryURL,
                                             skipCRC32: skipCRC32,
                                             symlinksValidWithin: symlinksValidWithin,
+                                            budget: budget,
                                             progress: entryProgress,
                                             preservesAppleMetadata: false)
             } else {
                 crc32 = try archive.extract(entry, to: entryURL,
                                             skipCRC32: skipCRC32,
                                             symlinksValidWithin: symlinksValidWithin,
+                                            budget: budget,
                                             preservesAppleMetadata: false)
             }
 

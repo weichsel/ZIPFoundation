@@ -11,6 +11,30 @@
 import Foundation
 
 extension Archive {
+
+    /// Mutable byte counter shared across one or more `extract` calls to enforce a cumulative cap
+    /// on decompressed output. Constructed at the top of `unzipItem` and threaded through each
+    /// per-entry extract so a single archive-wide budget can be enforced regardless of how many
+    /// entries (or AppleDouble companions) are extracted.
+    final class ByteBudget {
+        let limit: Int64
+        var consumed: Int64 = 0
+
+        init(limit: Int64) { self.limit = limit }
+
+        /// Wraps `consumer` so each chunk is charged against the budget before being forwarded.
+        /// Throws `ArchiveError.extractedByteLimitExceeded` if the cumulative total would exceed
+        /// `limit`. The check runs before the inner consumer, so the inner side effect (file
+        /// write, in-memory append) does not happen for the overshooting chunk.
+        func wrap(_ consumer: @escaping Consumer) -> Consumer {
+            return { data in
+                self.consumed += Int64(data.count)
+                if self.consumed > self.limit { throw ArchiveError.extractedByteLimitExceeded }
+                try consumer(data)
+            }
+        }
+    }
+
     /// Read a ZIP `Entry` from the receiver and write it to `url`.
     ///
     /// - Parameters:
@@ -20,6 +44,11 @@ extension Archive {
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
     ///   - symlinksValidWithin: Any symlink target that resolves outside this URL is rejected for security reasons.
     ///                          Pass `.rootFS` to allow symlinks to point anywhere on the filesystem.
+    ///   - maxExtractedBytes: Optional cap on the number of decompressed bytes this call may produce
+    ///                        (including any AppleDouble companion). `ArchiveError.extractedByteLimitExceeded`
+    ///                        is thrown if the limit is crossed. Use this to defend against zip bombs when
+    ///                        extracting untrusted archives. Partial output on disk is not cleaned up on
+    ///                        throw — the caller is responsible for that. Default is `nil` (no limit).
     ///   - progress: A progress object that can be used to track or cancel the extract operation.
     ///   - preservesAppleMetadata: On Darwin platforms, look up the matching `__MACOSX/.../._<name>`
     ///                             AppleDouble companion entry in the archive (if any) and apply its
@@ -31,8 +60,24 @@ extension Archive {
     public func extract(_ entry: Entry, to url: URL, bufferSize: Int = defaultReadChunkSize,
                         skipCRC32: Bool = false,
                         symlinksValidWithin: URL? = nil,
+                        maxExtractedBytes: Int64? = nil,
                         progress: Progress? = nil,
                         preservesAppleMetadata: Bool = true) throws -> CRC32 {
+        return try self.extract(entry, to: url, bufferSize: bufferSize, skipCRC32: skipCRC32,
+                                symlinksValidWithin: symlinksValidWithin,
+                                budget: maxExtractedBytes.map { ByteBudget(limit: $0) },
+                                progress: progress,
+                                preservesAppleMetadata: preservesAppleMetadata)
+    }
+
+    /// Internal extract that accepts a shared `ByteBudget`. Used by `unzipItem` to enforce a single
+    /// archive-wide byte cap across all entries.
+    func extract(_ entry: Entry, to url: URL, bufferSize: Int = defaultReadChunkSize,
+                 skipCRC32: Bool = false,
+                 symlinksValidWithin: URL? = nil,
+                 budget: ByteBudget?,
+                 progress: Progress? = nil,
+                 preservesAppleMetadata: Bool = true) throws -> CRC32 {
         guard bufferSize > 0 else {
             throw ArchiveError.invalidBufferSize
         }
@@ -49,7 +94,8 @@ extension Archive {
                 throw POSIXError(errno, path: url.path)
             }
             defer { fclose(destinationFile) }
-            let consumer = { _ = try Data.write(chunk: $0, to: destinationFile) }
+            let rawConsumer: Consumer = { _ = try Data.write(chunk: $0, to: destinationFile) }
+            let consumer = budget?.wrap(rawConsumer) ?? rawConsumer
             checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                         progress: progress, consumer: consumer)
         case .directory:
@@ -62,7 +108,7 @@ extension Archive {
             guard fileManager.itemExists(at: url) == false else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
-            let consumer = { (data: Data) in
+            let rawConsumer: Consumer = { (data: Data) in
                 guard let linkPath = String(data: data, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
 
                 let parentURL = url.deletingLastPathComponent()
@@ -74,13 +120,14 @@ extension Archive {
                 try fileManager.createParentDirectoryStructure(for: url)
                 try fileManager.createSymbolicLink(atPath: url.path, withDestinationPath: linkPath)
             }
+            let consumer = budget?.wrap(rawConsumer) ?? rawConsumer
             checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                         progress: progress, consumer: consumer)
         }
         try fileManager.transferAttributes(from: entry, toItemAtURL: url)
         if preservesAppleMetadata {
             try self.applyAppleDoubleCompanionIfPresent(for: entry, to: url, bufferSize: bufferSize,
-                                                        skipCRC32: skipCRC32)
+                                                        skipCRC32: skipCRC32, budget: budget)
         }
         return checksum
     }
@@ -92,19 +139,22 @@ extension Archive {
     /// companion, when no companion exists, or on non-Darwin platforms.
     func applyAppleDoubleCompanionIfPresent(for entry: Entry, to url: URL,
                                             bufferSize: Int = defaultReadChunkSize,
-                                            skipCRC32: Bool = false) throws {
+                                            skipCRC32: Bool = false,
+                                            budget: ByteBudget? = nil) throws {
 #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         // Companion entries do not have companions of their own.
         guard FileManager.realEntryPath(fromAppleDoubleCompanionPath: entry.path) == nil else { return }
         guard let companionPath = FileManager.appleDoubleCompanionPath(forEntryPath: entry.path) else { return }
         guard let companion = self[companionPath] else { return }
         var buffer = Data()
+        let rawConsumer: Consumer = { buffer.append($0) }
+        let consumer = budget?.wrap(rawConsumer) ?? rawConsumer
         _ = try self.extract(companion, bufferSize: bufferSize, skipCRC32: skipCRC32,
-                             consumer: { buffer.append($0) })
+                             consumer: consumer)
         guard let payload = AppleDoublePayload.decode(buffer) else { return }
         FileManager.applyAppleDoublePayload(payload, to: url)
 #else
-        _ = (entry, url, bufferSize, skipCRC32)
+        _ = (entry, url, bufferSize, skipCRC32, budget)
 #endif
     }
 
