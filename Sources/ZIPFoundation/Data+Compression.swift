@@ -60,12 +60,12 @@ extension Data {
 
     /// Compress the output of `provider` and pass it to `consumer`.
     /// - Parameters:
-    ///   - size: The uncompressed size of the data to be compressed.
+    ///   - size: The uncompressed size of the data to be compressed, or nil if not known, in which case provider will be called until it returns an empty Data chunk.
     ///   - bufferSize: The maximum size of the compression buffer.
     ///   - provider: A closure that accepts a position and a chunk size. Returns a `Data` chunk.
     ///   - consumer: A closure that processes the result of the compress operation.
-    /// - Returns: The checksum of the processed content.
-    public static func compress(size: Int64, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
+    /// - Returns: The total size of uncompressed data consumed, and checksum of the processed content.
+    public static func compress(size: Int64?, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> (Int64, CRC32) {
         #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         return try self.process(operation: COMPRESSION_STREAM_ENCODE, size: size, bufferSize: bufferSize,
                                 provider: provider, consumer: consumer)
@@ -85,8 +85,9 @@ extension Data {
     public static func decompress(size: Int64, bufferSize: Int, skipCRC32: Bool,
                                   provider: Provider, consumer: Consumer) throws -> CRC32 {
         #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
-        return try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize,
+        let (_, crc) =  try self.process(operation: COMPRESSION_STREAM_DECODE, size: size, bufferSize: bufferSize,
                                 skipCRC32: skipCRC32, provider: provider, consumer: consumer)
+        return crc
         #else
         return try self.decode(bufferSize: bufferSize, skipCRC32: skipCRC32, provider: provider, consumer: consumer)
         #endif
@@ -100,8 +101,8 @@ import Compression
 
 extension Data {
 
-    static func process(operation: compression_stream_operation, size: Int64, bufferSize: Int, skipCRC32: Bool = false,
-                        provider: Provider, consumer: Consumer) throws -> CRC32 {
+    static func process(operation: compression_stream_operation, size: Int64? = nil, bufferSize: Int, skipCRC32: Bool = false,
+                        provider: Provider, consumer: Consumer) throws -> (Int64, CRC32) {
         var crc32 = CRC32(0)
         let destPointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
         defer { destPointer.deallocate() }
@@ -119,17 +120,19 @@ extension Data {
         repeat {
             let isExhausted = stream.src_size == 0
             if isExhausted {
-                do {
-                    sourceData = try provider(position, Int(Swift.min((size - position), Int64(bufferSize))))
-                    position += Int64(stream.prepare(for: sourceData))
-                } catch { throw error }
+                let remaining = size != nil ? Int64(size! - position) : Int64(bufferSize)
+                sourceData = try provider(position, Int(Swift.min(remaining, Int64(bufferSize))))
+                position += Int64(stream.prepare(for: sourceData))
             }
-            if let sourceData = sourceData {
+            if let sourceData {
                 sourceData.withUnsafeBytes { rawBufferPointer in
                     if let baseAddress = rawBufferPointer.baseAddress {
                         let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
                         stream.src_ptr = pointer.advanced(by: sourceData.count - stream.src_size)
-                        let flags = sourceData.count < bufferSize ? Int32(COMPRESSION_STREAM_FINALIZE.rawValue) : 0
+                        var flags: Int32 = 0
+                        if (size == nil && sourceData.count == 0) || (size != nil && sourceData.count < bufferSize) {
+                            flags = Int32(COMPRESSION_STREAM_FINALIZE.rawValue)
+                        }
                         status = compression_stream_process(&stream, flags)
                     }
                 }
@@ -146,7 +149,7 @@ extension Data {
             default: throw CompressionError.corruptedData
             }
         } while status == COMPRESSION_STATUS_OK
-        return crc32
+        return (position, crc32)
     }
 }
 
@@ -166,7 +169,7 @@ private extension compression_stream {
 import CZlib
 
 extension Data {
-    static func encode(size: Int64, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
+    static func encode(size: Int64?, bufferSize: Int, provider: Provider, consumer: Consumer) throws -> CRC32 {
         var stream = z_stream()
         let streamSize = Int32(MemoryLayout<z_stream>.size)
         var result = deflateInit2_(&stream, Z_DEFAULT_COMPRESSION,
@@ -177,7 +180,8 @@ extension Data {
         var position: Int64 = 0
         var zipCRC32 = CRC32(0)
         repeat {
-            let readSize = Int(Swift.min((size - position), Int64(bufferSize)))
+            let remaining = size != nil ? Int64(size! - position) : Int64(bufferSize)
+            let readSize = Int(Swift.min(remaining, Int64(bufferSize)))
             var inputChunk = try provider(position, readSize)
             zipCRC32 = inputChunk.crc32(checksum: zipCRC32)
             stream.avail_in = UInt32(inputChunk.count)
@@ -185,7 +189,11 @@ extension Data {
                 if let baseAddress = rawBufferPointer.baseAddress {
                     let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
                     stream.next_in = pointer
-                    flush = position + Int64(bufferSize) >= size ? Z_FINISH : Z_NO_FLUSH
+                    if let size {
+                        flush = position + Int64(bufferSize) >= size ? Z_FINISH : Z_NO_FLUSH
+                    } else {
+                        flush = inputChunk.isEmpty ? Z_FINISH : Z_NO_FLUSH
+                    }
                 } else if rawBufferPointer.count > 0 {
                     throw CompressionError.corruptedData
                 } else {
@@ -211,7 +219,7 @@ extension Data {
             }
             position += Int64(readSize)
         } while flush != Z_FINISH
-        return zipCRC32
+        return (position, zipCRC32)
     }
 
     static func decode(bufferSize: Int, skipCRC32: Bool, provider: Provider, consumer: Consumer) throws -> CRC32 {
