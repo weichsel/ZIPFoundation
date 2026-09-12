@@ -339,7 +339,7 @@ extension ZIPFoundationTests {
         }
         defer { try? FileManager.default.removeItem(at: tempDir) }
 
-        waitForExpectations(timeout: 30.0)
+        wait(for: [unmountVolumeExpectation, createVolumeExpectation])
 #endif
     }
 }

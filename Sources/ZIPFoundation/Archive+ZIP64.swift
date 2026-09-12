@@ -139,8 +139,13 @@ extension Archive.ZIP64EndOfCentralDirectory {
 }
 
 /// Properties that represent the maximum value of each field
+#if swift(>=6.0)
+nonisolated(unsafe) var maxUInt32 = UInt32.max
+nonisolated(unsafe) var maxUInt16 = UInt16.max
+#else
 var maxUInt32 = UInt32.max
 var maxUInt16 = UInt16.max
+#endif
 
 var maxCompressedSize: UInt32 { maxUInt32 }
 var maxUncompressedSize: UInt32 { maxUInt32 }
