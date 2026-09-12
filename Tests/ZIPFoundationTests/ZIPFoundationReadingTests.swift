@@ -157,6 +157,46 @@ extension ZIPFoundationTests {
                             throws: Data.CompressionError.corruptedData)
     }
 
+    /// Regression test for an infinite loop in the Linux `Data.decode` path
+    /// when the provider signals EOF (empty chunk) before `inflate` returns
+    /// `Z_STREAM_END`.
+    ///
+    /// The compressed data is a single deflate stored block header with
+    /// `BFINAL=0` and a 3-byte payload. After consuming that chunk `inflate`
+    /// has not seen a final block, so the outer loop asks the provider for
+    /// more input. The provider returns an empty `Data` to signal EOF.
+    ///
+    /// Prior to the fix, the empty chunk caused the inner decompression block
+    /// (which is the only place `result` is written) to be skipped by the
+    /// `rawBufferPointer.count > 0` guard. The outer `while result != Z_STREAM_END`
+    /// condition could therefore never become false, and the function looped
+    /// forever at 100% CPU with no observable output.
+    ///
+    /// After the fix, an empty provider chunk is treated as corruption and
+    /// throws `CompressionError.corruptedData` alongside the other malformed-
+    /// stream cases.
+    ///
+    /// The function is unconditional so that XCTest's Linux test discovery
+    /// picks it up via the `allTests` list, but the body is only compiled on
+    /// non-Apple platforms because `Data.decode` is only defined there.
+    func testDecodeThrowsWhenProviderSignalsEOFBeforeStreamEnd() {
+#if !os(macOS) && !os(iOS) && !os(tvOS) && !os(visionOS) && !os(watchOS)
+        let truncated = Data([0x00, 0x03, 0x00, 0xfc, 0xff, 0x41, 0x42, 0x43])
+        var providerCallCount = 0
+        let provider: Provider = { _, _ in
+            providerCallCount += 1
+            return providerCallCount == 1 ? truncated : Data()
+        }
+        XCTAssertSwiftError(
+            try Data.decode(bufferSize: 32 * 1024,
+                            skipCRC32: true,
+                            provider: provider,
+                            consumer: { _ in }),
+            throws: Data.CompressionError.corruptedData
+        )
+#endif
+    }
+
     func testCorruptSymbolicLinkErrorConditions() {
         let archive = self.archive(for: #function, mode: .read)
         for entry in archive {
