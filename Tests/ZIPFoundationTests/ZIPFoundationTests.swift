@@ -134,7 +134,6 @@ class ZIPFoundationTests: XCTestCase {
         let originalGID = getgid()
         defer { setgid(originalGID) }
         guard let user = getpwnam("nobody") else { return }
-
         let gid = user.pointee.pw_gid
         guard 0 == setgid(gid) else { return }
     }
@@ -346,6 +345,8 @@ extension ZIPFoundationTests {
             ("testMemoryArchiveErrorConditions", testMemoryArchiveErrorConditions),
             ("testWriteOnlyFile", testWriteOnlyFile),
             ("testReadOnlyFile", testReadOnlyFile),
+            ("testReadPastEndOfMemoryFile", testReadPastEndOfMemoryFile),
+            ("testMemoryArchiveWithLocalHeaderBeyondEOF", testMemoryArchiveWithLocalHeaderBeyondEOF),
             ("testReadOnlySlicedFile", testReadOnlySlicedFile),
             ("testReadWriteFile", testReadWriteFile)
         ]
@@ -382,7 +383,6 @@ extension Data {
 
 #if os(macOS)
 extension NSUserScriptTask {
-
     static func makeVolumeCreationTask(at tempDir: URL, volumeName: String) throws -> NSUserScriptTask {
         let scriptURL = tempDir.appendingPathComponent("createVol.sh", isDirectory: false)
         let dmgURL = tempDir.appendingPathComponent(volumeName).appendingPathExtension("dmg")

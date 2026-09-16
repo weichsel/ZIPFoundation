@@ -57,6 +57,7 @@ public enum MemoryFileError: Error {
 private extension Archive.MemoryFile {
 
     func readData(buffer: UnsafeMutableRawBufferPointer) -> Int {
+        guard self.offset < self.data.count else { return 0 }
         let size = min(buffer.count, data.count-offset)
         let start = data.startIndex
         self.data.copyBytes(to: buffer.bindMemory(to: UInt8.self), from: start+offset..<start+offset+size)
