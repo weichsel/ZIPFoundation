@@ -160,6 +160,46 @@ extension ZIPFoundationTests {
         XCTAssertEqual(String(Unicode.Scalar(chars[1])), "B")
     }
 
+    func testReadPastEndOfMemoryFile() throws {
+        let originalData = Data("01234ABCDE".utf8)
+        let inputs = [Data(), Data("ABCDE".utf8), originalData[5..<originalData.count]]
+        for data in inputs {
+            let file = try Archive.MemoryFile(data: data).open(mode: .read)
+            defer { fclose(file) }
+            var buffer = [UInt8](repeating: 0, count: 3)
+            for offset in [data.count, data.count + 1, Int(Int32.max)] {
+                XCTAssertEqual(fseek(file, offset, SEEK_SET), 0)
+                XCTAssertEqual(fread(&buffer, 1, buffer.count, file), 0)
+                XCTAssertNotEqual(feof(file), 0)
+                XCTAssertEqual(ferror(file), 0)
+                XCTAssertEqual(ftell(file), offset)
+            }
+            // Reading past EOF must not prevent seeking back to valid data.
+            XCTAssertEqual(fseek(file, 0, SEEK_SET), 0)
+            XCTAssertEqual(feof(file), 0)
+            let count = fread(&buffer, 1, buffer.count, file)
+            XCTAssertEqual(count, min(data.count, buffer.count))
+            XCTAssertEqual(Array(buffer.prefix(count)), Array(data.prefix(buffer.count)))
+        }
+    }
+
+    func testMemoryArchiveWithLocalHeaderBeyondEOF() throws {
+        let archive = try Archive(accessMode: .create)
+        let contents = Data("test".utf8)
+        try archive.addEntry(with: "test.txt", type: .file,
+                             uncompressedSize: Int64(contents.count)) { position, size in
+            contents.subdata(in: Int(position)..<(Int(position) + size))
+        }
+        var data = try XCTUnwrap(archive.data)
+        let signature = Data([0x50, 0x4b, 0x01, 0x02])
+        let directoryOffset = try XCTUnwrap(data.range(of: signature)?.lowerBound)
+        // Point the local file header beyond the end of the archive.
+        data.replaceSubrange((directoryOffset + 42)..<(directoryOffset + 46),
+                             with: [0xff, 0xff, 0xff, 0x7f])
+        let reader = try Archive(data: data, accessMode: .read)
+        XCTAssertNil(reader.makeIterator().next())
+    }
+
     func testWriteOnlyFile() throws {
         let mem = Archive.MemoryFile()
         let file = try mem.open(mode: .create)
