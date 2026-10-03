@@ -37,6 +37,71 @@ extension ZIPFoundationTests {
             throws: Archive.ArchiveError.invalidCentralDirectoryEntryCount)
     }
 
+    func testReadZIP64CentralDirectoryOffsetOutOfRange() {
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertNil(archive["a.txt"])
+    }
+
+    func testReadZIP64DataDescriptorPositionOverflow() {
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertNil(archive["a.txt"])
+    }
+
+    func testExtractZIP64UncompressedSizeOutOfRange() {
+        let archive = self.archive(for: #function, mode: .read)
+        guard let entry = archive["a.txt"] else {
+            XCTFail("Failed to read entry.")
+            return
+        }
+        let progress = archive.makeProgressForReading(entry)
+        XCTAssertSwiftError(try archive.extract(entry, progress: progress, consumer: { _ in }),
+                            throws: Archive.ArchiveError.invalidEntrySize)
+    }
+
+    func testExtractZIP64CompressedSizeOutOfRange() {
+        let archive = self.archive(for: #function, mode: .read)
+        guard let entry = archive["a.txt"] else {
+            XCTFail("Failed to read entry.")
+            return
+        }
+        XCTAssertSwiftError(try archive.extract(entry, consumer: { _ in }),
+                            throws: Archive.ArchiveError.invalidEntrySize)
+    }
+
+    func testExtractZIP64SizeBeyondEndOfArchive() {
+        let archive = self.archive(for: #function, mode: .read)
+        guard let entry = archive["a.txt"] else {
+            XCTFail("Failed to read entry.")
+            return
+        }
+        XCTAssertNoThrow(try archive.extract(entry, consumer: { _ in }))
+    }
+
+    func testAddEntryZIP64CentralDirectoryOffsetOutOfRange() {
+        let archive = self.archive(for: #function, mode: .update)
+        XCTAssertSwiftError(try archive.addEntry(with: "b.txt", type: .file, uncompressedSize: Int64(0),
+                                                 provider: { _, _ in Data() }),
+                            throws: Archive.ArchiveError.invalidCentralDirectoryOffset)
+    }
+
+    func testAddEntryZIP64CentralDirectorySizeOutOfRange() {
+        let archive = self.archive(for: #function, mode: .update)
+        XCTAssertSwiftError(try archive.addEntry(with: "b.txt", type: .file, uncompressedSize: Int64(0),
+                                                 provider: { _, _ in Data() }),
+                            throws: Archive.ArchiveError.invalidCentralDirectorySize)
+    }
+
+    func testRemoveEntryZIP64SizeOutOfRange() {
+        let archive = self.archive(for: #function, mode: .update)
+        guard let entry = archive["a.txt"] else {
+            XCTFail("Failed to read entry.")
+            return
+        }
+        let progress = archive.makeProgressForRemoving(entry)
+        XCTAssertSwiftError(try archive.remove(entry, progress: progress),
+                            throws: Archive.ArchiveError.invalidLocalHeaderSize)
+    }
+
     // MARK: - Helper
 
     private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: UInt64, numberOfEntries: UInt64)
@@ -73,5 +138,21 @@ extension ZIPFoundationTests {
             return nil
         }
         return cds
+    }
+}
+
+extension ZIPFoundationTests {
+
+    static var zip64OutOfRangeTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
+        return [
+            ("testReadZIP64CentralDirectoryOffsetOutOfRange", testReadZIP64CentralDirectoryOffsetOutOfRange),
+            ("testReadZIP64DataDescriptorPositionOverflow", testReadZIP64DataDescriptorPositionOverflow),
+            ("testExtractZIP64UncompressedSizeOutOfRange", testExtractZIP64UncompressedSizeOutOfRange),
+            ("testExtractZIP64CompressedSizeOutOfRange", testExtractZIP64CompressedSizeOutOfRange),
+            ("testExtractZIP64SizeBeyondEndOfArchive", testExtractZIP64SizeBeyondEndOfArchive),
+            ("testAddEntryZIP64CentralDirectoryOffsetOutOfRange", testAddEntryZIP64CentralDirectoryOffsetOutOfRange),
+            ("testAddEntryZIP64CentralDirectorySizeOutOfRange", testAddEntryZIP64CentralDirectorySizeOutOfRange),
+            ("testRemoveEntryZIP64SizeOutOfRange", testRemoveEntryZIP64SizeOutOfRange)
+        ]
     }
 }

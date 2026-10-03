@@ -17,7 +17,7 @@ extension Archive {
     func readUncompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                           progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = entry.centralDirectoryStructure.effectiveUncompressedSize
-        guard size <= .max else { throw ArchiveError.invalidEntrySize }
+        guard size <= UInt64(Int64.max) else { throw ArchiveError.invalidEntrySize }
         return try Data.consumePart(of: Int64(size), chunkSize: bufferSize, skipCRC32: skipCRC32,
                                     provider: { (_, chunkSize) -> Data in
                                         return try Data.readChunk(of: chunkSize, from: self.archiveFile)
@@ -31,7 +31,7 @@ extension Archive {
     func readCompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                         progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = entry.centralDirectoryStructure.effectiveCompressedSize
-        guard size <= .max else { throw ArchiveError.invalidEntrySize }
+        guard size <= UInt64(Int64.max) else { throw ArchiveError.invalidEntrySize }
         return try Data.decompress(size: Int64(size), bufferSize: bufferSize, skipCRC32: skipCRC32,
                                    provider: { (_, chunkSize) -> Data in
                                     return try Data.readChunk(of: chunkSize, from: self.archiveFile)

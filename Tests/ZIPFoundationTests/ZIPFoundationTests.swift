@@ -255,7 +255,7 @@ extension ZIPFoundationTests {
             ("testFileModificationDate", testFileModificationDate),
             ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
             ("testInvalidSymlinkCompressionMethodErrorConditions", testInvalidSymlinkCompressionMethodErrorConditions)
-        ] + zip64Tests + darwinOnlyTests + posixOnlyTests + swift5OnlyTests
+        ] + zip64Tests + zip64OutOfRangeTests + darwinOnlyTests + posixOnlyTests + swift5OnlyTests
     }
 
     static var zip64Tests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {

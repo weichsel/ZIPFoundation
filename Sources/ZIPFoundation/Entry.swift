@@ -203,14 +203,16 @@ public struct Entry: Equatable {
         let localFileHeader = self.localFileHeader
         var extraDataLength = Int(localFileHeader.fileNameLength)
         extraDataLength += Int(localFileHeader.extraFieldLength)
-        var size = UInt64(LocalFileHeader.size + extraDataLength)
-        size += self.isCompressed ? self.compressedSize : self.uncompressedSize
+        var headerAndDescriptorSize = UInt64(LocalFileHeader.size + extraDataLength)
         if centralDirectoryStructure.isZIP64 {
-            size += self.zip64DataDescriptor != nil ? UInt64(ZIP64DataDescriptor.size) : 0
+            headerAndDescriptorSize += self.zip64DataDescriptor != nil ? UInt64(ZIP64DataDescriptor.size) : 0
         } else {
-            size += self.dataDescriptor != nil ? UInt64(DefaultDataDescriptor.size) : 0
+            headerAndDescriptorSize += self.dataDescriptor != nil ? UInt64(DefaultDataDescriptor.size) : 0
         }
-        return size
+        let dataSize = self.isCompressed ? self.compressedSize : self.uncompressedSize
+        let (size, overflow) = dataSize.addingReportingOverflow(headerAndDescriptorSize)
+        // A size that overflows is out of range in any case. `Archive.remove` rejects the maximum.
+        return overflow ? .max : size
     }
     var dataOffset: UInt64 {
         var dataOffset = self.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader

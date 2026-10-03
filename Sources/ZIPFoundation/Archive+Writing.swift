@@ -125,10 +125,13 @@ extension Archive {
         let compressionMethod = type == .file ? compressionMethod : .none
         progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : uncompressedSize
         let (eocdRecord, zip64EOCD) = (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory)
-        guard self.offsetToStartOfCentralDirectory <= .max else { throw ArchiveError.invalidCentralDirectoryOffset }
+        guard self.offsetToStartOfCentralDirectory <= UInt64(Int64.max) else {
+            throw ArchiveError.invalidCentralDirectoryOffset
+        }
         var startOfCD = Int64(self.offsetToStartOfCentralDirectory)
         fseeko(self.archiveFile, zip_off_t(startOfCD), SEEK_SET)
         let existingSize = self.sizeOfCentralDirectory
+        guard existingSize <= self.remainingSize() else { throw ArchiveError.invalidCentralDirectorySize }
         let existingData = try Data.readChunk(of: Int(existingSize), from: self.archiveFile)
         fseeko(self.archiveFile, zip_off_t(startOfCD), SEEK_SET)
         let fileHeaderStart = Int64(ftello(self.archiveFile))
@@ -192,6 +195,7 @@ extension Archive {
         var offset: UInt64 = 0
         for currentEntry in self {
             let cds = currentEntry.centralDirectoryStructure
+            guard currentEntry.localSize <= UInt64(Int64.max) else { throw ArchiveError.invalidLocalHeaderSize }
             if currentEntry != entry {
                 let entryStart = cds.effectiveRelativeOffsetOfLocalHeader
                 fseeko(self.archiveFile, zip_off_t(entryStart), SEEK_SET)
@@ -203,7 +207,6 @@ extension Archive {
                     _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
                     progress?.completedUnitCount += Int64($0.count)
                 }
-                guard currentEntry.localSize <= .max else { throw ArchiveError.invalidLocalHeaderSize }
                 _ = try Data.consumePart(of: Int64(currentEntry.localSize), chunkSize: bufferSize,
                                          provider: provider, consumer: consumer)
                 let updatedCentralDirectory = updateOffsetInCentralDirectory(centralDirectoryStructure: cds,
@@ -292,6 +295,15 @@ private extension Archive {
             _ = try Data.write(chunk: zip64EOCD.data, to: self.archiveFile)
         }
         _ = try Data.write(chunk: endOfCentralDirRecord.data, to: self.archiveFile)
+    }
+
+    /// The number of bytes between the current position of the archive file and its end.
+    func remainingSize() -> UInt64 {
+        let position = ftello(self.archiveFile)
+        fseeko(self.archiveFile, 0, SEEK_END)
+        let endPosition = ftello(self.archiveFile)
+        fseeko(self.archiveFile, position, SEEK_SET)
+        return position >= 0 && endPosition > position ? UInt64(endPosition - position) : 0
     }
 
     func makeTempArchive() throws -> (Archive, URL?) {
