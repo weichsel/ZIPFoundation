@@ -119,4 +119,111 @@ extension Archive {
         }
         return checksum
     }
+    
+    /// Read a portion of a ZIP `Entry` from the receiver and forward its contents to a `Consumer` closure.
+    ///
+    /// - Parameters:
+    ///   - range: The portion range in the (decompressed) entry.
+    ///   - entry: The ZIP `Entry` to read.
+    ///   - bufferSize: The maximum size of the read buffer and the decompression buffer (if needed).
+    ///   - consumer: A closure that consumes contents of `Entry` as `Data` chunks.
+    /// - Throws: An error if the destination file cannot be written or the entry contains malformed content.
+    public func extractRange(
+        _ range: Range<UInt64>,
+        of entry: Entry,
+        bufferSize: Int = defaultReadChunkSize,
+        consumer: Consumer
+    ) throws {
+        guard entry.type == .file else {
+            throw ArchiveError.entryIsNotAFile
+        }
+        guard bufferSize > 0 else {
+            throw ArchiveError.invalidBufferSize
+        }
+        guard range.lowerBound >= 0, range.upperBound <= entry.uncompressedSize else {
+            throw ArchiveError.rangeOutOfBounds
+        }
+        let localFileHeader = entry.localFileHeader
+        guard entry.dataOffset <= .max else {
+            throw ArchiveError.invalidLocalHeaderDataOffset
+        }
+        
+        guard let compressionMethod = CompressionMethod(rawValue: localFileHeader.compressionMethod) else {
+            throw ArchiveError.invalidCompressionMethod
+        }
+        
+        switch compressionMethod {
+        case .none:
+            try extractStoredRange(range, of: entry, bufferSize: bufferSize, consumer: consumer)
+            
+        case .deflate:
+            try extractCompressedRange(range, of: entry, bufferSize: bufferSize, consumer: consumer)
+        }
+    }
+    
+    /// Ranges of stored entries can be accessed directly, as the requested
+    /// indices match the ones in the archive file.
+    private func extractStoredRange(
+        _ range: Range<UInt64>,
+        of entry: Entry,
+        bufferSize: Int,
+        consumer: Consumer
+    ) throws {
+        fseeko(archiveFile, off_t(entry.dataOffset + range.lowerBound), SEEK_SET)
+        
+        _ = try Data.consumePart(
+            of: Int64(range.count),
+            chunkSize: bufferSize,
+            skipCRC32: true,
+            provider: { pos, chunkSize -> Data in
+                try Data.readChunk(of: chunkSize, from: self.archiveFile)
+            },
+            consumer: consumer
+        )
+    }
+    
+    /// Ranges of deflated entries cannot be accessed randomly. We must read
+    /// and inflate the entry from the start until we reach the requested range.
+    private func extractCompressedRange(
+        _ range: Range<UInt64>,
+        of entry: Entry,
+        bufferSize: Int,
+        consumer: Consumer
+    ) throws {
+        var bytesRead: UInt64 = 0
+        
+        do {
+            fseeko(archiveFile, off_t(entry.dataOffset), SEEK_SET)
+            
+            _ = try readCompressed(
+                entry: entry,
+                bufferSize: bufferSize,
+                skipCRC32: true
+            ) { chunk in
+                let chunkSize = UInt64(chunk.count)
+                
+                if bytesRead >= range.lowerBound {
+                    if bytesRead + chunkSize > range.upperBound {
+                        let remainingBytes = range.upperBound - bytesRead
+                        try consumer(chunk[..<remainingBytes])
+                    } else {
+                        try consumer(chunk)
+                    }
+                } else if bytesRead + chunkSize > range.lowerBound {
+                    // Calculate the overlap and pass the relevant portion of the chunk
+                    let start = range.lowerBound - bytesRead
+                    let end = Swift.min(chunkSize, range.upperBound - bytesRead)
+                    try consumer(chunk[start..<end])
+                }
+                
+                bytesRead += chunkSize
+                
+                guard bytesRead < range.upperBound else {
+                    throw EndOfRange()
+                }
+            }
+        } catch is EndOfRange { }
+    }
+    
+    private struct EndOfRange: Error {}
 }
