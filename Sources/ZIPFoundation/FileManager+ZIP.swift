@@ -110,7 +110,7 @@ extension FileManager {
             progress.totalUnitCount = totalUnitCount
         }
 
-        for entry in archive {
+        func extractEntry(_ entry: Entry) throws {
             let path = pathEncoding == nil ? entry.path : entry.path(using: pathEncoding!)
             let entryURL = destinationURL.appendingPathComponent(path)
             guard entryURL.isContained(in: destinationURL) else {
@@ -130,13 +130,18 @@ extension FileManager {
                                             skipCRC32: skipCRC32,
                                             symlinksValidWithin: symlinksValidWithin)
             }
-
-            func verifyChecksumIfNecessary() throws {
-                if skipCRC32 == false, crc32 != entry.checksum {
-                    throw Archive.ArchiveError.invalidCRC32
-                }
+            if skipCRC32 == false, crc32 != entry.checksum {
+                throw Archive.ArchiveError.invalidCRC32
             }
-            try verifyChecksumIfNecessary()
+        }
+
+        for entry in archive {
+            #if canImport(ObjectiveC)
+            // Release temporary Foundation objects before extracting the next entry.
+            try autoreleasepool { try extractEntry(entry) }
+            #else
+            try extractEntry(entry)
+            #endif
         }
     }
 
