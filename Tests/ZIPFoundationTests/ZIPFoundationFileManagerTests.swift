@@ -105,6 +105,24 @@ extension ZIPFoundationTests {
         XCTAssert(itemsExist)
     }
 
+    func testUnzipItemToRelativeDestination() throws {
+        // Destination URLs that were created from relative paths have to be resolved against their base URL.
+        let fileManager = FileManager()
+        let archive = self.archive(for: "testUnzipItem", mode: .read)
+        let baseURL = self.createDirectory(for: #function)
+        let workingDirectoryURL = baseURL.appendingPathComponent("working", isDirectory: true)
+        try fileManager.createDirectory(at: workingDirectoryURL, withIntermediateDirectories: true, attributes: nil)
+        let previousDirectoryPath = fileManager.currentDirectoryPath
+        XCTAssertTrue(fileManager.changeCurrentDirectoryPath(workingDirectoryURL.path))
+        defer { _ = fileManager.changeCurrentDirectoryPath(previousDirectoryPath) }
+        let relativeURL = URL(fileURLWithPath: "../destination", isDirectory: true)
+        try fileManager.unzipItem(at: archive.url, to: relativeURL)
+        let destinationURL = baseURL.appendingPathComponent("destination", isDirectory: true)
+        for entry in archive {
+            XCTAssertTrue(fileManager.itemExists(at: destinationURL.appendingPathComponent(entry.path)))
+        }
+    }
+
     func testUnzipItemWithPreferredEncoding() {
         let fileManager = FileManager()
         let encoding = String.Encoding.utf8

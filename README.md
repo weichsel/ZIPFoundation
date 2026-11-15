@@ -40,7 +40,8 @@ To learn more about the performance characteristics of the framework, you can re
 
 ## Requirements
 
-- iOS 12.0+ / macOS 10.11+ / tvOS 12.0+ / watchOS 2.0+ / visionOS 1.0+
+- Swift 6.4 or later (Xcode 27), CocoaPods or Carthage: iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 9.0+ / visionOS 1.0+
+- Swift 5.9 to 6.3 with the Swift Package Manager: iOS 12.0+ / macOS 10.13+ / tvOS 12.0+ / watchOS 5.0+ / visionOS 1.0+
 - Or Linux with zlib development package
 - Xcode 11.0
 - Swift 4.0

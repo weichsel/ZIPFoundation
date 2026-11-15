@@ -173,8 +173,8 @@ public final class Archive: Sequence {
     ///   - pathEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     ///                   This encoding is only used when _decoding_ paths from the receiver.
     ///                   Paths of entries added with `addEntry` are always UTF-8 encoded.
-    /// - Returns: An archive initialized with a backing file at the passed in file URL and the given access mode
-    ///   or `nil` if the following criteria are not met:
+    /// - Returns: An archive initialized with a backing file at the passed in file URL and the given access mode.
+    /// - Throws: An error if the following criteria are not met or if the backing file is not a valid archive.
     /// - Note:
     ///   - The file URL _must_ point to an existing file for `AccessMode.read`.
     ///   - The file URL _must_ point to a non-existing file for `AccessMode.create`.

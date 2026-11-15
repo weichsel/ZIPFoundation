@@ -247,6 +247,7 @@ extension ZIPFoundationTests {
             ("testSimpleTraversalAttack", testSimpleTraversalAttack),
             ("testPathDelimiterTraversalAttack", testPathDelimiterTraversalAttack),
             ("testUnzipItem", testUnzipItem),
+            ("testUnzipItemToRelativeDestination", testUnzipItemToRelativeDestination),
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testUnzipUncontainedSymlink", testUnzipUncontainedSymlink),
