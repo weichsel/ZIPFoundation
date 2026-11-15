@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.9.21](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.21)
+
+### Added
+ - Added support for the Info-ZIP Unicode Path extra field
+ - Added support for compressed symlinks and symlinks pointing into other subfolders of an archive
+ - Added `symlinksValidWithin` parameter to control symlink containment (replaces `allowUncontainedSymlinks`)
+ - Added support for symlink modification dates on Linux
+ - Added support for building for Windows
+ - Added package manifest for Swift 6.4 (Xcode 27)
+
+### Updated
+ - Fixed symlink containment bypass via chained relative symlinks
+ - Fixed crashes when reading archives with invalid ZIP64 sizes or offsets
+ - Fixed endless loop when an entry claims more data than the archive contains
+ - Fixed crash when reading past the end of an in-memory archive
+ - Fixed endless loop and out-of-bounds read when decoding truncated deflate streams on non-Darwin platforms
+ - Fixed reading of ZIP64 archives with entries at offset 0 or a low "version needed to extract"
+ - Fixed memory growth when zipping or unzipping archives with many entries
+ - Fixed performance regression when opening archives with many entries
+ - Fixed detection of directory entries with a trailing path delimiter
+ - Fixed build errors on Android
+ - Fixed `pkg-config` warning when building for Apple platforms
+ - Fixed deprecation warning in package manifest
+ - Improved minimum deployment targets for Xcode 27 (iOS 15, macOS 12, tvOS 15, watchOS 9 for CocoaPods and Carthage)
+ - Improved CI configuration and test coverage
+
 ## [0.9.20](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.20)
 
 ### Added
