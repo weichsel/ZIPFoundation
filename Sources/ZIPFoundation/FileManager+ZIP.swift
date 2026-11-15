@@ -151,6 +151,8 @@ extension FileManager {
         // would throw a `.fileReadNoSuchFile` false positive error.
         // For ZIP files it may be intended to archive "broken" symlinks because they might be
         // resolvable again when extracting the archive to a different destination.
+        // This only holds on Darwin platforms. On Linux, `URL.checkResourceIsReachable()` traverses symlinks too.
+        // Broken symlinks are therefore reported as non-existent there.
         return (try? url.checkResourceIsReachable()) == true
     }
 
