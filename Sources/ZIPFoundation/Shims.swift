@@ -112,4 +112,13 @@ import Android
 #endif
 typealias zip_off_t = off_t
 #endif
+
+// Autorelease pools only exist on platforms with an Objective-C runtime.
+// Elsewhere, this stand-in runs the body directly so call sites can use
+// `autoreleasepool` without `#if canImport(ObjectiveC)`.
+#if !canImport(ObjectiveC)
+func autoreleasepool<Result>(invoking body: () throws -> Result) rethrows -> Result {
+    return try body()
+}
+#endif
 // swiftlint:enable identifier_name type_name
