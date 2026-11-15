@@ -96,4 +96,14 @@ extension ZIPFoundationTests {
                                                                             return Data() })
         XCTAssertNil(invalidEOCDLocator2)
     }
+
+    func testReadZIP64ArchiveWithLowVersionNeededToExtract() throws {
+        // The ZIP64 end of central directory record has a "version needed to extract" of 1.0 and
+        // the only entry is a ZIP64 entry with a local header offset of 0.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertEqual(archive.map { $0.path }, ["a"])
+        var extractedData = Data()
+        _ = try archive.extract(XCTUnwrap(archive["a"]), consumer: { extractedData.append($0) })
+        XCTAssertEqual(extractedData, Data("a".utf8))
+    }
 }
