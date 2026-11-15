@@ -351,6 +351,7 @@ extension ZIPFoundationTests {
             ("testExtractCompressedFolderEntriesFromMemory", testExtractCompressedFolderEntriesFromMemory),
             ("testExtractUncompressedFolderEntriesFromMemory", testExtractUncompressedFolderEntriesFromMemory),
             ("testMemoryArchiveErrorConditions", testMemoryArchiveErrorConditions),
+            ("testMemoryArchiveWithInvalidLocalHeaderOffset", testMemoryArchiveWithInvalidLocalHeaderOffset),
             ("testWriteOnlyFile", testWriteOnlyFile),
             ("testReadOnlyFile", testReadOnlyFile),
             ("testReadOnlySlicedFile", testReadOnlySlicedFile),
