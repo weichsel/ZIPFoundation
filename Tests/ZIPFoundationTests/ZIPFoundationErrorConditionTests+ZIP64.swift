@@ -43,6 +43,25 @@ extension ZIPFoundationTests {
         XCTAssertEqual(archive.map { $0.path }, ["a"])
     }
 
+    func testExtractEntryWithInvalidZIP64Size() throws {
+        // The entry has a size of `UInt64.max` in its ZIP64 extended information.
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["a"])
+        XCTAssertEqual(archive.totalUnitCountForReading(entry), .max)
+        XCTAssertSwiftError(try archive.extract(entry, consumer: { _ in }),
+                            throws: Archive.ArchiveError.invalidEntrySize)
+    }
+
+    func testUnzipItemWithInvalidZIP64SizeProgress() {
+        // Both entries have a size of `UInt64.max`, so the sum of the entry sizes exceeds `Int64.max`.
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        let progress = Progress()
+        XCTAssertSwiftError(try FileManager().unzipItem(at: archive.url, to: destinationURL, progress: progress),
+                            throws: Archive.ArchiveError.invalidEntrySize)
+        XCTAssertEqual(progress.totalUnitCount, .max)
+    }
+
     // MARK: - Helper
 
     private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: UInt64, numberOfEntries: UInt64)
