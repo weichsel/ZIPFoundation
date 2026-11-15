@@ -223,9 +223,20 @@ extension Data {
         var unzipCRC32 = CRC32(0)
         var position: Int64 = 0
         repeat {
-            stream.avail_in = UInt32(bufferSize)
             var chunk = try provider(position, bufferSize)
             position += Int64(chunk.count)
+            // The provider signalling EOF (empty chunk) before `inflate` reached
+            // `Z_STREAM_END` means the compressed stream is truncated or otherwise
+            // corrupted. Without this guard the outer loop skips the inner
+            // decompression block (which is where `result` is updated) and spins
+            // forever, since the loop exit condition `result != Z_STREAM_END`
+            // can never become false.
+            guard chunk.count > 0 else {
+                throw CompressionError.corruptedData
+            }
+            // `avail_in` has to describe the chunk we actually received. Setting it
+            // from `bufferSize` makes `inflate` read past a short chunk's contents.
+            stream.avail_in = UInt32(chunk.count)
             try chunk.withUnsafeMutableBytes { (rawBufferPointer) in
                 if let baseAddress = rawBufferPointer.baseAddress, rawBufferPointer.count > 0 {
                     let pointer = baseAddress.assumingMemoryBound(to: UInt8.self)
