@@ -42,7 +42,7 @@ extension Data {
 
     static func readStruct<T>(from file: FILEPointer, at offset: UInt64)
     -> T? where T: DataSerializable {
-        guard offset <= .max else { return nil }
+        guard offset <= Int64.max else { return nil }
         fseeko(file, zip_off_t(offset), SEEK_SET)
         guard let data = try? self.readChunk(of: T.size, from: file) else {
             return nil

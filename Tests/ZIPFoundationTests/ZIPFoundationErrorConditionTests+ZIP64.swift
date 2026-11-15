@@ -37,6 +37,12 @@ extension ZIPFoundationTests {
             throws: Archive.ArchiveError.invalidCentralDirectoryEntryCount)
     }
 
+    func testIterateEntryWithOverflowingZIP64DataDescriptor() {
+        // The entry uses a data descriptor and has a size of `UInt64.max` in its ZIP64 extended information.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertEqual(archive.map { $0.path }, ["a"])
+    }
+
     // MARK: - Helper
 
     private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: UInt64, numberOfEntries: UInt64)
