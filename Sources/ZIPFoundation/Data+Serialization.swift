@@ -68,6 +68,8 @@ extension Data {
             let remainingSize = size - bytesRead
             chunkSize = remainingSize < chunkSize ? Int(remainingSize) : chunkSize
             let data = try provider(bytesRead, chunkSize)
+            // `size` can't be trusted. Stop when the provider runs dry before `size` is reached.
+            guard data.isEmpty == false else { throw DataError.unreadableFile }
             try consumer(data)
             if !skipCRC32 {
                 checksum = data.crc32(checksum: checksum)

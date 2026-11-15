@@ -62,6 +62,13 @@ extension ZIPFoundationTests {
         XCTAssertEqual(progress.totalUnitCount, .max)
     }
 
+    func testExtractEntryWithZIP64SizeExceedingArchive() throws {
+        // The entry has a size of `Int64.max`, which is more data than the archive can provide.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertSwiftError(try archive.extract(XCTUnwrap(archive["a"]), consumer: { _ in }),
+                            throws: Data.DataError.unreadableFile)
+    }
+
     // MARK: - Helper
 
     private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: UInt64, numberOfEntries: UInt64)
