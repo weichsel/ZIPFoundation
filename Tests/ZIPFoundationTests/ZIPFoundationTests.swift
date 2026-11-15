@@ -355,20 +355,6 @@ extension ZIPFoundationTests {
     }
 }
 
-extension Archive {
-    func checkIntegrity() -> Bool {
-        var isCorrect = false
-        do {
-            for entry in self {
-                let checksum = try self.extract(entry, consumer: { _ in })
-                isCorrect = checksum == entry.checksum
-                guard isCorrect else { break }
-            }
-        } catch { return false }
-        return isCorrect
-    }
-}
-
 extension Data {
     static func makeRandomData(size: Int) -> Data {
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(visionOS)
