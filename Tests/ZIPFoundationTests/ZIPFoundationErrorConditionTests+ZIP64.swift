@@ -116,11 +116,13 @@ extension ZIPFoundationTests {
         try archive.addEntry(with: "a", type: .file, uncompressedSize: Int64(1), compressionMethod: .deflate,
                              provider: { _, _ in Data([0]) })
         let original = try XCTUnwrap(archive["a"])
-        var directory = original.centralDirectoryStructure
         // Only the compressed size is invalid; progress can still represent the uncompressed size.
-        directory.extraFields = [ZIP64ExtendedInformation(dataSize: 16, uncompressedSize: 1,
-                                                           compressedSize: UInt64(Int64.max) + 1,
-                                                           relativeOffsetOfLocalHeader: 0, diskNumberStart: 0)]
+        let zip64Information = ZIP64ExtendedInformation(dataSize: 16, uncompressedSize: 1,
+                                                        compressedSize: UInt64(Int64.max) + 1,
+                                                        relativeOffsetOfLocalHeader: 0, diskNumberStart: 0)
+        let directory = try self.makeZIP64CentralDirectory(from: original.centralDirectoryStructure,
+                                                           placeholderOffsets: [20, 24],
+                                                           zip64Information: zip64Information)
         let entry = try XCTUnwrap(Entry(centralDirectoryStructure: directory,
                                         localFileHeader: original.localFileHeader))
         let progress = Progress(totalUnitCount: 0)
@@ -135,11 +137,13 @@ extension ZIPFoundationTests {
         let archive = self.archive(for: #function, mode: .create)
         try archive.addEntry(with: "a", type: .file, uncompressedSize: Int64(0), provider: { _, _ in Data() })
         let original = try XCTUnwrap(archive["a"])
-        var directory = original.centralDirectoryStructure
         // The header offset fits Int64, but adding the local header makes the data offset exceed it.
-        directory.extraFields = [ZIP64ExtendedInformation(dataSize: 8, uncompressedSize: 0, compressedSize: 0,
-                                                           relativeOffsetOfLocalHeader: UInt64(Int64.max),
-                                                           diskNumberStart: 0)]
+        let zip64Information = ZIP64ExtendedInformation(dataSize: 8, uncompressedSize: 0, compressedSize: 0,
+                                                        relativeOffsetOfLocalHeader: UInt64(Int64.max),
+                                                        diskNumberStart: 0)
+        let directory = try self.makeZIP64CentralDirectory(from: original.centralDirectoryStructure,
+                                                           placeholderOffsets: [42],
+                                                           zip64Information: zip64Information)
         let entry = try XCTUnwrap(Entry(centralDirectoryStructure: directory,
                                         localFileHeader: original.localFileHeader))
         XCTAssertSwiftError(try archive.extract(entry, consumer: { _ in
@@ -148,6 +152,24 @@ extension ZIPFoundationTests {
     }
 
     // MARK: - Helper
+
+    /// Returns a copy of `structure` that uses the values of `zip64Information`. ZIP64 values only apply to
+    /// fields that contain the placeholder `UInt32.max`, so the fields at `placeholderOffsets` are overwritten.
+    private func makeZIP64CentralDirectory(from structure: Entry.CentralDirectoryStructure,
+                                           placeholderOffsets: [Int],
+                                           zip64Information: Entry.ZIP64ExtendedInformation) throws
+    -> Entry.CentralDirectoryStructure {
+        var data = structure.data
+        for offset in placeholderOffsets {
+            data.replaceSubrange(offset..<offset + 4, with: [UInt8](repeating: 0xff, count: 4))
+        }
+        let fixedSize = Entry.CentralDirectoryStructure.size
+        let additionalData = data.subdata(in: fixedSize..<data.count)
+        var directory = try XCTUnwrap(Entry.CentralDirectoryStructure(data: data.subdata(in: 0..<fixedSize),
+                                                                      additionalDataProvider: { _ in additionalData }))
+        directory.extraFields = [zip64Information]
+        return directory
+    }
 
     private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: UInt64, numberOfEntries: UInt64,
                                                     offsetToStartOfCentralDirectory: UInt64 = 0)
