@@ -111,6 +111,42 @@ extension ZIPFoundationTests {
         XCTAssertSwiftError(try archive.remove(entryA), throws: Archive.ArchiveError.invalidLocalHeaderDataOffset)
     }
 
+    func testExtractCompressedEntryWithInvalidZIP64Size() throws {
+        let archive = self.archive(for: #function, mode: .create)
+        try archive.addEntry(with: "a", type: .file, uncompressedSize: Int64(1), compressionMethod: .deflate,
+                             provider: { _, _ in Data([0]) })
+        let original = try XCTUnwrap(archive["a"])
+        var directory = original.centralDirectoryStructure
+        // Only the compressed size is invalid; progress can still represent the uncompressed size.
+        directory.extraFields = [ZIP64ExtendedInformation(dataSize: 16, uncompressedSize: 1,
+                                                           compressedSize: UInt64(Int64.max) + 1,
+                                                           relativeOffsetOfLocalHeader: 0, diskNumberStart: 0)]
+        let entry = try XCTUnwrap(Entry(centralDirectoryStructure: directory,
+                                        localFileHeader: original.localFileHeader))
+        let progress = Progress(totalUnitCount: 0)
+        XCTAssertSwiftError(try archive.extract(entry, progress: progress, consumer: { _ in
+            XCTFail("Invalid compressed size must be rejected before delivering data.")
+        }), throws: Archive.ArchiveError.invalidEntrySize)
+        XCTAssertEqual(progress.totalUnitCount, 1)
+        XCTAssertEqual(progress.completedUnitCount, 0)
+    }
+
+    func testExtractEntryWithInvalidZIP64DataOffset() throws {
+        let archive = self.archive(for: #function, mode: .create)
+        try archive.addEntry(with: "a", type: .file, uncompressedSize: Int64(0), provider: { _, _ in Data() })
+        let original = try XCTUnwrap(archive["a"])
+        var directory = original.centralDirectoryStructure
+        // The header offset fits Int64, but adding the local header makes the data offset exceed it.
+        directory.extraFields = [ZIP64ExtendedInformation(dataSize: 8, uncompressedSize: 0, compressedSize: 0,
+                                                           relativeOffsetOfLocalHeader: UInt64(Int64.max),
+                                                           diskNumberStart: 0)]
+        let entry = try XCTUnwrap(Entry(centralDirectoryStructure: directory,
+                                        localFileHeader: original.localFileHeader))
+        XCTAssertSwiftError(try archive.extract(entry, consumer: { _ in
+            XCTFail("Invalid data offset must be rejected before delivering data.")
+        }), throws: Archive.ArchiveError.invalidLocalHeaderDataOffset)
+    }
+
     // MARK: - Helper
 
     private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: UInt64, numberOfEntries: UInt64,

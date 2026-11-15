@@ -127,6 +127,40 @@ extension ZIPFoundationTests {
         XCTAssert(fileManager.fileExists(atPath: infoURL.path))
     }
 
+    func testSymlinkContainmentWithUnresolvablePaths() throws {
+        let fileManager = FileManager()
+        let directoryURL = self.createDirectory(for: #function)
+        let loopURL = directoryURL.appendingPathComponent("loop")
+        try fileManager.createSymbolicLink(atPath: loopURL.path, withDestinationPath: "loop")
+        XCTAssertNil(URL.resolvedPathComponents(ofPath: loopURL.path))
+        // Reject an unresolvable containment root, link parent, or link destination.
+        XCTAssertFalse(URL.isSymlinkDestination("file", ofSymlinkIn: directoryURL, containedIn: loopURL))
+        XCTAssertFalse(URL.isSymlinkDestination("file", ofSymlinkIn: loopURL, containedIn: directoryURL))
+        XCTAssertFalse(URL.isSymlinkDestination("loop", ofSymlinkIn: directoryURL, containedIn: directoryURL))
+        XCTAssertTrue(URL.isSymlinkDestination("loop", ofSymlinkIn: directoryURL, containedIn: .rootFS))
+    }
+
+    func testUnzipIntoSymlinkLoop() throws {
+        let fileManager = FileManager()
+        let directoryURL = self.createDirectory(for: #function)
+        let loopURL = directoryURL.appendingPathComponent("loop")
+        try fileManager.createSymbolicLink(atPath: loopURL.path, withDestinationPath: "loop")
+        let archive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "file.txt", type: .file, content: "contained", to: archive)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: archive.url, to: loopURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssertEqual(try fileManager.destinationOfSymbolicLink(atPath: loopURL.path), "loop")
+    }
+
+    func testContainmentOfAbsolutePaths() throws {
+        let directoryURL = self.createDirectory(for: #function)
+        let components = try XCTUnwrap(URL.resolvedPathComponents(ofPath: directoryURL.path))
+        XCTAssertTrue(directoryURL.isContained(in: directoryURL, resolvedTo: components))
+        let siblingURL = URL(fileURLWithPath: directoryURL.path + "Sibling/file.txt")
+        XCTAssertFalse(siblingURL.isContained(in: directoryURL, resolvedTo: components))
+        XCTAssertFalse(directoryURL.deletingLastPathComponent().isContained(in: directoryURL, resolvedTo: components))
+    }
+
     // MARK: - Helpers
 
     private func addEntry(with path: String, type: Entry.EntryType, content: String = "",

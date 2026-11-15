@@ -52,9 +52,7 @@ extension Archive {
         switch compressionMethod {
         case .none:
             let localFileHeader = entry.localFileHeader
-            guard let size = Int(exactly: localFileHeader.compressedSize) else {
-                throw ArchiveError.invalidEntrySize
-            }
+            guard let size = Int(exactly: localFileHeader.compressedSize) else { throw ArchiveError.invalidEntrySize }
             let data = try Data.readChunk(of: size, from: self.archiveFile)
             checksum = data.crc32(checksum: 0)
             try consumer(data)
