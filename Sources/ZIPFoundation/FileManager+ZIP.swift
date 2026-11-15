@@ -51,10 +51,11 @@ extension FileManager {
             if shouldKeepParent { subPaths.append("") }
             var totalUnitCount = Int64(0)
             if let progress = progress {
-                totalUnitCount = subPaths.reduce(Int64(0), {
-                    let itemURL = sourceURL.appendingPathComponent($1)
-                    let itemSize = archive.totalUnitCountForAddingItem(at: itemURL)
-                    return $0 + itemSize
+                totalUnitCount = subPaths.reduce(Int64(0), { (count, subPath) in
+                    return autoreleasepool {
+                        let itemURL = sourceURL.appendingPathComponent(subPath)
+                        return count + archive.totalUnitCountForAddingItem(at: itemURL)
+                    }
                 })
                 progress.totalUnitCount = totalUnitCount
             }
@@ -63,17 +64,20 @@ extension FileManager {
             // as common base for all entries (similar to macOS' Archive Utility.app)
             let directoryPrefix = sourceURL.lastPathComponent
             for entryPath in subPaths {
-                let finalEntryPath = shouldKeepParent ? directoryPrefix + "/" + entryPath : entryPath
-                let finalBaseURL = shouldKeepParent ? sourceURL.deletingLastPathComponent() : sourceURL
-                if let progress = progress {
-                    let itemURL = sourceURL.appendingPathComponent(entryPath)
-                    let entryProgress = archive.makeProgressForAddingItem(at: itemURL)
-                    progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
-                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL,
-                                         compressionMethod: compressionMethod, progress: entryProgress)
-                } else {
-                    try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL,
-                                         compressionMethod: compressionMethod)
+                // Release temporary Foundation objects before adding the next entry.
+                try autoreleasepool {
+                    let finalEntryPath = shouldKeepParent ? directoryPrefix + "/" + entryPath : entryPath
+                    let finalBaseURL = shouldKeepParent ? sourceURL.deletingLastPathComponent() : sourceURL
+                    if let progress = progress {
+                        let itemURL = sourceURL.appendingPathComponent(entryPath)
+                        let entryProgress = archive.makeProgressForAddingItem(at: itemURL)
+                        progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
+                        try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL,
+                                             compressionMethod: compressionMethod, progress: entryProgress)
+                    } else {
+                        try archive.addEntry(with: finalEntryPath, relativeTo: finalBaseURL,
+                                             compressionMethod: compressionMethod)
+                    }
                 }
             }
         } else {
@@ -110,41 +114,31 @@ extension FileManager {
                 return didOverflow ? .max : count
             })
         }
-
         let destinationComponents = URL.resolvedPathComponents(ofPath: destinationURL.path)
         func extractEntry(_ entry: Entry) throws {
             let path = pathEncoding == nil ? entry.path : entry.path(using: pathEncoding!)
             let entryURL = destinationURL.appendingPathComponent(path)
             guard let destinationComponents = destinationComponents,
                   entryURL.isContained(in: destinationURL, resolvedTo: destinationComponents) else {
-                throw CocoaError(.fileReadInvalidFileName,
-                                 userInfo: [NSFilePathErrorKey: entryURL.path])
+                throw CocoaError(.fileReadInvalidFileName, userInfo: [NSFilePathErrorKey: entryURL.path])
             }
             let crc32: CRC32
             if let progress = progress {
                 let entryProgress = archive.makeProgressForReading(entry)
                 progress.addChild(entryProgress, withPendingUnitCount: entryProgress.totalUnitCount)
-                crc32 = try archive.extract(entry, to: entryURL,
-                                            skipCRC32: skipCRC32,
-                                            symlinksValidWithin: symlinksValidWithin,
-                                            progress: entryProgress)
+                crc32 = try archive.extract(entry, to: entryURL, skipCRC32: skipCRC32,
+                                            symlinksValidWithin: symlinksValidWithin, progress: entryProgress)
             } else {
-                crc32 = try archive.extract(entry, to: entryURL,
-                                            skipCRC32: skipCRC32,
+                crc32 = try archive.extract(entry, to: entryURL, skipCRC32: skipCRC32,
                                             symlinksValidWithin: symlinksValidWithin)
             }
             if skipCRC32 == false, crc32 != entry.checksum {
                 throw Archive.ArchiveError.invalidCRC32
             }
         }
-
         for entry in archive {
-            #if canImport(ObjectiveC)
             // Release temporary Foundation objects before extracting the next entry.
             try autoreleasepool { try extractEntry(entry) }
-            #else
-            try extractEntry(entry)
-            #endif
         }
     }
 
