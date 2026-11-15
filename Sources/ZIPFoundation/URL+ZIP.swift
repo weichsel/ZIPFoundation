@@ -49,4 +49,74 @@ extension URL {
         }()
         return sanitizedEntryPathURL.standardized.absoluteString.hasPrefix(parentDirectoryURL.absoluteString)
     }
+
+    /// Resolves a path, component by component, in the same way the file system does:
+    /// Symlinks are followed (including a symlink in the last component) and `..` is applied
+    /// to the resolved location.
+    ///
+    /// Trailing components that don't exist (yet) are kept as-is. A `..` that follows a non-existent component
+    /// of `path` can't be resolved reliably, because subsequent archive entries could replace the missing
+    /// component with a symlink.
+    ///
+    /// - Parameters:
+    ///   - path: The path to resolve.
+    ///   - baseComponents: The already resolved components of the directory a relative `path` starts at.
+    ///                     Ignored if `path` is absolute.
+    /// - Returns: The resolved path components or `nil` if the path can't be resolved reliably.
+    static func resolvedPathComponents(ofPath path: String, relativeTo baseComponents: [String] = []) -> [String]? {
+        func components(of path: String) -> [String] {
+            return path.split(separator: "/").map(String.init).filter { $0 != "." }
+        }
+
+        let fileManager = FileManager()
+        let maximumSymlinkCount = 64
+        var symlinkCount = 0
+        var hasMissingComponent = false
+        var resolved = (path as NSString).isAbsolutePath ? [] : baseComponents
+        var pending = Array(components(of: path).reversed())
+        while let component = pending.popLast() {
+            if component == ".." {
+                guard hasMissingComponent == false else { return nil }
+
+                _ = resolved.popLast()
+                continue
+            }
+            let candidatePath = "/" + (resolved + [component]).joined(separator: "/")
+            guard hasMissingComponent == false,
+                  let isSymbolicLink = URL.isSymbolicLink(atPath: candidatePath, fileManager: fileManager) else {
+                hasMissingComponent = true
+                resolved.append(component)
+                continue
+            }
+            guard isSymbolicLink else {
+                resolved.append(component)
+                continue
+            }
+
+            symlinkCount += 1
+            guard symlinkCount <= maximumSymlinkCount,
+                  let destination = try? fileManager.destinationOfSymbolicLink(atPath: candidatePath)
+            else { return nil }
+
+            if (destination as NSString).isAbsolutePath { resolved.removeAll() }
+            pending.append(contentsOf: components(of: destination).reversed())
+        }
+        return resolved
+    }
+
+    /// Checks if the item at `path` is a symlink, without traversing it.
+    ///
+    /// - Returns: `nil` if there is no item at `path`.
+    private static func isSymbolicLink(atPath path: String, fileManager: FileManager) -> Bool? {
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS) || os(Linux)
+        var fileStat = stat()
+        guard lstat(fileManager.fileSystemRepresentation(withPath: path), &fileStat) == 0 else { return nil }
+
+        return (fileStat.st_mode & S_IFMT) == S_IFLNK
+#else
+        guard let attributes = try? fileManager.attributesOfItem(atPath: path) else { return nil }
+
+        return attributes[.type] as? FileAttributeType == .typeSymbolicLink
+#endif
+    }
 }
