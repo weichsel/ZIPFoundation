@@ -97,3 +97,17 @@ extension XCTestCase {
         XCTAssertTrue(thrownError?.code == code, file: file, line: line)
     }
 }
+
+extension Archive {
+    func checkIntegrity() -> Bool {
+        var isCorrect = false
+        do {
+            for entry in self {
+                let checksum = try self.extract(entry, consumer: { _ in })
+                isCorrect = checksum == entry.checksum
+                guard isCorrect else { break }
+            }
+        } catch { return false }
+        return isCorrect
+    }
+}

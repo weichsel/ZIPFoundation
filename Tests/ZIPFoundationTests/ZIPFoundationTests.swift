@@ -293,6 +293,13 @@ extension ZIPFoundationTests {
             ("testRemoveEntryWithZIP64ExtendedInformation", testRemoveEntryWithZIP64ExtendedInformation),
             ("testWriteEOCDWithTooLargeSizeOfCentralDirectory", testWriteEOCDWithTooLargeSizeOfCentralDirectory),
             ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset),
+            ("testWriteEOCDWithTooSmallCentralDirectory", testWriteEOCDWithTooSmallCentralDirectory),
+            ("testAddEntryWithInvalidZIP64CentralDirectory", testAddEntryWithInvalidZIP64CentralDirectory),
+            ("testIterateEntryWithOverflowingZIP64DataDescriptor", testIterateEntryWithOverflowingZIP64DataDescriptor),
+            ("testExtractEntryWithInvalidZIP64Size", testExtractEntryWithInvalidZIP64Size),
+            ("testUnzipItemWithInvalidZIP64SizeProgress", testUnzipItemWithInvalidZIP64SizeProgress),
+            ("testExtractEntryWithZIP64SizeExceedingArchive", testExtractEntryWithZIP64SizeExceedingArchive),
+            ("testRemoveEntryWithInvalidZIP64Size", testRemoveEntryWithInvalidZIP64Size),
             ("testWriteLargeChunk", testWriteLargeChunk),
             ("testExtractUncompressedZIP64Entries", testExtractUncompressedZIP64Entries),
             ("testExtractCompressedZIP64Entries", testExtractCompressedZIP64Entries),
@@ -350,6 +357,7 @@ extension ZIPFoundationTests {
             ("testExtractCompressedFolderEntriesFromMemory", testExtractCompressedFolderEntriesFromMemory),
             ("testExtractUncompressedFolderEntriesFromMemory", testExtractUncompressedFolderEntriesFromMemory),
             ("testMemoryArchiveErrorConditions", testMemoryArchiveErrorConditions),
+            ("testMemoryArchiveWithInvalidLocalHeaderOffset", testMemoryArchiveWithInvalidLocalHeaderOffset),
             ("testWriteOnlyFile", testWriteOnlyFile),
             ("testReadOnlyFile", testReadOnlyFile),
             ("testReadOnlySlicedFile", testReadOnlySlicedFile),
@@ -358,20 +366,6 @@ extension ZIPFoundationTests {
         #else
         return []
         #endif
-    }
-}
-
-extension Archive {
-    func checkIntegrity() -> Bool {
-        var isCorrect = false
-        do {
-            for entry in self {
-                let checksum = try self.extract(entry, consumer: { _ in })
-                isCorrect = checksum == entry.checksum
-                guard isCorrect else { break }
-            }
-        } catch { return false }
-        return isCorrect
     }
 }
 

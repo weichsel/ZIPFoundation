@@ -110,6 +110,12 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
+    func testMemoryArchiveWithInvalidLocalHeaderOffset() {
+        // The local header offset of the entry points behind the end of the backing data.
+        let archive = self.memoryArchive(for: #function, mode: .read)
+        XCTAssertTrue(Array(archive).isEmpty)
+    }
+
     func testMemoryArchiveErrorConditions() throws {
         let data = Data.makeRandomData(size: 1024)
         XCTAssertSwiftError(try Archive(data: data, accessMode: .read),

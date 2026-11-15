@@ -106,7 +106,10 @@ extension FileManager {
         var totalUnitCount = Int64(0)
         let symlinksValidWithin = symlinksValidWithin ?? destinationURL
         if let progress = progress {
-            totalUnitCount = archive.reduce(0, { $0 + archive.totalUnitCountForReading($1) })
+            totalUnitCount = archive.reduce(0, {
+                let (count, didOverflow) = $0.addingReportingOverflow(archive.totalUnitCountForReading($1))
+                return didOverflow ? .max : count
+            })
             progress.totalUnitCount = totalUnitCount
         }
 

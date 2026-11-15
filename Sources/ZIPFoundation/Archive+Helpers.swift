@@ -17,7 +17,7 @@ extension Archive {
     func readUncompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                           progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = entry.centralDirectoryStructure.effectiveUncompressedSize
-        guard size <= .max else { throw ArchiveError.invalidEntrySize }
+        guard size <= Int64.max else { throw ArchiveError.invalidEntrySize }
         return try Data.consumePart(of: Int64(size), chunkSize: bufferSize, skipCRC32: skipCRC32,
                                     provider: { (_, chunkSize) -> Data in
                                         return try Data.readChunk(of: chunkSize, from: self.archiveFile)
@@ -31,7 +31,7 @@ extension Archive {
     func readCompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                         progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = entry.centralDirectoryStructure.effectiveCompressedSize
-        guard size <= .max else { throw ArchiveError.invalidEntrySize }
+        guard size <= Int64.max else { throw ArchiveError.invalidEntrySize }
         return try Data.decompress(size: Int64(size), bufferSize: bufferSize, skipCRC32: skipCRC32,
                                    provider: { (_, chunkSize) -> Data in
                                     return try Data.readChunk(of: chunkSize, from: self.archiveFile)
@@ -52,7 +52,9 @@ extension Archive {
         switch compressionMethod {
         case .none:
             let localFileHeader = entry.localFileHeader
-            let size = Int(localFileHeader.compressedSize)
+            guard let size = Int(exactly: localFileHeader.compressedSize) else {
+                throw ArchiveError.invalidEntrySize
+            }
             let data = try Data.readChunk(of: size, from: self.archiveFile)
             checksum = data.crc32(checksum: 0)
             try consumer(data)
@@ -198,6 +200,12 @@ extension Archive {
                 }
                 return (sizeOfCD + UInt64(cdDataLengthChange), numberOfTotalEntries + UInt64(countChange))
             case .remove:
+                guard sizeOfCD >= -cdDataLengthChange else {
+                    throw ArchiveError.invalidCentralDirectorySize
+                }
+                guard numberOfTotalEntries >= -countChange else {
+                    throw ArchiveError.invalidCentralDirectoryEntryCount
+                }
                 return (sizeOfCD - UInt64(-cdDataLengthChange), numberOfTotalEntries - UInt64(-countChange))
             }
         }()

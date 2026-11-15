@@ -37,9 +37,84 @@ extension ZIPFoundationTests {
             throws: Archive.ArchiveError.invalidCentralDirectoryEntryCount)
     }
 
+    func testWriteEOCDWithTooSmallCentralDirectory() {
+        let archive = self.archive(for: #function, mode: .create)
+        XCTAssertSwiftError(
+            try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
+                                                   startOfCentralDirectory: 0,
+                                                   startOfEndOfCentralDirectory: 0,
+                                                   operation: .remove),
+            throws: Archive.ArchiveError.invalidCentralDirectorySize)
+        archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: 1024,
+                                                                                numberOfEntries: 0)
+        XCTAssertSwiftError(
+            try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
+                                                   startOfCentralDirectory: 0,
+                                                   startOfEndOfCentralDirectory: 0,
+                                                   operation: .remove),
+            throws: Archive.ArchiveError.invalidCentralDirectoryEntryCount)
+    }
+
+    func testAddEntryWithInvalidZIP64CentralDirectory() {
+        let archive = self.archive(for: #function, mode: .create)
+        let addEntry = {
+            try archive.addEntry(with: "a", type: .file, uncompressedSize: Int64(0), provider: { _, _ in Data() })
+        }
+        archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: 0,
+                                                                                numberOfEntries: 0,
+                                                                                offsetToStartOfCentralDirectory: .max)
+        XCTAssertSwiftError(try addEntry(), throws: Archive.ArchiveError.invalidCentralDirectoryOffset)
+        archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: .max,
+                                                                                numberOfEntries: 0)
+        XCTAssertSwiftError(try addEntry(), throws: Archive.ArchiveError.invalidCentralDirectorySize)
+    }
+
+    func testIterateEntryWithOverflowingZIP64DataDescriptor() {
+        // The entry uses a data descriptor and has a size of `UInt64.max` in its ZIP64 extended information.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertEqual(archive.map { $0.path }, ["a"])
+    }
+
+    func testExtractEntryWithInvalidZIP64Size() throws {
+        // The entry has a size of `UInt64.max` in its ZIP64 extended information.
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["a"])
+        XCTAssertEqual(archive.totalUnitCountForReading(entry), .max)
+        XCTAssertSwiftError(try archive.extract(entry, consumer: { _ in }),
+                            throws: Archive.ArchiveError.invalidEntrySize)
+    }
+
+    func testUnzipItemWithInvalidZIP64SizeProgress() {
+        // Both entries have a size of `UInt64.max`, so the sum of the entry sizes exceeds `Int64.max`.
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        let progress = Progress()
+        XCTAssertSwiftError(try FileManager().unzipItem(at: archive.url, to: destinationURL, progress: progress),
+                            throws: Archive.ArchiveError.invalidEntrySize)
+        XCTAssertEqual(progress.totalUnitCount, .max)
+    }
+
+    func testExtractEntryWithZIP64SizeExceedingArchive() throws {
+        // The entry has a size of `Int64.max`, which is more data than the archive can provide.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertSwiftError(try archive.extract(XCTUnwrap(archive["a"]), consumer: { _ in }),
+                            throws: Data.DataError.unreadableFile)
+    }
+
+    func testRemoveEntryWithInvalidZIP64Size() throws {
+        // Entry "a" has a size of `UInt64.max` in its ZIP64 extended information. Entry "b" is valid.
+        let archive = self.archive(for: #function, mode: .update)
+        let entryA = try XCTUnwrap(archive["a"])
+        let entryB = try XCTUnwrap(archive["b"])
+        XCTAssertEqual(archive.totalUnitCountForRemoving(entryA), 0)
+        XCTAssertSwiftError(try archive.remove(entryB), throws: Archive.ArchiveError.invalidLocalHeaderSize)
+        XCTAssertSwiftError(try archive.remove(entryA), throws: Archive.ArchiveError.invalidLocalHeaderDataOffset)
+    }
+
     // MARK: - Helper
 
-    private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: UInt64, numberOfEntries: UInt64)
+    private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: UInt64, numberOfEntries: UInt64,
+                                                    offsetToStartOfCentralDirectory: UInt64 = 0)
     -> Archive.ZIP64EndOfCentralDirectory {
         let record = Archive.ZIP64EndOfCentralDirectoryRecord(sizeOfZIP64EndOfCentralDirectoryRecord: UInt64(44),
                                                               versionMadeBy: UInt16(789),
@@ -48,7 +123,8 @@ extension ZIPFoundationTests {
                                                               totalNumberOfEntriesOnDisk: 0,
                                                               totalNumberOfEntriesInCentralDirectory: numberOfEntries,
                                                               sizeOfCentralDirectory: sizeOfCentralDirectory,
-                                                              offsetToStartOfCentralDirectory: 0,
+                                                              offsetToStartOfCentralDirectory:
+                                                                offsetToStartOfCentralDirectory,
                                                               zip64ExtensibleDataSector: Data())
         let locator = Archive.ZIP64EndOfCentralDirectoryLocator(numberOfDiskWithZIP64EOCDRecordStart: 0,
                                                                 relativeOffsetOfZIP64EOCDRecord: 0,

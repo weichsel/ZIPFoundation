@@ -26,6 +26,8 @@ extension ZIPFoundationTests {
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
         let file: FILEPointer = fopen(fileSystemRepresentation, "rb")
+        let unreachableStructure: Entry.CentralDirectoryStructure? = Data.readStruct(from: file, at: .max)
+        XCTAssertNil(unreachableStructure)
         // Close the file to exercise the error path during readStructure that deals with
         // unreadable file data.
         fclose(file)
