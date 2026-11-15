@@ -194,6 +194,7 @@ extension Archive {
             let cds = currentEntry.centralDirectoryStructure
             if currentEntry != entry {
                 let entryStart = cds.effectiveRelativeOffsetOfLocalHeader
+                guard entryStart >= offset else { throw ArchiveError.invalidLocalHeaderDataOffset }
                 fseeko(self.archiveFile, zip_off_t(entryStart), SEEK_SET)
                 let provider: Provider = { (_, chunkSize) -> Data in
                     return try Data.readChunk(of: chunkSize, from: self.archiveFile)
@@ -203,7 +204,7 @@ extension Archive {
                     _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
                     progress?.completedUnitCount += Int64($0.count)
                 }
-                guard currentEntry.localSize <= .max else { throw ArchiveError.invalidLocalHeaderSize }
+                guard currentEntry.localSize <= Int64.max else { throw ArchiveError.invalidLocalHeaderSize }
                 _ = try Data.consumePart(of: Int64(currentEntry.localSize), chunkSize: bufferSize,
                                          provider: provider, consumer: consumer)
                 let updatedCentralDirectory = updateOffsetInCentralDirectory(centralDirectoryStructure: cds,

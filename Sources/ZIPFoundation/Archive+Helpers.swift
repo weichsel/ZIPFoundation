@@ -200,6 +200,12 @@ extension Archive {
                 }
                 return (sizeOfCD + UInt64(cdDataLengthChange), numberOfTotalEntries + UInt64(countChange))
             case .remove:
+                guard sizeOfCD >= -cdDataLengthChange else {
+                    throw ArchiveError.invalidCentralDirectorySize
+                }
+                guard numberOfTotalEntries >= -countChange else {
+                    throw ArchiveError.invalidCentralDirectoryEntryCount
+                }
                 return (sizeOfCD - UInt64(-cdDataLengthChange), numberOfTotalEntries - UInt64(-countChange))
             }
         }()

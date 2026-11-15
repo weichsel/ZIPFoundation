@@ -37,6 +37,24 @@ extension ZIPFoundationTests {
             throws: Archive.ArchiveError.invalidCentralDirectoryEntryCount)
     }
 
+    func testWriteEOCDWithTooSmallCentralDirectory() {
+        let archive = self.archive(for: #function, mode: .create)
+        XCTAssertSwiftError(
+            try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
+                                                   startOfCentralDirectory: 0,
+                                                   startOfEndOfCentralDirectory: 0,
+                                                   operation: .remove),
+            throws: Archive.ArchiveError.invalidCentralDirectorySize)
+        archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: 1024,
+                                                                                numberOfEntries: 0)
+        XCTAssertSwiftError(
+            try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
+                                                   startOfCentralDirectory: 0,
+                                                   startOfEndOfCentralDirectory: 0,
+                                                   operation: .remove),
+            throws: Archive.ArchiveError.invalidCentralDirectoryEntryCount)
+    }
+
     func testIterateEntryWithOverflowingZIP64DataDescriptor() {
         // The entry uses a data descriptor and has a size of `UInt64.max` in its ZIP64 extended information.
         let archive = self.archive(for: #function, mode: .read)
@@ -67,6 +85,16 @@ extension ZIPFoundationTests {
         let archive = self.archive(for: #function, mode: .read)
         XCTAssertSwiftError(try archive.extract(XCTUnwrap(archive["a"]), consumer: { _ in }),
                             throws: Data.DataError.unreadableFile)
+    }
+
+    func testRemoveEntryWithInvalidZIP64Size() throws {
+        // Entry "a" has a size of `UInt64.max` in its ZIP64 extended information. Entry "b" is valid.
+        let archive = self.archive(for: #function, mode: .update)
+        let entryA = try XCTUnwrap(archive["a"])
+        let entryB = try XCTUnwrap(archive["b"])
+        XCTAssertEqual(archive.totalUnitCountForRemoving(entryA), 0)
+        XCTAssertSwiftError(try archive.remove(entryB), throws: Archive.ArchiveError.invalidLocalHeaderSize)
+        XCTAssertSwiftError(try archive.remove(entryA), throws: Archive.ArchiveError.invalidLocalHeaderDataOffset)
     }
 
     // MARK: - Helper

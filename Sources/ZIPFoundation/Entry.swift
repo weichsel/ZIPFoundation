@@ -204,7 +204,10 @@ public struct Entry: Equatable {
         var extraDataLength = Int(localFileHeader.fileNameLength)
         extraDataLength += Int(localFileHeader.extraFieldLength)
         var size = UInt64(LocalFileHeader.size + extraDataLength)
-        size += self.isCompressed ? self.compressedSize : self.uncompressedSize
+        let dataSize = self.isCompressed ? self.compressedSize : self.uncompressedSize
+        // `dataSize` can't be trusted. Saturate, so that callers can reject sizes that exceed `Int64.max`.
+        guard dataSize <= Int64.max else { return .max }
+        size += dataSize
         if centralDirectoryStructure.isZIP64 {
             size += self.zip64DataDescriptor != nil ? UInt64(ZIP64DataDescriptor.size) : 0
         } else {
