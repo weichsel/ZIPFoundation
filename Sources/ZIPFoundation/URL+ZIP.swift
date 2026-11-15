@@ -50,6 +50,25 @@ extension URL {
         return sanitizedEntryPathURL.standardized.absoluteString.hasPrefix(parentDirectoryURL.absoluteString)
     }
 
+    /// Checks if the destination of a symlink, that is about to be created in `directoryURL`,
+    /// is contained in `parentDirectoryURL`.
+    ///
+    /// `directoryURL` doesn't have to exist yet. The caller is expected to create missing directories
+    /// (as regular directories) before creating the symlink.
+    static func isSymlinkDestination(_ destinationPath: String, ofSymlinkIn directoryURL: URL,
+                                     containedIn parentDirectoryURL: URL) -> Bool {
+        guard let parentComponents = URL.resolvedPathComponents(ofPath: parentDirectoryURL.path)
+        else { return false }
+        // Callers can opt out of the restriction by passing the root of the file system (`URL.rootFS`).
+        // In that case, every destination is valid, even if it can't be resolved reliably.
+        guard parentComponents.isEmpty == false else { return true }
+        guard let directoryComponents = URL.resolvedPathComponents(ofPath: directoryURL.path),
+              let components = URL.resolvedPathComponents(ofPath: destinationPath, relativeTo: directoryComponents)
+        else { return false }
+
+        return components.starts(with: parentComponents)
+    }
+
     /// Resolves a path, component by component, in the same way the file system does:
     /// Symlinks are followed (including a symlink in the last component) and `..` is applied
     /// to the resolved location.
