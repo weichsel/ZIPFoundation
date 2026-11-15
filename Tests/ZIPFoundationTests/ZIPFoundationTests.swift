@@ -278,6 +278,8 @@ extension ZIPFoundationTests {
             ("testUnzipCompressedZIP64Item", testUnzipCompressedZIP64Item),
             ("testUnzipUncompressedZIP64Item", testUnzipUncompressedZIP64Item),
             ("testUnzipItemWithZIP64DataDescriptor", testUnzipItemWithZIP64DataDescriptor),
+            ("testReadZIP64ArchiveWithLowVersionNeededToExtract",
+             testReadZIP64ArchiveWithLowVersionNeededToExtract),
             ("testEntryZIP64ExtraField", testEntryZIP64ExtraField),
             ("testEntryZIP64FieldOnlyHasUncompressedSize", testEntryZIP64FieldOnlyHasUncompressedSize),
             ("testEntryZIP64FieldIncludingDiskNumberStart", testEntryZIP64FieldIncludingDiskNumberStart),

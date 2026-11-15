@@ -52,17 +52,19 @@ extension ZIPFoundationTests {
                                                                           additionalDataProvider: {_ -> Data in
                                                                              return Data() })
         XCTAssertNil(invalidEOCDRecord2)
-        let eocdRecordWithWrongVersion: [UInt8] = [0x50, 0x4b, 0x06, 0x06, 0x2c, 0x00, 0x00, 0x00,
-                                                   0x00, 0x00, 0x00, 0x00, 0x1e, 0x03, 0x14, 0x00,
-                                                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                                   0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                                   0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                                   0x4c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                                   0x5a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-        let invalidEOCDRecord3 = Archive.ZIP64EndOfCentralDirectoryRecord(data: Data(eocdRecordWithWrongVersion),
-                                                                          additionalDataProvider: {_ -> Data in
-                                                                             return Data() })
-        XCTAssertNil(invalidEOCDRecord3)
+        // Some ZIP producers (e.g. Microsoft Outlook OLM export) write valid ZIP64
+        // structures with versionNeededToExtract < 4.5. These should be accepted.
+        let eocdRecordWithLowVersion: [UInt8] = [0x50, 0x4b, 0x06, 0x06, 0x2c, 0x00, 0x00, 0x00,
+                                                  0x00, 0x00, 0x00, 0x00, 0x1e, 0x03, 0x14, 0x00,
+                                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                                  0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                                  0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                                  0x4c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                                                  0x5a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        let lowVersionEOCDRecord = Archive.ZIP64EndOfCentralDirectoryRecord(data: Data(eocdRecordWithLowVersion),
+                                                                            additionalDataProvider: {_ -> Data in
+                                                                               return Data() })
+        XCTAssertNotNil(lowVersionEOCDRecord)
     }
 
     func testArchiveZIP64EOCDLocator() {
@@ -93,5 +95,15 @@ extension ZIPFoundationTests {
                                                                            additionalDataProvider: {_ -> Data in
                                                                             return Data() })
         XCTAssertNil(invalidEOCDLocator2)
+    }
+
+    func testReadZIP64ArchiveWithLowVersionNeededToExtract() throws {
+        // The ZIP64 end of central directory record has a "version needed to extract" of 1.0 and
+        // the only entry is a ZIP64 entry with a local header offset of 0.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertEqual(archive.map { $0.path }, ["a"])
+        var extractedData = Data()
+        _ = try archive.extract(XCTUnwrap(archive["a"]), consumer: { extractedData.append($0) })
+        XCTAssertEqual(extractedData, Data("a".utf8))
     }
 }
