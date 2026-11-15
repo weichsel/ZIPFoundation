@@ -103,14 +103,12 @@ extension FileManager {
             throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: sourceURL.path])
         }
         let archive = try Archive(url: sourceURL, accessMode: .read, pathEncoding: pathEncoding)
-        var totalUnitCount = Int64(0)
         let symlinksValidWithin = symlinksValidWithin ?? destinationURL
         if let progress = progress {
-            totalUnitCount = archive.reduce(0, {
+            progress.totalUnitCount = archive.reduce(0, {
                 let (count, didOverflow) = $0.addingReportingOverflow(archive.totalUnitCountForReading($1))
                 return didOverflow ? .max : count
             })
-            progress.totalUnitCount = totalUnitCount
         }
 
         let destinationComponents = URL.resolvedPathComponents(ofPath: destinationURL.path)

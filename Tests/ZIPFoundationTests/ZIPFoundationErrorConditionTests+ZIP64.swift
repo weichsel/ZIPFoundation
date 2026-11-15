@@ -88,7 +88,7 @@ extension ZIPFoundationTests {
         // Both entries have a size of `UInt64.max`, so the sum of the entry sizes exceeds `Int64.max`.
         let archive = self.archive(for: #function, mode: .read)
         let destinationURL = self.createDirectory(for: #function)
-        let progress = Progress()
+        let progress = Progress(totalUnitCount: 0)
         XCTAssertSwiftError(try FileManager().unzipItem(at: archive.url, to: destinationURL, progress: progress),
                             throws: Archive.ArchiveError.invalidEntrySize)
         XCTAssertEqual(progress.totalUnitCount, .max)
