@@ -54,6 +54,8 @@ extension ZIPFoundationTests {
     }
 
     func testZipItemErrorConditions() {
+        // The expected errors depend on Darwin file system behavior and on not running as root.
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let fileManager = FileManager()
         let nonExistingURL1 = URL(fileURLWithPath: "/nothing")
         let nonExistingURL2 = URL(fileURLWithPath: "/nowhere")
@@ -82,6 +84,7 @@ extension ZIPFoundationTests {
         let directoryURL = unreadableFileURL.deletingLastPathComponent()
         XCTAssertCocoaError(try fileManager.zipItem(at: directoryURL, to: directoryArchiveURL),
                             throwsErrorWithCode: .fileReadNoPermission)
+#endif
     }
 
     func testUnzipItem() {

@@ -28,10 +28,12 @@ extension ZIPFoundationTests {
         let file: FILEPointer = fopen(fileSystemRepresentation, "rb")
         let unreachableStructure: Entry.CentralDirectoryStructure? = Data.readStruct(from: file, at: .max)
         XCTAssertNil(unreachableStructure)
-        // Close the file to exercise the error path during readStructure that deals with
-        // unreadable file data.
         fclose(file)
-        let centralDirectoryStructure: Entry.CentralDirectoryStructure? = Data.readStruct(from: file, at: 0)
+        // Use a write-only file to exercise the error path during readStructure that deals with
+        // unreadable file data.
+        let writeOnlyFile: FILEPointer = fopen(fileSystemRepresentation, "wb")
+        defer { fclose(writeOnlyFile) }
+        let centralDirectoryStructure: Entry.CentralDirectoryStructure? = Data.readStruct(from: writeOnlyFile, at: 0)
         XCTAssertNil(centralDirectoryStructure)
     }
 
@@ -44,10 +46,10 @@ extension ZIPFoundationTests {
                                             attributes: nil)
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
-        let file: FILEPointer = fopen(fileSystemRepresentation, "rb")
-        // Close the file to exercise the error path during readChunk that deals with
+        // Use a write-only file to exercise the error path during readChunk that deals with
         // unreadable file data.
-        fclose(file)
+        let file: FILEPointer = fopen(fileSystemRepresentation, "wb")
+        defer { fclose(file) }
         XCTAssertSwiftError(try Data.readChunk(of: 10, from: file),
                             throws: Data.DataError.unreadableFile)
     }
@@ -61,10 +63,10 @@ extension ZIPFoundationTests {
                                             attributes: nil)
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
-        let file: FILEPointer = fopen(fileSystemRepresentation, "rb")
-        // Close the file to exercise the error path during writeChunk that deals with
+        // Use a read-only file to exercise the error path during writeChunk that deals with
         // unwritable files.
-        fclose(file)
+        let file: FILEPointer = fopen(fileSystemRepresentation, "rb")
+        defer { fclose(file) }
         XCTAssertSwiftError(try Data.write(chunk: Data(count: 10), to: file),
                             throws: Data.DataError.unwritableFile)
     }
@@ -109,11 +111,11 @@ extension ZIPFoundationTests {
                                             attributes: nil)
         XCTAssert(result == true)
         let fileSystemRepresentation = fileManager.fileSystemRepresentation(withPath: fileURL.path)
-        let file: FILEPointer = fopen(fileSystemRepresentation, "rb")
-        let data = Data.makeRandomData(size: 1024)
-        // Close the file to exercise the error path during writeChunk that deals with
+        // Use a read-only file to exercise the error path during writeChunk that deals with
         // unwritable files.
-        fclose(file)
+        let file: FILEPointer = fopen(fileSystemRepresentation, "rb")
+        defer { fclose(file) }
+        let data = Data.makeRandomData(size: 1024)
         XCTAssertSwiftError(try Data.writeLargeChunk(data, size: 1024, bufferSize: 256, to: file),
                             throws: Data.DataError.unwritableFile)
     }
