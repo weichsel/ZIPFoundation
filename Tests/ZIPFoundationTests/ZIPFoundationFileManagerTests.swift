@@ -160,6 +160,21 @@ extension ZIPFoundationTests {
         })
         try? fileManager.unzipItem(at: linkArchiveURL, to: destinationURL, symlinksValidWithin: URL.rootFS)
         XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("link")))
+
+        // Link destinations that can't be resolved reliably are only valid,
+        // if the caller opted out of the restriction.
+        let unresolvableArchive = self.archive(for: #function, mode: .create)
+        try unresolvableArchive.addEntry(with: "unresolvable", type: .symlink, uncompressedSize: Int64(17),
+                                         provider: { (_, _) -> Data in
+            return Data("missing/../target".utf8)
+        })
+        let unresolvableURL = destinationURL.appendingPathComponent("unresolvable")
+        XCTAssertSwiftError(try fileManager.unzipItem(at: unresolvableArchive.url, to: destinationURL),
+                            throws: Archive.ArchiveError.uncontainedSymlink)
+        XCTAssertFalse(fileManager.itemExists(at: unresolvableURL))
+        XCTAssertNoThrow(try fileManager.unzipItem(at: unresolvableArchive.url, to: destinationURL,
+                                                   symlinksValidWithin: URL.rootFS))
+        XCTAssertEqual(try? fileManager.destinationOfSymbolicLink(atPath: unresolvableURL.path), "missing/../target")
     }
 
     // On Darwin platforms, we want the same behavior as the system-provided ZIP utilities.

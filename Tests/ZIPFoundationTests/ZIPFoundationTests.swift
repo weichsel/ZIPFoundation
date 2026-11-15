@@ -250,6 +250,12 @@ extension ZIPFoundationTests {
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testUnzipUncontainedSymlink", testUnzipUncontainedSymlink),
+            ("testUnzipChainedSymlinkTraversal", testUnzipChainedSymlinkTraversal),
+            ("testUnzipDeferredSymlinkTraversal", testUnzipDeferredSymlinkTraversal),
+            ("testUnzipEntryPathTraversalThroughSymlink", testUnzipEntryPathTraversalThroughSymlink),
+            ("testUnzipEntryThroughUncontainedSymlink", testUnzipEntryThroughUncontainedSymlink),
+            ("testUnzipEntryThroughContainedSymlink", testUnzipEntryThroughContainedSymlink),
+            ("testUnzipSymlinkToNotYetExistingSymlink", testUnzipSymlinkToNotYetExistingSymlink),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests),
             ("testFileModificationDate", testFileModificationDate),
@@ -379,22 +385,3 @@ extension Data {
         return Data(bytes: bytes, count: size)
     }
 }
-
-#if os(macOS)
-extension NSUserScriptTask {
-
-    static func makeVolumeCreationTask(at tempDir: URL, volumeName: String) throws -> NSUserScriptTask {
-        let scriptURL = tempDir.appendingPathComponent("createVol.sh", isDirectory: false)
-        let dmgURL = tempDir.appendingPathComponent(volumeName).appendingPathExtension("dmg")
-        let script = """
-        #!/bin/bash
-        hdiutil create -size 5m -fs HFS+ -type SPARSEBUNDLE -ov -volname "\(volumeName)" "\(dmgURL.path)"
-        hdiutil attach -nobrowse "\(dmgURL.appendingPathExtension("sparsebundle").path)"
-        """
-        try script.write(to: scriptURL, atomically: false, encoding: .utf8)
-        let permissions = NSNumber(value: Int16(0o770))
-        try FileManager.default.setAttributes([.posixPermissions: permissions], ofItemAtPath: scriptURL.path)
-        return try NSUserScriptTask(url: scriptURL)
-    }
-}
-#endif

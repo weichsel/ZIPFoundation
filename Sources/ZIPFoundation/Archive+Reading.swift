@@ -62,10 +62,11 @@ extension Archive {
             let consumer = { (data: Data) in
                 guard let linkPath = String(data: data, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
 
+                // The link destination has to be resolved through the file system to account for
+                // symlinks created by preceding entries. (e.g. `a -> .` followed by `b -> a/..`)
                 let parentURL = url.deletingLastPathComponent()
-                let isAbsolutePath = (linkPath as NSString).isAbsolutePath
-                let linkURL = URL(fileURLWithPath: linkPath, relativeTo: isAbsolutePath ? nil : parentURL)
-                let isContained = linkURL.isContained(in: symlinksValidWithin ?? parentURL)
+                let isContained = URL.isSymlinkDestination(linkPath, ofSymlinkIn: parentURL,
+                                                           containedIn: symlinksValidWithin ?? parentURL)
                 guard isContained else { throw ArchiveError.uncontainedSymlink }
 
                 try fileManager.createParentDirectoryStructure(for: url)

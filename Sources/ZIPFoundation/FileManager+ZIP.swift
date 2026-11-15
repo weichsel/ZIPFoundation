@@ -110,10 +110,12 @@ extension FileManager {
             progress.totalUnitCount = totalUnitCount
         }
 
+        let destinationComponents = URL.resolvedPathComponents(ofPath: destinationURL.path)
         for entry in archive {
             let path = pathEncoding == nil ? entry.path : entry.path(using: pathEncoding!)
             let entryURL = destinationURL.appendingPathComponent(path)
-            guard entryURL.isContained(in: destinationURL) else {
+            guard let destinationComponents = destinationComponents,
+                  entryURL.isContained(in: destinationURL, resolvedTo: destinationComponents) else {
                 throw CocoaError(.fileReadInvalidFileName,
                                  userInfo: [NSFilePathErrorKey: entryURL.path])
             }
@@ -149,6 +151,8 @@ extension FileManager {
         // would throw a `.fileReadNoSuchFile` false positive error.
         // For ZIP files it may be intended to archive "broken" symlinks because they might be
         // resolvable again when extracting the archive to a different destination.
+        // This only holds on Darwin platforms. On Linux, `URL.checkResourceIsReachable()` traverses symlinks too.
+        // Broken symlinks are therefore reported as non-existent there.
         return (try? url.checkResourceIsReachable()) == true
     }
 
