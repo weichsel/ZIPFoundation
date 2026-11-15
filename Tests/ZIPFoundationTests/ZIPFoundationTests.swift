@@ -263,7 +263,11 @@ extension ZIPFoundationTests {
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests),
             ("testFileModificationDate", testFileModificationDate),
             ("testFileModificationDateHelperMethods", testFileModificationDateHelperMethods),
-            ("testInvalidSymlinkCompressionMethodErrorConditions", testInvalidSymlinkCompressionMethodErrorConditions)
+            ("testInvalidSymlinkCompressionMethodErrorConditions", testInvalidSymlinkCompressionMethodErrorConditions),
+            ("testReadStructureErrorConditions", testReadStructureErrorConditions),
+            ("testReadChunkErrorConditions", testReadChunkErrorConditions),
+            ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
+            ("testWriteLargeChunkErrorConditions", testWriteLargeChunkErrorConditions)
         ] + zip64Tests + darwinOnlyTests + posixOnlyTests + swift5OnlyTests
     }
 
@@ -327,13 +331,7 @@ extension ZIPFoundationTests {
             ("testArchiveAddUncompressedEntryProgress", testArchiveAddUncompressedEntryProgress),
             ("testArchiveAddCompressedEntryProgress", testArchiveAddCompressedEntryProgress),
             ("testZIP64ArchiveAddEntryProgress", testZIP64ArchiveAddEntryProgress),
-            // The below test cases test error code paths but they lead to undefined behavior and memory
-            // corruption on non-Darwin platforms. We disable them for now.
-            ("testReadStructureErrorConditions", testReadStructureErrorConditions),
-            ("testReadChunkErrorConditions", testReadChunkErrorConditions),
-            ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
-            ("testWriteLargeChunkErrorConditions", testWriteLargeChunkErrorConditions),
-            // Fails for Swift < 4.2 on Linux. We can re-enable that when we drop Swift 4.x support
+            // Relies on Darwin file system behavior and on not running as root
             ("testZipItemErrorConditions", testZipItemErrorConditions),
             // Applying permissions on symlinks is only relevant on Darwin platforms
             ("testSymlinkPermissionsTransferErrorConditions", testSymlinkPermissionsTransferErrorConditions)

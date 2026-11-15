@@ -52,10 +52,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tag: ['5.10', '6.0', '6.2', '6.3']
+        tag: ['5.10', '6.0', '6.2', '6.3', '6.4']
         runner: [ubuntu-latest]
         include:
-          - { tag: '6.3', runner: ubuntu-24.04-arm }
+          - { tag: '6.4', runner: ubuntu-24.04-arm }
     runs-on: ${{ matrix.runner }}
     container:
       image: swift:${{ matrix.tag }}

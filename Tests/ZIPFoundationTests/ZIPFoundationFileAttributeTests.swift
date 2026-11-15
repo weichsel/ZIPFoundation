@@ -48,6 +48,8 @@ extension ZIPFoundationTests {
     }
 
     func testSymlinkPermissionsTransferErrorConditions() {
+        // Applying permissions on symlinks is only relevant on Darwin platforms.
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         let fileManager = FileManager()
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         XCTAssertSwiftError(try fileManager.setAttributes([:], ofItemAtURL: assetURL, traverseLink: false),
@@ -59,6 +61,7 @@ extension ZIPFoundationTests {
         XCTAssertPOSIXError(try fileManager.setAttributes([.posixPermissions: permissions],
                                                           ofItemAtURL: nonExistentURL, traverseLink: false),
                             throwsErrorWithCode: .ENOENT)
+#endif
     }
 
     func testSymlinkModificationDateTransferErrorConditions() {
