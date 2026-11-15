@@ -110,10 +110,12 @@ extension FileManager {
             progress.totalUnitCount = totalUnitCount
         }
 
+        let destinationComponents = URL.resolvedPathComponents(ofPath: destinationURL.path)
         for entry in archive {
             let path = pathEncoding == nil ? entry.path : entry.path(using: pathEncoding!)
             let entryURL = destinationURL.appendingPathComponent(path)
-            guard entryURL.isContained(in: destinationURL) else {
+            guard let destinationComponents = destinationComponents,
+                  entryURL.isContained(in: destinationURL, resolvedTo: destinationComponents) else {
                 throw CocoaError(.fileReadInvalidFileName,
                                  userInfo: [NSFilePathErrorKey: entryURL.path])
             }

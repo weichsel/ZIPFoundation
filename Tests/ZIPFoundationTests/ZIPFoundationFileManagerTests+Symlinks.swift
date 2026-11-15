@@ -50,6 +50,42 @@ extension ZIPFoundationTests {
         XCTAssertFalse(fileManager.itemExists(at: escapedURL))
     }
 
+    func testUnzipEntryPathTraversalThroughSymlink() throws {
+        // `link/..` lexically resolves to the destination directory.
+        // The file system resolves `link` first and therefore ends up in the parent of the destination.
+        let fileManager = FileManager()
+        let destinationURL = self.createDirectory(for: #function)
+        let escapedURL = destinationURL.deletingLastPathComponent().appendingPathComponent("path-escaped.txt")
+        let archive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "link", type: .symlink, content: ".", to: archive)
+        try self.addEntry(with: "link/../path-escaped.txt", type: .file, content: "escaped", to: archive)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: archive.url, to: destinationURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssertFalse(fileManager.itemExists(at: escapedURL))
+    }
+
+    func testUnzipEntryThroughUncontainedSymlink() throws {
+        // Allowing symlinks to point outside of the destination must not allow
+        // subsequent entries to be written through them.
+        let fileManager = FileManager()
+        let destinationURL = self.createDirectory(for: #function)
+        let outsideURL = self.createDirectory(for: #function + "Outside")
+        let archive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "link", type: .symlink, content: outsideURL.path, to: archive)
+        try self.addEntry(with: "link/escaped.txt", type: .file, content: "escaped", to: archive)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: archive.url, to: destinationURL,
+                                                      symlinksValidWithin: URL.rootFS),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("link")))
+        XCTAssertFalse(fileManager.itemExists(at: outsideURL.appendingPathComponent("escaped.txt")))
+        // Directory entries must not be able to alter attributes of the link destination either.
+        let directoryArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "link/", type: .directory, to: directoryArchive)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: directoryArchive.url, to: destinationURL,
+                                                      symlinksValidWithin: URL.rootFS),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+    }
+
     func testUnzipEntryThroughContainedSymlink() throws {
         let fileManager = FileManager()
         let destinationURL = self.createDirectory(for: #function)
@@ -70,7 +106,8 @@ extension ZIPFoundationTests {
         XCTAssert(fileManager.itemExists(at: directoryURL.appendingPathComponent("file.txt")))
         XCTAssert(fileManager.itemExists(at: directoryURL.appendingPathComponent("other.txt")))
         XCTAssert(fileManager.itemExists(at: directoryURL.appendingPathComponent("third.txt")))
-        XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("dangling")))
+        let danglingURL = destinationURL.appendingPathComponent("dangling")
+        XCTAssertEqual(try? fileManager.destinationOfSymbolicLink(atPath: danglingURL.path), "missing/file.txt")
     }
 
     // MARK: - Helpers

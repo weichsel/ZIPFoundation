@@ -29,25 +29,32 @@ extension URL {
             ProcessInfo.processInfo.globallyUniqueString)
     }
 
-    func isContained(in parentDirectoryURL: URL) -> Bool {
-        // Ensure this URL is contained in the passed in URL
-        let parentDirectoryURL = URL(fileURLWithPath: parentDirectoryURL.path, isDirectory: true).standardized
-        // Maliciously crafted ZIP files can contain entries using a prepended path delimiter `/` in combination
-        // with the parent directory shorthand `..` to bypass our containment check.
-        // When a malicious entry path like e.g. `/../secret.txt` gets appended to the destination
-        // directory URL (e.g. `file:///tmp/`), the resulting URL `file:///tmp//../secret.txt` gets expanded
-        // to `file:///tmp/secret` when using `URL.standardized`. This URL would pass the check performed
-        // in `isContained(in:)`.
-        // Lower level API like POSIX `fopen` - which is used at a later point during extraction - expands
-        // `/tmp//../secret.txt` to `/secret.txt` though. This would lead to an escape to the parent directory.
-        // To avoid that, we replicate the behavior of `fopen`s path expansion and replace all double delimiters
-        // with single delimiters.
-        // More details: https://github.com/weichsel/ZIPFoundation/issues/281
-        let sanitizedEntryPathURL: URL = {
-            let sanitizedPath = self.path.replacingOccurrences(of: "//", with: "/")
-            return URL(fileURLWithPath: sanitizedPath)
-        }()
-        return sanitizedEntryPathURL.standardized.absoluteString.hasPrefix(parentDirectoryURL.absoluteString)
+    /// Checks if the receiver is contained in `directoryURL`, based on the locations
+    /// the file system would actually access.
+    ///
+    /// A lexical check (e.g. via `URL.standardized`) is not sufficient here, because it doesn't
+    /// replicate the path resolution of lower level API like POSIX `fopen`:
+    /// - An entry path like `/../secret.txt` appended to `/tmp/` results in `/tmp//../secret.txt`.
+    ///   `URL.standardized` expands this to `/tmp/secret.txt`, while the file system resolves it to `/secret.txt`.
+    ///   More details: https://github.com/weichsel/ZIPFoundation/issues/281
+    /// - A path like `link/../file` is lexically contained in its parent directory. If `link` is a symlink,
+    ///   the file system resolves the link first and applies `..` to the link destination afterwards.
+    ///   Entries of a maliciously crafted archive can use symlinks created by preceding entries
+    ///   to escape the destination directory that way.
+    ///
+    /// - Parameters:
+    ///   - directoryURL: The directory that should contain the receiver.
+    ///   - directoryComponents: The resolved path components of `directoryURL`. They are passed in,
+    ///                          so that callers that check many URLs only have to resolve the directory once.
+    func isContained(in directoryURL: URL, resolvedTo directoryComponents: [String]) -> Bool {
+        let path = self.path
+        let directoryPath = directoryURL.path
+        // If the receiver was built by appending to `directoryURL`, only the appended part has to be resolved.
+        let components = path.hasPrefix(directoryPath + "/")
+            ? URL.resolvedPathComponents(ofPath: "./" + path.dropFirst(directoryPath.count),
+                                         relativeTo: directoryComponents)
+            : URL.resolvedPathComponents(ofPath: path)
+        return components?.starts(with: directoryComponents) == true
     }
 
     /// Checks if the destination of a symlink, that is about to be created in `directoryURL`,
