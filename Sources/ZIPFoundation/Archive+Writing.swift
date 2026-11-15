@@ -125,10 +125,13 @@ extension Archive {
         let compressionMethod = type == .file ? compressionMethod : .none
         progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : uncompressedSize
         let (eocdRecord, zip64EOCD) = (self.endOfCentralDirectoryRecord, self.zip64EndOfCentralDirectory)
-        guard self.offsetToStartOfCentralDirectory <= .max else { throw ArchiveError.invalidCentralDirectoryOffset }
+        guard self.offsetToStartOfCentralDirectory <= Int64.max else {
+            throw ArchiveError.invalidCentralDirectoryOffset
+        }
         var startOfCD = Int64(self.offsetToStartOfCentralDirectory)
         fseeko(self.archiveFile, zip_off_t(startOfCD), SEEK_SET)
         let existingSize = self.sizeOfCentralDirectory
+        guard existingSize <= Int.max else { throw ArchiveError.invalidCentralDirectorySize }
         let existingData = try Data.readChunk(of: Int(existingSize), from: self.archiveFile)
         fseeko(self.archiveFile, zip_off_t(startOfCD), SEEK_SET)
         let fileHeaderStart = Int64(ftello(self.archiveFile))

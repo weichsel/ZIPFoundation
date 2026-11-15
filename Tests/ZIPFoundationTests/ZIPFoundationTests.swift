@@ -288,6 +288,7 @@ extension ZIPFoundationTests {
             ("testWriteEOCDWithTooLargeSizeOfCentralDirectory", testWriteEOCDWithTooLargeSizeOfCentralDirectory),
             ("testWriteEOCDWithTooLargeCentralDirectoryOffset", testWriteEOCDWithTooLargeCentralDirectoryOffset),
             ("testWriteEOCDWithTooSmallCentralDirectory", testWriteEOCDWithTooSmallCentralDirectory),
+            ("testAddEntryWithInvalidZIP64CentralDirectory", testAddEntryWithInvalidZIP64CentralDirectory),
             ("testIterateEntryWithOverflowingZIP64DataDescriptor", testIterateEntryWithOverflowingZIP64DataDescriptor),
             ("testExtractEntryWithInvalidZIP64Size", testExtractEntryWithInvalidZIP64Size),
             ("testUnzipItemWithInvalidZIP64SizeProgress", testUnzipItemWithInvalidZIP64SizeProgress),

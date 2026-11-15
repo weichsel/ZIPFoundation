@@ -55,6 +55,20 @@ extension ZIPFoundationTests {
             throws: Archive.ArchiveError.invalidCentralDirectoryEntryCount)
     }
 
+    func testAddEntryWithInvalidZIP64CentralDirectory() {
+        let archive = self.archive(for: #function, mode: .create)
+        let addEntry = {
+            try archive.addEntry(with: "a", type: .file, uncompressedSize: Int64(0), provider: { _, _ in Data() })
+        }
+        archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: 0,
+                                                                                numberOfEntries: 0,
+                                                                                offsetToStartOfCentralDirectory: .max)
+        XCTAssertSwiftError(try addEntry(), throws: Archive.ArchiveError.invalidCentralDirectoryOffset)
+        archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: .max,
+                                                                                numberOfEntries: 0)
+        XCTAssertSwiftError(try addEntry(), throws: Archive.ArchiveError.invalidCentralDirectorySize)
+    }
+
     func testIterateEntryWithOverflowingZIP64DataDescriptor() {
         // The entry uses a data descriptor and has a size of `UInt64.max` in its ZIP64 extended information.
         let archive = self.archive(for: #function, mode: .read)
@@ -99,7 +113,8 @@ extension ZIPFoundationTests {
 
     // MARK: - Helper
 
-    private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: UInt64, numberOfEntries: UInt64)
+    private func makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: UInt64, numberOfEntries: UInt64,
+                                                    offsetToStartOfCentralDirectory: UInt64 = 0)
     -> Archive.ZIP64EndOfCentralDirectory {
         let record = Archive.ZIP64EndOfCentralDirectoryRecord(sizeOfZIP64EndOfCentralDirectoryRecord: UInt64(44),
                                                               versionMadeBy: UInt16(789),
@@ -108,7 +123,8 @@ extension ZIPFoundationTests {
                                                               totalNumberOfEntriesOnDisk: 0,
                                                               totalNumberOfEntriesInCentralDirectory: numberOfEntries,
                                                               sizeOfCentralDirectory: sizeOfCentralDirectory,
-                                                              offsetToStartOfCentralDirectory: 0,
+                                                              offsetToStartOfCentralDirectory:
+                                                                offsetToStartOfCentralDirectory,
                                                               zip64ExtensibleDataSector: Data())
         let locator = Archive.ZIP64EndOfCentralDirectoryLocator(numberOfDiskWithZIP64EOCDRecordStart: 0,
                                                                 relativeOffsetOfZIP64EOCDRecord: 0,
