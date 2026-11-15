@@ -110,6 +110,23 @@ extension ZIPFoundationTests {
         XCTAssertEqual(try? fileManager.destinationOfSymbolicLink(atPath: danglingURL.path), "missing/file.txt")
     }
 
+    func testUnzipSymlinkToNotYetExistingSymlink() throws {
+        // Framework bundles contain symlinks that point through other symlinks.
+        // Depending on the entry order, those don't exist yet when the link gets created.
+        // More details: https://github.com/weichsel/ZIPFoundation/issues/185
+        let fileManager = FileManager()
+        let destinationURL = self.createDirectory(for: #function)
+        let archive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "Test.framework/Resources", type: .symlink,
+                          content: "Versions/Current/Resources", to: archive)
+        try self.addEntry(with: "Test.framework/Versions/A/Resources/Info.plist", type: .file,
+                          content: "plist", to: archive)
+        try self.addEntry(with: "Test.framework/Versions/Current", type: .symlink, content: "A", to: archive)
+        XCTAssertNoThrow(try fileManager.unzipItem(at: archive.url, to: destinationURL))
+        let infoURL = destinationURL.appendingPathComponent("Test.framework/Resources/Info.plist")
+        XCTAssert(fileManager.fileExists(atPath: infoURL.path))
+    }
+
     // MARK: - Helpers
 
     private func addEntry(with path: String, type: Entry.EntryType, content: String = "",

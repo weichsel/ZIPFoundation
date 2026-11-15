@@ -255,6 +255,7 @@ extension ZIPFoundationTests {
             ("testUnzipEntryPathTraversalThroughSymlink", testUnzipEntryPathTraversalThroughSymlink),
             ("testUnzipEntryThroughUncontainedSymlink", testUnzipEntryThroughUncontainedSymlink),
             ("testUnzipEntryThroughContainedSymlink", testUnzipEntryThroughContainedSymlink),
+            ("testUnzipSymlinkToNotYetExistingSymlink", testUnzipSymlinkToNotYetExistingSymlink),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests),
             ("testFileModificationDate", testFileModificationDate),
