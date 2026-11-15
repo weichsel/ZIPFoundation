@@ -1,4 +1,7 @@
 // swift-tools-version:5.0
+
+// NOTE: This manifest applies only to Xcodes 14 and lower.
+
 import PackageDescription
 
 #if canImport(Compression)
