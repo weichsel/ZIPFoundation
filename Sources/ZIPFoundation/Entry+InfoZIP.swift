@@ -46,15 +46,18 @@ extension Entry.InfoZIPUnicodePath {
             if headerID == Archive.ExtraFieldHeaderID.infoZIPUnicodePath.rawValue, dataSize >= 5 {
                 let fieldData = data.subdata(in: offset..<nextOffset)
                 let version: UInt8 = fieldData.scanValue(start: 4)
-                let nameCRC32: UInt32 = fieldData.scanValue(start: 5)
-                let unicodeNameData = fieldData.subdata(in: 9..<fieldData.count)
+                // Version 1 is the only defined version. Fields with other versions have to be ignored.
+                if version == 1 {
+                    let nameCRC32: UInt32 = fieldData.scanValue(start: 5)
+                    let unicodeNameData = fieldData.subdata(in: 9..<fieldData.count)
 
-                return Entry.InfoZIPUnicodePath(
-                    dataSize: dataSize,
-                    version: version,
-                    nameCRC32: nameCRC32,
-                    unicodeName: unicodeNameData
-                )
+                    return Entry.InfoZIPUnicodePath(
+                        dataSize: dataSize,
+                        version: version,
+                        nameCRC32: nameCRC32,
+                        unicodeName: unicodeNameData
+                    )
+                }
             }
             offset = nextOffset
         }

@@ -35,6 +35,19 @@ extension ZIPFoundationTests {
         XCTAssertNil(Entry.InfoZIPUnicodePath.scanForUnicodePath(in: Data(shortField)))
     }
 
+    func testEntryScanForInfoZIPWithUnsupportedVersion() {
+        // Unicode Path fields with the name "a" and the versions 0 and 2.
+        let version0Field: [UInt8] = [0x75, 0x70, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x61]
+        XCTAssertNil(Entry.InfoZIPUnicodePath.scanForUnicodePath(in: Data(version0Field)))
+        let version2Field: [UInt8] = [0x75, 0x70, 0x06, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x61]
+        XCTAssertNil(Entry.InfoZIPUnicodePath.scanForUnicodePath(in: Data(version2Field)))
+        // A version 1 field with the name "b" that follows an unsupported field has to be found.
+        let version1Field: [UInt8] = [0x75, 0x70, 0x06, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x62]
+        let infoZIP = Entry.InfoZIPUnicodePath.scanForUnicodePath(in: Data(version2Field + version1Field))
+        XCTAssertEqual(infoZIP?.version, 1)
+        XCTAssertEqual(infoZIP?.unicodeName, Data("b".utf8))
+    }
+
     func testInfoZIPUnicodePathWithTruncatedField() {
         // The Unicode Path fields of both entries are too short. The header file names have to be used.
         let archive = self.archive(for: #function, mode: .read)

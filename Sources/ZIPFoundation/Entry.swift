@@ -128,8 +128,7 @@ public struct Entry: Equatable {
         if let infoZIPExtraField = self.infoZIPExtraField {
             // Validate CRC32 before using the Unicode name
             let originalFilenameCRC32 = self.centralDirectoryStructure.fileNameData.crc32(checksum: 0)
-            // Version 1 is the only defined version. Fields with other versions have to be ignored.
-            if infoZIPExtraField.version == 1, infoZIPExtraField.nameCRC32 == originalFilenameCRC32,
+            if infoZIPExtraField.nameCRC32 == originalFilenameCRC32,
                let unicodePath = String(data: infoZIPExtraField.unicodeName, encoding: .utf8),
                unicodePath.isEmpty == false {
                 return unicodePath

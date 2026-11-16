@@ -328,7 +328,8 @@ extension ZIPFoundationTests {
             ("testEntryScanForTruncatedInfoZIP", testEntryScanForTruncatedInfoZIP),
             ("testInfoZIPUnicodePathWithTruncatedField", testInfoZIPUnicodePathWithTruncatedField),
             ("testInfoZIPUnicodePathWithInvalidName", testInfoZIPUnicodePathWithInvalidName),
-            ("testInfoZIPUnicodePathWithUnsupportedVersion", testInfoZIPUnicodePathWithUnsupportedVersion)
+            ("testInfoZIPUnicodePathWithUnsupportedVersion", testInfoZIPUnicodePathWithUnsupportedVersion),
+            ("testEntryScanForInfoZIPWithUnsupportedVersion", testEntryScanForInfoZIPWithUnsupportedVersion)
         ]
     }
 
