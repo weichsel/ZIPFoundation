@@ -49,6 +49,13 @@ extension ZIPFoundationTests {
         XCTAssertNotNil(archive["a"])
     }
 
+    func testInfoZIPUnicodePathWithUnsupportedVersion() {
+        // The Unicode Path field has a matching CRC32 and the name "renamed.txt", but its version is 2.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertEqual(archive.map { $0.path }, ["original.txt"])
+        XCTAssertNotNil(archive["original.txt"])
+    }
+
     func testInfoZIPUnicodePath() {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)
