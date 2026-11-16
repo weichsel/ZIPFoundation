@@ -140,6 +140,25 @@ extension Entry.ZIP64ExtendedInformation {
         if dataSize == 0 { return nil }
     }
 
+    /// Returns the extra fields in `data` that are not ZIP64 extended information fields.
+    static func extraFieldData(excludingZIP64FieldsIn data: Data) -> Data {
+        var remainingData = Data()
+        var offset = 0
+        let headerSize = Int(Entry.ZIP64ExtendedInformation.headerSize)
+        while offset + headerSize <= data.count {
+            let headerID: UInt16 = data.scanValue(start: offset)
+            let dataSize: UInt16 = data.scanValue(start: offset + 2)
+            let nextOffset = offset + headerSize + Int(dataSize)
+            // Truncated fields at the end of the data are dropped.
+            guard nextOffset <= data.count else { break }
+            if headerID != Archive.ExtraFieldHeaderID.zip64ExtendedInformation.rawValue {
+                remainingData.append(data.subdata(in: offset..<nextOffset))
+            }
+            offset = nextOffset
+        }
+        return remainingData
+    }
+
     static func scanForZIP64Field(in data: Data, fields: [Field]) -> Entry.ZIP64ExtendedInformation? {
         guard data.isEmpty == false else { return nil }
         var offset = 0

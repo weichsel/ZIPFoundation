@@ -330,7 +330,9 @@ extension ZIPFoundationTests {
             ("testInfoZIPUnicodePathWithInvalidName", testInfoZIPUnicodePathWithInvalidName),
             ("testInfoZIPUnicodePathWithUnsupportedVersion", testInfoZIPUnicodePathWithUnsupportedVersion),
             ("testEntryScanForInfoZIPWithUnsupportedVersion", testEntryScanForInfoZIPWithUnsupportedVersion),
-            ("testInfoZIPUnicodePathHeaderSelection", testInfoZIPUnicodePathHeaderSelection)
+            ("testInfoZIPUnicodePathHeaderSelection", testInfoZIPUnicodePathHeaderSelection),
+            ("testRemoveEntryPreservesUnicodePathOfZIP64Entry", testRemoveEntryPreservesUnicodePathOfZIP64Entry),
+            ("testExtraFieldDataExcludingZIP64Fields", testExtraFieldDataExcludingZIP64Fields)
         ]
     }
 

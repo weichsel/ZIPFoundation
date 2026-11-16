@@ -77,6 +77,28 @@ extension ZIPFoundationTests {
         XCTAssertEqual(archive.map { $0.path }, ["unicode-a", "b", "c"])
     }
 
+    func testRemoveEntryPreservesUnicodePathOfZIP64Entry() throws {
+        // The second entry has ZIP64 extended information and the Unicode Path "renamed.txt".
+        let archive = self.archive(for: #function, mode: .update)
+        XCTAssertEqual(archive.map { $0.path }, ["remove.txt", "renamed.txt"])
+        try archive.remove(XCTUnwrap(archive["remove.txt"]))
+        XCTAssertEqual(archive.map { $0.path }, ["renamed.txt"])
+        var extractedData = Data()
+        _ = try archive.extract(XCTUnwrap(archive["renamed.txt"]), consumer: { extractedData.append($0) })
+        XCTAssertEqual(extractedData, Data("original.txt".utf8))
+    }
+
+    func testExtraFieldDataExcludingZIP64Fields() {
+        let zip64Field: [UInt8] = [0x01, 0x00, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        let otherField: [UInt8] = [0x99, 0x99, 0x02, 0x00, 0xaa, 0xbb]
+        // A field that claims more data than is available.
+        let truncatedField: [UInt8] = [0x98, 0x98, 0x08, 0x00, 0xcc]
+        let data = Data(otherField + zip64Field + otherField + truncatedField)
+        XCTAssertEqual(Entry.ZIP64ExtendedInformation.extraFieldData(excludingZIP64FieldsIn: data),
+                       Data(otherField + otherField))
+        XCTAssertEqual(Entry.ZIP64ExtendedInformation.extraFieldData(excludingZIP64FieldsIn: Data()), Data())
+    }
+
     func testInfoZIPUnicodePath() {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)

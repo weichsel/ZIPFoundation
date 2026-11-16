@@ -281,7 +281,12 @@ extension Entry.CentralDirectoryStructure {
     init(centralDirectoryStructure: Entry.CentralDirectoryStructure,
          zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, relativeOffset: UInt32) {
         if let existingInfo = zip64ExtendedInformation {
-            self.extraFieldData = existingInfo.data
+            // Only the ZIP64 extended information is replaced. All other extra fields are preserved.
+            let zip64Data = existingInfo.data
+            let otherFields = Entry.ZIP64ExtendedInformation
+                .extraFieldData(excludingZIP64FieldsIn: centralDirectoryStructure.extraFieldData)
+            let fitsExtraField = zip64Data.count + otherFields.count <= Int(UInt16.max)
+            self.extraFieldData = fitsExtraField ? zip64Data + otherFields : zip64Data
             self.versionNeededToExtract = max(centralDirectoryStructure.versionNeededToExtract,
                                               Archive.Version.v45.rawValue)
         } else {
