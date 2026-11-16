@@ -171,6 +171,15 @@ extension ZIPFoundationTests {
         XCTAssertFalse(directoryURL.deletingLastPathComponent().isContained(in: directoryURL, resolvedTo: components))
     }
 
+    func testDeprecatedContainmentCheck() {
+        let directoryURL = self.createDirectory(for: #function)
+        XCTAssertTrue(directoryURL.appendingPathComponent("file.txt").isContained(in: directoryURL))
+        XCTAssertFalse(directoryURL.appendingPathComponent("../file.txt").isContained(in: directoryURL))
+        // The containing directory can't be resolved, because `..` follows a component that doesn't exist.
+        let unresolvableURL = directoryURL.appendingPathComponent("missing/../directory")
+        XCTAssertFalse(unresolvableURL.appendingPathComponent("file.txt").isContained(in: unresolvableURL))
+    }
+
     // MARK: - Helpers
 
     private func addEntry(with path: String, type: Entry.EntryType, content: String = "",
