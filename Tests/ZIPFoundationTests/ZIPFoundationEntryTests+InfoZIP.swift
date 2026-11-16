@@ -42,8 +42,8 @@ extension ZIPFoundationTests {
             ("testInfoZIPUnicodePathWithPathEncoding", testInfoZIPUnicodePathWithPathEncoding),
             ("testInfoZIPUnicodePathEntryType", testInfoZIPUnicodePathEntryType),
             ("testRemoveEntryPreservesInfoZIPUnicodePath", testRemoveEntryPreservesInfoZIPUnicodePath),
-            ("testRemoveEntryDropsInfoZIPUnicodePathOfZIP64Entry",
-             testRemoveEntryDropsInfoZIPUnicodePathOfZIP64Entry)
+            ("testRemoveEntryPreservesInfoZIPUnicodePathOfZIP64Entry",
+             testRemoveEntryPreservesInfoZIPUnicodePathOfZIP64Entry)
         ]
     }
 
@@ -252,20 +252,19 @@ extension ZIPFoundationTests {
         XCTAssertEqual(updatedArchive?.map { $0.path }, ["Ö³Ü¹/Å².txt", "É¶.txt", "ascii.txt"])
     }
 
-    func testRemoveEntryDropsInfoZIPUnicodePathOfZIP64Entry() {
+    func testRemoveEntryPreservesInfoZIPUnicodePathOfZIP64Entry() throws {
         // The second entry has ZIP64 extended information and a Unicode Path in both headers.
         let archive = self.archive(for: #function, mode: .update)
         XCTAssertEqual(archive.map { $0.path }, ["remove.txt", "zip64-☃.txt"])
-        XCTAssertNotNil(archive["zip64-☃.txt"]?.zip64ExtendedInformation)
-        guard let entry = archive["remove.txt"] else {
-            XCTFail("Failed to retrieve entry from archive."); return
-        }
-        XCTAssertNoThrow(try archive.remove(entry))
-        // Rewriting the central directory only keeps the ZIP64 extended information of ZIP64 entries.
-        // All other extra fields are lost and the CP437 header file name is used. This pins the current behavior.
-        XCTAssertEqual(archive.map { $0.path }, ["zip64-ä.txt"])
-        XCTAssertEqual(archive["zip64-ä.txt"]?.centralDirectoryStructure.extraFieldData.count, 20)
-        XCTAssertNotNil(archive["zip64-ä.txt"]?.zip64ExtendedInformation)
+        let extraFieldData = try XCTUnwrap(archive["zip64-☃.txt"]).centralDirectoryStructure.extraFieldData
+        try archive.remove(XCTUnwrap(archive["remove.txt"]))
+        // Rewriting the central directory keeps all extra fields of entries with ZIP64 extended information.
+        XCTAssertEqual(archive.map { $0.path }, ["zip64-☃.txt"])
+        let entry = try XCTUnwrap(archive["zip64-☃.txt"])
+        XCTAssertEqual(entry.centralDirectoryStructure.extraFieldData, extraFieldData)
+        XCTAssertNotNil(entry.zip64ExtendedInformation)
         XCTAssert(archive.checkIntegrity())
+        let updatedArchive = try Archive(url: archive.url, accessMode: .read, pathEncoding: nil)
+        XCTAssertEqual(updatedArchive.map { $0.path }, ["zip64-☃.txt"])
     }
 }

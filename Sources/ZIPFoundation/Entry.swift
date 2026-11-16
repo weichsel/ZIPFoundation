@@ -279,21 +279,44 @@ extension Entry.CentralDirectoryStructure {
         }
     }
 
-    init(centralDirectoryStructure: Entry.CentralDirectoryStructure,
-         zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, relativeOffset: UInt32) {
-        if let existingInfo = zip64ExtendedInformation {
-            self.extraFieldData = existingInfo.data
-            self.versionNeededToExtract = max(centralDirectoryStructure.versionNeededToExtract,
-                                              Archive.Version.v45.rawValue)
-        } else {
-            self.extraFieldData = centralDirectoryStructure.extraFieldData
-            // The extra field data is unchanged, so a validated Unicode Path stays valid.
-            self.infoZIPUnicodePath = centralDirectoryStructure.infoZIPUnicodePath
-            let existingVersion = centralDirectoryStructure.versionNeededToExtract
-            self.versionNeededToExtract = existingVersion < Archive.Version.v45.rawValue
-                ? centralDirectoryStructure.versionNeededToExtract
-                : Archive.Version.v20.rawValue
+    /// Creates a copy of `centralDirectoryStructure` for an entry that has been moved to `updatedOffset`.
+    ///
+    /// Existing ZIP64 extended information is replaced or removed, depending on which fields of the
+    /// updated structure contain a ZIP64 placeholder. All other extra fields are preserved.
+    /// Returns `nil` if the updated extra fields exceed the maximum extra field length.
+    init?(centralDirectoryStructure: Entry.CentralDirectoryStructure, updatedOffset: UInt64) {
+        let relativeOffset = updatedOffset < maxOffsetOfLocalFileHeader ? UInt32(updatedOffset) : UInt32.max
+        let existingExtraFieldData = centralDirectoryStructure.extraFieldData
+        var versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract
+        var extraFieldData = existingExtraFieldData
+        // If no ZIP64 extended information exists, then this information will not be newly added either.
+        if let existingInfo = centralDirectoryStructure.zip64ExtendedInformation {
+            var zip64Fields: [Field] = []
+            if centralDirectoryStructure.uncompressedSize == .max { zip64Fields.append(.uncompressedSize) }
+            if centralDirectoryStructure.compressedSize == .max { zip64Fields.append(.compressedSize) }
+            if relativeOffset == .max { zip64Fields.append(.relativeOffsetOfLocalHeader) }
+            if centralDirectoryStructure.diskNumberStart == .max { zip64Fields.append(.diskNumberStart) }
+            // ZIP64 extended information that is no longer needed is removed.
+            var zip64FieldData: Data?
+            if zip64Fields.isEmpty == false {
+                let updatedInfo = Entry.ZIP64ExtendedInformation(dataSize: 0,
+                                                                 uncompressedSize: existingInfo.uncompressedSize,
+                                                                 compressedSize: existingInfo.compressedSize,
+                                                                 relativeOffsetOfLocalHeader: updatedOffset,
+                                                                 diskNumberStart: existingInfo.diskNumberStart)
+                zip64FieldData = updatedInfo.data(containing: zip64Fields)
+                versionNeededToExtract = max(versionNeededToExtract, Archive.Version.v45.rawValue)
+            }
+            extraFieldData = Entry.ZIP64ExtendedInformation
+                .extraFieldData(replacingZIP64FieldIn: existingExtraFieldData, with: zip64FieldData)
         }
+        guard extraFieldData.count <= Int(UInt16.max) else { return nil }
+        self.extraFieldData = extraFieldData
+        // The version is never lowered. It can also be required by other features of the entry,
+        // like a ZIP64 data descriptor or its compression method.
+        self.versionNeededToExtract = versionNeededToExtract
+        // The Unicode Path extra field and the file name are unchanged, so a validated Unicode Path stays valid.
+        self.infoZIPUnicodePath = centralDirectoryStructure.infoZIPUnicodePath
         self.extraFieldLength = UInt16(extraFieldData.count)
         self.relativeOffsetOfLocalHeader = relativeOffset
         self.versionMadeBy = centralDirectoryStructure.versionMadeBy

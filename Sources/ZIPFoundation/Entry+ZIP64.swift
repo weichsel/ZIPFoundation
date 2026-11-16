@@ -125,19 +125,62 @@ extension Entry.ZIP64ExtendedInformation {
         self.diskNumberStart = value(of: .diskNumberStart)
     }
 
-    init?(zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, offset: UInt64) {
-        // Only used when removing entry, if no ZIP64 extended information exists,
-        // then this information will not be newly added either
-        guard let existingInfo = zip64ExtendedInformation else { return nil }
-        relativeOffsetOfLocalHeader = offset >= maxOffsetOfLocalFileHeader ? offset : 0
-        uncompressedSize = existingInfo.uncompressedSize
-        compressedSize = existingInfo.compressedSize
-        diskNumberStart = existingInfo.diskNumberStart
-        let tempDataSize = [relativeOffsetOfLocalHeader, uncompressedSize, compressedSize]
-            .filter { $0 != 0 }
-            .reduce(UInt16(0), { $0 + UInt16(MemoryLayout.size(ofValue: $1))})
-        dataSize = tempDataSize + (diskNumberStart > 0 ? UInt16(MemoryLayout.size(ofValue: diskNumberStart)) : 0)
-        if dataSize == 0 { return nil }
+    /// Returns the serialized extra field. Only the values of `fields` are included.
+    func data(containing fields: [Field]) -> Data {
+        var headerID = self.headerID
+        var dataSize = UInt16(fields.reduce(0, { $0 + $1.size }))
+        var uncompressedSize = self.uncompressedSize
+        var compressedSize = self.compressedSize
+        var relativeOffsetOfLFH = self.relativeOffsetOfLocalHeader
+        var diskNumberStart = self.diskNumberStart
+        var data = Data()
+        withUnsafePointer(to: &headerID, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        withUnsafePointer(to: &dataSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        // The order of the values is fixed.
+        if fields.contains(.uncompressedSize) {
+            withUnsafePointer(to: &uncompressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        }
+        if fields.contains(.compressedSize) {
+            withUnsafePointer(to: &compressedSize, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        }
+        if fields.contains(.relativeOffsetOfLocalHeader) {
+            withUnsafePointer(to: &relativeOffsetOfLFH, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        }
+        if fields.contains(.diskNumberStart) {
+            withUnsafePointer(to: &diskNumberStart, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
+        }
+        return data
+    }
+
+    /// Returns `data` with its ZIP64 extended information field replaced by `zip64FieldData`.
+    ///
+    /// Pass `nil` to remove the ZIP64 extended information. All other extra fields keep their position.
+    /// Data that follows the last well-formed extra field is preserved too.
+    static func extraFieldData(replacingZIP64FieldIn data: Data, with zip64FieldData: Data?) -> Data {
+        // The offsets of the fields are zero-based. Slices with a different start index have to be rebased.
+        let data = data.startIndex == 0 ? data : Data(data)
+        let headerSize = Int(Entry.ZIP64ExtendedInformation.headerSize)
+        var remainingData = Data()
+        var replacement = zip64FieldData
+        var offset = 0
+        while offset + headerSize <= data.count {
+            let headerID: UInt16 = data.scanValue(start: offset)
+            let dataSize: UInt16 = data.scanValue(start: offset + 2)
+            let nextOffset = offset + headerSize + Int(dataSize)
+            guard nextOffset <= data.count else { break }
+            if headerID != Archive.ExtraFieldHeaderID.zip64ExtendedInformation.rawValue {
+                remainingData.append(data.subdata(in: offset..<nextOffset))
+            } else if let zip64FieldData = replacement {
+                // Only the first ZIP64 extended information field is replaced. Additional ones are removed.
+                remainingData.append(zip64FieldData)
+                replacement = nil
+            }
+            offset = nextOffset
+        }
+        remainingData.append(data.subdata(in: offset..<data.count))
+        // The existing field is not part of the well-formed fields. The replacement has to precede all other data.
+        if let zip64FieldData = replacement { remainingData = zip64FieldData + remainingData }
+        return remainingData
     }
 
     static func scanForZIP64Field(in data: Data, fields: [Field]) -> Entry.ZIP64ExtendedInformation? {

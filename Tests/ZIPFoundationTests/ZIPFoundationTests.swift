@@ -272,7 +272,7 @@ extension ZIPFoundationTests {
             ("testReadChunkErrorConditions", testReadChunkErrorConditions),
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
             ("testWriteLargeChunkErrorConditions", testWriteLargeChunkErrorConditions)
-        ] + zip64Tests + infoZIPTests + darwinOnlyTests + posixOnlyTests + swift5OnlyTests
+        ] + zip64Tests + zip64UpdateTests + infoZIPTests + darwinOnlyTests + posixOnlyTests + swift5OnlyTests
     }
 
     static var zip64Tests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
@@ -292,6 +292,8 @@ extension ZIPFoundationTests {
             ("testEntryInvalidZIP64ExtraFieldErrorConditions", testEntryInvalidZIP64ExtraFieldErrorConditions),
             ("testEntryScanForZIP64Field", testEntryScanForZIP64Field),
             ("testEntryScanForZIP64FieldErrorConditions", testEntryScanForZIP64FieldErrorConditions),
+            ("testEntryZIP64FieldContainingFields", testEntryZIP64FieldContainingFields),
+            ("testExtraFieldDataReplacingZIP64Field", testExtraFieldDataReplacingZIP64Field),
             ("testArchiveZIP64EOCDRecord", testArchiveZIP64EOCDRecord),
             ("testArchiveInvalidZIP64EOCERecordConditions", testArchiveInvalidZIP64EOCERecordConditions),
             ("testArchiveZIP64EOCDLocator", testArchiveZIP64EOCDLocator),
