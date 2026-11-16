@@ -16,6 +16,8 @@ extension Entry.CentralDirectoryStructure {
     ///
     /// The field is only used if its version is not newer than 1 and if its CRC32 matches the checksum of
     /// `fileNameData`.
+    /// A field whose path disagrees with `fileNameData` about a trailing path delimiter is not usable either,
+    /// because the type of an entry depends on the file name of its header.
     /// Scanning stops at the first Unicode Path field that is not usable and at the first malformed extra field.
     /// If there is more than one usable field, the last one is used. This matches Info-ZIP's `unzip`.
     ///
@@ -59,6 +61,10 @@ extension Entry.CentralDirectoryStructure {
         // A field without a name indicates that the file name of the header is UTF-8 encoded.
         // Like in `unzip`, this includes names that start with a NUL byte.
         guard nameBytes.isEmpty == false else { return String(data: fileNameData, encoding: .utf8) }
+        // The entry type is derived from the file name of the header. A path that disagrees with it about
+        // the trailing path delimiter would turn a file into a directory path or vice versa.
+        let pathDelimiter = UInt8(ascii: "/")
+        guard (nameBytes.last == pathDelimiter) == (fileNameData.last == pathDelimiter) else { return nil }
         return String(bytes: nameBytes, encoding: .utf8)
     }
 }
