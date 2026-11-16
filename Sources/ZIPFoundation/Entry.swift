@@ -155,7 +155,10 @@ public struct Entry: Equatable {
         // OS Type is stored in the upper byte of versionMadeBy
         let osTypeRaw = self.centralDirectoryStructure.versionMadeBy >> 8
         let osType = OSType(rawValue: UInt(osTypeRaw)) ?? .unused
-        var isDirectory = self.path.hasSuffix("/")
+        // The type depends on the file name of the central directory header.
+        // An Info-ZIP Unicode Path extra field is not taken into account.
+        let usesUTF8PathEncoding = self.centralDirectoryStructure.usesUTF8PathEncoding
+        var isDirectory = self.path(using: usesUTF8PathEncoding ? .utf8 : .codepage437).hasSuffix("/")
         switch osType {
         case .unix, .osx:
             // Use truncatingIfNeeded for safer conversion across platforms

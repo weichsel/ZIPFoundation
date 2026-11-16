@@ -57,6 +57,7 @@ extension Entry.CentralDirectoryStructure {
         // Info-ZIP's `unzip` treats the name as a C string. It ends at the first NUL byte.
         let nameBytes = fieldData[nameOffset...].prefix { $0 != 0 }
         // A field without a name indicates that the file name of the header is UTF-8 encoded.
+        // Like in `unzip`, this includes names that start with a NUL byte.
         guard nameBytes.isEmpty == false else { return String(data: fileNameData, encoding: .utf8) }
         return String(bytes: nameBytes, encoding: .utf8)
     }

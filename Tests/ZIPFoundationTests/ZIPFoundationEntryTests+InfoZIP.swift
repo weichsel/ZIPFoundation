@@ -40,6 +40,7 @@ extension ZIPFoundationTests {
             ("testInfoZIPUnicodePathWithInvalidFields", testInfoZIPUnicodePathWithInvalidFields),
             ("testInfoZIPUnicodePathPrecedence", testInfoZIPUnicodePathPrecedence),
             ("testInfoZIPUnicodePathWithPathEncoding", testInfoZIPUnicodePathWithPathEncoding),
+            ("testInfoZIPUnicodePathEntryType", testInfoZIPUnicodePathEntryType),
             ("testRemoveEntryPreservesInfoZIPUnicodePath", testRemoveEntryPreservesInfoZIPUnicodePath),
             ("testRemoveEntryDropsInfoZIPUnicodePathOfZIP64Entry",
              testRemoveEntryDropsInfoZIPUnicodePathOfZIP64Entry)
@@ -225,6 +226,15 @@ extension ZIPFoundationTests {
     }
 
     // MARK: - Removing Entries
+
+    func testInfoZIPUnicodePathEntryType() {
+        // The type of an entry depends on its header file name. The Unicode Paths of the entries
+        // disagree with their header file names about the trailing path delimiter.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertEqual(archive.map { $0.path }, ["file-☃/", "directory-☃"])
+        XCTAssertEqual(archive.map { $0.path(using: .codepage437) }, ["file-ä.txt", "directory-ä/"])
+        XCTAssertEqual(archive.map { $0.type }, [.file, .directory])
+    }
 
     func testRemoveEntryPreservesInfoZIPUnicodePath() {
         // Extra fields of entries without ZIP64 extended information are copied when rewriting
