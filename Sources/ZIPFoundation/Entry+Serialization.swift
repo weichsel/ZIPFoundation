@@ -147,6 +147,11 @@ extension Entry.CentralDirectoryStructure {
                                                                                            fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
         }
+        // The Unicode Path is not needed if the file name is flagged as UTF-8 encoded.
+        if self.usesUTF8PathEncoding == false {
+            self.infoZIPUnicodePath = Self.scanForInfoZIPUnicodePath(in: self.extraFieldData,
+                                                                     fileNameData: self.fileNameData)
+        }
     }
 }
 

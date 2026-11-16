@@ -121,6 +121,7 @@ public final class Archive: Sequence {
 
     enum ExtraFieldHeaderID: UInt16 {
         case zip64ExtendedInformation = 0x0001
+        case infoZIPUnicodePath = 0x7075
     }
 
     struct EndOfCentralDirectoryRecord: DataSerializable {

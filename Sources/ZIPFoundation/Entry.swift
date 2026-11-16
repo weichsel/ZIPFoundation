@@ -106,6 +106,8 @@ public struct Entry: Equatable {
         let fileCommentData: Data
 
         var extraFields: [ExtensibleDataField]?
+        /// The validated path from the Info-ZIP Unicode Path extra field of the receiver.
+        var infoZIPUnicodePath: String?
         var usesDataDescriptor: Bool { return (self.generalPurposeBitFlag & (1 << 3 )) != 0 }
         var usesUTF8PathEncoding: Bool { return (self.generalPurposeBitFlag & (1 << 11 )) != 0 }
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
@@ -119,11 +121,17 @@ public struct Entry: Equatable {
     ///
     /// - Parameters:
     ///   - encoding: `String.Encoding`
+    /// - Note: Always decodes the file name of the central directory header.
+    ///         An Info-ZIP Unicode Path extra field is not taken into account.
     public func path(using encoding: String.Encoding) -> String {
         return String(pathData: self.centralDirectoryStructure.fileNameData, encoding: encoding)
     }
     /// The `path` of the receiver within a ZIP `Archive`.
+    ///
+    /// - Note: A valid Info-ZIP Unicode Path extra field in the central directory header takes precedence
+    ///         over the file name of entries that are not flagged as UTF-8 encoded.
     public var path: String {
+        if let unicodePath = self.centralDirectoryStructure.infoZIPUnicodePath { return unicodePath }
         let encoding = self.centralDirectoryStructure.usesUTF8PathEncoding ? String.Encoding.utf8 : .codepage437
         return self.path(using: encoding)
     }
