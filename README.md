@@ -295,4 +295,4 @@ Twitter: [@weichsel](https://twitter.com/weichsel).
 ## License
 
 ZIP Foundation is released under the MIT License.  
-See [LICENSE](https://github.com/weichsel/ZIPFoundation/blob/master/LICENSE) for details.
+See [LICENSE](https://github.com/weichsel/ZIPFoundation/blob/main/LICENSE) for details.
