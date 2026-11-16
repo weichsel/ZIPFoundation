@@ -15,21 +15,6 @@ extension ZIPFoundationTests {
 
     typealias ZIP64ExtendedInformation = Entry.ZIP64ExtendedInformation
 
-    static var zip64UpdateTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
-        return [
-            ("testUpdatedCentralDirectoryStructureKeepsOtherExtraFields",
-             testUpdatedCentralDirectoryStructureKeepsOtherExtraFields),
-            ("testUpdatedCentralDirectoryStructureKeepsVersionNeededToExtract",
-             testUpdatedCentralDirectoryStructureKeepsVersionNeededToExtract),
-            ("testUpdatedCentralDirectoryStructureRemovesUnneededZIP64Field",
-             testUpdatedCentralDirectoryStructureRemovesUnneededZIP64Field),
-            ("testUpdatedCentralDirectoryStructureWithZeroZIP64Values",
-             testUpdatedCentralDirectoryStructureWithZeroZIP64Values),
-            ("testUpdatedCentralDirectoryStructureWithExceedingExtraFieldLength",
-             testUpdatedCentralDirectoryStructureWithExceedingExtraFieldLength)
-        ]
-    }
-
     func testEntryZIP64ExtraField() {
         let extraFieldBytesIncludingSizeFields: [UInt8] = [0x01, 0x00, 0x10, 0x00, 0x0a, 0x00, 0x00, 0x00,
                                                            0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00,

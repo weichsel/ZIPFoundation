@@ -13,24 +13,6 @@ import XCTest
 
 extension ZIPFoundationTests {
 
-    static var infoZIPTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
-        return [
-            ("testInfoZIPUnicodePathScan", testInfoZIPUnicodePathScan),
-            ("testInfoZIPUnicodePathScanInvalidFields", testInfoZIPUnicodePathScanInvalidFields),
-            ("testInfoZIPUnicodePathScanMultipleFields", testInfoZIPUnicodePathScanMultipleFields),
-            ("testInfoZIPUnicodePathScanEmptyName", testInfoZIPUnicodePathScanEmptyName),
-            ("testInfoZIPUnicodePath", testInfoZIPUnicodePath),
-            ("testInfoZIPUnicodePathWithLegacyEncoding", testInfoZIPUnicodePathWithLegacyEncoding),
-            ("testInfoZIPUnicodePathWithInvalidFields", testInfoZIPUnicodePathWithInvalidFields),
-            ("testInfoZIPUnicodePathPrecedence", testInfoZIPUnicodePathPrecedence),
-            ("testInfoZIPUnicodePathWithPathEncoding", testInfoZIPUnicodePathWithPathEncoding),
-            ("testInfoZIPUnicodePathEntryType", testInfoZIPUnicodePathEntryType),
-            ("testRemoveEntryPreservesInfoZIPUnicodePath", testRemoveEntryPreservesInfoZIPUnicodePath),
-            ("testRemoveEntryPreservesInfoZIPUnicodePathOfZIP64Entry",
-             testRemoveEntryPreservesInfoZIPUnicodePathOfZIP64Entry)
-        ]
-    }
-
     // MARK: - Parser
 
     func testInfoZIPUnicodePathScan() {

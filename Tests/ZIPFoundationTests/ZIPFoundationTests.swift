@@ -153,21 +153,6 @@ class ZIPFoundationTests: XCTestCase {
         defer { setrlimit(fileNoFlag, &storedRlimit) }
         try handler()
     }
-
-    // MARK: - ZIP64 Helpers
-
-    // It's not practical to create compressed files that exceed the size limit every time for test,
-    // so provide helper methods to mock the maximum size limit
-
-    func mockIntMaxValues(int32Factor: Int = 64, int16Factor: Int = 64) {
-        maxUInt32 = UInt32(int32Factor * int32Factor)
-        maxUInt16 = UInt16(int16Factor)
-    }
-
-    func resetIntMaxValues() {
-        maxUInt32 = .max
-        maxUInt16 = .max
-    }
 }
 
 extension ZIPFoundationTests {
@@ -271,8 +256,31 @@ extension ZIPFoundationTests {
             ("testReadStructureErrorConditions", testReadStructureErrorConditions),
             ("testReadChunkErrorConditions", testReadChunkErrorConditions),
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
-            ("testWriteLargeChunkErrorConditions", testWriteLargeChunkErrorConditions)
-        ] + zip64Tests + zip64UpdateTests + infoZIPTests + darwinOnlyTests + posixOnlyTests + swift5OnlyTests
+            ("testWriteLargeChunkErrorConditions", testWriteLargeChunkErrorConditions),
+            ("testInfoZIPUnicodePathScan", testInfoZIPUnicodePathScan),
+            ("testInfoZIPUnicodePathScanInvalidFields", testInfoZIPUnicodePathScanInvalidFields),
+            ("testInfoZIPUnicodePathScanMultipleFields", testInfoZIPUnicodePathScanMultipleFields),
+            ("testInfoZIPUnicodePathScanEmptyName", testInfoZIPUnicodePathScanEmptyName),
+            ("testInfoZIPUnicodePath", testInfoZIPUnicodePath),
+            ("testInfoZIPUnicodePathWithLegacyEncoding", testInfoZIPUnicodePathWithLegacyEncoding),
+            ("testInfoZIPUnicodePathWithInvalidFields", testInfoZIPUnicodePathWithInvalidFields),
+            ("testInfoZIPUnicodePathPrecedence", testInfoZIPUnicodePathPrecedence),
+            ("testInfoZIPUnicodePathWithPathEncoding", testInfoZIPUnicodePathWithPathEncoding),
+            ("testInfoZIPUnicodePathEntryType", testInfoZIPUnicodePathEntryType),
+            ("testRemoveEntryPreservesInfoZIPUnicodePath", testRemoveEntryPreservesInfoZIPUnicodePath),
+            ("testRemoveEntryPreservesInfoZIPUnicodePathOfZIP64Entry",
+             testRemoveEntryPreservesInfoZIPUnicodePathOfZIP64Entry),
+            ("testUpdatedCentralDirectoryStructureKeepsOtherExtraFields",
+             testUpdatedCentralDirectoryStructureKeepsOtherExtraFields),
+            ("testUpdatedCentralDirectoryStructureKeepsVersionNeededToExtract",
+             testUpdatedCentralDirectoryStructureKeepsVersionNeededToExtract),
+            ("testUpdatedCentralDirectoryStructureRemovesUnneededZIP64Field",
+             testUpdatedCentralDirectoryStructureRemovesUnneededZIP64Field),
+            ("testUpdatedCentralDirectoryStructureWithZeroZIP64Values",
+             testUpdatedCentralDirectoryStructureWithZeroZIP64Values),
+            ("testUpdatedCentralDirectoryStructureWithExceedingExtraFieldLength",
+             testUpdatedCentralDirectoryStructureWithExceedingExtraFieldLength)
+        ] + zip64Tests + darwinOnlyTests + posixOnlyTests + swift5OnlyTests
     }
 
     static var zip64Tests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
@@ -378,16 +386,5 @@ extension ZIPFoundationTests {
         #else
         return []
         #endif
-    }
-}
-
-extension Data {
-    static func makeRandomData(size: Int) -> Data {
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(visionOS)
-        let bytes = [UInt32](repeating: 0, count: size).map { _ in UInt32.random(in: 0...UInt32.max) }
-        #else
-        let bytes = [UInt32](repeating: 0, count: size).map { _ in random() }
-        #endif
-        return Data(bytes: bytes, count: size)
     }
 }

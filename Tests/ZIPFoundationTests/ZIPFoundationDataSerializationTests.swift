@@ -120,3 +120,14 @@ extension ZIPFoundationTests {
                             throws: Data.DataError.unwritableFile)
     }
 }
+
+extension Data {
+    static func makeRandomData(size: Int) -> Data {
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(visionOS)
+        let bytes = [UInt32](repeating: 0, count: size).map { _ in UInt32.random(in: 0...UInt32.max) }
+        #else
+        let bytes = [UInt32](repeating: 0, count: size).map { _ in random() }
+        #endif
+        return Data(bytes: bytes, count: size)
+    }
+}
