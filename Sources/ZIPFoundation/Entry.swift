@@ -284,6 +284,8 @@ extension Entry.CentralDirectoryStructure {
                                               Archive.Version.v45.rawValue)
         } else {
             self.extraFieldData = centralDirectoryStructure.extraFieldData
+            // The extra field data is unchanged, so a validated Unicode Path stays valid.
+            self.infoZIPUnicodePath = centralDirectoryStructure.infoZIPUnicodePath
             let existingVersion = centralDirectoryStructure.versionNeededToExtract
             self.versionNeededToExtract = existingVersion < Archive.Version.v45.rawValue
                 ? centralDirectoryStructure.versionNeededToExtract
