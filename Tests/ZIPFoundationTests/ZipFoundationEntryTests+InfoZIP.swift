@@ -41,6 +41,14 @@ extension ZIPFoundationTests {
         XCTAssertEqual(archive.map { $0.path }, ["a", "b"])
     }
 
+    func testInfoZIPUnicodePathWithInvalidName() {
+        // The Unicode Path of the first entry is not valid UTF-8 and the one of the second entry is empty.
+        // The header file names have to be used.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertEqual(archive.map { $0.path }, ["a", "b"])
+        XCTAssertNotNil(archive["a"])
+    }
+
     func testInfoZIPUnicodePath() {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)
