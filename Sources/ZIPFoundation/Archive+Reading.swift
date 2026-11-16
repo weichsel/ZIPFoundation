@@ -59,21 +59,21 @@ extension Archive {
             guard fileManager.itemExists(at: url) == false else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
-            let consumer = { (data: Data) in
-                guard let linkPath = String(data: data, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
-
-                // The link destination has to be resolved through the file system to account for
-                // symlinks created by preceding entries. (e.g. `a -> .` followed by `b -> a/..`)
-                let parentURL = url.deletingLastPathComponent()
-                let isContained = URL.isSymlinkDestination(linkPath, ofSymlinkIn: parentURL,
-                                                           containedIn: symlinksValidWithin ?? parentURL)
-                guard isContained else { throw ArchiveError.uncontainedSymlink }
-
-                try fileManager.createParentDirectoryStructure(for: url)
-                try fileManager.createSymbolicLink(atPath: url.path, withDestinationPath: linkPath)
-            }
+            // The link destination of compressed symlinks can be delivered in multiple chunks.
+            var linkData = Data()
             checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
-                                        progress: progress, consumer: consumer)
+                                        progress: progress, consumer: { linkData.append($0) })
+            guard let linkPath = String(data: linkData, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
+
+            // The link destination has to be resolved through the file system to account for
+            // symlinks created by preceding entries. (e.g. `a -> .` followed by `b -> a/..`)
+            let parentURL = url.deletingLastPathComponent()
+            let isContained = URL.isSymlinkDestination(linkPath, ofSymlinkIn: parentURL,
+                                                       containedIn: symlinksValidWithin ?? parentURL)
+            guard isContained else { throw ArchiveError.uncontainedSymlink }
+
+            try fileManager.createParentDirectoryStructure(for: url)
+            try fileManager.createSymbolicLink(atPath: url.path, withDestinationPath: linkPath)
         }
         try fileManager.transferAttributes(from: entry, toItemAtURL: url)
         return checksum

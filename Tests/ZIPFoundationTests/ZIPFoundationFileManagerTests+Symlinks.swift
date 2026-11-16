@@ -110,6 +110,16 @@ extension ZIPFoundationTests {
         XCTAssertEqual(try? fileManager.destinationOfSymbolicLink(atPath: danglingURL.path), "missing/file.txt")
     }
 
+    func testExtractCompressedSymlinkWithSmallBufferSize() throws {
+        // The link destination is longer than the buffer size, so it is decompressed in multiple chunks.
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        let linkURL = destinationURL.appendingPathComponent("link")
+        _ = try archive.extract(XCTUnwrap(archive["link"]), to: linkURL, bufferSize: 32)
+        XCTAssertEqual(try FileManager().destinationOfSymbolicLink(atPath: linkURL.path),
+                       "target-directory/with-a-rather-long-name/that-exceeds-the-buffer-size/file.txt")
+    }
+
     func testUnzipSymlinkToNotYetExistingSymlink() throws {
         // Framework bundles contain symlinks that point through other symlinks.
         // Depending on the entry order, those don't exist yet when the link gets created.
