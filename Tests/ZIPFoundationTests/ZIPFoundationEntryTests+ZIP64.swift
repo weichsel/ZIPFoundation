@@ -148,6 +148,18 @@ extension ZIPFoundationTests {
         let zip64Field2 = ZIP64ExtendedInformation.scanForZIP64Field(in: Data(extraFieldBytesWithZIP64Field2),
                                                                      fields: [.uncompressedSize, .compressedSize])
         XCTAssertNotNil(zip64Field2)
+        // A field without values is well-formed, also at the end of the extra field data.
+        let emptyZIP64Field: [UInt8] = [0x01, 0x00, 0x00, 0x00]
+        XCTAssertNotNil(ZIP64ExtendedInformation.scanForZIP64Field(in: Data(emptyZIP64Field + timestampField),
+                                                                   fields: []))
+        XCTAssertNotNil(ZIP64ExtendedInformation.scanForZIP64Field(in: Data(timestampField + emptyZIP64Field),
+                                                                   fields: []))
+        // The indices of sliced data don't start at zero.
+        let slice = Data([0xff, 0xff] + timestampField + extraFieldBytesWithZIP64Field).dropFirst(2)
+        let zip64Field3 = ZIP64ExtendedInformation.scanForZIP64Field(in: slice,
+                                                                     fields: [.uncompressedSize, .compressedSize])
+        XCTAssertEqual(zip64Field3?.uncompressedSize, 10)
+        XCTAssertEqual(zip64Field3?.compressedSize, 10)
     }
 
     func testEntryScanForZIP64FieldErrorConditions() {
@@ -159,6 +171,14 @@ extension ZIPFoundationTests {
         let noZIP64Field = ZIP64ExtendedInformation.scanForZIP64Field(in: Data(extraFieldBytesWithoutZIP64Field),
                                                                       fields: [])
         XCTAssertNil(noZIP64Field)
+        // A field that claims more data than is available ends the scan.
+        let truncatedField: [UInt8] = [0x98, 0x98, 0x08, 0x00, 0xcc]
+        let zip64Field: [UInt8] = [0x01, 0x00, 0x08, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        XCTAssertNil(ZIP64ExtendedInformation.scanForZIP64Field(in: Data(truncatedField + zip64Field),
+                                                                fields: [.relativeOffsetOfLocalHeader]))
+        // Only the first ZIP64 field is taken into account.
+        XCTAssertNil(ZIP64ExtendedInformation.scanForZIP64Field(in: Data(zip64SizeField + zip64Field),
+                                                                fields: [.relativeOffsetOfLocalHeader]))
     }
 
     // MARK: - Updating Central Directory Structures
@@ -279,10 +299,6 @@ extension ZIPFoundationTests {
         XCTAssertEqual(ZIP64ExtendedInformation.extraFieldData(replacingZIP64FieldIn: data, with: nil),
                        Data(timestampField + timestampField + truncatedField))
         XCTAssertEqual(ZIP64ExtendedInformation.extraFieldData(replacingZIP64FieldIn: Data(), with: nil), Data())
-        // Without a well-formed ZIP64 field, the replacement precedes all other data.
-        XCTAssertEqual(ZIP64ExtendedInformation.extraFieldData(replacingZIP64FieldIn: Data(truncatedField),
-                                                               with: replacement),
-                       Data(zip64SizeField + truncatedField))
         // The indices of sliced data don't start at zero.
         let slice = Data([0xff, 0xff] + zip64Field + timestampField).dropFirst(2)
         XCTAssertEqual(ZIP64ExtendedInformation.extraFieldData(replacingZIP64FieldIn: slice, with: nil),

@@ -182,6 +182,7 @@ extension Entry.ZIP64ExtendedInformation {
     ///
     /// Pass `nil` to remove the ZIP64 extended information. All other extra fields keep their position.
     /// Data that follows the last well-formed extra field is preserved too.
+    /// A replacement requires that `data` contains ZIP64 extended information.
     static func extraFieldData(replacingZIP64FieldIn data: Data, with zip64FieldData: Data?) -> Data {
         var updatedData = Data()
         var replacement = zip64FieldData
@@ -197,28 +198,17 @@ extension Entry.ZIP64ExtendedInformation {
             }
         }
         updatedData.append(fields.remainingData)
-        // The existing field is not part of the well-formed fields. The replacement has to precede all other data.
-        if let zip64FieldData = replacement { updatedData = zip64FieldData + updatedData }
+        // ZIP64 extended information that `scanForZIP64Field` has found is always part of the well-formed fields.
+        assert(replacement == nil, "The extra field data contains no ZIP64 extended information to replace.")
         return updatedData
     }
 
+    /// Scans extra field data for ZIP64 extended information that contains exactly the values of `fields`.
+    ///
+    /// Only the first ZIP64 extended information field is taken into account.
     static func scanForZIP64Field(in data: Data, fields: [Field]) -> Entry.ZIP64ExtendedInformation? {
-        guard data.isEmpty == false else { return nil }
-        var offset = 0
-        var headerID: UInt16
-        var dataSize: UInt16
-        let extraFieldLength = data.count
-        let headerSize = Int(Entry.ZIP64ExtendedInformation.headerSize)
-        while offset < extraFieldLength - headerSize {
-            headerID = data.scanValue(start: offset)
-            dataSize = data.scanValue(start: offset + 2)
-            let nextOffset = offset + headerSize + Int(dataSize)
-            guard nextOffset <= extraFieldLength else { return nil }
-            if headerID == Archive.ExtraFieldHeaderID.zip64ExtendedInformation.rawValue {
-                return Entry.ZIP64ExtendedInformation(data: data.subdata(in: offset..<nextOffset), fields: fields)
-            }
-            offset = nextOffset
-        }
-        return nil
+        let zip64FieldID = Archive.ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
+        guard let zip64Field = ExtraFields(data).first(where: { $0.headerID == zip64FieldID }) else { return nil }
+        return Entry.ZIP64ExtendedInformation(data: zip64Field.data, fields: fields)
     }
 }
