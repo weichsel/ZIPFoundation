@@ -153,21 +153,6 @@ class ZIPFoundationTests: XCTestCase {
         defer { setrlimit(fileNoFlag, &storedRlimit) }
         try handler()
     }
-
-    // MARK: - ZIP64 Helpers
-
-    // It's not practical to create compressed files that exceed the size limit every time for test,
-    // so provide helper methods to mock the maximum size limit
-
-    func mockIntMaxValues(int32Factor: Int = 64, int16Factor: Int = 64) {
-        maxUInt32 = UInt32(int32Factor * int32Factor)
-        maxUInt16 = UInt16(int16Factor)
-    }
-
-    func resetIntMaxValues() {
-        maxUInt32 = .max
-        maxUInt16 = .max
-    }
 }
 
 extension ZIPFoundationTests {
@@ -283,8 +268,18 @@ extension ZIPFoundationTests {
             ("testInfoZIPUnicodePathWithPathEncoding", testInfoZIPUnicodePathWithPathEncoding),
             ("testInfoZIPUnicodePathEntryType", testInfoZIPUnicodePathEntryType),
             ("testRemoveEntryPreservesInfoZIPUnicodePath", testRemoveEntryPreservesInfoZIPUnicodePath),
-            ("testRemoveEntryDropsInfoZIPUnicodePathOfZIP64Entry",
-             testRemoveEntryDropsInfoZIPUnicodePathOfZIP64Entry)
+            ("testRemoveEntryPreservesInfoZIPUnicodePathOfZIP64Entry",
+             testRemoveEntryPreservesInfoZIPUnicodePathOfZIP64Entry),
+            ("testUpdatedCentralDirectoryStructureKeepsOtherExtraFields",
+             testUpdatedCentralDirectoryStructureKeepsOtherExtraFields),
+            ("testUpdatedCentralDirectoryStructureKeepsVersionNeededToExtract",
+             testUpdatedCentralDirectoryStructureKeepsVersionNeededToExtract),
+            ("testUpdatedCentralDirectoryStructureRemovesUnneededZIP64Field",
+             testUpdatedCentralDirectoryStructureRemovesUnneededZIP64Field),
+            ("testUpdatedCentralDirectoryStructureWithZeroZIP64Values",
+             testUpdatedCentralDirectoryStructureWithZeroZIP64Values),
+            ("testUpdatedCentralDirectoryStructureWithExceedingExtraFieldLength",
+             testUpdatedCentralDirectoryStructureWithExceedingExtraFieldLength)
         ] + zip64Tests + darwinOnlyTests + posixOnlyTests + swift5OnlyTests
     }
 
@@ -305,6 +300,8 @@ extension ZIPFoundationTests {
             ("testEntryInvalidZIP64ExtraFieldErrorConditions", testEntryInvalidZIP64ExtraFieldErrorConditions),
             ("testEntryScanForZIP64Field", testEntryScanForZIP64Field),
             ("testEntryScanForZIP64FieldErrorConditions", testEntryScanForZIP64FieldErrorConditions),
+            ("testEntryZIP64FieldContainingFields", testEntryZIP64FieldContainingFields),
+            ("testExtraFieldDataReplacingZIP64Field", testExtraFieldDataReplacingZIP64Field),
             ("testArchiveZIP64EOCDRecord", testArchiveZIP64EOCDRecord),
             ("testArchiveInvalidZIP64EOCERecordConditions", testArchiveInvalidZIP64EOCERecordConditions),
             ("testArchiveZIP64EOCDLocator", testArchiveZIP64EOCDLocator),

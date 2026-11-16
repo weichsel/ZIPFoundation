@@ -107,3 +107,21 @@ extension ZIPFoundationTests {
         XCTAssertEqual(extractedData, Data("a".utf8))
     }
 }
+
+extension ZIPFoundationTests {
+
+    // MARK: - ZIP64 Helpers
+
+    // It's not practical to create compressed files that exceed the size limit every time for test,
+    // so provide helper methods to mock the maximum size limit
+
+    func mockIntMaxValues(int32Factor: Int = 64, int16Factor: Int = 64) {
+        maxUInt32 = UInt32(int32Factor * int32Factor)
+        maxUInt16 = UInt16(int16Factor)
+    }
+
+    func resetIntMaxValues() {
+        maxUInt32 = .max
+        maxUInt16 = .max
+    }
+}

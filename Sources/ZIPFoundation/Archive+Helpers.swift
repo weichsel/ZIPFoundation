@@ -164,7 +164,7 @@ extension Archive {
                                                                       compressedSize: extraCompressedSize ?? 0,
                                                                       relativeOffsetOfLocalHeader: extraOffset ?? 0,
                                                                       diskNumberStart: 0)
-            extraFieldLength += Entry.ZIP64ExtendedInformation.headerSize
+            extraFieldLength += UInt16(ExtraField.headerSize)
         }
         let centralDirectory = CentralDirectoryStructure(localFileHeader: localFileHeader,
                                                          fileAttributes: externalFileAttributes,

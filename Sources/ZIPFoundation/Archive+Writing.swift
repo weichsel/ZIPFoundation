@@ -210,8 +210,8 @@ extension Archive {
                 guard currentEntry.localSize <= Int64.max else { throw ArchiveError.invalidLocalHeaderSize }
                 _ = try Data.consumePart(of: Int64(currentEntry.localSize), chunkSize: bufferSize,
                                          provider: provider, consumer: consumer)
-                let updatedCentralDirectory = updateOffsetInCentralDirectory(centralDirectoryStructure: cds,
-                                                                             updatedOffset: entryStart - offset)
+                let updatedCentralDirectory = try updateOffsetInCentralDirectory(centralDirectoryStructure: cds,
+                                                                                 updatedOffset: entryStart - offset)
                 centralDirectoryData.append(updatedCentralDirectory.data)
             } else { offset = currentEntry.localSize }
         }
@@ -274,13 +274,12 @@ extension Archive {
 private extension Archive {
 
     func updateOffsetInCentralDirectory(centralDirectoryStructure: CentralDirectoryStructure,
-                                        updatedOffset: UInt64) -> CentralDirectoryStructure {
-        let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation(
-            zip64ExtendedInformation: centralDirectoryStructure.zip64ExtendedInformation, offset: updatedOffset)
-        let offsetInCD = updatedOffset < maxOffsetOfLocalFileHeader ? UInt32(updatedOffset) : UInt32.max
-        return CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
-                                         zip64ExtendedInformation: zip64ExtendedInformation,
-                                         relativeOffset: offsetInCD)
+                                        updatedOffset: UInt64) throws -> CentralDirectoryStructure {
+        let updatedStructure = CentralDirectoryStructure(centralDirectoryStructure: centralDirectoryStructure,
+                                                         updatedOffset: updatedOffset)
+        // The updated extra fields don't fit into the central directory structure.
+        guard let updatedStructure = updatedStructure else { throw ArchiveError.invalidCentralDirectorySize }
+        return updatedStructure
     }
 
     func rollback(_ localFileHeaderStart: UInt64, _ existingCentralDirectory: (data: Data, size: UInt64),

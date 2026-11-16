@@ -284,19 +284,41 @@ extension Entry.CentralDirectoryStructure {
         self.infoZIPUnicodePath = self.scanForInfoZIPUnicodePath()
     }
 
-    init(centralDirectoryStructure: Entry.CentralDirectoryStructure,
-         zip64ExtendedInformation: Entry.ZIP64ExtendedInformation?, relativeOffset: UInt32) {
-        if let existingInfo = zip64ExtendedInformation {
-            self.extraFieldData = existingInfo.data
-            self.versionNeededToExtract = max(centralDirectoryStructure.versionNeededToExtract,
-                                              Archive.Version.v45.rawValue)
-        } else {
-            self.extraFieldData = centralDirectoryStructure.extraFieldData
-            let existingVersion = centralDirectoryStructure.versionNeededToExtract
-            self.versionNeededToExtract = existingVersion < Archive.Version.v45.rawValue
-                ? centralDirectoryStructure.versionNeededToExtract
-                : Archive.Version.v20.rawValue
+    /// Creates a copy of `centralDirectoryStructure` for an entry that has been moved to `updatedOffset`.
+    ///
+    /// Existing ZIP64 extended information is replaced or removed, depending on which fields of the
+    /// updated structure contain a ZIP64 placeholder. All other extra fields are preserved.
+    /// Returns `nil` if the updated extra fields exceed the maximum extra field length.
+    init?(centralDirectoryStructure: Entry.CentralDirectoryStructure, updatedOffset: UInt64) {
+        let relativeOffset = updatedOffset < maxOffsetOfLocalFileHeader ? UInt32(updatedOffset) : UInt32.max
+        var versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract
+        var extraFieldData = centralDirectoryStructure.extraFieldData
+        // If no ZIP64 extended information exists, then this information will not be newly added either.
+        if let existingInfo = centralDirectoryStructure.zip64ExtendedInformation {
+            // The sizes and the disk number are unchanged. Only the placeholder of the offset can change.
+            var zip64Fields = centralDirectoryStructure.validFields.filter { $0 != .relativeOffsetOfLocalHeader }
+            if relativeOffset == .max { zip64Fields.append(.relativeOffsetOfLocalHeader) }
+            // ZIP64 extended information that is no longer needed is removed.
+            var zip64FieldData: Data?
+            if zip64Fields.isEmpty == false {
+                zip64FieldData = existingInfo.data(containing: zip64Fields, relativeOffsetOfLocalHeader: updatedOffset)
+            }
+            // ZIP64 extended information requires version 4.5. An entry with a data descriptor also stays marked
+            // as ZIP64 if its ZIP64 extended information is removed. Otherwise its data descriptor would be read
+            // with a different size. Only the lower byte holds the version.
+            let needsZIP64Version = zip64FieldData != nil || centralDirectoryStructure.usesDataDescriptor
+            if needsZIP64Version,
+               UInt8(truncatingIfNeeded: versionNeededToExtract) < UInt8(Archive.Version.v45.rawValue) {
+                versionNeededToExtract = (versionNeededToExtract & 0xff00) | Archive.Version.v45.rawValue
+            }
+            extraFieldData = Entry.ZIP64ExtendedInformation
+                .extraFieldData(replacingZIP64FieldIn: extraFieldData, with: zip64FieldData)
         }
+        guard extraFieldData.count <= Int(UInt16.max) else { return nil }
+        self.extraFieldData = extraFieldData
+        // The version is never lowered. It can also be required by other features of the entry,
+        // like a ZIP64 data descriptor or its compression method.
+        self.versionNeededToExtract = versionNeededToExtract
         self.extraFieldLength = UInt16(extraFieldData.count)
         self.relativeOffsetOfLocalHeader = relativeOffset
         self.versionMadeBy = centralDirectoryStructure.versionMadeBy
