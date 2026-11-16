@@ -322,7 +322,9 @@ extension ZIPFoundationTests {
             ("testUnzipSymlink", testUnzipSymlink),
             ("testUnzipCompressedSymlink", testUnzipCompressedSymlink),
             ("testEntryScanForInfoZIP", testEntryScanForInfoZIP),
-            ("testInfoZIPUnicodePath", testInfoZIPUnicodePath)
+            ("testInfoZIPUnicodePath", testInfoZIPUnicodePath),
+            ("testEntryScanForTruncatedInfoZIP", testEntryScanForTruncatedInfoZIP),
+            ("testInfoZIPUnicodePathWithTruncatedField", testInfoZIPUnicodePathWithTruncatedField)
         ]
     }
 

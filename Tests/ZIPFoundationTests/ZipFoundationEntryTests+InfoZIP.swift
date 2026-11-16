@@ -26,6 +26,21 @@ extension ZIPFoundationTests {
         XCTAssertNotNil(infoZIP)
     }
 
+    func testEntryScanForTruncatedInfoZIP() {
+        // A Unicode Path field without a payload, followed by another field.
+        let emptyField: [UInt8] = [0x75, 0x70, 0x00, 0x00, 0x99, 0x99, 0x00, 0x00]
+        XCTAssertNil(Entry.InfoZIPUnicodePath.scanForUnicodePath(in: Data(emptyField)))
+        // A Unicode Path field that is too short to contain a version and a CRC32.
+        let shortField: [UInt8] = [0x75, 0x70, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00]
+        XCTAssertNil(Entry.InfoZIPUnicodePath.scanForUnicodePath(in: Data(shortField)))
+    }
+
+    func testInfoZIPUnicodePathWithTruncatedField() {
+        // The Unicode Path fields of both entries are too short. The header file names have to be used.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertEqual(archive.map { $0.path }, ["a", "b"])
+    }
+
     func testInfoZIPUnicodePath() {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)

@@ -42,7 +42,8 @@ extension Entry.InfoZIPUnicodePath {
             let nextOffset = offset + headerSize + Int(dataSize)
             guard nextOffset <= extraFieldLength else { return nil }
 
-            if headerID == Archive.ExtraFieldHeaderID.infoZIPUnicodePath.rawValue {
+            // The field has to contain at least a version (1 byte) and the CRC32 of the header file name (4 bytes).
+            if headerID == Archive.ExtraFieldHeaderID.infoZIPUnicodePath.rawValue, dataSize >= 5 {
                 let fieldData = data.subdata(in: offset..<nextOffset)
                 let version: UInt8 = fieldData.scanValue(start: 4)
                 let nameCRC32: UInt32 = fieldData.scanValue(start: 5)
