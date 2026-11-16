@@ -3,7 +3,6 @@
 ## [0.9.21](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.21)
 
 ### Added
- - Added support for the Info-ZIP Unicode Path extra field
  - Added support for compressed symlinks and symlinks pointing into other subfolders of an archive
  - Added `symlinksValidWithin` parameter to control symlink containment (replaces `allowUncontainedSymlinks`)
  - Added support for symlink modification dates on Linux
