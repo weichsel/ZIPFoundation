@@ -55,6 +55,8 @@ extension ZIPFoundationTests {
         // Trailing garbage that is too short for a header or that claims more data than available.
         XCTAssertEqual(scan(unicodePathField + [0x00, 0x00, 0x00]), "É¶.txt")
         XCTAssertEqual(scan(unicodePathField + [0x99, 0x99, 0xff, 0xff, 0x00]), "É¶.txt")
+        // Version 0 is accepted like Info-ZIP's `unzip` does.
+        XCTAssertEqual(scan(unicodePathField(name: Array("zero.txt".utf8), version: 0)), "zero.txt")
         XCTAssertNil(scan([]))
         XCTAssertNil(scan(timestampField))
         XCTAssertNil(scan(timestampField + timestampField))
@@ -71,7 +73,7 @@ extension ZIPFoundationTests {
         // Unknown versions
         field[4] = 2
         XCTAssertNil(scan(field))
-        field[4] = 0
+        field[4] = 0xff
         XCTAssertNil(scan(field))
         // The CRC32 doesn't match the file name.
         field = unicodePathField
@@ -167,8 +169,8 @@ extension ZIPFoundationTests {
     func testInfoZIPUnicodePathWithInvalidFields() {
         // The Unicode Path fields of all entries are invalid. The CP437 header file names have to be used.
         let archive = self.archive(for: #function, mode: .read)
-        let paths = ["unknown-version-ü.txt", "version-zero-ü.txt", "crc-mismatch-ü.txt", "invalid-utf8-ü.txt",
-                     "truncated-ü.txt", "no-data-ü.txt", "overrun-ü.txt", "marker-ü.txt"]
+        let paths = ["unknown-version-ü.txt", "crc-mismatch-ü.txt", "invalid-utf8-ü.txt", "truncated-ü.txt",
+                     "no-data-ü.txt", "overrun-ü.txt", "marker-ü.txt"]
         XCTAssertEqual(archive.map { $0.path }, paths)
         XCTAssertEqual(archive.map { $0.path(using: .codepage437) }, paths)
         XCTAssertEqual(archive.compactMap { archive[$0.path]?.path }, paths)
@@ -190,6 +192,7 @@ extension ZIPFoundationTests {
                      "two-valid-☃.txt",      // two valid fields
                      "valid-invalid-☃.txt",  // valid field followed by an invalid field
                      "invalid-valid-ä.txt",  // invalid field followed by a valid field
+                     "version-zero-☃.txt",   // valid field with the version 0
                      "nul-☃.txt",            // name with data after a NUL byte
                      "other-fields-☃.txt"]   // valid field between another field and trailing garbage
         XCTAssertEqual(archive.map { $0.path }, paths)

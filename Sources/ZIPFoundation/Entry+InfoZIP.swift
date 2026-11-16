@@ -14,7 +14,8 @@ extension Entry.CentralDirectoryStructure {
 
     /// Scans extra field data for an Info-ZIP Unicode Path extra field (APPNOTE.TXT 4.6.9).
     ///
-    /// The field is only used if its version is 1 and if its CRC32 matches the checksum of `fileNameData`.
+    /// The field is only used if its version is not newer than 1 and if its CRC32 matches the checksum of
+    /// `fileNameData`.
     /// Scanning stops at the first Unicode Path field that is not usable and at the first malformed extra field.
     /// If there is more than one usable field, the last one is used. This matches Info-ZIP's `unzip`.
     ///
@@ -47,9 +48,10 @@ extension Entry.CentralDirectoryStructure {
     }
 
     private static func infoZIPUnicodePath(from fieldData: UnsafeRawBufferPointer, fileNameData: Data) -> String? {
+        // Info-ZIP's `unzip` only rejects versions that are newer than the supported version.
         let supportedVersion = UInt8(1)
         let nameOffset = 5
-        guard fieldData.count >= nameOffset, fieldData[0] == supportedVersion else { return nil }
+        guard fieldData.count >= nameOffset, fieldData[0] <= supportedVersion else { return nil }
         let nameCRC32 = UInt32(littleEndian: fieldData.loadUnaligned(fromByteOffset: 1, as: UInt32.self))
         guard nameCRC32 == fileNameData.crc32(checksum: 0) else { return nil }
         // Info-ZIP's `unzip` treats the name as a C string. It ends at the first NUL byte.

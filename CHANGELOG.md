@@ -4,7 +4,7 @@
 
 ### Added
  - Added support for reading the Info-ZIP Unicode Path extra field: `Entry.path` uses the UTF-8 path from the central directory header of entries that are not flagged as UTF-8 encoded
-   - The field is ignored if its version is not 1, if its CRC32 doesn't match the header file name or if its path is not valid UTF-8. A field without a path marks the header file name as UTF-8 encoded
+   - The field is ignored if its version is newer than 1, if its CRC32 doesn't match the header file name or if its path is not valid UTF-8. A field without a path marks the header file name as UTF-8 encoded
    - `Entry.path(using:)` and an explicitly passed `pathEncoding` always decode the header file name
    - The field is never written. Removing an entry keeps the Unicode Paths of the remaining entries, except for entries with ZIP64 extended information, which lose them together with their other extra fields
  - Added support for compressed symlinks and symlinks pointing into other subfolders of an archive
