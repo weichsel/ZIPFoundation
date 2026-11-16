@@ -11,22 +11,6 @@
 import XCTest
 @testable import ZIPFoundation
 
-/// The ISO 8859-1 encoded file name "É¶.txt" and its Unicode Path field as written by Info-ZIP's `zip` 3.0.
-private let legacyFileName: [UInt8] = [0xc9, 0xb6, 0x2e, 0x74, 0x78, 0x74]
-private let unicodePathField: [UInt8] = [0x75, 0x70, 0x0d, 0x00, 0x01, 0x31, 0x4d, 0x39, 0xbb,
-                                         0xc3, 0x89, 0xc2, 0xb6, 0x2e, 0x74, 0x78, 0x74]
-private let timestampField: [UInt8] = [0x55, 0x54, 0x05, 0x00, 0x01, 0xc0, 0xc2, 0x19, 0x69]
-
-/// Returns a Unicode Path field that is valid for `legacyFileName`.
-private func unicodePathField(name: [UInt8], version: UInt8 = 1) -> [UInt8] {
-    return [0x75, 0x70, UInt8(5 + name.count), 0x00, version, 0x31, 0x4d, 0x39, 0xbb] + name
-}
-
-private func scan(_ extraField: [UInt8], fileName: [UInt8] = legacyFileName) -> String? {
-    return Entry.CentralDirectoryStructure.scanForInfoZIPUnicodePath(in: Data(extraField),
-                                                                     fileNameData: Data(fileName))
-}
-
 extension ZIPFoundationTests {
 
     static var infoZIPTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
@@ -268,4 +252,26 @@ extension ZIPFoundationTests {
         XCTAssertNotNil(archive["zip64-ä.txt"]?.zip64ExtendedInformation)
         XCTAssert(archive.checkIntegrity())
     }
+}
+
+// MARK: - Helper
+
+/// The ISO 8859-1 encoded file name "É¶.txt" and its Unicode Path field as written by Info-ZIP's `zip` 3.0.
+///
+/// The bytes `C9 B6` are valid in three encodings and decode to a different name in each of them:
+/// "É¶.txt" (ISO 8859-1), "ɶ.txt" (UTF-8) and "╔╢.txt" (code page 437). The resulting path of an entry
+/// therefore shows if the Unicode Path field, the UTF-8 file name or the code page 437 fallback has been used.
+private let legacyFileName: [UInt8] = [0xc9, 0xb6, 0x2e, 0x74, 0x78, 0x74]
+private let unicodePathField: [UInt8] = [0x75, 0x70, 0x0d, 0x00, 0x01, 0x31, 0x4d, 0x39, 0xbb,
+                                         0xc3, 0x89, 0xc2, 0xb6, 0x2e, 0x74, 0x78, 0x74]
+private let timestampField: [UInt8] = [0x55, 0x54, 0x05, 0x00, 0x01, 0xc0, 0xc2, 0x19, 0x69]
+
+/// Returns a Unicode Path field that is valid for `legacyFileName`.
+private func unicodePathField(name: [UInt8], version: UInt8 = 1) -> [UInt8] {
+    return [0x75, 0x70, UInt8(5 + name.count), 0x00, version, 0x31, 0x4d, 0x39, 0xbb] + name
+}
+
+private func scan(_ extraField: [UInt8], fileName: [UInt8] = legacyFileName) -> String? {
+    return Entry.CentralDirectoryStructure.scanForInfoZIPUnicodePath(in: Data(extraField),
+                                                                     fileNameData: Data(fileName))
 }
