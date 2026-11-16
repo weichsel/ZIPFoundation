@@ -12,6 +12,17 @@ import Foundation
 
 extension Entry.CentralDirectoryStructure {
 
+    /// Scans the extra field data of the receiver for an Info-ZIP Unicode Path that is valid for its file name.
+    ///
+    /// Every initializer derives `infoZIPUnicodePath` with this method after it has set the extra field data.
+    ///
+    /// - Returns: The validated path or `nil` if there is no usable Unicode Path field.
+    func scanForInfoZIPUnicodePath() -> String? {
+        // The Unicode Path is not needed if the file name is flagged as UTF-8 encoded.
+        guard self.usesUTF8PathEncoding == false else { return nil }
+        return Self.scanForInfoZIPUnicodePath(in: self.extraFieldData, fileNameData: self.fileNameData)
+    }
+
     /// Scans extra field data for an Info-ZIP Unicode Path extra field (APPNOTE.TXT 4.6.9).
     ///
     /// The field is only used if its version is not newer than 1 and if its CRC32 matches the checksum of

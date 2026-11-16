@@ -131,7 +131,12 @@ public struct Entry: Equatable {
     /// - Note: A valid Info-ZIP Unicode Path extra field in the central directory header takes precedence
     ///         over the file name of entries that are not flagged as UTF-8 encoded.
     public var path: String {
-        if let unicodePath = self.centralDirectoryStructure.infoZIPUnicodePath { return unicodePath }
+        return self.centralDirectoryStructure.infoZIPUnicodePath ?? self.headerPath
+    }
+    /// The file name of the central directory header, decoded as UTF-8 or code page 437.
+    ///
+    /// An Info-ZIP Unicode Path extra field is not taken into account.
+    private var headerPath: String {
         let encoding = self.centralDirectoryStructure.usesUTF8PathEncoding ? String.Encoding.utf8 : .codepage437
         return self.path(using: encoding)
     }
@@ -157,8 +162,7 @@ public struct Entry: Equatable {
         let osType = OSType(rawValue: UInt(osTypeRaw)) ?? .unused
         // The type depends on the file name of the central directory header.
         // An Info-ZIP Unicode Path extra field is not taken into account.
-        let usesUTF8PathEncoding = self.centralDirectoryStructure.usesUTF8PathEncoding
-        var isDirectory = self.path(using: usesUTF8PathEncoding ? .utf8 : .codepage437).hasSuffix("/")
+        var isDirectory = self.headerPath.hasSuffix("/")
         switch osType {
         case .unix, .osx:
             // Use truncatingIfNeeded for safer conversion across platforms
@@ -277,6 +281,7 @@ extension Entry.CentralDirectoryStructure {
                                                                                            fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
         }
+        self.infoZIPUnicodePath = self.scanForInfoZIPUnicodePath()
     }
 
     init(centralDirectoryStructure: Entry.CentralDirectoryStructure,
@@ -287,8 +292,6 @@ extension Entry.CentralDirectoryStructure {
                                               Archive.Version.v45.rawValue)
         } else {
             self.extraFieldData = centralDirectoryStructure.extraFieldData
-            // The extra field data is unchanged, so a validated Unicode Path stays valid.
-            self.infoZIPUnicodePath = centralDirectoryStructure.infoZIPUnicodePath
             let existingVersion = centralDirectoryStructure.versionNeededToExtract
             self.versionNeededToExtract = existingVersion < Archive.Version.v45.rawValue
                 ? centralDirectoryStructure.versionNeededToExtract
@@ -315,6 +318,7 @@ extension Entry.CentralDirectoryStructure {
                                                                                            fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
         }
+        self.infoZIPUnicodePath = self.scanForInfoZIPUnicodePath()
     }
 }
 
