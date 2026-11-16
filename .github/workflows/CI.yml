@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - development
+      - main
     paths:
       - '.github/workflows/CI.yml'
       - '.swiftlint.yml'
