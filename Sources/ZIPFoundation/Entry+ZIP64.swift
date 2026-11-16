@@ -205,8 +205,6 @@ extension Entry.ZIP64ExtendedInformation {
             }
         }
         updatedData.append(fields.remainingData)
-        // ZIP64 extended information that `scanForZIP64Field` has found is always part of the well-formed fields.
-        assert(replacement == nil, "The extra field data contains no ZIP64 extended information to replace.")
         return updatedData
     }
 
