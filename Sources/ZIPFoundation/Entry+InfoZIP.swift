@@ -21,7 +21,7 @@ extension Entry {
     }
 
     var infoZIPExtraField: InfoZIPUnicodePath? {
-        let extraField = self.localFileHeader.extraFields?.first { $0 is InfoZIPUnicodePath }
+        let extraField = self.centralDirectoryStructure.extraFields?.first { $0 is InfoZIPUnicodePath }
         return extraField as? InfoZIPUnicodePath
     }
 }

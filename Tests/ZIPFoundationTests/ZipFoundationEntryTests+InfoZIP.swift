@@ -69,6 +69,14 @@ extension ZIPFoundationTests {
         XCTAssertNotNil(archive["original.txt"])
     }
 
+    func testInfoZIPUnicodePathHeaderSelection() {
+        // a: The Unicode Path field is stored in the central directory.
+        // b: The Unicode Path field is only stored in the local file header and has to be ignored.
+        // c: The file name is flagged as UTF-8, so the Unicode Path field has to be ignored.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertEqual(archive.map { $0.path }, ["unicode-a", "b", "c"])
+    }
+
     func testInfoZIPUnicodePath() {
         let fileManager = FileManager()
         let archive = self.archive(for: #function, mode: .read)

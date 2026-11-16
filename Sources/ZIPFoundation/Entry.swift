@@ -124,9 +124,10 @@ public struct Entry: Equatable {
     }
     /// The `path` of the receiver within a ZIP `Archive`.
     public var path: String {
-        // Read Info-ZIP Unicode Path extra field if present
-        if let infoZIPExtraField = self.infoZIPExtraField {
-            // Validate CRC32 before using the Unicode name
+        let usesUTF8PathEncoding = self.centralDirectoryStructure.usesUTF8PathEncoding
+        // The Info-ZIP Unicode Path extra field is only used if the file name is not flagged as UTF-8.
+        if usesUTF8PathEncoding == false, let infoZIPExtraField = self.infoZIPExtraField {
+            // The CRC32 has to match the file name of the header that contains the extra field.
             let originalFilenameCRC32 = self.centralDirectoryStructure.fileNameData.crc32(checksum: 0)
             if infoZIPExtraField.nameCRC32 == originalFilenameCRC32,
                let unicodePath = String(data: infoZIPExtraField.unicodeName, encoding: .utf8),
@@ -134,8 +135,7 @@ public struct Entry: Equatable {
                 return unicodePath
             }
         }
-        let encoding = self.centralDirectoryStructure.usesUTF8PathEncoding ? String.Encoding.utf8 : .codepage437
-        return self.path(using: encoding)
+        return self.path(using: usesUTF8PathEncoding ? .utf8 : .codepage437)
     }
     /// The file attributes of the receiver as key/value pairs.
     ///

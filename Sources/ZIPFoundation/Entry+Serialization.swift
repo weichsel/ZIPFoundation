@@ -62,15 +62,10 @@ extension Entry.LocalFileHeader {
         subRangeStart += Int(self.fileNameLength)
         subRangeEnd = subRangeStart + Int(self.extraFieldLength)
         self.extraFieldData = additionalData.subdata(in: subRangeStart..<subRangeEnd)
-        var extraFields: [ExtensibleDataField] = []
         if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation.scanForZIP64Field(in: self.extraFieldData,
                                                                                            fields: self.validFields) {
-            extraFields.append(zip64ExtendedInformation)
+            self.extraFields = [zip64ExtendedInformation]
         }
-        if let infoZIPUnicodePath = Entry.InfoZIPUnicodePath.scanForUnicodePath(in: self.extraFieldData) {
-            extraFields.append(infoZIPUnicodePath)
-        }
-        self.extraFields = extraFields
     }
 }
 
@@ -148,10 +143,16 @@ extension Entry.CentralDirectoryStructure {
         subRangeStart += Int(self.extraFieldLength)
         subRangeEnd = subRangeStart + Int(self.fileCommentLength)
         self.fileCommentData = additionalData.subdata(in: subRangeStart..<subRangeEnd)
+        var extraFields: [ExtensibleDataField] = []
         if let zip64ExtendedInformation = Entry.ZIP64ExtendedInformation.scanForZIP64Field(in: self.extraFieldData,
                                                                                            fields: self.validFields) {
-            self.extraFields = [zip64ExtendedInformation]
+            extraFields.append(zip64ExtendedInformation)
         }
+        // The Unicode Path is taken from the central directory. A field in the local file header is not used.
+        if let infoZIPUnicodePath = Entry.InfoZIPUnicodePath.scanForUnicodePath(in: self.extraFieldData) {
+            extraFields.append(infoZIPUnicodePath)
+        }
+        self.extraFields = extraFields.isEmpty ? nil : extraFields
     }
 }
 
