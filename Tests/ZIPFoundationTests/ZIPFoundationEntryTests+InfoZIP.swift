@@ -64,6 +64,10 @@ extension ZIPFoundationTests {
         field[2] = 0xff
         field[3] = 0xff
         XCTAssertNil(scan(field))
+        // The path disagrees with the file name about the trailing path delimiter.
+        XCTAssertNil(scan(unicodePathField(name: Array("directory/".utf8))))
+        XCTAssertEqual(scan(unicodePathField(name: Array("first.txt".utf8))
+                            + unicodePathField(name: Array("directory/".utf8))), "first.txt")
         // Scanning stops at malformed extra fields.
         XCTAssertNil(scan([0x99, 0x99, 0xff, 0xff] + unicodePathField))
     }
@@ -191,16 +195,28 @@ extension ZIPFoundationTests {
         XCTAssertFalse(fileManager.itemExists(at: destinationURL.appendingPathComponent("通知.txt")))
     }
 
-    // MARK: - Removing Entries
-
     func testInfoZIPUnicodePathEntryType() {
-        // The type of an entry depends on its header file name. The Unicode Paths of the entries
-        // disagree with their header file names about the trailing path delimiter.
+        // The type of an entry depends on its header file name. The Unicode Paths of the entries ("file-☃/" and
+        // "directory-☃") disagree with their header file names about the trailing path delimiter and are ignored.
         let archive = self.archive(for: #function, mode: .read)
-        XCTAssertEqual(archive.map { $0.path }, ["file-☃/", "directory-☃"])
-        XCTAssertEqual(archive.map { $0.path(using: .codepage437) }, ["file-ä.txt", "directory-ä/"])
+        let paths = ["file-ä.txt", "directory-ä/"]
+        XCTAssertEqual(archive.map { $0.path }, paths)
+        XCTAssertEqual(archive.map { $0.path(using: .codepage437) }, paths)
         XCTAssertEqual(archive.map { $0.type }, [.file, .directory])
+        XCTAssertEqual(archive.compactMap { $0.centralDirectoryStructure.infoZIPUnicodePath }, [])
+        let fileManager = FileManager()
+        let destinationURL = self.createDirectory(for: #function)
+        XCTAssertNoThrow(try fileManager.unzipItem(at: archive.url, to: destinationURL))
+        var isDirectory: ObjCBool = false
+        XCTAssert(fileManager.fileExists(atPath: destinationURL.appendingPathComponent("file-ä.txt").path,
+                                         isDirectory: &isDirectory))
+        XCTAssertFalse(isDirectory.boolValue)
+        XCTAssert(fileManager.fileExists(atPath: destinationURL.appendingPathComponent("directory-ä").path,
+                                         isDirectory: &isDirectory))
+        XCTAssert(isDirectory.boolValue)
     }
+
+    // MARK: - Removing Entries
 
     func testRemoveEntryPreservesInfoZIPUnicodePath() {
         // Extra fields of entries without ZIP64 extended information are copied when rewriting
