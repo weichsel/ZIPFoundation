@@ -37,33 +37,27 @@ extension Entry.CentralDirectoryStructure {
     ///   - fileNameData: The file name of the same header.
     /// - Returns: The validated path or `nil` if `extraFieldData` contains no usable Unicode Path field.
     static func scanForInfoZIPUnicodePath(in extraFieldData: Data, fileNameData: Data) -> String? {
-        let headerSize = 4
         // The smallest usable field consists of a header, a version (1 byte) and a CRC32 (4 bytes).
-        guard extraFieldData.count >= headerSize + 5 else { return nil }
-        return extraFieldData.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) -> String? in
-            var unicodePath: String?
-            buffer.forEachExtraField { (headerID, fieldRange) in
-                guard headerID == Archive.ExtraFieldHeaderID.infoZIPUnicodePath.rawValue else { return true }
-                let fieldData = UnsafeRawBufferPointer(rebasing: buffer[fieldRange].dropFirst(headerSize))
-                guard let path = self.infoZIPUnicodePath(from: fieldData, fileNameData: fileNameData) else {
-                    return false
-                }
-                unicodePath = path
-                return true
-            }
-            return unicodePath
+        guard extraFieldData.count >= ExtraFields.Field.headerSize + 5 else { return nil }
+        let unicodePathID = Archive.ExtraFieldHeaderID.infoZIPUnicodePath.rawValue
+        var unicodePath: String?
+        for field in ExtraFields(extraFieldData) where field.headerID == unicodePathID {
+            guard let path = self.infoZIPUnicodePath(from: field.payload, fileNameData: fileNameData) else { break }
+            unicodePath = path
         }
+        return unicodePath
     }
 
-    private static func infoZIPUnicodePath(from fieldData: UnsafeRawBufferPointer, fileNameData: Data) -> String? {
+    /// - Parameter fieldData: The data of a Unicode Path field without its header. Its indices may not start at zero.
+    private static func infoZIPUnicodePath(from fieldData: Data, fileNameData: Data) -> String? {
         // Info-ZIP's `unzip` only rejects versions that are newer than the supported version.
         let supportedVersion = UInt8(1)
         let nameOffset = 5
-        guard fieldData.count >= nameOffset, fieldData[0] <= supportedVersion else { return nil }
-        let nameCRC32 = UInt32(littleEndian: fieldData.loadUnaligned(fromByteOffset: 1, as: UInt32.self))
+        guard fieldData.count >= nameOffset, fieldData[fieldData.startIndex] <= supportedVersion else { return nil }
+        let nameCRC32 = UInt32(littleEndian: fieldData.scanValue(start: 1))
         guard nameCRC32 == fileNameData.crc32(checksum: 0) else { return nil }
         // Info-ZIP's `unzip` treats the name as a C string. It ends at the first NUL byte.
-        let nameBytes = fieldData[nameOffset...].prefix { $0 != 0 }
+        let nameBytes = fieldData.dropFirst(nameOffset).prefix { $0 != 0 }
         // A field without a name indicates that the file name of the header is UTF-8 encoded.
         // Like in `unzip`, this includes names that start with a NUL byte.
         guard nameBytes.isEmpty == false else { return String(data: fileNameData, encoding: .utf8) }

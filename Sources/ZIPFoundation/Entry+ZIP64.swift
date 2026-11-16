@@ -15,25 +15,39 @@ protocol ExtensibleDataField {
     var dataSize: UInt16 { get }
 }
 
-extension UnsafeRawBufferPointer {
-    /// Calls `body` with the header ID and the range of each well-formed extra field in the receiver.
+/// The well-formed extra fields at the beginning of the extra field data of a header.
+///
+/// Iteration ends at the first field that claims more data than is available.
+struct ExtraFields: Sequence, IteratorProtocol {
+
+    struct Field {
+        static let headerSize = 4
+        let headerID: UInt16
+        /// The bytes of the field, including its 4 byte header.
+        let data: Data
+        /// The bytes of the field that follow its header.
+        var payload: Data { return self.data.dropFirst(Self.headerSize) }
+    }
+
+    /// The data that has not been returned as part of a field yet.
     ///
-    /// The range includes the 4 byte header of the field. Iteration ends at the first field that claims
-    /// more data than is available, or when `body` returns `false`.
-    ///
-    /// - Returns: The offset of the first byte that has not been passed to `body` as part of an accepted field.
-    @discardableResult
-    func forEachExtraField(_ body: (_ headerID: UInt16, _ fieldRange: Range<Int>) -> Bool) -> Int {
-        let headerSize = 4
-        var offset = 0
-        while self.count - offset >= headerSize {
-            let headerID = UInt16(littleEndian: self.loadUnaligned(fromByteOffset: offset, as: UInt16.self))
-            let dataSize = UInt16(littleEndian: self.loadUnaligned(fromByteOffset: offset + 2, as: UInt16.self))
-            let nextOffset = offset + headerSize + Int(dataSize)
-            guard nextOffset <= self.count, body(headerID, offset..<nextOffset) else { break }
-            offset = nextOffset
-        }
-        return offset
+    /// After the iteration has ended, this is the data that follows the last well-formed field.
+    private(set) var remainingData: Data
+
+    /// - Parameter data: The untrusted extra field data of a header.
+    init(_ data: Data) {
+        self.remainingData = data
+    }
+
+    mutating func next() -> Field? {
+        guard self.remainingData.count >= Field.headerSize else { return nil }
+        let headerID = UInt16(littleEndian: self.remainingData.scanValue(start: 0))
+        let dataSize = UInt16(littleEndian: self.remainingData.scanValue(start: 2))
+        let fieldSize = Field.headerSize + Int(dataSize)
+        guard fieldSize <= self.remainingData.count else { return nil }
+        let fieldData = self.remainingData.prefix(fieldSize)
+        self.remainingData = self.remainingData.dropFirst(fieldSize)
+        return Field(headerID: headerID, data: fieldData)
     }
 }
 
@@ -169,24 +183,23 @@ extension Entry.ZIP64ExtendedInformation {
     /// Pass `nil` to remove the ZIP64 extended information. All other extra fields keep their position.
     /// Data that follows the last well-formed extra field is preserved too.
     static func extraFieldData(replacingZIP64FieldIn data: Data, with zip64FieldData: Data?) -> Data {
-        var remainingData = Data()
+        var updatedData = Data()
         var replacement = zip64FieldData
-        data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
-            let endOfFields = buffer.forEachExtraField { (headerID, fieldRange) in
-                if headerID != Archive.ExtraFieldHeaderID.zip64ExtendedInformation.rawValue {
-                    remainingData.append(contentsOf: UnsafeRawBufferPointer(rebasing: buffer[fieldRange]))
-                } else if let zip64FieldData = replacement {
-                    // Only the first ZIP64 extended information field is replaced. Additional ones are removed.
-                    remainingData.append(zip64FieldData)
-                    replacement = nil
-                }
-                return true
+        // The iterator is advanced manually, because the data that follows the last field is needed afterwards.
+        var fields = ExtraFields(data)
+        while let field = fields.next() {
+            if field.headerID != Archive.ExtraFieldHeaderID.zip64ExtendedInformation.rawValue {
+                updatedData.append(field.data)
+            } else if let zip64FieldData = replacement {
+                // Only the first ZIP64 extended information field is replaced. Additional ones are removed.
+                updatedData.append(zip64FieldData)
+                replacement = nil
             }
-            remainingData.append(contentsOf: UnsafeRawBufferPointer(rebasing: buffer[endOfFields...]))
         }
+        updatedData.append(fields.remainingData)
         // The existing field is not part of the well-formed fields. The replacement has to precede all other data.
-        if let zip64FieldData = replacement { remainingData = zip64FieldData + remainingData }
-        return remainingData
+        if let zip64FieldData = replacement { updatedData = zip64FieldData + updatedData }
+        return updatedData
     }
 
     static func scanForZIP64Field(in data: Data, fields: [Field]) -> Entry.ZIP64ExtendedInformation? {
