@@ -38,7 +38,7 @@ extension Entry.CentralDirectoryStructure {
     /// - Returns: The validated path or `nil` if `extraFieldData` contains no usable Unicode Path field.
     static func scanForInfoZIPUnicodePath(in extraFieldData: Data, fileNameData: Data) -> String? {
         // The smallest usable field consists of a header, a version (1 byte) and a CRC32 (4 bytes).
-        guard extraFieldData.count >= ExtraFields.Field.headerSize + 5 else { return nil }
+        guard extraFieldData.count >= ExtraField.headerSize + 5 else { return nil }
         let unicodePathID = Archive.ExtraFieldHeaderID.infoZIPUnicodePath.rawValue
         var unicodePath: String?
         for field in ExtraFields(extraFieldData) where field.headerID == unicodePathID {

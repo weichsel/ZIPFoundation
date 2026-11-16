@@ -15,19 +15,21 @@ protocol ExtensibleDataField {
     var dataSize: UInt16 { get }
 }
 
+/// An extra field of a header. It consists of a header ID, the size of its data and the data itself.
+struct ExtraField {
+    /// The size of the header ID and the data size that precede the data of every extra field.
+    static let headerSize = 4
+    let headerID: UInt16
+    /// The bytes of the field, including its 4 byte header.
+    let data: Data
+    /// The bytes of the field that follow its header.
+    var payload: Data { return self.data.dropFirst(Self.headerSize) }
+}
+
 /// The well-formed extra fields at the beginning of the extra field data of a header.
 ///
 /// Iteration ends at the first field that claims more data than is available.
 struct ExtraFields: Sequence, IteratorProtocol {
-
-    struct Field {
-        static let headerSize = 4
-        let headerID: UInt16
-        /// The bytes of the field, including its 4 byte header.
-        let data: Data
-        /// The bytes of the field that follow its header.
-        var payload: Data { return self.data.dropFirst(Self.headerSize) }
-    }
 
     /// The data that has not been returned as part of a field yet.
     ///
@@ -39,15 +41,15 @@ struct ExtraFields: Sequence, IteratorProtocol {
         self.remainingData = data
     }
 
-    mutating func next() -> Field? {
-        guard self.remainingData.count >= Field.headerSize else { return nil }
+    mutating func next() -> ExtraField? {
+        guard self.remainingData.count >= ExtraField.headerSize else { return nil }
         let headerID = UInt16(littleEndian: self.remainingData.scanValue(start: 0))
         let dataSize = UInt16(littleEndian: self.remainingData.scanValue(start: 2))
-        let fieldSize = Field.headerSize + Int(dataSize)
+        let fieldSize = ExtraField.headerSize + Int(dataSize)
         guard fieldSize <= self.remainingData.count else { return nil }
         let fieldData = self.remainingData.prefix(fieldSize)
         self.remainingData = self.remainingData.dropFirst(fieldSize)
-        return Field(headerID: headerID, data: fieldData)
+        return ExtraField(headerID: headerID, data: fieldData)
     }
 }
 
@@ -61,7 +63,6 @@ extension Entry {
     struct ZIP64ExtendedInformation: ExtensibleDataField {
         let headerID: UInt16 = Archive.ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
         let dataSize: UInt16
-        static let headerSize: UInt16 = 4
         let uncompressedSize: UInt64
         let compressedSize: UInt64
         let relativeOffsetOfLocalHeader: UInt64
@@ -126,10 +127,10 @@ extension Entry.ZIP64ExtendedInformation {
     }
 
     init?(data: Data, fields: [Field]) {
-        let headerLength = 4
-        guard fields.reduce(0, { $0 + $1.size }) + headerLength == data.count else { return nil }
+        let headerSize = ExtraField.headerSize
+        guard fields.reduce(0, { $0 + $1.size }) + headerSize == data.count else { return nil }
 
-        var readOffset = headerLength
+        var readOffset = headerSize
         func value<T>(of field: Field) -> T where T: BinaryInteger {
             if fields.contains(field), readOffset + field.size <= data.count {
                 defer { readOffset += MemoryLayout<T>.size }
