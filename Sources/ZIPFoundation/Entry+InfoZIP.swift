@@ -29,19 +29,14 @@ extension Entry.CentralDirectoryStructure {
         guard extraFieldData.count >= headerSize + 5 else { return nil }
         return extraFieldData.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) -> String? in
             var unicodePath: String?
-            var offset = 0
-            while buffer.count - offset >= headerSize {
-                let headerID = UInt16(littleEndian: buffer.loadUnaligned(fromByteOffset: offset, as: UInt16.self))
-                let dataSize = UInt16(littleEndian: buffer.loadUnaligned(fromByteOffset: offset + 2, as: UInt16.self))
-                let dataStart = offset + headerSize
-                let dataEnd = dataStart + Int(dataSize)
-                guard dataEnd <= buffer.count else { break }
-                if headerID == Archive.ExtraFieldHeaderID.infoZIPUnicodePath.rawValue {
-                    let fieldData = UnsafeRawBufferPointer(rebasing: buffer[dataStart..<dataEnd])
-                    guard let path = self.infoZIPUnicodePath(from: fieldData, fileNameData: fileNameData) else { break }
-                    unicodePath = path
+            buffer.forEachExtraField { (headerID, fieldRange) in
+                guard headerID == Archive.ExtraFieldHeaderID.infoZIPUnicodePath.rawValue else { return true }
+                let fieldData = UnsafeRawBufferPointer(rebasing: buffer[fieldRange].dropFirst(headerSize))
+                guard let path = self.infoZIPUnicodePath(from: fieldData, fileNameData: fileNameData) else {
+                    return false
                 }
-                offset = dataEnd
+                unicodePath = path
+                return true
             }
             return unicodePath
         }

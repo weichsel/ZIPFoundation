@@ -290,11 +290,9 @@ extension Entry.CentralDirectoryStructure {
         var extraFieldData = centralDirectoryStructure.extraFieldData
         // If no ZIP64 extended information exists, then this information will not be newly added either.
         if let existingInfo = centralDirectoryStructure.zip64ExtendedInformation {
-            var zip64Fields: [Field] = []
-            if centralDirectoryStructure.uncompressedSize == .max { zip64Fields.append(.uncompressedSize) }
-            if centralDirectoryStructure.compressedSize == .max { zip64Fields.append(.compressedSize) }
+            // The sizes and the disk number are unchanged. Only the placeholder of the offset can change.
+            var zip64Fields = centralDirectoryStructure.validFields.filter { $0 != .relativeOffsetOfLocalHeader }
             if relativeOffset == .max { zip64Fields.append(.relativeOffsetOfLocalHeader) }
-            if centralDirectoryStructure.diskNumberStart == .max { zip64Fields.append(.diskNumberStart) }
             // ZIP64 extended information that is no longer needed is removed.
             var zip64FieldData: Data?
             if zip64Fields.isEmpty == false {
