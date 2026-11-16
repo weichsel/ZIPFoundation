@@ -77,17 +77,15 @@ extension ZIPFoundationTests {
                             throws: Entry.EntryError.missingModificationDateAttributeError)
         XCTAssertPOSIXError(try fileManager.setSymlinkModificationDate(Date(), ofItemAtURL: nonExistentURL),
                             throwsErrorWithCode: .ENOENT)
-        XCTAssertPOSIXError(
-            try fileManager.setAttributes(
-                [
-                    .posixPermissions: providedPermissions,
-                    .modificationDate: Date()
-                ],
-                ofItemAtURL: nonExistentURL,
-                traverseLink: false
-            ),
-            throwsErrorWithCode: .ENOENT
-        )
+        let attributes: [FileAttributeKey: Any] = [.posixPermissions: providedPermissions, .modificationDate: Date()]
+#if os(Linux)
+        // Setting the modification date of a symlink is best effort on Linux.
+        XCTAssertNoThrow(try fileManager.setAttributes(attributes, ofItemAtURL: nonExistentURL, traverseLink: false))
+#else
+        XCTAssertPOSIXError(try fileManager.setAttributes(attributes, ofItemAtURL: nonExistentURL,
+                                                          traverseLink: false),
+                            throwsErrorWithCode: .ENOENT)
+#endif
 #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
         var resourceValues = URLResourceValues()
         resourceValues.isUserImmutable = true
