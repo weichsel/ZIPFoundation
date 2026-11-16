@@ -286,9 +286,8 @@ extension Entry.CentralDirectoryStructure {
     /// Returns `nil` if the updated extra fields exceed the maximum extra field length.
     init?(centralDirectoryStructure: Entry.CentralDirectoryStructure, updatedOffset: UInt64) {
         let relativeOffset = updatedOffset < maxOffsetOfLocalFileHeader ? UInt32(updatedOffset) : UInt32.max
-        let existingExtraFieldData = centralDirectoryStructure.extraFieldData
         var versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract
-        var extraFieldData = existingExtraFieldData
+        var extraFieldData = centralDirectoryStructure.extraFieldData
         // If no ZIP64 extended information exists, then this information will not be newly added either.
         if let existingInfo = centralDirectoryStructure.zip64ExtendedInformation {
             var zip64Fields: [Field] = []
@@ -299,16 +298,21 @@ extension Entry.CentralDirectoryStructure {
             // ZIP64 extended information that is no longer needed is removed.
             var zip64FieldData: Data?
             if zip64Fields.isEmpty == false {
-                let updatedInfo = Entry.ZIP64ExtendedInformation(dataSize: 0,
+                let dataSize = UInt16(zip64Fields.reduce(0, { $0 + $1.size }))
+                let updatedInfo = Entry.ZIP64ExtendedInformation(dataSize: dataSize,
                                                                  uncompressedSize: existingInfo.uncompressedSize,
                                                                  compressedSize: existingInfo.compressedSize,
                                                                  relativeOffsetOfLocalHeader: updatedOffset,
                                                                  diskNumberStart: existingInfo.diskNumberStart)
                 zip64FieldData = updatedInfo.data(containing: zip64Fields)
-                versionNeededToExtract = max(versionNeededToExtract, Archive.Version.v45.rawValue)
+            }
+            // The entry stays marked as ZIP64, also if its ZIP64 extended information is removed. Otherwise
+            // its data descriptor would be read with a different size. Only the lower byte holds the version.
+            if UInt8(truncatingIfNeeded: versionNeededToExtract) < UInt8(Archive.Version.v45.rawValue) {
+                versionNeededToExtract = (versionNeededToExtract & 0xff00) | Archive.Version.v45.rawValue
             }
             extraFieldData = Entry.ZIP64ExtendedInformation
-                .extraFieldData(replacingZIP64FieldIn: existingExtraFieldData, with: zip64FieldData)
+                .extraFieldData(replacingZIP64FieldIn: extraFieldData, with: zip64FieldData)
         }
         guard extraFieldData.count <= Int(UInt16.max) else { return nil }
         self.extraFieldData = extraFieldData

@@ -207,6 +207,10 @@ extension ZIPFoundationTests {
         XCTAssertEqual(try self.updatedCentralDirectoryStructure(structure, offset: 100).versionNeededToExtract, 45)
         structure = try self.makeCentralDirectoryStructure(version: 63, sizes: .max, extraField: zip64SizeField)
         XCTAssertEqual(try self.updatedCentralDirectoryStructure(structure, offset: 100).versionNeededToExtract, 63)
+        // Only the lower byte holds the version. The upper byte is preserved.
+        structure = try self.makeCentralDirectoryStructure(version: 0x0314, sizes: .max, extraField: zip64SizeField)
+        XCTAssertEqual(try self.updatedCentralDirectoryStructure(structure, offset: 100).versionNeededToExtract,
+                       0x032d)
     }
 
     func testUpdatedCentralDirectoryStructureRemovesUnneededZIP64Field() throws {
@@ -221,6 +225,14 @@ extension ZIPFoundationTests {
         XCTAssertNil(updatedStructure.zip64ExtendedInformation)
         XCTAssertEqual(updatedStructure.effectiveRelativeOffsetOfLocalHeader, 100)
         XCTAssertEqual(updatedStructure.versionNeededToExtract, 45)
+        // An entry with a lower version stays marked as ZIP64, so that its data descriptor is read as before.
+        let lowVersionStructure = try self.makeCentralDirectoryStructure(version: 20, relativeOffset: .max,
+                                                                         extraField: zip64OffsetField)
+        XCTAssertTrue(lowVersionStructure.isZIP64)
+        let updatedLowVersionStructure = try self.updatedCentralDirectoryStructure(lowVersionStructure, offset: 100)
+        XCTAssertEqual(updatedLowVersionStructure.extraFieldData, Data())
+        XCTAssertEqual(updatedLowVersionStructure.versionNeededToExtract, 45)
+        XCTAssertTrue(updatedLowVersionStructure.isZIP64)
     }
 
     func testUpdatedCentralDirectoryStructureWithZeroZIP64Values() throws {
