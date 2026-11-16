@@ -198,18 +198,19 @@ extension Archive {
                 }
                 return (sizeOfCD + UInt64(cdDataLengthChange), numberOfTotalEntries + UInt64(countChange))
             case .remove:
-                guard sizeOfCD >= -cdDataLengthChange else {
+                guard sizeOfCD >= -cdDataLengthChange, startOfEndOfCentralDirectory >= startOfCentralDirectory else {
                     throw ArchiveError.invalidCentralDirectorySize
                 }
                 guard numberOfTotalEntries >= -countChange else {
                     throw ArchiveError.invalidCentralDirectoryEntryCount
                 }
-                return (sizeOfCD - UInt64(-cdDataLengthChange), numberOfTotalEntries - UInt64(-countChange))
+                // The central directory structures of the remaining entries can change their size when their
+                // ZIP64 extended information is updated. The size of the written central directory has to be used.
+                return (startOfEndOfCentralDirectory - startOfCentralDirectory,
+                        numberOfTotalEntries - UInt64(-countChange))
             }
         }()
-        let sizeOfCDForEOCD = updatedSizeOfCD >= maxSizeOfCentralDirectory
-            ? UInt32.max
-            : UInt32(updatedSizeOfCD)
+        let sizeOfCDForEOCD = updatedSizeOfCD >= maxSizeOfCentralDirectory ? UInt32.max : UInt32(updatedSizeOfCD)
         let numberOfTotalEntriesForEOCD = updatedNumberOfEntries >= maxTotalNumberOfEntries
             ? UInt16.max
             : UInt16(updatedNumberOfEntries)

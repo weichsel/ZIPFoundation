@@ -325,6 +325,28 @@ extension ZIPFoundationTests {
         }
         XCTAssertEqual(entry4.zip64ExtendedInformation?.relativeOffsetOfLocalHeader, entry3OriginalOffset)
     }
+
+    func testRemoveEntryUpdatesSizeOfCentralDirectory() throws {
+        self.mockIntMaxValues()
+        defer { self.resetIntMaxValues() }
+        let archive = self.archive(for: #function, mode: .create)
+        let size = 5000
+        let data = Data.makeRandomData(size: size)
+        try archive.addFileEntry(with: "first", size: size, data: data)
+        try archive.addFileEntry(with: "second", size: size, data: data)
+        // The second entry needs ZIP64 extended information for its sizes and its offset.
+        let extraFieldLength = archive["second"]?.centralDirectoryStructure.extraFieldLength
+        XCTAssertEqual(extraFieldLength, 28)
+        try archive.remove(XCTUnwrap(archive["first"]))
+        // The offset no longer needs ZIP64 extended information. The central directory structure gets smaller.
+        XCTAssertEqual(archive["second"]?.centralDirectoryStructure.extraFieldLength, 20)
+        let sizeOfCentralDirectory = archive.reduce(0, { $0 + $1.centralDirectoryStructure.data.count })
+        XCTAssertEqual(archive.sizeOfCentralDirectory, UInt64(sizeOfCentralDirectory))
+        // Adding an entry relies on the size of the central directory.
+        try archive.addFileEntry(with: "third", size: size, data: data)
+        XCTAssertEqual(archive.map { $0.path }, ["second", "third"])
+        XCTAssert(archive.checkIntegrity())
+    }
 }
 
 extension Archive {

@@ -17,6 +17,7 @@
  - Fixed crash when reading past the end of an in-memory archive
  - Fixed endless loop and out-of-bounds read when decoding truncated deflate streams on non-Darwin platforms
  - Fixed reading of ZIP64 archives with entries at offset 0 or a low "version needed to extract"
+ - Fixed loss of added entries after removing an entry from an archive that contains ZIP64 entries
  - Fixed memory growth when zipping or unzipping archives with many entries
  - Fixed performance regression when opening archives with many entries
  - Fixed detection of directory entries with a trailing path delimiter
