@@ -3,10 +3,10 @@
 ## [0.9.21](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.21)
 
 ### Added
- - Added support for the Info-ZIP Unicode Path extra field
  - Added support for compressed symlinks and symlinks pointing into other subfolders of an archive
  - Added `symlinksValidWithin` parameter to control symlink containment (replaces `allowUncontainedSymlinks`)
  - Added support for symlink modification dates on Linux
+ - Added support for the Info-ZIP Unicode Path extra field
  - Added support for building for Windows
  - Added package manifest for Swift 6.4 (Xcode 27)
 
@@ -24,8 +24,6 @@
  - Fixed build errors on Android
  - Fixed `pkg-config` warning when building for Apple platforms
  - Fixed deprecation warning in package manifest
- - Improved minimum deployment targets for Xcode 27 (iOS 15, macOS 12, tvOS 15, watchOS 9 for CocoaPods and Carthage)
- - Improved CI configuration and test coverage
 
 ## [0.9.20](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.20)
 

@@ -106,6 +106,8 @@ public struct Entry: Equatable {
         let fileCommentData: Data
 
         var extraFields: [ExtensibleDataField]?
+        /// The validated path from the Info-ZIP Unicode Path extra field of the receiver.
+        var infoZIPUnicodePath: String?
         var usesDataDescriptor: Bool { return (self.generalPurposeBitFlag & (1 << 3 )) != 0 }
         var usesUTF8PathEncoding: Bool { return (self.generalPurposeBitFlag & (1 << 11 )) != 0 }
         var isEncrypted: Bool { return (self.generalPurposeBitFlag & (1 << 0)) != 0 }
@@ -119,21 +121,22 @@ public struct Entry: Equatable {
     ///
     /// - Parameters:
     ///   - encoding: `String.Encoding`
+    /// - Note: Always decodes the file name of the central directory header.
+    ///         An Info-ZIP Unicode Path extra field is not taken into account.
     public func path(using encoding: String.Encoding) -> String {
         return String(pathData: self.centralDirectoryStructure.fileNameData, encoding: encoding)
     }
     /// The `path` of the receiver within a ZIP `Archive`.
+    ///
+    /// - Note: A valid Info-ZIP Unicode Path extra field in the central directory header takes precedence
+    ///         over the file name of entries that are not flagged as UTF-8 encoded.
     public var path: String {
-        // Read Info-ZIP Unicode Path extra field if present
-        if let infoZIPExtraField = self.infoZIPExtraField {
-            // Validate CRC32 before using the Unicode name
-            let originalFilenameCRC32 = self.centralDirectoryStructure.fileNameData.crc32(checksum: 0)
-            if infoZIPExtraField.nameCRC32 == originalFilenameCRC32,
-               let unicodePath = String(data: infoZIPExtraField.unicodeName, encoding: .utf8),
-               unicodePath.isEmpty == false {
-                return unicodePath
-            }
-        }
+        return self.centralDirectoryStructure.infoZIPUnicodePath ?? self.headerPath
+    }
+    /// The file name of the central directory header, decoded as UTF-8 or code page 437.
+    ///
+    /// An Info-ZIP Unicode Path extra field is not taken into account.
+    private var headerPath: String {
         let encoding = self.centralDirectoryStructure.usesUTF8PathEncoding ? String.Encoding.utf8 : .codepage437
         return self.path(using: encoding)
     }
@@ -157,7 +160,9 @@ public struct Entry: Equatable {
         // OS Type is stored in the upper byte of versionMadeBy
         let osTypeRaw = self.centralDirectoryStructure.versionMadeBy >> 8
         let osType = OSType(rawValue: UInt(osTypeRaw)) ?? .unused
-        var isDirectory = self.path.hasSuffix("/")
+        // The type depends on the file name of the central directory header.
+        // An Info-ZIP Unicode Path extra field is not taken into account.
+        var isDirectory = self.headerPath.hasSuffix("/")
         switch osType {
         case .unix, .osx:
             // Use truncatingIfNeeded for safer conversion across platforms
@@ -276,6 +281,7 @@ extension Entry.CentralDirectoryStructure {
                                                                                            fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
         }
+        self.infoZIPUnicodePath = self.scanForInfoZIPUnicodePath()
     }
 
     init(centralDirectoryStructure: Entry.CentralDirectoryStructure,
@@ -312,6 +318,7 @@ extension Entry.CentralDirectoryStructure {
                                                                                            fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
         }
+        self.infoZIPUnicodePath = self.scanForInfoZIPUnicodePath()
     }
 }
 

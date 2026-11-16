@@ -271,7 +271,20 @@ extension ZIPFoundationTests {
             ("testReadStructureErrorConditions", testReadStructureErrorConditions),
             ("testReadChunkErrorConditions", testReadChunkErrorConditions),
             ("testWriteChunkErrorConditions", testWriteChunkErrorConditions),
-            ("testWriteLargeChunkErrorConditions", testWriteLargeChunkErrorConditions)
+            ("testWriteLargeChunkErrorConditions", testWriteLargeChunkErrorConditions),
+            ("testInfoZIPUnicodePathScan", testInfoZIPUnicodePathScan),
+            ("testInfoZIPUnicodePathScanInvalidFields", testInfoZIPUnicodePathScanInvalidFields),
+            ("testInfoZIPUnicodePathScanMultipleFields", testInfoZIPUnicodePathScanMultipleFields),
+            ("testInfoZIPUnicodePathScanEmptyName", testInfoZIPUnicodePathScanEmptyName),
+            ("testInfoZIPUnicodePath", testInfoZIPUnicodePath),
+            ("testInfoZIPUnicodePathWithLegacyEncoding", testInfoZIPUnicodePathWithLegacyEncoding),
+            ("testInfoZIPUnicodePathWithInvalidFields", testInfoZIPUnicodePathWithInvalidFields),
+            ("testInfoZIPUnicodePathPrecedence", testInfoZIPUnicodePathPrecedence),
+            ("testInfoZIPUnicodePathWithPathEncoding", testInfoZIPUnicodePathWithPathEncoding),
+            ("testInfoZIPUnicodePathEntryType", testInfoZIPUnicodePathEntryType),
+            ("testRemoveEntryPreservesInfoZIPUnicodePath", testRemoveEntryPreservesInfoZIPUnicodePath),
+            ("testRemoveEntryDropsInfoZIPUnicodePathOfZIP64Entry",
+             testRemoveEntryDropsInfoZIPUnicodePathOfZIP64Entry)
         ] + zip64Tests + darwinOnlyTests + posixOnlyTests + swift5OnlyTests
     }
 
@@ -323,12 +336,7 @@ extension ZIPFoundationTests {
             ("testUnzipSymlink", testUnzipSymlink),
             ("testUnzipCompressedSymlink", testUnzipCompressedSymlink),
             ("testExtractCompressedSymlinkWithSmallBufferSize", testExtractCompressedSymlinkWithSmallBufferSize),
-            ("testDeprecatedContainmentCheck", testDeprecatedContainmentCheck),
-            ("testEntryScanForInfoZIP", testEntryScanForInfoZIP),
-            ("testInfoZIPUnicodePath", testInfoZIPUnicodePath),
-            ("testEntryScanForTruncatedInfoZIP", testEntryScanForTruncatedInfoZIP),
-            ("testInfoZIPUnicodePathWithTruncatedField", testInfoZIPUnicodePathWithTruncatedField),
-            ("testInfoZIPUnicodePathWithInvalidName", testInfoZIPUnicodePathWithInvalidName)
+            ("testDeprecatedContainmentCheck", testDeprecatedContainmentCheck)
         ]
     }
 
@@ -381,16 +389,5 @@ extension ZIPFoundationTests {
         #else
         return []
         #endif
-    }
-}
-
-extension Data {
-    static func makeRandomData(size: Int) -> Data {
-        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS) || os(visionOS)
-        let bytes = [UInt32](repeating: 0, count: size).map { _ in UInt32.random(in: 0...UInt32.max) }
-        #else
-        let bytes = [UInt32](repeating: 0, count: size).map { _ in random() }
-        #endif
-        return Data(bytes: bytes, count: size)
     }
 }

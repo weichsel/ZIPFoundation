@@ -10,54 +10,72 @@
 
 import Foundation
 
-extension Entry {
+extension Entry.CentralDirectoryStructure {
 
-    struct InfoZIPUnicodePath: ExtensibleDataField {
-        var headerID: UInt16 { Archive.ExtraFieldHeaderID.infoZIPUnicodePath.rawValue }
-        let dataSize: UInt16
-        let version: UInt8
-        let nameCRC32: UInt32
-        let unicodeName: Data
+    /// Scans the extra field data of the receiver for an Info-ZIP Unicode Path that is valid for its file name.
+    ///
+    /// Every initializer derives `infoZIPUnicodePath` with this method after it has set the extra field data.
+    ///
+    /// - Returns: The validated path or `nil` if there is no usable Unicode Path field.
+    func scanForInfoZIPUnicodePath() -> String? {
+        // The Unicode Path is not needed if the file name is flagged as UTF-8 encoded.
+        guard self.usesUTF8PathEncoding == false else { return nil }
+        return Self.scanForInfoZIPUnicodePath(in: self.extraFieldData, fileNameData: self.fileNameData)
     }
 
-    var infoZIPExtraField: InfoZIPUnicodePath? {
-        let extraField = self.localFileHeader.extraFields?.first { $0 is InfoZIPUnicodePath }
-        return extraField as? InfoZIPUnicodePath
-    }
-}
-
-extension Entry.InfoZIPUnicodePath {
-
-    static func scanForUnicodePath(in data: Data) -> Entry.InfoZIPUnicodePath? {
-        guard data.isEmpty == false else { return nil }
-        var offset = 0
-        var headerID: UInt16
-        var dataSize: UInt16
-        let extraFieldLength = data.count
+    /// Scans extra field data for an Info-ZIP Unicode Path extra field (APPNOTE.TXT 4.6.9).
+    ///
+    /// The field is only used if its version is not newer than 1 and if its CRC32 matches the checksum of
+    /// `fileNameData`.
+    /// A field whose path disagrees with `fileNameData` about a trailing path delimiter is not usable either,
+    /// because the type of an entry depends on the file name of its header.
+    /// Scanning stops at the first Unicode Path field that is not usable and at the first malformed extra field.
+    /// If there is more than one usable field, the last one is used. This matches Info-ZIP's `unzip`.
+    ///
+    /// - Parameters:
+    ///   - extraFieldData: The untrusted extra field data of a header.
+    ///   - fileNameData: The file name of the same header.
+    /// - Returns: The validated path or `nil` if `extraFieldData` contains no usable Unicode Path field.
+    static func scanForInfoZIPUnicodePath(in extraFieldData: Data, fileNameData: Data) -> String? {
         let headerSize = 4
-
-        while offset < extraFieldLength - headerSize {
-            headerID = data.scanValue(start: offset)
-            dataSize = data.scanValue(start: offset + 2)
-            let nextOffset = offset + headerSize + Int(dataSize)
-            guard nextOffset <= extraFieldLength else { return nil }
-
-            // The field has to contain at least a version (1 byte) and the CRC32 of the header file name (4 bytes).
-            if headerID == Archive.ExtraFieldHeaderID.infoZIPUnicodePath.rawValue, dataSize >= 5 {
-                let fieldData = data.subdata(in: offset..<nextOffset)
-                let version: UInt8 = fieldData.scanValue(start: 4)
-                let nameCRC32: UInt32 = fieldData.scanValue(start: 5)
-                let unicodeNameData = fieldData.subdata(in: 9..<fieldData.count)
-
-                return Entry.InfoZIPUnicodePath(
-                    dataSize: dataSize,
-                    version: version,
-                    nameCRC32: nameCRC32,
-                    unicodeName: unicodeNameData
-                )
+        // The smallest usable field consists of a header, a version (1 byte) and a CRC32 (4 bytes).
+        guard extraFieldData.count >= headerSize + 5 else { return nil }
+        return extraFieldData.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) -> String? in
+            var unicodePath: String?
+            var offset = 0
+            while buffer.count - offset >= headerSize {
+                let headerID = UInt16(littleEndian: buffer.loadUnaligned(fromByteOffset: offset, as: UInt16.self))
+                let dataSize = UInt16(littleEndian: buffer.loadUnaligned(fromByteOffset: offset + 2, as: UInt16.self))
+                let dataStart = offset + headerSize
+                let dataEnd = dataStart + Int(dataSize)
+                guard dataEnd <= buffer.count else { break }
+                if headerID == Archive.ExtraFieldHeaderID.infoZIPUnicodePath.rawValue {
+                    let fieldData = UnsafeRawBufferPointer(rebasing: buffer[dataStart..<dataEnd])
+                    guard let path = self.infoZIPUnicodePath(from: fieldData, fileNameData: fileNameData) else { break }
+                    unicodePath = path
+                }
+                offset = dataEnd
             }
-            offset = nextOffset
+            return unicodePath
         }
-        return nil
+    }
+
+    private static func infoZIPUnicodePath(from fieldData: UnsafeRawBufferPointer, fileNameData: Data) -> String? {
+        // Info-ZIP's `unzip` only rejects versions that are newer than the supported version.
+        let supportedVersion = UInt8(1)
+        let nameOffset = 5
+        guard fieldData.count >= nameOffset, fieldData[0] <= supportedVersion else { return nil }
+        let nameCRC32 = UInt32(littleEndian: fieldData.loadUnaligned(fromByteOffset: 1, as: UInt32.self))
+        guard nameCRC32 == fileNameData.crc32(checksum: 0) else { return nil }
+        // Info-ZIP's `unzip` treats the name as a C string. It ends at the first NUL byte.
+        let nameBytes = fieldData[nameOffset...].prefix { $0 != 0 }
+        // A field without a name indicates that the file name of the header is UTF-8 encoded.
+        // Like in `unzip`, this includes names that start with a NUL byte.
+        guard nameBytes.isEmpty == false else { return String(data: fileNameData, encoding: .utf8) }
+        // The entry type is derived from the file name of the header. A path that disagrees with it about
+        // the trailing path delimiter would turn a file into a directory path or vice versa.
+        let pathDelimiter = UInt8(ascii: "/")
+        guard (nameBytes.last == pathDelimiter) == (fileNameData.last == pathDelimiter) else { return nil }
+        return String(bytes: nameBytes, encoding: .utf8)
     }
 }
