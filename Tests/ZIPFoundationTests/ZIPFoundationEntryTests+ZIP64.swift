@@ -210,11 +210,18 @@ extension ZIPFoundationTests {
         XCTAssertNil(updatedStructure.zip64ExtendedInformation)
         XCTAssertEqual(updatedStructure.effectiveRelativeOffsetOfLocalHeader, 100)
         XCTAssertEqual(updatedStructure.versionNeededToExtract, 45)
-        // An entry with a lower version stays marked as ZIP64, so that its data descriptor is read as before.
-        let lowVersionStructure = try self.makeCentralDirectoryStructure(version: 20, relativeOffset: .max,
+        // The lower version of an entry without a data descriptor is unchanged.
+        var lowVersionStructure = try self.makeCentralDirectoryStructure(version: 20, relativeOffset: .max,
                                                                          extraField: zip64OffsetField)
+        var updatedLowVersionStructure = try self.updatedCentralDirectoryStructure(lowVersionStructure, offset: 100)
+        XCTAssertEqual(updatedLowVersionStructure.extraFieldData, Data())
+        XCTAssertEqual(updatedLowVersionStructure.versionNeededToExtract, 20)
+        // An entry with a data descriptor stays marked as ZIP64, so that its data descriptor is read as before.
+        lowVersionStructure = try self.makeCentralDirectoryStructure(version: 20, flags: 0x0808, relativeOffset: .max,
+                                                                     extraField: zip64OffsetField)
+        XCTAssertTrue(lowVersionStructure.usesDataDescriptor)
         XCTAssertTrue(lowVersionStructure.isZIP64)
-        let updatedLowVersionStructure = try self.updatedCentralDirectoryStructure(lowVersionStructure, offset: 100)
+        updatedLowVersionStructure = try self.updatedCentralDirectoryStructure(lowVersionStructure, offset: 100)
         XCTAssertEqual(updatedLowVersionStructure.extraFieldData, Data())
         XCTAssertEqual(updatedLowVersionStructure.versionNeededToExtract, 45)
         XCTAssertTrue(updatedLowVersionStructure.isZIP64)
@@ -309,14 +316,15 @@ extension ZIPFoundationTests {
                                                              updatedOffset: offset))
     }
 
-    private func makeCentralDirectoryStructure(version: UInt16 = 45, sizes: UInt32 = 10, relativeOffset: UInt32 = 0,
+    private func makeCentralDirectoryStructure(version: UInt16 = 45, flags: UInt16 = 0x0800, sizes: UInt32 = 10,
+                                               relativeOffset: UInt32 = 0,
                                                extraField: [UInt8]) throws -> Entry.CentralDirectoryStructure {
         func bytes<T: FixedWidthInteger>(_ value: T) -> [UInt8] {
             return (0..<MemoryLayout<T>.size).map { UInt8(truncatingIfNeeded: value >> ($0 * 8)) }
         }
         let fileName = Data("a".utf8)
-        var data: [UInt8] = [0x50, 0x4b, 0x01, 0x02, 0x1e, 0x03] + bytes(version)
-        data += [0x00, 0x08, 0x00, 0x00, 0xab, 0x85, 0x77, 0x47, 0x00, 0x00, 0x00, 0x00]
+        var data: [UInt8] = [0x50, 0x4b, 0x01, 0x02, 0x1e, 0x03] + bytes(version) + bytes(flags)
+        data += [0x00, 0x00, 0xab, 0x85, 0x77, 0x47, 0x00, 0x00, 0x00, 0x00]
         data += bytes(sizes) + bytes(sizes)
         data += bytes(UInt16(fileName.count)) + bytes(UInt16(extraField.count))
         data += [UInt8](repeating: 0, count: 10)

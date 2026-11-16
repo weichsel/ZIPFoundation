@@ -174,7 +174,7 @@ extension Entry.ZIP64ExtendedInformation {
         data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) in
             let endOfFields = buffer.forEachExtraField { (headerID, fieldRange) in
                 if headerID != Archive.ExtraFieldHeaderID.zip64ExtendedInformation.rawValue {
-                    remainingData.append(contentsOf: buffer[fieldRange])
+                    remainingData.append(contentsOf: UnsafeRawBufferPointer(rebasing: buffer[fieldRange]))
                 } else if let zip64FieldData = replacement {
                     // Only the first ZIP64 extended information field is replaced. Additional ones are removed.
                     remainingData.append(zip64FieldData)
@@ -182,7 +182,7 @@ extension Entry.ZIP64ExtendedInformation {
                 }
                 return true
             }
-            remainingData.append(contentsOf: buffer[endOfFields...])
+            remainingData.append(contentsOf: UnsafeRawBufferPointer(rebasing: buffer[endOfFields...]))
         }
         // The existing field is not part of the well-formed fields. The replacement has to precede all other data.
         if let zip64FieldData = replacement { remainingData = zip64FieldData + remainingData }

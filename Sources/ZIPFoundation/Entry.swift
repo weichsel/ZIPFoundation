@@ -304,9 +304,12 @@ extension Entry.CentralDirectoryStructure {
                                                                  diskNumberStart: existingInfo.diskNumberStart)
                 zip64FieldData = updatedInfo.data(containing: zip64Fields)
             }
-            // The entry stays marked as ZIP64, also if its ZIP64 extended information is removed. Otherwise
-            // its data descriptor would be read with a different size. Only the lower byte holds the version.
-            if UInt8(truncatingIfNeeded: versionNeededToExtract) < UInt8(Archive.Version.v45.rawValue) {
+            // ZIP64 extended information requires version 4.5. An entry with a data descriptor also stays marked
+            // as ZIP64 if its ZIP64 extended information is removed. Otherwise its data descriptor would be read
+            // with a different size. Only the lower byte holds the version.
+            let needsZIP64Version = zip64FieldData != nil || centralDirectoryStructure.usesDataDescriptor
+            if needsZIP64Version,
+               UInt8(truncatingIfNeeded: versionNeededToExtract) < UInt8(Archive.Version.v45.rawValue) {
                 versionNeededToExtract = (versionNeededToExtract & 0xff00) | Archive.Version.v45.rawValue
             }
             extraFieldData = Entry.ZIP64ExtendedInformation
