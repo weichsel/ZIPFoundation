@@ -301,13 +301,7 @@ extension Entry.CentralDirectoryStructure {
             // ZIP64 extended information that is no longer needed is removed.
             var zip64FieldData: Data?
             if zip64Fields.isEmpty == false {
-                let dataSize = UInt16(zip64Fields.reduce(0, { $0 + $1.size }))
-                let updatedInfo = Entry.ZIP64ExtendedInformation(dataSize: dataSize,
-                                                                 uncompressedSize: existingInfo.uncompressedSize,
-                                                                 compressedSize: existingInfo.compressedSize,
-                                                                 relativeOffsetOfLocalHeader: updatedOffset,
-                                                                 diskNumberStart: existingInfo.diskNumberStart)
-                zip64FieldData = updatedInfo.data(containing: zip64Fields)
+                zip64FieldData = existingInfo.data(containing: zip64Fields, relativeOffsetOfLocalHeader: updatedOffset)
             }
             // ZIP64 extended information requires version 4.5. An entry with a data descriptor also stays marked
             // as ZIP64 if its ZIP64 extended information is removed. Otherwise its data descriptor would be read

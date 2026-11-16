@@ -316,6 +316,10 @@ extension ZIPFoundationTests {
                                         0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00]
         XCTAssertEqual(zip64Field.data(containing: [.diskNumberStart, .relativeOffsetOfLocalHeader]),
                        Data(otherFieldBytes))
+        // An updated offset is stored instead of the offset of the field.
+        let updatedOffsetFieldBytes: [UInt8] = [0x01, 0x00, 0x08, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        XCTAssertEqual(zip64Field.data(containing: [.relativeOffsetOfLocalHeader], relativeOffsetOfLocalHeader: 13),
+                       Data(updatedOffsetFieldBytes))
     }
 
     // MARK: - Helper

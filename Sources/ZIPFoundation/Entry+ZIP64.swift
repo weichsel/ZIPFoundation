@@ -123,7 +123,8 @@ extension Entry.ZIP64ExtendedInformation {
         if self.uncompressedSize != 0 || self.compressedSize != 0 { fields += [.uncompressedSize, .compressedSize] }
         if self.relativeOffsetOfLocalHeader != 0 { fields.append(.relativeOffsetOfLocalHeader) }
         if self.diskNumberStart != 0 { fields.append(.diskNumberStart) }
-        return self.data(containing: fields, dataSize: self.dataSize)
+        return self.data(containing: fields, dataSize: self.dataSize,
+                         relativeOffsetOfLocalHeader: self.relativeOffsetOfLocalHeader)
     }
 
     init?(data: Data, fields: [Field]) {
@@ -149,16 +150,21 @@ extension Entry.ZIP64ExtendedInformation {
     }
 
     /// Returns the serialized extra field. Only the values of `fields` are included.
-    func data(containing fields: [Field]) -> Data {
-        return self.data(containing: fields, dataSize: UInt16(fields.reduce(0, { $0 + $1.size })))
+    ///
+    /// - Parameters:
+    ///   - fields: The values to include. The size of the field data is derived from them.
+    ///   - relativeOffsetOfLocalHeader: An offset that is stored instead of the offset of the receiver.
+    func data(containing fields: [Field], relativeOffsetOfLocalHeader: UInt64? = nil) -> Data {
+        return self.data(containing: fields, dataSize: UInt16(fields.reduce(0, { $0 + $1.size })),
+                         relativeOffsetOfLocalHeader: relativeOffsetOfLocalHeader ?? self.relativeOffsetOfLocalHeader)
     }
 
-    private func data(containing fields: [Field], dataSize: UInt16) -> Data {
+    private func data(containing fields: [Field], dataSize: UInt16, relativeOffsetOfLocalHeader: UInt64) -> Data {
         var headerID = self.headerID
         var dataSize = dataSize
         var uncompressedSize = self.uncompressedSize
         var compressedSize = self.compressedSize
-        var relativeOffsetOfLFH = self.relativeOffsetOfLocalHeader
+        var relativeOffsetOfLFH = relativeOffsetOfLocalHeader
         var diskNumberStart = self.diskNumberStart
         var data = Data()
         withUnsafePointer(to: &headerID, { data.append(UnsafeBufferPointer(start: $0, count: 1))})
