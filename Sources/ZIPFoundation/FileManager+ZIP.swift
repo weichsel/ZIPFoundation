@@ -202,12 +202,13 @@ extension FileManager {
         // since 2.6. swift-corelibs-foundation's `setAttributes` doesn't
         // round-trip `.modificationDate` for symlinks today, so we go
         // straight to the libc syscall here to preserve mtime parity with
-        // Apple platforms when extracting.
+        // Apple platforms when extracting. Not all file systems support this,
+        // so a failure to set the date does not fail the extraction.
         guard let modificationDate = attributes[.modificationDate] as? Date else {
             throw Entry.EntryError.missingModificationDateAttributeError
         }
 
-        try self.setSymlinkModificationDate(modificationDate, ofItemAtURL: url)
+        try? self.setSymlinkModificationDate(modificationDate, ofItemAtURL: url)
 #else
         // Some platforms lack a fully equivalent symlink-targeted
         // `lutimes`; leave this codepath as a no-op there.

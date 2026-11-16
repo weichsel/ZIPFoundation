@@ -30,3 +30,14 @@ public extension FileManager {
                            progress: progress, pathEncoding: pathEncoding)
     }
 }
+
+public extension URL {
+
+    @available(*, deprecated, message: "Containment is checked during extraction. This method will be removed.")
+    func isContained(in parentDirectoryURL: URL) -> Bool {
+        guard let directoryComponents = URL.resolvedPathComponents(ofPath: parentDirectoryURL.path) else {
+            return false
+        }
+        return self.isContained(in: parentDirectoryURL, resolvedTo: directoryComponents)
+    }
+}
