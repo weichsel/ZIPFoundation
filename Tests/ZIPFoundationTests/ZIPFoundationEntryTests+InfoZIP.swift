@@ -116,6 +116,8 @@ extension ZIPFoundationTests {
         XCTAssertFalse(entry.centralDirectoryStructure.usesUTF8PathEncoding)
         XCTAssertEqual(entry.path(using: .isoLatin1), "Ö³Ü¹/Å².txt")
         XCTAssertEqual(entry.path(using: .codepage437), "╓│▄╣/┼▓.txt")
+        // Callers can pass the code page 437 encoding that CoreFoundation derives on all platforms.
+        XCTAssertEqual(entry.path(using: String.Encoding(rawValue: 0x80000400)), "╓│▄╣/┼▓.txt")
         let destinationURL = self.createDirectory(for: #function)
         XCTAssertNoThrow(try FileManager().unzipItem(at: archive.url, to: destinationURL))
         XCTAssertEqual(try? Data(contentsOf: destinationURL.appendingPathComponent("Ö³Ü¹/Å².txt")),

@@ -25,6 +25,8 @@ extension String.Encoding {
     // `init(pathData:encoding:)` initializer below; passing this encoding to any
     // other Foundation API will yield nil/empty results.
     static let codepage437 = String.Encoding(rawValue: 0x400)
+    // The encoding that CoreFoundation derives for code page 437. Callers can pass it as path encoding.
+    static let coreFoundationCodepage437 = String.Encoding(rawValue: 0x80000400)
     #endif
 }
 
@@ -38,7 +40,7 @@ extension String {
     // Source: https://en.wikipedia.org/wiki/Code_page_437#Character_set
     init(pathData: Data, encoding: String.Encoding) {
         #if os(Linux) || os(Windows) || os(Android)
-        if encoding == .codepage437 {
+        if encoding == .codepage437 || encoding == .coreFoundationCodepage437 {
             self.init()
             for byte in pathData {
                 self.unicodeScalars.append(Self.cp437Lookup[Int(byte)])
