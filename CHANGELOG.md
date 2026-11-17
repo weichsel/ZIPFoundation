@@ -6,7 +6,7 @@
  - Added support for compressed symlinks and symlinks pointing into other subfolders of an archive
  - Added `symlinksValidWithin` parameter to control symlink containment (replaces `allowUncontainedSymlinks`)
  - Added support for symlink modification dates on Linux
- - Added support for the Info-ZIP Unicode Path extra field
+ - Added support for reading the Info-ZIP Unicode Path extra field
  - Added support for building for Windows
  - Added package manifest for Swift 6.4 (Xcode 27)
 
