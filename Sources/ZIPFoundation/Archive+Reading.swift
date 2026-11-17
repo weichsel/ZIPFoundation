@@ -138,6 +138,8 @@ extension Archive {
             linkData.append(data)
         })
         guard let linkPath = String(data: linkData, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
+        // A destination with a NUL byte can't be represented as a file system path.
+        guard linkPath.utf8.contains(0) == false else { throw ArchiveError.invalidEntryPath }
 
         return (linkPath, checksum)
     }

@@ -245,6 +245,12 @@ extension ZIPFoundationTests {
         XCTAssertSwiftError(try fileManager.unzipItem(at: emptyArchive.url, to: destinationURL),
                             throws: Archive.ArchiveError.uncontainedSymlink)
         XCTAssertFalse(fileManager.itemExists(at: linkURL))
+        // A destination with a NUL byte can't be represented as a file system path.
+        let nulArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "link", type: .symlink, content: "tar\0get", to: nulArchive)
+        XCTAssertSwiftError(try fileManager.unzipItem(at: nulArchive.url, to: destinationURL),
+                            throws: Archive.ArchiveError.invalidEntryPath)
+        XCTAssertFalse(fileManager.itemExists(at: linkURL))
         // A destination that exceeds the size limit is rejected before it is read.
         let longArchive = self.archive(for: #function, mode: .create)
         let longDestination = String(repeating: "a", count: maxSymbolicLinkDestinationSize + 1)
