@@ -96,6 +96,10 @@ public final class Archive: Sequence {
         case missingEndOfCentralDirectoryRecord
         /// Thrown when an entry contains a symlink pointing to a path outside the destination directory.
         case uncontainedSymlink
+        /// Thrown when the requested range is out of bounds for the entry.
+        case rangeOutOfBounds
+        /// The requested entry is not a file but a directory or symlink.
+        case entryIsNotAFile
     }
 
     /// The access mode for an `Archive`.
