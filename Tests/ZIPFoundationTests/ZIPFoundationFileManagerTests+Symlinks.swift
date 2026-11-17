@@ -169,6 +169,102 @@ extension ZIPFoundationTests {
         let siblingURL = URL(fileURLWithPath: directoryURL.path + "Sibling/file.txt")
         XCTAssertFalse(siblingURL.isContained(in: directoryURL, resolvedTo: components))
         XCTAssertFalse(directoryURL.deletingLastPathComponent().isContained(in: directoryURL, resolvedTo: components))
+        // The path of the root directory already ends with a path delimiter.
+        let rootEntryURL = URL.rootFS.appendingPathComponent("zipfoundation-missing/../file.txt")
+        XCTAssertTrue(rootEntryURL.isContained(in: .rootFS, resolvedTo: []))
+    }
+
+    func testUnzipEntryWithParentReference() throws {
+        let fileManager = FileManager()
+        let directoryURL = self.createDirectory(for: #function)
+        let destinationURL = directoryURL.appendingPathComponent("destination")
+        // The directories that precede `..` don't exist before the entries are extracted.
+        let archive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "missing/../file.txt", type: .file, content: "contained", to: archive)
+        try self.addEntry(with: "a/b/../../c/../other.txt", type: .file, content: "contained", to: archive)
+        XCTAssertNoThrow(try fileManager.unzipItem(at: archive.url, to: destinationURL))
+        XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("file.txt")))
+        XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("other.txt")))
+        let escapingArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "absent/../../escaped.txt", type: .file, content: "escaped", to: escapingArchive)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: escapingArchive.url, to: destinationURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssertFalse(fileManager.itemExists(at: directoryURL.appendingPathComponent("escaped.txt")))
+        // The components that follow `..` are resolved through the file system again.
+        let outsideURL = directoryURL.appendingPathComponent("outside")
+        try fileManager.createDirectory(at: outsideURL, withIntermediateDirectories: true, attributes: nil)
+        try fileManager.createSymbolicLink(atPath: destinationURL.appendingPathComponent("link").path,
+                                           withDestinationPath: "../outside")
+        let linkArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "absent/../link/escaped.txt", type: .file, content: "escaped", to: linkArchive)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: linkArchive.url, to: destinationURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssertFalse(fileManager.itemExists(at: outsideURL.appendingPathComponent("escaped.txt")))
+        // A missing directory must not be created outside of the destination, even if the path returns to it.
+        let returningArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "../created-outside/../destination/escaped.txt", type: .file, content: "escaped",
+                          to: returningArchive)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: returningArchive.url, to: destinationURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssertFalse(fileManager.itemExists(at: directoryURL.appendingPathComponent("created-outside")))
+        XCTAssertFalse(fileManager.itemExists(at: destinationURL.appendingPathComponent("escaped.txt")))
+        // A symlink entry can be located behind a missing directory as well. Its destination is contained.
+        let symlinkArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "target.txt", type: .file, content: "contained", to: symlinkArchive)
+        try self.addEntry(with: "vacant/../alias", type: .symlink, content: "target.txt", to: symlinkArchive)
+        XCTAssertNoThrow(try fileManager.unzipItem(at: symlinkArchive.url, to: destinationURL))
+        let aliasURL = destinationURL.appendingPathComponent("alias")
+        XCTAssertEqual(try? fileManager.destinationOfSymbolicLink(atPath: aliasURL.path), "target.txt")
+        // The destination of the caller can contain a missing directory that is followed by `..`.
+        let indirectURL = directoryURL.appendingPathComponent("vacant/../indirect")
+        XCTAssertNoThrow(try fileManager.unzipItem(at: symlinkArchive.url, to: indirectURL))
+        let indirectAliasURL = directoryURL.appendingPathComponent("indirect/alias")
+        XCTAssertEqual(try? fileManager.destinationOfSymbolicLink(atPath: indirectAliasURL.path), "target.txt")
+        XCTAssert(fileManager.itemExists(at: directoryURL.appendingPathComponent("indirect/target.txt")))
+    }
+
+    func testUnzipEntryWithoutName() throws {
+        let fileManager = FileManager()
+        let destinationURL = self.createDirectory(for: #function).appendingPathComponent("destination")
+        // An entry without a name would refer to the destination directory itself.
+        for (path, type) in [("", Entry.EntryType.file), ("/", .directory)] {
+            let archive = self.archive(for: #function, mode: .create)
+            try self.addEntry(with: path, type: type, content: type == .file ? "file" : "", to: archive)
+            XCTAssertCocoaError(try fileManager.unzipItem(at: archive.url, to: destinationURL),
+                                throwsErrorWithCode: .fileReadInvalidFileName)
+            XCTAssertFalse(fileManager.itemExists(at: destinationURL))
+        }
+    }
+
+    func testUnzipSymlinkWithInvalidDestination() throws {
+        let fileManager = FileManager()
+        let destinationURL = self.createDirectory(for: #function)
+        let linkURL = destinationURL.appendingPathComponent("link")
+        let emptyArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "link", type: .symlink, content: "", to: emptyArchive)
+        XCTAssertSwiftError(try fileManager.unzipItem(at: emptyArchive.url, to: destinationURL),
+                            throws: Archive.ArchiveError.uncontainedSymlink)
+        XCTAssertFalse(fileManager.itemExists(at: linkURL))
+        // A destination with a NUL byte can't be represented as a file system path.
+        let nulArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "link", type: .symlink, content: "tar\0get", to: nulArchive)
+        XCTAssertSwiftError(try fileManager.unzipItem(at: nulArchive.url, to: destinationURL),
+                            throws: Archive.ArchiveError.invalidEntryPath)
+        XCTAssertFalse(fileManager.itemExists(at: linkURL))
+        // A destination that exceeds the size limit is rejected before it is read.
+        let longArchive = self.archive(for: #function, mode: .create)
+        let longDestination = String(repeating: "a", count: maxSymbolicLinkDestinationSize + 1)
+        try self.addEntry(with: "link", type: .symlink, content: longDestination, to: longArchive)
+        XCTAssertSwiftError(try fileManager.unzipItem(at: longArchive.url, to: destinationURL),
+                            throws: Archive.ArchiveError.invalidEntryPath)
+        // The compressed symlink of the test archive states a small size, but expands to a long destination.
+        let compressedArchive = self.archive(for: #function, mode: .update)
+        let entry = try XCTUnwrap(compressedArchive["link"])
+        XCTAssertGreaterThan(entry.uncompressedSize, UInt64(maxSymbolicLinkDestinationSize))
+        let smallEntry = try XCTUnwrap(self.entry(entry, withUncompressedSize: 8))
+        XCTAssertSwiftError(try compressedArchive.extract(smallEntry, to: linkURL),
+                            throws: Archive.ArchiveError.invalidEntryPath)
+        XCTAssertFalse(fileManager.itemExists(at: linkURL))
     }
 
     func testDeprecatedContainmentCheck() {
@@ -181,6 +277,17 @@ extension ZIPFoundationTests {
     }
 
     // MARK: - Helpers
+
+    /// Returns a copy of `entry` whose central directory structure states a different uncompressed size.
+    private func entry(_ entry: Entry, withUncompressedSize size: UInt32) -> Entry? {
+        var data = entry.centralDirectoryStructure.data
+        withUnsafeBytes(of: size.littleEndian) { data.replaceSubrange(24..<28, with: $0) }
+        let structureSize = Entry.CentralDirectoryStructure.size
+        let structure = Entry.CentralDirectoryStructure(data: data.prefix(structureSize)) { _ in
+            return Data(data.dropFirst(structureSize))
+        }
+        return structure.flatMap { Entry(centralDirectoryStructure: $0, localFileHeader: entry.localFileHeader) }
+    }
 
     private func addEntry(with path: String, type: Entry.EntryType, content: String = "",
                           to archive: Archive) throws {

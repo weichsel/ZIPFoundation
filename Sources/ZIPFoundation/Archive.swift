@@ -25,6 +25,8 @@ let defaultPOSIXBufferSize = defaultReadChunkSize
 let defaultDirectoryUnitCount = Int64(1)
 let minEndOfCentralDirectoryOffset = Int64(22)
 let maxDirectoryEndOffset = Int64(66000)
+/// The maximum size of a symlink destination. Longer destinations are not usable as a path on any platform.
+let maxSymbolicLinkDestinationSize = 4096
 let endOfCentralDirectoryStructSignature = 0x06054b50
 let localFileHeaderStructSignature = 0x04034b50
 let dataDescriptorStructSignature = 0x08074b50
@@ -251,6 +253,15 @@ public final class Archive: Sequence {
                 let descriptorPosition = didOverflow ? .max : position
                 if centralDirStruct.isZIP64 {
                     zip64DataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
+                    // Neither the version nor ZIP64 extended information in the central directory say how
+                    // the descriptor was written. An entry that only needs ZIP64 for its offset has a
+                    // descriptor with 4 byte sizes. The sizes of the central directory tell them apart.
+                    if zip64DataDescriptor?.matchesSizes(of: centralDirStruct) != true,
+                       let descriptor: DataDescriptor = Data.readStruct(from: self.archiveFile,
+                                                                         at: descriptorPosition),
+                       descriptor.matchesSizes(of: centralDirStruct) {
+                        (dataDescriptor, zip64DataDescriptor) = (descriptor, nil)
+                    }
                 } else {
                     dataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
                 }
@@ -280,48 +291,6 @@ public final class Archive: Sequence {
             return self.first { $0.path(using: encoding) == path }
         }
         return self.first { $0.path == path }
-    }
-
-    // MARK: - Helpers
-
-    static func scanForEndOfCentralDirectoryRecord(in file: FILEPointer)
-    -> EndOfCentralDirectoryStructure? {
-        var eocdOffset: UInt64 = 0
-        var index = minEndOfCentralDirectoryOffset
-        fseeko(file, 0, SEEK_END)
-        let archiveLength = Int64(ftello(file))
-        guard archiveLength >= 0 else { return nil }
-
-        while eocdOffset == 0 && index < maxDirectoryEndOffset && index <= archiveLength {
-            fseeko(file, zip_off_t(archiveLength - index), SEEK_SET)
-            var potentialDirectoryEndTag: UInt32 = UInt32()
-            fread(&potentialDirectoryEndTag, 1, MemoryLayout<UInt32>.size, file)
-            if potentialDirectoryEndTag == UInt32(endOfCentralDirectoryStructSignature) {
-                eocdOffset = UInt64(archiveLength - index)
-                guard let eocd: EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: eocdOffset) else {
-                    return nil
-                }
-                let zip64EOCD = scanForZIP64EndOfCentralDirectory(in: file, eocdOffset: eocdOffset)
-                return (eocd, zip64EOCD)
-            }
-            index += 1
-        }
-        return nil
-    }
-
-    private static func scanForZIP64EndOfCentralDirectory(in file: FILEPointer, eocdOffset: UInt64)
-    -> ZIP64EndOfCentralDirectory? {
-        guard UInt64(ZIP64EndOfCentralDirectoryLocator.size) < eocdOffset else { return nil }
-
-        let locatorOffset = eocdOffset - UInt64(ZIP64EndOfCentralDirectoryLocator.size)
-        guard UInt64(ZIP64EndOfCentralDirectoryRecord.size) < locatorOffset else { return nil }
-
-        let recordOffset = locatorOffset - UInt64(ZIP64EndOfCentralDirectoryRecord.size)
-        guard let locator: ZIP64EndOfCentralDirectoryLocator = Data.readStruct(from: file, at: locatorOffset),
-              let record: ZIP64EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: recordOffset) else {
-            return nil
-        }
-        return ZIP64EndOfCentralDirectory(record: record, locator: locator)
     }
 }
 

@@ -25,6 +25,25 @@ extension ZIPFoundationTests {
         XCTAssertNil(invalidECDR)
     }
 
+    func testArchiveWithTrailingData() throws {
+        let archive = self.archive(for: #function, mode: .create)
+        try archive.addEntry(with: "a", type: .file, uncompressedSize: Int64(1), provider: { _, _ in Data([0]) })
+        let archiveData = try Data(contentsOf: archive.url)
+        let trailingDataURL = ZIPFoundationTests.tempZipDirectoryURL.appendingPathComponent("trailingData.zip")
+        // The end of central directory record is followed by more data than a ZIP file comment can hold.
+        // Different sizes move the signature of the record across the boundaries of the scanned chunks.
+        let scannedSize = Int(maxDirectoryEndOffset)
+        for trailingDataSize in [scannedSize, 70000] + (0...4).map({ scannedSize + 3 * defaultReadChunkSize + $0 }) {
+            try (archiveData + Data(count: trailingDataSize)).write(to: trailingDataURL)
+            let trailingDataArchive = try Archive(url: trailingDataURL, accessMode: .read)
+            XCTAssertEqual(trailingDataArchive.map { $0.path }, ["a"])
+            XCTAssert(trailingDataArchive.checkIntegrity())
+        }
+        try Data(count: scannedSize + 3 * defaultReadChunkSize).write(to: trailingDataURL)
+        XCTAssertSwiftError(try Archive(url: trailingDataURL, accessMode: .read),
+                            throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
+    }
+
     func testDirectoryCreationHelperMethods() {
         let processInfo = ProcessInfo.processInfo
         var nestedURL = ZIPFoundationTests.tempZipDirectoryURL

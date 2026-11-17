@@ -9,6 +9,9 @@
 //
 
 import XCTest
+#if canImport(Android)
+import Android
+#endif
 @testable import ZIPFoundation
 
 enum AdditionalDataError: Error {
@@ -172,6 +175,7 @@ extension ZIPFoundationTests {
             ("testArchiveAddEntryErrorConditions", testArchiveAddEntryErrorConditions),
             ("testArchiveCreateErrorConditions", testArchiveCreateErrorConditions),
             ("testArchiveInvalidEOCDRecordConditions", testArchiveInvalidEOCDRecordConditions),
+            ("testArchiveWithTrailingData", testArchiveWithTrailingData),
             ("testArchiveInvalidDataErrorConditions", testArchiveInvalidDataErrorConditions),
             ("testArchiveIteratorErrorConditions", testArchiveIteratorErrorConditions),
             ("testArchiveReadErrorConditions", testArchiveReadErrorConditions),
@@ -248,6 +252,9 @@ extension ZIPFoundationTests {
             ("testSymlinkContainmentWithUnresolvablePaths", testSymlinkContainmentWithUnresolvablePaths),
             ("testUnzipIntoSymlinkLoop", testUnzipIntoSymlinkLoop),
             ("testContainmentOfAbsolutePaths", testContainmentOfAbsolutePaths),
+            ("testUnzipEntryWithParentReference", testUnzipEntryWithParentReference),
+            ("testUnzipEntryWithoutName", testUnzipEntryWithoutName),
+            ("testUnzipSymlinkWithInvalidDestination", testUnzipSymlinkWithInvalidDestination),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests),
             ("testFileModificationDate", testFileModificationDate),
@@ -326,10 +333,13 @@ extension ZIPFoundationTests {
             ("testUnzipItemWithInvalidZIP64SizeProgress", testUnzipItemWithInvalidZIP64SizeProgress),
             ("testExtractEntryWithZIP64SizeExceedingArchive", testExtractEntryWithZIP64SizeExceedingArchive),
             ("testRemoveEntryWithInvalidZIP64Size", testRemoveEntryWithInvalidZIP64Size),
+            ("testRemoveEntryWithReorderedCentralDirectory", testRemoveEntryWithReorderedCentralDirectory),
             ("testWriteLargeChunk", testWriteLargeChunk),
             ("testExtractUncompressedZIP64Entries", testExtractUncompressedZIP64Entries),
             ("testExtractCompressedZIP64Entries", testExtractCompressedZIP64Entries),
             ("testExtractEntryWithZIP64DataDescriptor", testExtractEntryWithZIP64DataDescriptor),
+            ("testIterateZIP64EntryWithDefaultDataDescriptor", testIterateZIP64EntryWithDefaultDataDescriptor),
+            ("testRemoveEntryNextToDefaultDataDescriptor", testRemoveEntryNextToDefaultDataDescriptor),
             ("testUnzipSymlink", testUnzipSymlink),
             ("testUnzipCompressedSymlink", testUnzipCompressedSymlink),
             ("testExtractCompressedSymlinkWithSmallBufferSize", testExtractCompressedSymlinkWithSmallBufferSize),

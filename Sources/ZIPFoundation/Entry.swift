@@ -194,6 +194,8 @@ public struct Entry: Equatable {
     /// The size of the receiver's compressed data.
     public var compressedSize: UInt64 {
         if centralDirectoryStructure.isZIP64 {
+            // A ZIP64 entry can have a data descriptor with 4 byte sizes.
+            if let dataDescriptor = self.dataDescriptor { return UInt64(dataDescriptor.compressedSize) }
             return zip64DataDescriptor?.compressedSize ?? centralDirectoryStructure.effectiveCompressedSize
         }
         return UInt64(dataDescriptor?.compressedSize ?? centralDirectoryStructure.compressedSize)
@@ -201,6 +203,8 @@ public struct Entry: Equatable {
     /// The size of the receiver's uncompressed data.
     public var uncompressedSize: UInt64 {
         if centralDirectoryStructure.isZIP64 {
+            // A ZIP64 entry can have a data descriptor with 4 byte sizes.
+            if let dataDescriptor = self.dataDescriptor { return UInt64(dataDescriptor.uncompressedSize) }
             return zip64DataDescriptor?.uncompressedSize ?? centralDirectoryStructure.effectiveUncompressedSize
         }
         return UInt64(dataDescriptor?.uncompressedSize ?? centralDirectoryStructure.uncompressedSize)
@@ -215,10 +219,11 @@ public struct Entry: Equatable {
         // `dataSize` can't be trusted. Saturate, so that callers can reject sizes that exceed `Int64.max`.
         guard dataSize <= Int64.max else { return .max }
         size += dataSize
-        if centralDirectoryStructure.isZIP64 {
-            size += self.zip64DataDescriptor != nil ? UInt64(ZIP64DataDescriptor.size) : 0
-        } else {
-            size += self.dataDescriptor != nil ? UInt64(DefaultDataDescriptor.size) : 0
+        // At most one of the descriptors is set. A ZIP64 entry can have a data descriptor with 4 byte sizes.
+        if self.zip64DataDescriptor != nil {
+            size += UInt64(ZIP64DataDescriptor.size)
+        } else if self.dataDescriptor != nil {
+            size += UInt64(DefaultDataDescriptor.size)
         }
         return size
     }
@@ -293,16 +298,13 @@ extension Entry.CentralDirectoryStructure {
         let relativeOffset = updatedOffset < maxOffsetOfLocalFileHeader ? UInt32(updatedOffset) : UInt32.max
         var versionNeededToExtract = centralDirectoryStructure.versionNeededToExtract
         var extraFieldData = centralDirectoryStructure.extraFieldData
-        // If no ZIP64 extended information exists, then this information will not be newly added either.
-        if let existingInfo = centralDirectoryStructure.zip64ExtendedInformation {
-            // The sizes and the disk number are unchanged. Only the placeholder of the offset can change.
-            var zip64Fields = centralDirectoryStructure.validFields.filter { $0 != .relativeOffsetOfLocalHeader }
-            if relativeOffset == .max { zip64Fields.append(.relativeOffsetOfLocalHeader) }
+        let existingInfo = centralDirectoryStructure.zip64ExtendedInformation
+        // An entry without ZIP64 extended information needs it, if it has been moved behind the maximum offset.
+        // The remaining entries are written in the order of the central directory, so offsets can also increase.
+        if existingInfo != nil || relativeOffset == .max {
             // ZIP64 extended information that is no longer needed is removed.
-            var zip64FieldData: Data?
-            if zip64Fields.isEmpty == false {
-                zip64FieldData = existingInfo.data(containing: zip64Fields, relativeOffsetOfLocalHeader: updatedOffset)
-            }
+            let zip64FieldData = centralDirectoryStructure.zip64FieldData(forOffset: updatedOffset,
+                                                                          usingPlaceholder: relativeOffset == .max)
             // ZIP64 extended information requires version 4.5. An entry with a data descriptor also stays marked
             // as ZIP64 if its ZIP64 extended information is removed. Otherwise its data descriptor would be read
             // with a different size. Only the lower byte holds the version.
@@ -311,8 +313,14 @@ extension Entry.CentralDirectoryStructure {
                UInt8(truncatingIfNeeded: versionNeededToExtract) < UInt8(Archive.Version.v45.rawValue) {
                 versionNeededToExtract = (versionNeededToExtract & 0xff00) | Archive.Version.v45.rawValue
             }
-            extraFieldData = Entry.ZIP64ExtendedInformation
-                .extraFieldData(replacingZIP64FieldIn: extraFieldData, with: zip64FieldData)
+            // New ZIP64 extended information precedes the existing extra fields. Data that follows the last
+            // well-formed extra field stays at the end that way.
+            if existingInfo != nil {
+                extraFieldData = Entry.ZIP64ExtendedInformation
+                    .extraFieldData(replacingZIP64FieldIn: extraFieldData, with: zip64FieldData)
+            } else if let zip64FieldData = zip64FieldData {
+                extraFieldData = zip64FieldData + extraFieldData
+            }
         }
         guard extraFieldData.count <= Int(UInt16.max) else { return nil }
         self.extraFieldData = extraFieldData
@@ -345,6 +353,21 @@ extension Entry.CentralDirectoryStructure {
 }
 
 extension Entry.CentralDirectoryStructure {
+
+    /// Returns the ZIP64 extended information field of the receiver for an updated offset.
+    ///
+    /// - Returns: The serialized field or `nil` if the receiver doesn't need ZIP64 extended information.
+    func zip64FieldData(forOffset offset: UInt64, usingPlaceholder: Bool) -> Data? {
+        let existingInfo = self.zip64ExtendedInformation
+        // The sizes and the disk number are unchanged. Only the placeholder of the offset can change.
+        var fields = existingInfo == nil ? [] : self.validFields.filter { $0 != .relativeOffsetOfLocalHeader }
+        if usingPlaceholder { fields.append(.relativeOffsetOfLocalHeader) }
+        guard fields.isEmpty == false else { return nil }
+
+        let emptyInfo = Entry.ZIP64ExtendedInformation(dataSize: 0, uncompressedSize: 0, compressedSize: 0,
+                                                       relativeOffsetOfLocalHeader: 0, diskNumberStart: 0)
+        return (existingInfo ?? emptyInfo).data(containing: fields, relativeOffsetOfLocalHeader: offset)
+    }
 
     var effectiveCompressedSize: UInt64 {
         if self.isZIP64, self.compressedSize == .max,

@@ -305,3 +305,82 @@ extension Archive {
         return zip64EOCD
     }
 }
+
+extension Archive {
+
+    // MARK: - End of Central Directory
+
+    static func scanForEndOfCentralDirectoryRecord(in file: FILEPointer)
+    -> EndOfCentralDirectoryStructure? {
+        var eocdOffset: UInt64 = 0
+        var index = minEndOfCentralDirectoryOffset
+        fseeko(file, 0, SEEK_END)
+        let archiveLength = Int64(ftello(file))
+        guard archiveLength >= 0 else { return nil }
+
+        while eocdOffset == 0 && index < maxDirectoryEndOffset && index <= archiveLength {
+            fseeko(file, zip_off_t(archiveLength - index), SEEK_SET)
+            var potentialDirectoryEndTag: UInt32 = UInt32()
+            fread(&potentialDirectoryEndTag, 1, MemoryLayout<UInt32>.size, file)
+            if potentialDirectoryEndTag == UInt32(endOfCentralDirectoryStructSignature) {
+                eocdOffset = UInt64(archiveLength - index)
+                return self.endOfCentralDirectoryStructure(in: file, at: eocdOffset)
+            }
+            index += 1
+        }
+        // A record that is followed by more data than a ZIP file comment can hold is not within reach of
+        // the scan above. The remaining part of the file is searched in chunks.
+        guard let offset = self.scanForEndOfCentralDirectorySignature(in: file,
+                                                                      before: archiveLength - index + 1) else {
+            return nil
+        }
+        return self.endOfCentralDirectoryStructure(in: file, at: offset)
+    }
+
+    static func endOfCentralDirectoryStructure(in file: FILEPointer, at eocdOffset: UInt64)
+    -> EndOfCentralDirectoryStructure? {
+        guard let eocd: EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: eocdOffset) else {
+            return nil
+        }
+        let zip64EOCD = scanForZIP64EndOfCentralDirectory(in: file, eocdOffset: eocdOffset)
+        return (eocd, zip64EOCD)
+    }
+
+    /// Searches for the last end of central directory signature that starts before `endOffset`.
+    static func scanForEndOfCentralDirectorySignature(in file: FILEPointer, before endOffset: Int64)
+    -> UInt64? {
+        var signature = UInt32(endOfCentralDirectoryStructSignature).littleEndian
+        let signatureData = Data(bytes: &signature, count: MemoryLayout<UInt32>.size)
+        let chunkSize = Int64(defaultReadChunkSize)
+        // A signature that starts before `end` can extend past it.
+        var end = endOffset + Int64(signatureData.count - 1)
+        while end >= Int64(signatureData.count) {
+            let start = Swift.max(0, end - chunkSize)
+            fseeko(file, zip_off_t(start), SEEK_SET)
+            guard let chunk = try? Data.readChunk(of: Int(end - start), from: file),
+                  chunk.count == Int(end - start) else { return nil }
+            if let range = chunk.range(of: signatureData, options: .backwards) {
+                return UInt64(start) + UInt64(range.lowerBound - chunk.startIndex)
+            }
+            guard start > 0 else { return nil }
+            // Consecutive chunks overlap, so that a signature at a chunk boundary is found.
+            end = start + Int64(signatureData.count - 1)
+        }
+        return nil
+    }
+
+    static func scanForZIP64EndOfCentralDirectory(in file: FILEPointer, eocdOffset: UInt64)
+    -> ZIP64EndOfCentralDirectory? {
+        guard UInt64(ZIP64EndOfCentralDirectoryLocator.size) < eocdOffset else { return nil }
+
+        let locatorOffset = eocdOffset - UInt64(ZIP64EndOfCentralDirectoryLocator.size)
+        guard UInt64(ZIP64EndOfCentralDirectoryRecord.size) < locatorOffset else { return nil }
+
+        let recordOffset = locatorOffset - UInt64(ZIP64EndOfCentralDirectoryRecord.size)
+        guard let locator: ZIP64EndOfCentralDirectoryLocator = Data.readStruct(from: file, at: locatorOffset),
+              let record: ZIP64EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: recordOffset) else {
+            return nil
+        }
+        return ZIP64EndOfCentralDirectory(record: record, locator: locator)
+    }
+}

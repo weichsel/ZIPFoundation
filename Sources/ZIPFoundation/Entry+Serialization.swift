@@ -169,4 +169,10 @@ extension Entry.DataDescriptor {
         // when copying those entries to the tempArchive during remove(_ entry:).
         self.data = Data()
     }
+
+    /// Checks if the sizes of the receiver are the sizes that the central directory states for its entry.
+    func matchesSizes(of centralDirectoryStructure: Entry.CentralDirectoryStructure) -> Bool {
+        return UInt64(self.compressedSize) == centralDirectoryStructure.effectiveCompressedSize
+            && UInt64(self.uncompressedSize) == centralDirectoryStructure.effectiveUncompressedSize
+    }
 }

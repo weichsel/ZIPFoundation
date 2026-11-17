@@ -7,25 +7,32 @@
  - Added `symlinksValidWithin` parameter to control symlink containment (replaces `allowUncontainedSymlinks`)
  - Added support for symlink modification dates on Linux
  - Added support for reading the Info-ZIP Unicode Path extra field
- - Added support for building for Windows
+ - Added support for building for Windows. Extraction is not tested on Windows and the containment of entries and symlinks is not verified there
  - Added package manifest for Swift 6.4 (Xcode 27)
 
 ### Updated
  - Fixed symlink containment bypass via chained relative symlinks
+ - Entries that would be written through a symlink that points outside of the destination are rejected during extraction
+ - Entries that would create a directory outside of the destination (e.g. `../outside/../destination/file`) are rejected during extraction
+ - Symlinks with a destination that can't be resolved reliably (e.g. `missing/../target`) are rejected during extraction
  - Fixed crashes when reading archives with invalid ZIP64 sizes or offsets
- - Fixed endless loop when an entry claims more data than the archive contains
+ - Fixed endless loop when an entry claims more data than the archive contains (extraction throws `Data.DataError.unreadableFile`)
  - Fixed crash when reading past the end of an in-memory archive
+ - Fixed crash and unbounded growth of an archive when adding an entry to an archive with an invalid central directory size or offset
  - Fixed endless loop and out-of-bounds read when decoding truncated deflate streams on non-Darwin platforms
  - Fixed reading of ZIP64 archives with entries at offset 0 or a low "version needed to extract"
  - Fixed loss of added entries after removing an entry from an archive that contains ZIP64 entries
  - Fixed loss of extra fields and invalid ZIP64 extended information of ZIP64 entries after removing an entry
  - Fixed lowering of the "version needed to extract" of remaining entries after removing an entry
+ - Fixed invalid offsets after removing an entry from an archive whose central directory order differs from the order of its entries
+ - Fixed wrong sizes of ZIP64 entries that have a data descriptor with 4 byte sizes
  - Fixed memory growth when zipping or unzipping archives with many entries
  - Fixed performance regression when opening archives with many entries
  - Fixed detection of directory entries with a trailing path delimiter
  - Fixed build errors on Android
  - Fixed `pkg-config` warning when building for Apple platforms
  - Fixed deprecation warning in package manifest
+ - Raised the deployment targets of the CocoaPods spec and the Xcode project to the minimums of Xcode 27 (iOS 15, macOS 12, tvOS 15, watchOS 9). The Swift Package Manager with Swift 5.9 to 6.3 keeps the previous deployment targets, except for watchOS, which is raised from 4 to 5
 
 ## [0.9.20](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.20)
 
