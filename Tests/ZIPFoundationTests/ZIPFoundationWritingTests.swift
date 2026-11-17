@@ -247,6 +247,19 @@ extension ZIPFoundationTests {
             XCTAssertEqual(reopenedArchive.map { $0.path }, paths.filter { $0 != path })
             XCTAssert(reopenedArchive.checkIntegrity())
         }
+        // An entry without ZIP64 extended information can be moved behind the maximum offset.
+        let archive = self.archive(for: #function, mode: .read)
+        let structure = try XCTUnwrap(archive["a.txt"]).centralDirectoryStructure
+        XCTAssertNil(structure.zip64ExtendedInformation)
+        let offset = UInt64(UInt32.max) + 1
+        let movedStructure = try XCTUnwrap(Entry.CentralDirectoryStructure(centralDirectoryStructure: structure,
+                                                                           updatedOffset: offset))
+        XCTAssertEqual(movedStructure.relativeOffsetOfLocalHeader, .max)
+        XCTAssertEqual(movedStructure.effectiveRelativeOffsetOfLocalHeader, offset)
+        XCTAssertEqual(movedStructure.versionNeededToExtract & 0xff, Archive.Version.v45.rawValue)
+        // The existing extra fields follow the new ZIP64 extended information.
+        XCTAssertEqual(movedStructure.extraFieldData.suffix(structure.extraFieldData.count), structure.extraFieldData)
+        XCTAssertEqual(Int(movedStructure.extraFieldLength), structure.extraFieldData.count + 12)
     }
 
     func testRemoveDataDescriptorCompressedEntry() {
