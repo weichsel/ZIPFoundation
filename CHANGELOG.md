@@ -31,7 +31,7 @@
  - Fixed build errors on Android
  - Fixed `pkg-config` warning when building for Apple platforms
  - Fixed deprecation warning in package manifest
- - Raised the deployment targets of the CocoaPods spec and the Xcode project to the minimums of Xcode 27 (iOS 15, macOS 12, tvOS 15, watchOS 9). The Swift Package Manager with Swift 5.9 to 6.3 keeps the previous deployment targets
+ - Raised the deployment targets of the CocoaPods spec and the Xcode project to the minimums of Xcode 27 (iOS 15, macOS 12, tvOS 15, watchOS 9). The Swift Package Manager with Swift 5.9 to 6.3 keeps the previous deployment targets, except for watchOS, which is raised from 4 to 5
 
 ## [0.9.20](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.20)
 
