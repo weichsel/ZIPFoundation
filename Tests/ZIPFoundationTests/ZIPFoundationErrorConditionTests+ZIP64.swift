@@ -67,6 +67,20 @@ extension ZIPFoundationTests {
         archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: .max,
                                                                                 numberOfEntries: 0)
         XCTAssertSwiftError(try addEntry(), throws: Archive.ArchiveError.invalidCentralDirectorySize)
+        // A central directory that claims to be larger than the archive must not be read or rewritten.
+        let archiveSize = try? FileManager().attributesOfItem(atPath: archive.url.path)[.size] as? UInt64
+        archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: 1 << 26,
+                                                                                numberOfEntries: 0)
+        XCTAssertSwiftError(try addEntry(), throws: Archive.ArchiveError.invalidCentralDirectorySize)
+        archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: 1 << 50,
+                                                                                numberOfEntries: 0)
+        XCTAssertSwiftError(try addEntry(), throws: Archive.ArchiveError.invalidCentralDirectorySize)
+        archive.zip64EndOfCentralDirectory = makeMockZIP64EndOfCentralDirectory(sizeOfCentralDirectory: 0,
+                                                                                numberOfEntries: 0,
+                                                                                offsetToStartOfCentralDirectory: 1 << 9)
+        XCTAssertSwiftError(try addEntry(), throws: Archive.ArchiveError.invalidCentralDirectorySize)
+        let updatedSize = try? FileManager().attributesOfItem(atPath: archive.url.path)[.size] as? UInt64
+        XCTAssertEqual(updatedSize, archiveSize)
     }
 
     func testIterateEntryWithOverflowingZIP64DataDescriptor() {

@@ -129,10 +129,8 @@ extension Archive {
             throw ArchiveError.invalidCentralDirectoryOffset
         }
         var startOfCD = Int64(self.offsetToStartOfCentralDirectory)
-        fseeko(self.archiveFile, zip_off_t(startOfCD), SEEK_SET)
         let existingSize = self.sizeOfCentralDirectory
-        guard existingSize <= Int.max else { throw ArchiveError.invalidCentralDirectorySize }
-        let existingData = try Data.readChunk(of: Int(existingSize), from: self.archiveFile)
+        let existingData = try self.readCentralDirectoryData(at: startOfCD, size: existingSize)
         fseeko(self.archiveFile, zip_off_t(startOfCD), SEEK_SET)
         let fileHeaderStart = Int64(ftello(self.archiveFile))
         guard fileHeaderStart >= 0 else { throw ArchiveError.unwritableArchive }
@@ -276,6 +274,24 @@ extension Archive {
 // MARK: - Private
 
 private extension Archive {
+
+    /// Reads the central directory of the receiver.
+    ///
+    /// The offset and the size of the central directory can't be trusted. A central directory that is not
+    /// located within the receiver is rejected. Otherwise, a claimed size could allocate an arbitrary amount
+    /// of memory and grow the receiver by that size when the central directory is written again.
+    func readCentralDirectoryData(at offset: Int64, size: UInt64) throws -> Data {
+        fseeko(self.archiveFile, 0, SEEK_END)
+        let archiveLength = Int64(ftello(self.archiveFile))
+        guard archiveLength >= offset, size <= UInt64(archiveLength - offset) else {
+            throw ArchiveError.invalidCentralDirectorySize
+        }
+        fseeko(self.archiveFile, zip_off_t(offset), SEEK_SET)
+        let data = try Data.readChunk(of: Int(size), from: self.archiveFile)
+        guard data.count == Int(size) else { throw ArchiveError.invalidCentralDirectorySize }
+
+        return data
+    }
 
     func updateOffsetInCentralDirectory(centralDirectoryStructure: CentralDirectoryStructure,
                                         updatedOffset: UInt64) throws -> CentralDirectoryStructure {
