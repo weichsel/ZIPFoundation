@@ -54,6 +54,10 @@ extension ZIPFoundationTests {
         } catch {
             XCTFail("\(error)")
         }
+        // The size of the only entry includes its data descriptor. The central directory follows it.
+        let archive = self.archive(for: #function, mode: .read)
+        XCTAssertNotNil(archive["simple.data"]?.zip64DataDescriptor)
+        XCTAssertEqual(archive["simple.data"]?.localSize, archive.offsetToStartOfCentralDirectory)
     }
 
     // MARK: - Helpers
