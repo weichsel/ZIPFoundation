@@ -7,7 +7,7 @@
  - Added `symlinksValidWithin` parameter to control symlink containment (replaces `allowUncontainedSymlinks`)
  - Added support for symlink modification dates on Linux
  - Added support for reading the Info-ZIP Unicode Path extra field
- - Added support for building for Windows
+ - Added support for building for Windows. Extraction is not tested on Windows and the containment of entries and symlinks is not verified there
  - Added package manifest for Swift 6.4 (Xcode 27)
 
 ### Updated
@@ -18,6 +18,7 @@
  - Fixed crashes when reading archives with invalid ZIP64 sizes or offsets
  - Fixed endless loop when an entry claims more data than the archive contains (extraction throws `Data.DataError.unreadableFile`)
  - Fixed crash when reading past the end of an in-memory archive
+ - Fixed crash and unbounded growth of an archive when adding an entry to an archive with an invalid central directory size or offset
  - Fixed endless loop and out-of-bounds read when decoding truncated deflate streams on non-Darwin platforms
  - Fixed reading of ZIP64 archives with entries at offset 0 or a low "version needed to extract"
  - Fixed loss of added entries after removing an entry from an archive that contains ZIP64 entries
