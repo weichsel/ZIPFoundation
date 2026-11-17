@@ -251,6 +251,15 @@ public final class Archive: Sequence {
                 let descriptorPosition = didOverflow ? .max : position
                 if centralDirStruct.isZIP64 {
                     zip64DataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
+                    // Neither the version nor ZIP64 extended information in the central directory say how
+                    // the descriptor was written. An entry that only needs ZIP64 for its offset has a
+                    // descriptor with 4 byte sizes. The sizes of the central directory tell them apart.
+                    if zip64DataDescriptor?.matchesSizes(of: centralDirStruct) != true,
+                       let descriptor: DataDescriptor = Data.readStruct(from: self.archiveFile,
+                                                                         at: descriptorPosition),
+                       descriptor.matchesSizes(of: centralDirStruct) {
+                        (dataDescriptor, zip64DataDescriptor) = (descriptor, nil)
+                    }
                 } else {
                     dataDescriptor = Data.readStruct(from: self.archiveFile, at: descriptorPosition)
                 }

@@ -88,4 +88,30 @@ extension ZIPFoundationTests {
             throw ZIP64ReadingTestsError.failedToExtractEntry(type: .file)
         }
     }
+
+    func testIterateZIP64EntryWithDefaultDataDescriptor() throws {
+        // Entry "a.txt" requires version 4.5, but its data descriptor has 4 byte sizes.
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["a.txt"])
+        XCTAssertTrue(entry.centralDirectoryStructure.isZIP64)
+        XCTAssertNil(entry.zip64DataDescriptor)
+        XCTAssertEqual(entry.uncompressedSize, 240)
+        XCTAssertEqual(entry.compressedSize, 17)
+        XCTAssertEqual(archive.map { $0.path }, ["a.txt", "b.txt"])
+        XCTAssert(archive.checkIntegrity())
+    }
+
+    func testRemoveEntryNextToZIP64EntryWithDefaultDataDescriptor() throws {
+        // Entry "a.txt" has ZIP64 extended information for its offset and a data descriptor with 4 byte sizes.
+        let archive = self.archive(for: #function, mode: .update)
+        XCTAssertEqual(archive["a.txt"]?.uncompressedSize, 240)
+        try archive.remove(XCTUnwrap(archive["pad.txt"]))
+        XCTAssertEqual(archive.map { $0.path }, ["a.txt", "c.txt"])
+        XCTAssertEqual(archive["a.txt"]?.uncompressedSize, 240)
+        XCTAssertEqual(archive["a.txt"]?.compressedSize, 17)
+        XCTAssert(archive.checkIntegrity())
+        try archive.remove(XCTUnwrap(archive["c.txt"]))
+        XCTAssertEqual(archive.map { $0.path }, ["a.txt"])
+        XCTAssert(archive.checkIntegrity())
+    }
 }

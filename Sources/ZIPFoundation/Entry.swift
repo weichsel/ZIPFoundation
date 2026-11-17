@@ -194,6 +194,8 @@ public struct Entry: Equatable {
     /// The size of the receiver's compressed data.
     public var compressedSize: UInt64 {
         if centralDirectoryStructure.isZIP64 {
+            // A ZIP64 entry can have a data descriptor with 4 byte sizes.
+            if let dataDescriptor = self.dataDescriptor { return UInt64(dataDescriptor.compressedSize) }
             return zip64DataDescriptor?.compressedSize ?? centralDirectoryStructure.effectiveCompressedSize
         }
         return UInt64(dataDescriptor?.compressedSize ?? centralDirectoryStructure.compressedSize)
@@ -201,6 +203,8 @@ public struct Entry: Equatable {
     /// The size of the receiver's uncompressed data.
     public var uncompressedSize: UInt64 {
         if centralDirectoryStructure.isZIP64 {
+            // A ZIP64 entry can have a data descriptor with 4 byte sizes.
+            if let dataDescriptor = self.dataDescriptor { return UInt64(dataDescriptor.uncompressedSize) }
             return zip64DataDescriptor?.uncompressedSize ?? centralDirectoryStructure.effectiveUncompressedSize
         }
         return UInt64(dataDescriptor?.uncompressedSize ?? centralDirectoryStructure.uncompressedSize)
@@ -215,10 +219,11 @@ public struct Entry: Equatable {
         // `dataSize` can't be trusted. Saturate, so that callers can reject sizes that exceed `Int64.max`.
         guard dataSize <= Int64.max else { return .max }
         size += dataSize
-        if centralDirectoryStructure.isZIP64 {
-            size += self.zip64DataDescriptor != nil ? UInt64(ZIP64DataDescriptor.size) : 0
-        } else {
-            size += self.dataDescriptor != nil ? UInt64(DefaultDataDescriptor.size) : 0
+        // At most one of the descriptors is set. A ZIP64 entry can have a data descriptor with 4 byte sizes.
+        if self.zip64DataDescriptor != nil {
+            size += UInt64(ZIP64DataDescriptor.size)
+        } else if self.dataDescriptor != nil {
+            size += UInt64(DefaultDataDescriptor.size)
         }
         return size
     }

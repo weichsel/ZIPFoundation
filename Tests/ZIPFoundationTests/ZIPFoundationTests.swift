@@ -336,6 +336,9 @@ extension ZIPFoundationTests {
             ("testDeprecatedContainmentCheck", testDeprecatedContainmentCheck)
         ]
     }
+            ("testIterateZIP64EntryWithDefaultDataDescriptor", testIterateZIP64EntryWithDefaultDataDescriptor),
+            ("testRemoveEntryNextToZIP64EntryWithDefaultDataDescriptor",
+             testRemoveEntryNextToZIP64EntryWithDefaultDataDescriptor),
 
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
         #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
