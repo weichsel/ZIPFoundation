@@ -171,7 +171,7 @@ extension ZIPFoundationTests {
         XCTAssertFalse(directoryURL.deletingLastPathComponent().isContained(in: directoryURL, resolvedTo: components))
     }
 
-    func testUnzipEntryWithParentReferenceToMissingDirectory() throws {
+    func testUnzipEntryWithParentReference() throws {
         let fileManager = FileManager()
         let directoryURL = self.createDirectory(for: #function)
         let destinationURL = directoryURL.appendingPathComponent("destination")

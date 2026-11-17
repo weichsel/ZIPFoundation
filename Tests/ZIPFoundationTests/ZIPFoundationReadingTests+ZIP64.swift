@@ -101,7 +101,7 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
-    func testRemoveEntryNextToZIP64EntryWithDefaultDataDescriptor() throws {
+    func testRemoveEntryNextToDefaultDataDescriptor() throws {
         // Entry "a.txt" has ZIP64 extended information for its offset and a data descriptor with 4 byte sizes.
         let archive = self.archive(for: #function, mode: .update)
         XCTAssertEqual(archive["a.txt"]?.uncompressedSize, 240)
