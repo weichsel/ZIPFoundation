@@ -254,7 +254,7 @@ extension ZIPFoundationTests {
             ("testContainmentOfAbsolutePaths", testContainmentOfAbsolutePaths),
             ("testUnzipEntryWithParentReference", testUnzipEntryWithParentReference),
             ("testUnzipEntryWithoutName", testUnzipEntryWithoutName),
-            ("testUnzipSymlinkWithEmptyDestination", testUnzipSymlinkWithEmptyDestination),
+            ("testUnzipSymlinkWithInvalidDestination", testUnzipSymlinkWithInvalidDestination),
             ("testZipItem", testZipItem),
             ("testLinuxTestSuiteIncludesAllTests", testLinuxTestSuiteIncludesAllTests),
             ("testFileModificationDate", testFileModificationDate),

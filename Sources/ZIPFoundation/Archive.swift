@@ -25,6 +25,8 @@ let defaultPOSIXBufferSize = defaultReadChunkSize
 let defaultDirectoryUnitCount = Int64(1)
 let minEndOfCentralDirectoryOffset = Int64(22)
 let maxDirectoryEndOffset = Int64(66000)
+/// The maximum size of a symlink destination. Longer destinations are not usable as a path on any platform.
+let maxSymbolicLinkDestinationSize = 4096
 let endOfCentralDirectoryStructSignature = 0x06054b50
 let localFileHeaderStructSignature = 0x04034b50
 let dataDescriptorStructSignature = 0x08074b50

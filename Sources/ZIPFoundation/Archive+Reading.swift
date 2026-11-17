@@ -59,11 +59,9 @@ extension Archive {
             guard fileManager.itemExists(at: url) == false else {
                 throw CocoaError(.fileWriteFileExists, userInfo: [NSFilePathErrorKey: url.path])
             }
-            // The link destination of compressed symlinks can be delivered in multiple chunks.
-            var linkData = Data()
-            checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32,
-                                        progress: progress, consumer: { linkData.append($0) })
-            guard let linkPath = String(data: linkData, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
+            let linkPath: String
+            (linkPath, checksum) = try self.readSymbolicLinkDestination(of: entry, bufferSize: bufferSize,
+                                                                        skipCRC32: skipCRC32, progress: progress)
 
             // The link destination has to be resolved through the file system to account for
             // symlinks created by preceding entries. (e.g. `a -> .` followed by `b -> a/..`)
@@ -119,5 +117,28 @@ extension Archive {
 
         }
         return checksum
+    }
+}
+
+extension Archive {
+
+    func readSymbolicLinkDestination(of entry: Entry, bufferSize: Int, skipCRC32: Bool,
+                                     progress: Progress? = nil) throws -> (String, CRC32) {
+        // The sizes of the entry can't be trusted. Collecting the destination stops at the size limit,
+        // so that a small compressed entry can't allocate an arbitrary amount of memory.
+        guard entry.uncompressedSize <= maxSymbolicLinkDestinationSize else { throw ArchiveError.invalidEntryPath }
+
+        // The link destination of compressed symlinks can be delivered in multiple chunks.
+        var linkData = Data()
+        let checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32, progress: progress,
+                                        consumer: { (data) in
+            guard linkData.count + data.count <= maxSymbolicLinkDestinationSize else {
+                throw ArchiveError.invalidEntryPath
+            }
+            linkData.append(data)
+        })
+        guard let linkPath = String(data: linkData, encoding: .utf8) else { throw ArchiveError.invalidEntryPath }
+
+        return (linkPath, checksum)
     }
 }

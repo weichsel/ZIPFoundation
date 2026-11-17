@@ -220,14 +220,29 @@ extension ZIPFoundationTests {
         }
     }
 
-    func testUnzipSymlinkWithEmptyDestination() throws {
+    func testUnzipSymlinkWithInvalidDestination() throws {
         let fileManager = FileManager()
         let destinationURL = self.createDirectory(for: #function)
-        let archive = self.archive(for: #function, mode: .create)
-        try self.addEntry(with: "link", type: .symlink, content: "", to: archive)
-        XCTAssertSwiftError(try fileManager.unzipItem(at: archive.url, to: destinationURL),
+        let linkURL = destinationURL.appendingPathComponent("link")
+        let emptyArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "link", type: .symlink, content: "", to: emptyArchive)
+        XCTAssertSwiftError(try fileManager.unzipItem(at: emptyArchive.url, to: destinationURL),
                             throws: Archive.ArchiveError.uncontainedSymlink)
-        XCTAssertFalse(fileManager.itemExists(at: destinationURL.appendingPathComponent("link")))
+        XCTAssertFalse(fileManager.itemExists(at: linkURL))
+        // A destination that exceeds the size limit is rejected before it is read.
+        let longArchive = self.archive(for: #function, mode: .create)
+        let longDestination = String(repeating: "a", count: maxSymbolicLinkDestinationSize + 1)
+        try self.addEntry(with: "link", type: .symlink, content: longDestination, to: longArchive)
+        XCTAssertSwiftError(try fileManager.unzipItem(at: longArchive.url, to: destinationURL),
+                            throws: Archive.ArchiveError.invalidEntryPath)
+        // The compressed symlink of the test archive states a small size, but expands to a long destination.
+        let compressedArchive = self.archive(for: #function, mode: .update)
+        let entry = try XCTUnwrap(compressedArchive["link"])
+        XCTAssertGreaterThan(entry.uncompressedSize, UInt64(maxSymbolicLinkDestinationSize))
+        let smallEntry = try XCTUnwrap(self.entry(entry, withUncompressedSize: 8))
+        XCTAssertSwiftError(try compressedArchive.extract(smallEntry, to: linkURL),
+                            throws: Archive.ArchiveError.invalidEntryPath)
+        XCTAssertFalse(fileManager.itemExists(at: linkURL))
     }
 
     func testDeprecatedContainmentCheck() {
@@ -240,6 +255,17 @@ extension ZIPFoundationTests {
     }
 
     // MARK: - Helpers
+
+    /// Returns a copy of `entry` whose central directory structure states a different uncompressed size.
+    private func entry(_ entry: Entry, withUncompressedSize size: UInt32) -> Entry? {
+        var data = entry.centralDirectoryStructure.data
+        withUnsafeBytes(of: size.littleEndian) { data.replaceSubrange(24..<28, with: $0) }
+        let structureSize = Entry.CentralDirectoryStructure.size
+        let structure = Entry.CentralDirectoryStructure(data: data.prefix(structureSize)) { _ in
+            return Data(data.dropFirst(structureSize))
+        }
+        return structure.flatMap { Entry(centralDirectoryStructure: $0, localFileHeader: entry.localFileHeader) }
+    }
 
     private func addEntry(with path: String, type: Entry.EntryType, content: String = "",
                           to archive: Archive) throws {
