@@ -52,7 +52,9 @@ extension URL {
         // If the receiver was built by appending to `directoryURL`, only the appended part has to be resolved.
         // Missing components of the appended part are created as regular directories before the receiver
         // is written. A `..` that follows them can therefore be resolved.
-        let components = path.hasPrefix(directoryPath + "/")
+        // The path of the root directory already ends with a path delimiter.
+        let directoryPrefix = directoryPath.hasSuffix("/") ? directoryPath : directoryPath + "/"
+        let components = path.hasPrefix(directoryPrefix)
             ? URL.resolvedPathComponents(ofPath: "./" + path.dropFirst(directoryPath.count),
                                          relativeTo: directoryComponents, missingComponentsAreDirectories: true)
             : URL.resolvedPathComponents(ofPath: path)
@@ -63,17 +65,21 @@ extension URL {
     /// is contained in `parentDirectoryURL`.
     ///
     /// `directoryURL` doesn't have to exist yet. The caller is expected to create missing directories
-    /// (as regular directories) before creating the symlink.
+    /// (as regular directories) before creating the symlink. The same applies to `parentDirectoryURL`,
+    /// which is provided by the caller of the extraction. A `..` that follows a missing directory can
+    /// therefore be resolved for both of them. The destination of the symlink is always resolved strictly.
     static func isSymlinkDestination(_ destinationPath: String, ofSymlinkIn directoryURL: URL,
                                      containedIn parentDirectoryURL: URL) -> Bool {
-        guard let parentComponents = URL.resolvedPathComponents(ofPath: parentDirectoryURL.path)
+        guard let parentComponents = URL.resolvedPathComponents(ofPath: parentDirectoryURL.path,
+                                                                missingComponentsAreDirectories: true)
         else { return false }
         // Callers can opt out of the restriction by passing the root of the file system (`URL.rootFS`).
         // In that case, every destination is valid, even if it can't be resolved reliably.
         guard parentComponents.isEmpty == false else { return true }
         // An empty destination doesn't refer to a location.
         guard destinationPath.isEmpty == false else { return false }
-        guard let directoryComponents = URL.resolvedPathComponents(ofPath: directoryURL.path),
+        guard let directoryComponents = URL.resolvedPathComponents(ofPath: directoryURL.path,
+                                                                   missingComponentsAreDirectories: true),
               let components = URL.resolvedPathComponents(ofPath: destinationPath, relativeTo: directoryComponents)
         else { return false }
 
@@ -93,7 +99,9 @@ extension URL {
     ///   - baseComponents: The already resolved components of the directory a relative `path` starts at.
     ///                     Ignored if `path` is absolute.
     ///   - missingComponentsAreDirectories: Pass `true` if the caller creates the missing components of `path`
-    ///                                      as regular directories before it accesses the path. A `..` then
+    ///                                      as regular directories before it accesses the path. This is the
+    ///                                      case for entry paths and for the destination of an extraction,
+    ///                                      which is provided by the caller of the extraction. A `..` then
     ///                                      removes the missing component that precedes it. Missing components
     ///                                      that are not located within `baseComponents` can't be resolved,
     ///                                      because they would be created outside of that directory.

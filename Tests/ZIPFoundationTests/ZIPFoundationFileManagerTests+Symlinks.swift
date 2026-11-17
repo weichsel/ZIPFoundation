@@ -169,6 +169,9 @@ extension ZIPFoundationTests {
         let siblingURL = URL(fileURLWithPath: directoryURL.path + "Sibling/file.txt")
         XCTAssertFalse(siblingURL.isContained(in: directoryURL, resolvedTo: components))
         XCTAssertFalse(directoryURL.deletingLastPathComponent().isContained(in: directoryURL, resolvedTo: components))
+        // The path of the root directory already ends with a path delimiter.
+        let rootEntryURL = URL.rootFS.appendingPathComponent("zipfoundation-missing/../file.txt")
+        XCTAssertTrue(rootEntryURL.isContained(in: .rootFS, resolvedTo: []))
     }
 
     func testUnzipEntryWithParentReference() throws {
@@ -205,6 +208,19 @@ extension ZIPFoundationTests {
                             throwsErrorWithCode: .fileReadInvalidFileName)
         XCTAssertFalse(fileManager.itemExists(at: directoryURL.appendingPathComponent("created-outside")))
         XCTAssertFalse(fileManager.itemExists(at: destinationURL.appendingPathComponent("escaped.txt")))
+        // A symlink entry can be located behind a missing directory as well. Its destination is contained.
+        let symlinkArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "target.txt", type: .file, content: "contained", to: symlinkArchive)
+        try self.addEntry(with: "vacant/../alias", type: .symlink, content: "target.txt", to: symlinkArchive)
+        XCTAssertNoThrow(try fileManager.unzipItem(at: symlinkArchive.url, to: destinationURL))
+        let aliasURL = destinationURL.appendingPathComponent("alias")
+        XCTAssertEqual(try? fileManager.destinationOfSymbolicLink(atPath: aliasURL.path), "target.txt")
+        // The destination of the caller can contain a missing directory that is followed by `..`.
+        let indirectURL = directoryURL.appendingPathComponent("vacant/../indirect")
+        XCTAssertNoThrow(try fileManager.unzipItem(at: symlinkArchive.url, to: indirectURL))
+        let indirectAliasURL = directoryURL.appendingPathComponent("indirect/alias")
+        XCTAssertEqual(try? fileManager.destinationOfSymbolicLink(atPath: indirectAliasURL.path), "target.txt")
+        XCTAssert(fileManager.itemExists(at: directoryURL.appendingPathComponent("indirect/target.txt")))
     }
 
     func testUnzipEntryWithoutName() throws {

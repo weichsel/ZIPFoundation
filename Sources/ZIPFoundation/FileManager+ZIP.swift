@@ -114,7 +114,8 @@ extension FileManager {
                 return didOverflow ? .max : count
             })
         }
-        let destinationComponents = URL.resolvedPathComponents(ofPath: destinationURL.path)
+        let destinationComponents = URL.resolvedPathComponents(ofPath: destinationURL.path,
+                                                               missingComponentsAreDirectories: true)
         func extractEntry(_ entry: Entry) throws {
             let path = pathEncoding == nil ? entry.path : entry.path(using: pathEncoding!)
             let entryURL = destinationURL.appendingPathComponent(path)
