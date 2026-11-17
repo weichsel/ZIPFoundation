@@ -290,48 +290,6 @@ public final class Archive: Sequence {
         }
         return self.first { $0.path == path }
     }
-
-    // MARK: - Helpers
-
-    static func scanForEndOfCentralDirectoryRecord(in file: FILEPointer)
-    -> EndOfCentralDirectoryStructure? {
-        var eocdOffset: UInt64 = 0
-        var index = minEndOfCentralDirectoryOffset
-        fseeko(file, 0, SEEK_END)
-        let archiveLength = Int64(ftello(file))
-        guard archiveLength >= 0 else { return nil }
-
-        while eocdOffset == 0 && index < maxDirectoryEndOffset && index <= archiveLength {
-            fseeko(file, zip_off_t(archiveLength - index), SEEK_SET)
-            var potentialDirectoryEndTag: UInt32 = UInt32()
-            fread(&potentialDirectoryEndTag, 1, MemoryLayout<UInt32>.size, file)
-            if potentialDirectoryEndTag == UInt32(endOfCentralDirectoryStructSignature) {
-                eocdOffset = UInt64(archiveLength - index)
-                guard let eocd: EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: eocdOffset) else {
-                    return nil
-                }
-                let zip64EOCD = scanForZIP64EndOfCentralDirectory(in: file, eocdOffset: eocdOffset)
-                return (eocd, zip64EOCD)
-            }
-            index += 1
-        }
-        return nil
-    }
-
-    private static func scanForZIP64EndOfCentralDirectory(in file: FILEPointer, eocdOffset: UInt64)
-    -> ZIP64EndOfCentralDirectory? {
-        guard UInt64(ZIP64EndOfCentralDirectoryLocator.size) < eocdOffset else { return nil }
-
-        let locatorOffset = eocdOffset - UInt64(ZIP64EndOfCentralDirectoryLocator.size)
-        guard UInt64(ZIP64EndOfCentralDirectoryRecord.size) < locatorOffset else { return nil }
-
-        let recordOffset = locatorOffset - UInt64(ZIP64EndOfCentralDirectoryRecord.size)
-        guard let locator: ZIP64EndOfCentralDirectoryLocator = Data.readStruct(from: file, at: locatorOffset),
-              let record: ZIP64EndOfCentralDirectoryRecord = Data.readStruct(from: file, at: recordOffset) else {
-            return nil
-        }
-        return ZIP64EndOfCentralDirectory(record: record, locator: locator)
-    }
 }
 
 extension Archive.EndOfCentralDirectoryRecord {
