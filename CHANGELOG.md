@@ -13,6 +13,7 @@
 ### Updated
  - Fixed symlink containment bypass via chained relative symlinks
  - Entries that would be written through a symlink that points outside of the destination are rejected during extraction
+ - Entries that would create a directory outside of the destination (e.g. `../outside/../destination/file`) are rejected during extraction
  - Symlinks with a destination that can't be resolved reliably (e.g. `missing/../target`) are rejected during extraction
  - Fixed crashes when reading archives with invalid ZIP64 sizes or offsets
  - Fixed endless loop when an entry claims more data than the archive contains (extraction throws `Data.DataError.unreadableFile`)

@@ -94,7 +94,9 @@ extension URL {
     ///                     Ignored if `path` is absolute.
     ///   - missingComponentsAreDirectories: Pass `true` if the caller creates the missing components of `path`
     ///                                      as regular directories before it accesses the path. A `..` then
-    ///                                      removes the missing component that precedes it.
+    ///                                      removes the missing component that precedes it. Missing components
+    ///                                      that are not located within `baseComponents` can't be resolved,
+    ///                                      because they would be created outside of that directory.
     /// - Returns: The resolved path components or `nil` if the path can't be resolved reliably.
     static func resolvedPathComponents(ofPath path: String, relativeTo baseComponents: [String] = [],
                                        missingComponentsAreDirectories: Bool = false) -> [String]? {
@@ -122,6 +124,9 @@ extension URL {
             let candidatePath = "/" + (resolved + [component]).joined(separator: "/")
             guard missingComponentCount == 0,
                   let isSymbolicLink = URL.isSymbolicLink(atPath: candidatePath, fileManager: fileManager) else {
+                // The missing directory would be created at the location that has been resolved so far.
+                if missingComponentsAreDirectories, resolved.starts(with: baseComponents) == false { return nil }
+
                 missingComponentCount += 1
                 resolved.append(component)
                 continue

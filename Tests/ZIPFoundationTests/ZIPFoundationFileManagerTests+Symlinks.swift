@@ -197,6 +197,14 @@ extension ZIPFoundationTests {
         XCTAssertCocoaError(try fileManager.unzipItem(at: linkArchive.url, to: destinationURL),
                             throwsErrorWithCode: .fileReadInvalidFileName)
         XCTAssertFalse(fileManager.itemExists(at: outsideURL.appendingPathComponent("escaped.txt")))
+        // A missing directory must not be created outside of the destination, even if the path returns to it.
+        let returningArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "../created-outside/../destination/escaped.txt", type: .file, content: "escaped",
+                          to: returningArchive)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: returningArchive.url, to: destinationURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssertFalse(fileManager.itemExists(at: directoryURL.appendingPathComponent("created-outside")))
+        XCTAssertFalse(fileManager.itemExists(at: destinationURL.appendingPathComponent("escaped.txt")))
     }
 
     func testUnzipEntryWithoutName() throws {
