@@ -118,7 +118,8 @@ extension FileManager {
         func extractEntry(_ entry: Entry) throws {
             let path = pathEncoding == nil ? entry.path : entry.path(using: pathEncoding!)
             let entryURL = destinationURL.appendingPathComponent(path)
-            guard let destinationComponents = destinationComponents,
+            // A path without a name (e.g. an empty path) would refer to the destination directory itself.
+            guard let destinationComponents = destinationComponents, path.contains(where: { $0 != "/" }),
                   entryURL.isContained(in: destinationURL, resolvedTo: destinationComponents) else {
                 throw CocoaError(.fileReadInvalidFileName, userInfo: [NSFilePathErrorKey: entryURL.path])
             }
@@ -132,9 +133,7 @@ extension FileManager {
                 crc32 = try archive.extract(entry, to: entryURL, skipCRC32: skipCRC32,
                                             symlinksValidWithin: symlinksValidWithin)
             }
-            if skipCRC32 == false, crc32 != entry.checksum {
-                throw Archive.ArchiveError.invalidCRC32
-            }
+            guard skipCRC32 || crc32 == entry.checksum else { throw Archive.ArchiveError.invalidCRC32 }
         }
         for entry in archive {
             // Release temporary Foundation objects before extracting the next entry.

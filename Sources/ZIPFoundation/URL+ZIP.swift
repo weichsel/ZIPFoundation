@@ -50,9 +50,11 @@ extension URL {
         let path = self.path
         let directoryPath = directoryURL.path
         // If the receiver was built by appending to `directoryURL`, only the appended part has to be resolved.
+        // Missing components of the appended part are created as regular directories before the receiver
+        // is written. A `..` that follows them can therefore be resolved.
         let components = path.hasPrefix(directoryPath + "/")
             ? URL.resolvedPathComponents(ofPath: "./" + path.dropFirst(directoryPath.count),
-                                         relativeTo: directoryComponents)
+                                         relativeTo: directoryComponents, missingComponentsAreDirectories: true)
             : URL.resolvedPathComponents(ofPath: path)
         return components?.starts(with: directoryComponents) == true
     }
@@ -69,6 +71,8 @@ extension URL {
         // Callers can opt out of the restriction by passing the root of the file system (`URL.rootFS`).
         // In that case, every destination is valid, even if it can't be resolved reliably.
         guard parentComponents.isEmpty == false else { return true }
+        // An empty destination doesn't refer to a location.
+        guard destinationPath.isEmpty == false else { return false }
         guard let directoryComponents = URL.resolvedPathComponents(ofPath: directoryURL.path),
               let components = URL.resolvedPathComponents(ofPath: destinationPath, relativeTo: directoryComponents)
         else { return false }
@@ -88,8 +92,12 @@ extension URL {
     ///   - path: The path to resolve.
     ///   - baseComponents: The already resolved components of the directory a relative `path` starts at.
     ///                     Ignored if `path` is absolute.
+    ///   - missingComponentsAreDirectories: Pass `true` if the caller creates the missing components of `path`
+    ///                                      as regular directories before it accesses the path. A `..` then
+    ///                                      removes the missing component that precedes it.
     /// - Returns: The resolved path components or `nil` if the path can't be resolved reliably.
-    static func resolvedPathComponents(ofPath path: String, relativeTo baseComponents: [String] = []) -> [String]? {
+    static func resolvedPathComponents(ofPath path: String, relativeTo baseComponents: [String] = [],
+                                       missingComponentsAreDirectories: Bool = false) -> [String]? {
         func components(of path: String) -> [String] {
             return path.split(separator: "/").map(String.init).filter { $0 != "." }
         }
@@ -97,20 +105,24 @@ extension URL {
         let fileManager = FileManager()
         let maximumSymlinkCount = 64
         var symlinkCount = 0
-        var hasMissingComponent = false
+        // The number of components at the end of `resolved` that don't exist.
+        var missingComponentCount = 0
         var resolved = (path as NSString).isAbsolutePath ? [] : baseComponents
         var pending = Array(components(of: path).reversed())
         while let component = pending.popLast() {
             if component == ".." {
-                guard hasMissingComponent == false else { return nil }
+                if missingComponentCount > 0 {
+                    guard missingComponentsAreDirectories else { return nil }
 
+                    missingComponentCount -= 1
+                }
                 _ = resolved.popLast()
                 continue
             }
             let candidatePath = "/" + (resolved + [component]).joined(separator: "/")
-            guard hasMissingComponent == false,
+            guard missingComponentCount == 0,
                   let isSymbolicLink = URL.isSymbolicLink(atPath: candidatePath, fileManager: fileManager) else {
-                hasMissingComponent = true
+                missingComponentCount += 1
                 resolved.append(component)
                 continue
             }

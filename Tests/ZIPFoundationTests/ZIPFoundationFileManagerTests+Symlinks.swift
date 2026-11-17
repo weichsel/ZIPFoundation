@@ -171,6 +171,57 @@ extension ZIPFoundationTests {
         XCTAssertFalse(directoryURL.deletingLastPathComponent().isContained(in: directoryURL, resolvedTo: components))
     }
 
+    func testUnzipEntryWithParentReferenceToMissingDirectory() throws {
+        let fileManager = FileManager()
+        let directoryURL = self.createDirectory(for: #function)
+        let destinationURL = directoryURL.appendingPathComponent("destination")
+        // The directories that precede `..` don't exist before the entries are extracted.
+        let archive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "missing/../file.txt", type: .file, content: "contained", to: archive)
+        try self.addEntry(with: "a/b/../../c/../other.txt", type: .file, content: "contained", to: archive)
+        XCTAssertNoThrow(try fileManager.unzipItem(at: archive.url, to: destinationURL))
+        XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("file.txt")))
+        XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("other.txt")))
+        let escapingArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "absent/../../escaped.txt", type: .file, content: "escaped", to: escapingArchive)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: escapingArchive.url, to: destinationURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssertFalse(fileManager.itemExists(at: directoryURL.appendingPathComponent("escaped.txt")))
+        // The components that follow `..` are resolved through the file system again.
+        let outsideURL = directoryURL.appendingPathComponent("outside")
+        try fileManager.createDirectory(at: outsideURL, withIntermediateDirectories: true, attributes: nil)
+        try fileManager.createSymbolicLink(atPath: destinationURL.appendingPathComponent("link").path,
+                                           withDestinationPath: "../outside")
+        let linkArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "absent/../link/escaped.txt", type: .file, content: "escaped", to: linkArchive)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: linkArchive.url, to: destinationURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssertFalse(fileManager.itemExists(at: outsideURL.appendingPathComponent("escaped.txt")))
+    }
+
+    func testUnzipEntryWithoutName() throws {
+        let fileManager = FileManager()
+        let destinationURL = self.createDirectory(for: #function).appendingPathComponent("destination")
+        // An entry without a name would refer to the destination directory itself.
+        for (path, type) in [("", Entry.EntryType.file), ("/", .directory)] {
+            let archive = self.archive(for: #function, mode: .create)
+            try self.addEntry(with: path, type: type, content: type == .file ? "file" : "", to: archive)
+            XCTAssertCocoaError(try fileManager.unzipItem(at: archive.url, to: destinationURL),
+                                throwsErrorWithCode: .fileReadInvalidFileName)
+            XCTAssertFalse(fileManager.itemExists(at: destinationURL))
+        }
+    }
+
+    func testUnzipSymlinkWithEmptyDestination() throws {
+        let fileManager = FileManager()
+        let destinationURL = self.createDirectory(for: #function)
+        let archive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "link", type: .symlink, content: "", to: archive)
+        XCTAssertSwiftError(try fileManager.unzipItem(at: archive.url, to: destinationURL),
+                            throws: Archive.ArchiveError.uncontainedSymlink)
+        XCTAssertFalse(fileManager.itemExists(at: destinationURL.appendingPathComponent("link")))
+    }
+
     func testDeprecatedContainmentCheck() {
         let directoryURL = self.createDirectory(for: #function)
         XCTAssertTrue(directoryURL.appendingPathComponent("file.txt").isContained(in: directoryURL))
