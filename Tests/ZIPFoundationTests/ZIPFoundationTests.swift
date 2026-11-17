@@ -331,19 +331,20 @@ extension ZIPFoundationTests {
             ("testUnzipItemWithInvalidZIP64SizeProgress", testUnzipItemWithInvalidZIP64SizeProgress),
             ("testExtractEntryWithZIP64SizeExceedingArchive", testExtractEntryWithZIP64SizeExceedingArchive),
             ("testRemoveEntryWithInvalidZIP64Size", testRemoveEntryWithInvalidZIP64Size),
+            ("testRemoveEntryWithReorderedCentralDirectory", testRemoveEntryWithReorderedCentralDirectory),
             ("testWriteLargeChunk", testWriteLargeChunk),
             ("testExtractUncompressedZIP64Entries", testExtractUncompressedZIP64Entries),
             ("testExtractCompressedZIP64Entries", testExtractCompressedZIP64Entries),
             ("testExtractEntryWithZIP64DataDescriptor", testExtractEntryWithZIP64DataDescriptor),
+            ("testIterateZIP64EntryWithDefaultDataDescriptor", testIterateZIP64EntryWithDefaultDataDescriptor),
+            ("testRemoveEntryNextToZIP64EntryWithDefaultDataDescriptor",
+             testRemoveEntryNextToZIP64EntryWithDefaultDataDescriptor),
             ("testUnzipSymlink", testUnzipSymlink),
             ("testUnzipCompressedSymlink", testUnzipCompressedSymlink),
             ("testExtractCompressedSymlinkWithSmallBufferSize", testExtractCompressedSymlinkWithSmallBufferSize),
             ("testDeprecatedContainmentCheck", testDeprecatedContainmentCheck)
         ]
     }
-            ("testIterateZIP64EntryWithDefaultDataDescriptor", testIterateZIP64EntryWithDefaultDataDescriptor),
-            ("testRemoveEntryNextToZIP64EntryWithDefaultDataDescriptor",
-             testRemoveEntryNextToZIP64EntryWithDefaultDataDescriptor),
 
     static var darwinOnlyTests: [(String, (ZIPFoundationTests) -> () throws -> Void)] {
         #if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)

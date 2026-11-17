@@ -108,7 +108,9 @@ extension ZIPFoundationTests {
         let entryB = try XCTUnwrap(archive["b"])
         XCTAssertEqual(archive.totalUnitCountForRemoving(entryA), 0)
         XCTAssertSwiftError(try archive.remove(entryB), throws: Archive.ArchiveError.invalidLocalHeaderSize)
-        XCTAssertSwiftError(try archive.remove(entryA), throws: Archive.ArchiveError.invalidLocalHeaderDataOffset)
+        // Removing the invalid entry doesn't depend on its size. The valid entry is kept.
+        XCTAssertNoThrow(try archive.remove(entryA))
+        XCTAssertEqual(archive.map { $0.path }, ["b"])
     }
 
     func testExtractCompressedEntryWithInvalidZIP64Size() throws {

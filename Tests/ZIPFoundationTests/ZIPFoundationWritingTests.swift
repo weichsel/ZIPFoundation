@@ -233,6 +233,22 @@ extension ZIPFoundationTests {
         XCTAssert(archive.checkIntegrity())
     }
 
+    func testRemoveEntryWithReorderedCentralDirectory() throws {
+        // The entries are stored as "a.txt", "b.txt", "c.txt", "d.txt". The central directory lists them
+        // in a different order.
+        let paths = ["b.txt", "d.txt", "a.txt", "c.txt"]
+        for path in paths {
+            let archive = self.archive(for: #function, mode: .update)
+            XCTAssertEqual(archive.map { $0.path }, paths)
+            try archive.remove(XCTUnwrap(archive[path]))
+            XCTAssertEqual(archive.map { $0.path }, paths.filter { $0 != path })
+            XCTAssert(archive.checkIntegrity())
+            let reopenedArchive = try Archive(url: archive.url, accessMode: .read)
+            XCTAssertEqual(reopenedArchive.map { $0.path }, paths.filter { $0 != path })
+            XCTAssert(reopenedArchive.checkIntegrity())
+        }
+    }
+
     func testRemoveDataDescriptorCompressedEntry() {
         let archive = self.archive(for: #function, mode: .update)
         guard let entryToRemove = archive["second.txt"] else {

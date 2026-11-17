@@ -192,12 +192,16 @@ extension Archive {
         defer { tempDir.map { try? FileManager().removeItem(at: $0) } }
         progress?.totalUnitCount = self.totalUnitCountForRemoving(entry)
         var centralDirectoryData = Data()
-        var offset: UInt64 = 0
-        for currentEntry in self {
+        for currentEntry in self where currentEntry != entry {
             let cds = currentEntry.centralDirectoryStructure
-            if currentEntry != entry {
+            do {
                 let entryStart = cds.effectiveRelativeOffsetOfLocalHeader
-                guard entryStart >= offset else { throw ArchiveError.invalidLocalHeaderDataOffset }
+                guard entryStart <= Int64.max else { throw ArchiveError.invalidLocalHeaderDataOffset }
+                // The remaining entries are written in the order of the central directory. That order can differ
+                // from the order in which they are stored in the receiver. The new offset of an entry is
+                // therefore the position it is written to and not its old offset minus the removed size.
+                let updatedOffset = Int64(ftello(tempArchive.archiveFile))
+                guard updatedOffset >= 0 else { throw ArchiveError.unwritableArchive }
                 fseeko(self.archiveFile, zip_off_t(entryStart), SEEK_SET)
                 let provider: Provider = { (_, chunkSize) -> Data in
                     return try Data.readChunk(of: chunkSize, from: self.archiveFile)
@@ -211,9 +215,9 @@ extension Archive {
                 _ = try Data.consumePart(of: Int64(currentEntry.localSize), chunkSize: bufferSize,
                                          provider: provider, consumer: consumer)
                 let updatedCentralDirectory = try updateOffsetInCentralDirectory(centralDirectoryStructure: cds,
-                                                                                 updatedOffset: entryStart - offset)
+                                                                                 updatedOffset: UInt64(updatedOffset))
                 centralDirectoryData.append(updatedCentralDirectory.data)
-            } else { offset = currentEntry.localSize }
+            }
         }
         let startOfCentralDirectory = Int64(ftello(tempArchive.archiveFile))
         guard startOfCentralDirectory >= 0 else { throw ArchiveError.unwritableArchive }
