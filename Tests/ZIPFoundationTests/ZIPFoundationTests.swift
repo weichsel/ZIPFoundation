@@ -173,6 +173,8 @@ extension ZIPFoundationTests {
             ("testArchiveInvalidEOCDRecordConditions", testArchiveInvalidEOCDRecordConditions),
             ("testArchiveWithTrailingData", testArchiveWithTrailingData),
             ("testRemoveEntryBeforeStoredSymlinkWithWrongSize", testRemoveEntryBeforeStoredSymlinkWithWrongSize),
+            ("testRemoveEntryBeforeStoredSymlinkWithDataDescriptor",
+             testRemoveEntryBeforeStoredSymlinkWithDataDescriptor),
             ("testArchiveInvalidDataErrorConditions", testArchiveInvalidDataErrorConditions),
             ("testArchiveIteratorErrorConditions", testArchiveIteratorErrorConditions),
             ("testArchiveReadErrorConditions", testArchiveReadErrorConditions),
