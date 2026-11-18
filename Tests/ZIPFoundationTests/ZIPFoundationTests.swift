@@ -175,6 +175,8 @@ extension ZIPFoundationTests {
             ("testRemoveEntryBeforeStoredSymlinkWithWrongSize", testRemoveEntryBeforeStoredSymlinkWithWrongSize),
             ("testRemoveEntryBeforeStoredSymlinkWithDataDescriptor",
              testRemoveEntryBeforeStoredSymlinkWithDataDescriptor),
+            ("testRemoveEntryBeforeEntryWithWrongDataDescriptorSize",
+             testRemoveEntryBeforeEntryWithWrongDataDescriptorSize),
             ("testArchiveInvalidDataErrorConditions", testArchiveInvalidDataErrorConditions),
             ("testArchiveIteratorErrorConditions", testArchiveIteratorErrorConditions),
             ("testArchiveReadErrorConditions", testArchiveReadErrorConditions),

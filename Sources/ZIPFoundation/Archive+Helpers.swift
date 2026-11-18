@@ -36,7 +36,7 @@ extension Archive {
 
     func readCompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                         progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
-        let size = entry.centralDirectoryStructure.effectiveCompressedSize
+        let size = entry.storedDataSize
         guard size <= Int64.max else { throw ArchiveError.invalidEntrySize }
         return try Data.decompress(size: Int64(size), bufferSize: bufferSize, skipCRC32: skipCRC32,
                                    provider: { (_, chunkSize) -> Data in
@@ -59,8 +59,8 @@ extension Archive {
         case .none:
             // The sizes of the local file header can't be trusted. Reading in chunks bounds the allocation
             // by the buffer size. Some writers stored a wrong uncompressed size for symlinks,
-            // so the compressed size determines the length of the destination.
-            let size = entry.centralDirectoryStructure.effectiveCompressedSize
+            // so the stored data size determines the length of the destination.
+            let size = entry.storedDataSize
             checksum = try self.readUncompressed(size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                                  progress: progress, with: consumer)
         case .deflate: checksum = try self.readCompressed(entry: entry, bufferSize: bufferSize,

@@ -75,6 +75,22 @@ extension ZIPFoundationTests {
         XCTAssertEqual(fileData, Data("abc".utf8))
     }
 
+    func testRemoveEntryBeforeEntryWithWrongDataDescriptorSize() throws {
+        // The data descriptor of the deflated entry "data" states a compressed size of 4 bytes.
+        // The central directory states the actual size.
+        let archive = self.archive(for: #function, mode: .update)
+        let entry = try XCTUnwrap(archive["data"])
+        XCTAssertEqual(entry.dataDescriptor?.compressedSize, 4)
+        XCTAssertNotEqual(entry.centralDirectoryStructure.effectiveCompressedSize, 4)
+        try archive.remove(XCTUnwrap(archive["first"]))
+        let reopenedArchive = try Archive(url: archive.url, accessMode: .read)
+        XCTAssertEqual(reopenedArchive.map { $0.path }, ["data", "file"])
+        XCTAssert(reopenedArchive.checkIntegrity())
+        var data = Data()
+        _ = try reopenedArchive.extract(XCTUnwrap(reopenedArchive["data"])) { data.append($0) }
+        XCTAssertEqual(data, Data(String(repeating: "compressible ", count: 8).utf8))
+    }
+
     func testDirectoryCreationHelperMethods() {
         let processInfo = ProcessInfo.processInfo
         var nestedURL = ZIPFoundationTests.tempZipDirectoryURL

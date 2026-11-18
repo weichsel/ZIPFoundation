@@ -126,7 +126,7 @@ extension Archive {
                                      progress: Progress? = nil) throws -> (String, CRC32) {
         // The sizes of the entry can't be trusted. Collecting the destination stops at the size limit,
         // so that a small compressed entry can't allocate an arbitrary amount of memory.
-        let size = entry.isCompressed ? entry.uncompressedSize : entry.centralDirectoryStructure.effectiveCompressedSize
+        let size = entry.isCompressed ? entry.uncompressedSize : entry.storedDataSize
         guard size <= maxSymbolicLinkDestinationSize else { throw ArchiveError.invalidEntryPath }
 
         // The link destination of compressed symlinks can be delivered in multiple chunks.
