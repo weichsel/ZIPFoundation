@@ -25,14 +25,10 @@ class ZIPFoundationTests: XCTestCase {
     }
 
     static var tempZipDirectoryURL: URL = {
-        let processInfo = ProcessInfo.processInfo
         var tempZipDirectory = URL(fileURLWithPath: NSTemporaryDirectory())
         tempZipDirectory.appendPathComponent("ZipTempDirectory")
-        // We use a unique path to support parallel test runs via
-        // "swift test --parallel"
-        // When using --parallel, setUp() and tearDown() are called 
-        // multiple times.
-        tempZipDirectory.appendPathComponent(processInfo.globallyUniqueString)
+        // Parallel test processes each run setUp() and tearDown() and need their own directory.
+        tempZipDirectory.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
         return tempZipDirectory
     }()
 
