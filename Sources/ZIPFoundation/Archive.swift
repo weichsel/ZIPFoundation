@@ -175,6 +175,8 @@ public final class Archive: Sequence {
     ///   - pathEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     ///                   This encoding is only used when _decoding_ paths from the receiver.
     ///                   Paths of entries added with `addEntry` are always UTF-8 encoded.
+    ///                   `subscript` decodes all file names with it, including UTF-8 flagged ones.
+    ///                   `Entry.path` does not use it, but ignores Info-ZIP Unicode Paths if it is set.
     /// - Returns: An archive initialized with a backing file at the passed in file URL and the given access mode.
     /// - Throws: An error if the following criteria are not met or if the backing file is not a valid archive.
     /// - Note:
@@ -205,6 +207,8 @@ public final class Archive: Sequence {
     ///   - pathEncoding: Encoding for entry paths. Overrides the encoding specified in the archive.
     ///                   This encoding is only used when _decoding_ paths from the receiver.
     ///                   Paths of entries added with `addEntry` are always UTF-8 encoded.
+    ///                   `subscript` decodes all file names with it, including UTF-8 flagged ones.
+    ///                   `Entry.path` does not use it, but ignores Info-ZIP Unicode Paths if it is set.
     /// - Returns: An in-memory archive initialized with passed in backing data.
     /// - Note:
     ///   - The backing `data` _must_ contain a valid ZIP archive for `AccessMode.read` and `AccessMode.update`.
@@ -288,6 +292,9 @@ public final class Archive: Sequence {
     /// - Parameter path: A relative file path identifying the corresponding `Entry`.
     /// - Returns: An `Entry` with the given `path`. Otherwise, `nil`.
     public subscript(path: String) -> Entry? {
+        if let encoding = self.pathEncoding {
+            return self.first { $0.path(using: encoding) == path }
+        }
         return self.first { $0.path == path }
     }
 }

@@ -205,8 +205,9 @@ extension ZIPFoundationTests {
         XCTAssertEqual(archive.map { $0.path(using: .isoLatin1) }, ["Ä¿Â¼/Í¼Æ¬.txt", "Í¨Öª.txt"])
         XCTAssertNil(archive["通知.txt"])
         XCTAssertEqual(archive["Í¨Öª.txt"]?.path(using: .isoLatin1), "Í¨Öª.txt")
-        XCTAssertEqual(archive["Í¨Öª.txt"]?.path, "Í¨Öª.txt")
-        XCTAssertEqual(archive.compactMap { archive[$0.path] }, Array(archive))
+        // `path` ignores the explicit path encoding and decodes the header file name
+        // with code page 437. The Unicode Path is not used.
+        XCTAssertEqual(archive.map { $0.path }, ["─┐┬╝/═╝╞¼.txt", "═¿╓¬.txt"])
         let fileManager = FileManager()
         let destinationURL = self.createDirectory(for: #function)
         XCTAssertNoThrow(try fileManager.unzipItem(at: archive.url, to: destinationURL, pathEncoding: .isoLatin1))
@@ -236,22 +237,31 @@ extension ZIPFoundationTests {
         XCTAssert(isDirectory.boolValue)
     }
 
-    // MARK: - Removing Entries
-
-    func testPathEncodingOverridesUTF8Flag() throws {
-        // An explicit path encoding also decodes file names that are flagged as UTF-8.
+    func testPathEncodingIgnoresUnicodePath() throws {
+        // With an explicit path encoding, lookup decodes all header file names with that encoding,
+        // including UTF-8 flagged ones. `path` still decodes them by the UTF-8 flag.
         let fixture = "testInfoZIPUnicodePathPrecedence"
         let archive = self.archive(for: fixture, mode: .read, preferredEncoding: .isoLatin1)
         let entry = try XCTUnwrap(archive["bit11-Ã¤.txt"])
         XCTAssert(entry.centralDirectoryStructure.usesUTF8PathEncoding)
-        XCTAssertEqual(entry.path, "bit11-Ã¤.txt")
+        XCTAssertEqual(entry.path, "bit11-ä.txt")
         XCTAssertNil(archive["bit11-ä.txt"])
-        // A file name that can't be decoded with the explicit path encoding results in an empty path.
+        // Unicode Paths are not used for entries without the UTF-8 flag.
+        let unicodeEntry = try XCTUnwrap(archive.first {
+            $0.centralDirectoryStructure.infoZIPUnicodePath == "central-only-☃.txt"
+        })
+        XCTAssertEqual(unicodeEntry.path, unicodeEntry.path(using: .codepage437))
+        XCTAssertNotEqual(unicodeEntry.path, "central-only-☃.txt")
+        // A file name that can't be decoded with the explicit path encoding can't be looked up by its `path`.
         // The code page 437 file names of this archive are not valid UTF-8.
         let invalidFixture = "testInfoZIPUnicodePathWithInvalidFields"
         let invalidArchive = self.archive(for: invalidFixture, mode: .read, preferredEncoding: .utf8)
-        XCTAssertEqual(invalidArchive.makeIterator().next()?.path, "")
+        let invalidEntry = try XCTUnwrap(invalidArchive.makeIterator().next())
+        XCTAssertEqual(invalidEntry.path(using: .utf8), "")
+        XCTAssertEqual(invalidEntry.path, invalidEntry.path(using: .codepage437))
     }
+
+    // MARK: - Removing Entries
 
     func testRemoveEntryAcrossPathEncodings() throws {
         // An entry that was retrieved with an explicit path encoding can be removed from an archive

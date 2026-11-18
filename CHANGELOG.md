@@ -11,7 +11,6 @@
  - Added package manifest for Swift 6.4
 
 ### Updated
- - Changed `Entry.path` to use the archive’s explicit path encoding, matching lookup and extraction
  - Fixed symlink containment bypass via chained symlinks
  - Fixed crashes and endless loops when reading malformed archives
  - Fixed crash when adding entries to archives with an invalid central directory

@@ -117,7 +117,7 @@ extension FileManager {
         let destinationComponents = URL.resolvedPathComponents(ofPath: destinationURL.path,
                                                                missingComponentsAreDirectories: true)
         func extractEntry(_ entry: Entry) throws {
-            let path = entry.path
+            let path = pathEncoding == nil ? entry.path : entry.path(using: pathEncoding!)
             let entryURL = destinationURL.appendingPathComponent(path)
             // A path without a name (e.g. an empty path) would refer to the destination directory itself.
             guard let destinationComponents = destinationComponents, path.contains(where: { $0 != "/" }),

@@ -128,12 +128,13 @@ public struct Entry: Equatable {
     }
     /// The `path` of the receiver within a ZIP `Archive`.
     ///
-    /// - Note: An explicit archive encoding decodes the header name. Otherwise, entries without the UTF-8 flag
-    ///         use a valid Info-ZIP Unicode Path from the central directory when available.
-    /// - Note: An explicit archive encoding also applies to entries with the UTF-8 flag.
-    ///         The path is empty if the header name can't be decoded with that encoding.
+    /// - Note: A valid Info-ZIP Unicode Path extra field in the central directory header takes precedence
+    ///         over the file name of entries that are not flagged as UTF-8 encoded.
+    ///         It is not used if the archive has an explicit path encoding, which `path` never decodes with.
+    ///         `Archive.subscript` and `FileManager.unzipItem` use `path(using:)` with that encoding instead.
     public var path: String {
-        if let encoding = self.pathEncoding { return self.path(using: encoding) }
+        // An explicit path encoding disables the Unicode Path.
+        if self.pathEncoding != nil { return self.headerPath }
         return self.centralDirectoryStructure.infoZIPUnicodePath ?? self.headerPath
     }
     /// The file name of the central directory header, decoded as UTF-8 or code page 437.
