@@ -5,7 +5,6 @@
 ### Added
  - Added support for compressed symlinks
  - Added `symlinksValidWithin` parameter to control symlink containment
- - Added support for the Info-ZIP Unicode Path extra field
  - Added support for symlink modification dates on Linux
  - Added initial support for building for Windows
  - Added package manifest for Swift 6.4

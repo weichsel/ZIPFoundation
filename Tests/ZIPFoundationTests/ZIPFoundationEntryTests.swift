@@ -206,4 +206,21 @@ extension ZIPFoundationTests {
         XCTAssert(archive["compressed"]?.isCompressed == true)
         XCTAssert(archive["uncompressed"]?.isCompressed == false)
     }
+
+    func testRemoveEntryPreservesExtraFields() throws {
+        // The entries with non-ASCII names have Info-ZIP Unicode Path extra fields, which are not interpreted.
+        // Extra fields of entries without ZIP64 extended information are copied when rewriting
+        // the central directory.
+        let archive = self.archive(for: #function, mode: .update)
+        let paths = archive.map { $0.path }
+        let extraFieldData = archive.map { $0.centralDirectoryStructure.extraFieldData }
+        XCTAssertEqual(paths.count, 4)
+        try archive.remove(XCTUnwrap(archive[paths[0]]))
+        XCTAssertEqual(archive.map { $0.path }, Array(paths.dropFirst()))
+        XCTAssertEqual(archive.map { $0.centralDirectoryStructure.extraFieldData }, Array(extraFieldData.dropFirst()))
+        XCTAssert(archive.checkIntegrity())
+        let reopenedArchive = try Archive(url: archive.url, accessMode: .read)
+        XCTAssertEqual(reopenedArchive.map { $0.centralDirectoryStructure.extraFieldData },
+                       Array(extraFieldData.dropFirst()))
+    }
 }

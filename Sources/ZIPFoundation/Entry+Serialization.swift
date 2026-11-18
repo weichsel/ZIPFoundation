@@ -147,7 +147,6 @@ extension Entry.CentralDirectoryStructure {
                                                                                            fields: self.validFields) {
             self.extraFields = [zip64ExtendedInformation]
         }
-        self.infoZIPUnicodePath = self.scanForInfoZIPUnicodePath()
     }
 }
 
