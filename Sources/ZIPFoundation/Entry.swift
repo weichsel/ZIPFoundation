@@ -128,8 +128,8 @@ public struct Entry: Equatable {
     }
     /// The `path` of the receiver within a ZIP `Archive`.
     ///
-    /// - Note: An explicit archive path encoding takes precedence. Otherwise, a valid Info-ZIP Unicode Path extra field in the central directory header takes precedence
-    ///         over the file name of entries that are not flagged as UTF-8 encoded.
+    /// - Note: An explicit archive encoding decodes the header name. Otherwise, entries without the UTF-8 flag
+    ///         use a valid Info-ZIP Unicode Path from the central directory when available.
     public var path: String {
         if let encoding = self.pathEncoding { return self.path(using: encoding) }
         return self.centralDirectoryStructure.infoZIPUnicodePath ?? self.headerPath
