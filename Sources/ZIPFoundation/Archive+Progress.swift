@@ -33,8 +33,7 @@ extension Archive {
     public func totalUnitCountForReading(_ entry: Entry) -> Int64 {
         switch entry.type {
         case .file, .symlink:
-            // Uncompressed entries are read by the size of their file data.
-            return Int64(clamping: entry.isCompressed ? entry.uncompressedSize : entry.fileDataSize)
+            return Int64(clamping: entry.readSize)
         case .directory:
             return defaultDirectoryUnitCount
         }

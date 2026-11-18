@@ -98,7 +98,7 @@ extension Archive {
         fseeko(self.archiveFile, zip_off_t(entry.dataOffset), SEEK_SET)
         progress?.totalUnitCount = self.totalUnitCountForReading(entry)
         switch entry.type {
-        case .file:
+        case .file, .symlink:
             guard let compressionMethod = CompressionMethod(rawValue: localFileHeader.compressionMethod) else {
                 throw ArchiveError.invalidCompressionMethod
             }
@@ -111,10 +111,6 @@ extension Archive {
         case .directory:
             try consumer(Data())
             progress?.completedUnitCount = self.totalUnitCountForReading(entry)
-        case .symlink:
-            checksum = try self.readSymbolicLink(entry: entry, bufferSize: bufferSize,
-                                                 skipCRC32: skipCRC32, progress: progress, with: consumer)
-
         }
         return checksum
     }
@@ -126,7 +122,7 @@ extension Archive {
                                      progress: Progress? = nil) throws -> (String, CRC32) {
         // The sizes of the entry can't be trusted. Collecting the destination stops at the size limit,
         // so that a small compressed entry can't allocate an arbitrary amount of memory.
-        let size = entry.isCompressed ? entry.uncompressedSize : entry.fileDataSize
+        let size = entry.readSize
         guard size <= maxSymbolicLinkDestinationSize else { throw ArchiveError.invalidEntryPath }
 
         // The link destination of compressed symlinks can be delivered in multiple chunks.
