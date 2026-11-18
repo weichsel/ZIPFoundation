@@ -235,6 +235,34 @@ extension ZIPFoundationTests {
                        parent + ["nested", fileName])
     }
 
+    func testUnzipEntryIntoCanonicallyEquivalentSibling() throws {
+        let fileManager = FileManager()
+        let directoryURL = self.createDirectory(for: #function)
+        let destinationURL = directoryURL.appendingPathComponent("caf\u{00E9}")
+        let siblingName = "cafe\u{0301}"
+        let siblingURL = directoryURL.appendingPathComponent(siblingName)
+        try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
+        try fileManager.createDirectory(at: siblingURL, withIntermediateDirectories: true, attributes: nil)
+        let entryArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "../" + siblingName + "/entry.txt", type: .file, content: "entry", to: entryArchive)
+        let symlinkArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "link", type: .symlink, content: "../" + siblingName, to: symlinkArchive)
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
+        // The file system treats both names as the same directory, so the sibling is the destination.
+        XCTAssertNoThrow(try fileManager.unzipItem(at: entryArchive.url, to: destinationURL))
+        XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("entry.txt")))
+        XCTAssertNoThrow(try fileManager.unzipItem(at: symlinkArchive.url, to: destinationURL))
+#else
+        // The file system compares names byte by byte, so the sibling is a different directory.
+        XCTAssertCocoaError(try fileManager.unzipItem(at: entryArchive.url, to: destinationURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssertFalse(fileManager.itemExists(at: siblingURL.appendingPathComponent("entry.txt")))
+        XCTAssertSwiftError(try fileManager.unzipItem(at: symlinkArchive.url, to: destinationURL),
+                            throws: Archive.ArchiveError.uncontainedSymlink)
+        XCTAssertFalse(fileManager.itemExists(at: destinationURL.appendingPathComponent("link")))
+#endif
+    }
+
     func testUnzipEntryWithoutName() throws {
         let fileManager = FileManager()
         let destinationURL = self.createDirectory(for: #function).appendingPathComponent("destination")

@@ -63,7 +63,9 @@ extension URL {
         } else {
             components = URL.resolvedPathComponents(ofPath: path)
         }
-        return components?.starts(with: directoryComponents) == true
+        guard let components = components else { return false }
+
+        return URL.pathComponents(components, startWith: directoryComponents)
     }
 
     /// Checks if the destination of a symlink, that is about to be created in `directoryURL`,
@@ -88,7 +90,7 @@ extension URL {
               let components = URL.resolvedPathComponents(ofPath: destinationPath, relativeTo: directoryComponents)
         else { return false }
 
-        return components.starts(with: parentComponents)
+        return URL.pathComponents(components, startWith: parentComponents)
     }
 
     /// Resolves a path, component by component, in the same way the file system does:
@@ -138,7 +140,9 @@ extension URL {
             guard missingComponentCount == 0,
                   let isSymbolicLink = URL.isSymbolicLink(atPath: candidatePath, fileManager: fileManager) else {
                 // The missing directory would be created at the location that has been resolved so far.
-                if missingComponentsAreDirectories, resolved.starts(with: baseComponents) == false { return nil }
+                if missingComponentsAreDirectories, URL.pathComponents(resolved, startWith: baseComponents) == false {
+                    return nil
+                }
 
                 missingComponentCount += 1
                 resolved.append(component)
@@ -158,6 +162,20 @@ extension URL {
             pending.append(contentsOf: components(of: destination).reversed())
         }
         return resolved
+    }
+
+    /// Checks if `components` start with `prefix`, in the same way the file system compares names.
+    ///
+    /// The file systems of Darwin platforms treat canonically equivalent names (e.g. a precomposed `é`
+    /// and an `e` followed by a combining acute accent) as the same item, as does `String` equality.
+    /// The file systems of other platforms compare names byte by byte. There, canonically equivalent
+    /// names can refer to different items, so they must not be treated as equal.
+    static func pathComponents(_ components: [String], startWith prefix: [String]) -> Bool {
+#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
+        return components.starts(with: prefix)
+#else
+        return components.starts(with: prefix) { $0.unicodeScalars.elementsEqual($1.unicodeScalars) }
+#endif
     }
 
     /// Checks if the item at `path` is a symlink, without traversing it.
