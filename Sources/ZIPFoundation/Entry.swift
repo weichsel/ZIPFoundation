@@ -123,6 +123,9 @@ public struct Entry: Equatable {
         return String(pathData: self.centralDirectoryStructure.fileNameData, encoding: encoding)
     }
     /// The `path` of the receiver within a ZIP `Archive`.
+    ///
+    /// Uses the encoding indicated by the header, defaulting to code page 437.
+    /// To apply an archive's explicit path encoding, call `path(using:)` with that encoding.
     public var path: String {
         let encoding = self.centralDirectoryStructure.usesUTF8PathEncoding ? String.Encoding.utf8 : .codepage437
         return self.path(using: encoding)

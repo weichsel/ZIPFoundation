@@ -283,6 +283,8 @@ public final class Archive: Sequence {
     ///   Therefore an archive can contain multiple entries with the same path. This method
     ///   always returns the first `Entry` with the given `path`.
     ///
+    /// Lookup uses the archive's explicit path encoding when one was supplied.
+    ///
     /// - Parameter path: A relative file path identifying the corresponding `Entry`.
     /// - Returns: An `Entry` with the given `path`. Otherwise, `nil`.
     public subscript(path: String) -> Entry? {
