@@ -215,7 +215,9 @@ public struct Entry: Equatable {
         var extraDataLength = Int(localFileHeader.fileNameLength)
         extraDataLength += Int(localFileHeader.extraFieldLength)
         var size = UInt64(LocalFileHeader.size + extraDataLength)
-        let dataSize = self.isCompressed ? self.compressedSize : self.uncompressedSize
+        // The stored data of uncompressed entries has the compressed size as well. Their uncompressed size
+        // can differ, e.g. for symlinks with a misreported size.
+        let dataSize = self.compressedSize
         // `dataSize` can't be trusted. Saturate, so that callers can reject sizes that exceed `Int64.max`.
         guard dataSize <= Int64.max else { return .max }
         size += dataSize

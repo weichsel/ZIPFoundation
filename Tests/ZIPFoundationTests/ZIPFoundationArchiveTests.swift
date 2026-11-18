@@ -44,6 +44,37 @@ extension ZIPFoundationTests {
                             throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
     }
 
+    func testRemoveEntryBeforeStoredSymlinkWithWrongSize() throws {
+        // The stored symlink "link" states an uncompressed size of 4 bytes, but stores a 13 byte destination.
+        let archive = self.archive(for: #function, mode: .update)
+        try archive.remove(XCTUnwrap(archive["first"]))
+        let reopenedArchive = try Archive(url: archive.url, accessMode: .read)
+        XCTAssertEqual(reopenedArchive.map { $0.path }, ["link", "file"])
+        XCTAssert(reopenedArchive.checkIntegrity())
+        var linkData = Data()
+        _ = try reopenedArchive.extract(XCTUnwrap(reopenedArchive["link"])) { linkData.append($0) }
+        XCTAssertEqual(linkData, Data("a-long-target".utf8))
+    }
+
+    func testRemoveEntryBeforeStoredSymlinkWithDataDescriptor() throws {
+        // The 13-byte target is followed by a descriptor reporting an uncompressed size of 4.
+        let archive = self.archive(for: #function, mode: .update)
+        try archive.remove(XCTUnwrap(archive["first"]))
+        let reopenedArchive = try Archive(url: archive.url, accessMode: .read)
+        XCTAssertEqual(reopenedArchive.map { $0.path }, ["link", "file"])
+        let link = try XCTUnwrap(reopenedArchive["link"])
+        let descriptor = try XCTUnwrap(link.dataDescriptor)
+        let target = Data("a-long-target".utf8)
+        XCTAssertEqual(descriptor.compressedSize, UInt32(target.count))
+        XCTAssertEqual(descriptor.uncompressedSize, 4)
+        XCTAssertEqual(descriptor.crc32, target.crc32(checksum: 0))
+        let bytes = try Data(contentsOf: archive.url)
+        XCTAssertEqual(bytes.dropFirst(Int(link.dataOffset)).prefix(target.count), target)
+        var fileData = Data()
+        _ = try reopenedArchive.extract(XCTUnwrap(reopenedArchive["file"])) { fileData.append($0) }
+        XCTAssertEqual(fileData, Data("abc".utf8))
+    }
+
     func testDirectoryCreationHelperMethods() {
         let processInfo = ProcessInfo.processInfo
         var nestedURL = ZIPFoundationTests.tempZipDirectoryURL
