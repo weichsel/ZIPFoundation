@@ -128,6 +128,11 @@ extension Archive {
         // so that a small compressed entry can't allocate an arbitrary amount of memory.
         guard entry.uncompressedSize <= maxSymbolicLinkDestinationSize else { throw ArchiveError.invalidEntryPath }
 
+        // A stored link is read in one allocation sized from the local header.
+        let header = entry.localFileHeader
+        if header.compressionMethod == CompressionMethod.none.rawValue,
+           header.compressedSize > maxSymbolicLinkDestinationSize { throw ArchiveError.invalidEntryPath }
+
         // The link destination of compressed symlinks can be delivered in multiple chunks.
         var linkData = Data()
         let checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32, progress: progress,

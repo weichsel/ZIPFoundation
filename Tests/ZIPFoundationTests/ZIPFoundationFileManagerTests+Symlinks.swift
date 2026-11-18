@@ -257,6 +257,14 @@ extension ZIPFoundationTests {
         try self.addEntry(with: "link", type: .symlink, content: longDestination, to: longArchive)
         XCTAssertSwiftError(try fileManager.unzipItem(at: longArchive.url, to: destinationURL),
                             throws: Archive.ArchiveError.invalidEntryPath)
+        // A stored link with inconsistent sizes is rejected before extraction starts.
+        let stored = try XCTUnwrap(longArchive["link"])
+        let inconsistent = try XCTUnwrap(self.entry(stored, withUncompressedSize: 8))
+        let progress = Progress(totalUnitCount: 0)
+        XCTAssertSwiftError(try longArchive.extract(inconsistent, to: linkURL, progress: progress),
+                            throws: Archive.ArchiveError.invalidEntryPath)
+        XCTAssertEqual(progress.totalUnitCount, 0)
+        XCTAssertFalse(fileManager.itemExists(at: linkURL))
         // The compressed symlink of the test archive states a small size, but expands to a long destination.
         let compressedArchive = self.archive(for: #function, mode: .update)
         let entry = try XCTUnwrap(compressedArchive["link"])
