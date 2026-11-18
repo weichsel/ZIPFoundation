@@ -123,7 +123,6 @@ public final class Archive: Sequence {
 
     enum ExtraFieldHeaderID: UInt16 {
         case zip64ExtendedInformation = 0x0001
-        case infoZIPUnicodePath = 0x7075
     }
 
     struct EndOfCentralDirectoryRecord: DataSerializable {
@@ -281,6 +280,8 @@ public final class Archive: Sequence {
     /// - Note: The ZIP file format specification does not enforce unique paths for entries.
     ///   Therefore an archive can contain multiple entries with the same path. This method
     ///   always returns the first `Entry` with the given `path`.
+    ///
+    /// Lookup uses the archive's explicit path encoding when one was supplied.
     ///
     /// - Parameter path: A relative file path identifying the corresponding `Entry`.
     /// - Returns: An `Entry` with the given `path`. Otherwise, `nil`.

@@ -98,6 +98,8 @@ extension ZIPFoundationTests {
         XCTAssertNotNil(imageEntry)
         let textEntry = archive["data/Benoît.txt"]
         XCTAssertNotNil(textEntry)
+        XCTAssertEqual(textEntry?.path(using: encoding), "data/Benoît.txt")
+        XCTAssertEqual(textEntry?.path, "data/Beno├«t.txt")
     }
 
     func testExtractMSDOSArchive() {

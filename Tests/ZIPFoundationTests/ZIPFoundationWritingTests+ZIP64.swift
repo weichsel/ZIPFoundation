@@ -326,6 +326,23 @@ extension ZIPFoundationTests {
         XCTAssertEqual(entry4.zip64ExtendedInformation?.relativeOffsetOfLocalHeader, entry3OriginalOffset)
     }
 
+    func testRemoveZIP64EntryPreservesExtraFields() throws {
+        // The second entry has ZIP64 extended information and an Info-ZIP Unicode Path extra field in both headers.
+        let archive = self.archive(for: #function, mode: .update)
+        let paths = archive.map { $0.path }
+        XCTAssertEqual(paths.count, 2)
+        let extraFieldData = try XCTUnwrap(archive[paths[1]]).centralDirectoryStructure.extraFieldData
+        try archive.remove(XCTUnwrap(archive[paths[0]]))
+        // Rewriting the central directory keeps all extra fields of entries with ZIP64 extended information.
+        XCTAssertEqual(archive.map { $0.path }, [paths[1]])
+        let entry = try XCTUnwrap(archive[paths[1]])
+        XCTAssertEqual(entry.centralDirectoryStructure.extraFieldData, extraFieldData)
+        XCTAssertNotNil(entry.zip64ExtendedInformation)
+        XCTAssert(archive.checkIntegrity())
+        let reopenedArchive = try Archive(url: archive.url, accessMode: .read)
+        XCTAssertEqual(reopenedArchive.map { $0.path }, [paths[1]])
+    }
+
     func testRemoveEntryUpdatesSizeOfCentralDirectory() throws {
         self.mockIntMaxValues()
         defer { self.resetIntMaxValues() }
