@@ -130,6 +130,8 @@ public struct Entry: Equatable {
     ///
     /// - Note: An explicit archive encoding decodes the header name. Otherwise, entries without the UTF-8 flag
     ///         use a valid Info-ZIP Unicode Path from the central directory when available.
+    /// - Note: An explicit archive encoding also applies to entries with the UTF-8 flag.
+    ///         The path is empty if the header name can't be decoded with that encoding.
     public var path: String {
         if let encoding = self.pathEncoding { return self.path(using: encoding) }
         return self.centralDirectoryStructure.infoZIPUnicodePath ?? self.headerPath
@@ -242,7 +244,8 @@ public struct Entry: Equatable {
     let zip64DataDescriptor: ZIP64DataDescriptor?
 
     public static func == (lhs: Entry, rhs: Entry) -> Bool {
-        return lhs.path == rhs.path
+        // Compare the raw file name so that equality does not depend on the path encoding of the archive.
+        return lhs.centralDirectoryStructure.fileNameData == rhs.centralDirectoryStructure.fileNameData
             && lhs.localFileHeader.crc32 == rhs.localFileHeader.crc32
             && lhs.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader
             == rhs.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader

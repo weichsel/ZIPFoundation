@@ -189,7 +189,8 @@ extension ZIPFoundationTests {
             let reader = try Archive(url: archive.url, accessMode: .read, pathEncoding: encoding)
             let entry = try XCTUnwrap(reader.makeIterator().next())
             XCTAssertEqual(entry.path, encoding == nil ? "résumé.txt" : "resume.txt")
-            XCTAssertEqual(entry == unicodeEntry, encoding == nil)
+            // Equality does not depend on the path encoding of the archive.
+            XCTAssertEqual(entry, unicodeEntry)
             XCTAssertEqual(reader[entry.path], entry)
             let destination = directory.appendingPathComponent(encoding == nil ? "unicode" : "legacy")
             try FileManager().unzipItem(at: archive.url, to: destination, pathEncoding: encoding)
@@ -236,6 +237,36 @@ extension ZIPFoundationTests {
     }
 
     // MARK: - Removing Entries
+
+    func testPathEncodingOverridesUTF8Flag() throws {
+        // An explicit path encoding also decodes file names that are flagged as UTF-8.
+        let fixture = "testInfoZIPUnicodePathPrecedence"
+        let archive = self.archive(for: fixture, mode: .read, preferredEncoding: .isoLatin1)
+        let entry = try XCTUnwrap(archive["bit11-Ã¤.txt"])
+        XCTAssert(entry.centralDirectoryStructure.usesUTF8PathEncoding)
+        XCTAssertEqual(entry.path, "bit11-Ã¤.txt")
+        XCTAssertNil(archive["bit11-ä.txt"])
+        // A file name that can't be decoded with the explicit path encoding results in an empty path.
+        // The code page 437 file names of this archive are not valid UTF-8.
+        let invalidFixture = "testInfoZIPUnicodePathWithInvalidFields"
+        let invalidArchive = self.archive(for: invalidFixture, mode: .read, preferredEncoding: .utf8)
+        XCTAssertEqual(invalidArchive.makeIterator().next()?.path, "")
+    }
+
+    func testRemoveEntryAcrossPathEncodings() throws {
+        // An entry that was retrieved with an explicit path encoding can be removed from an archive
+        // that was opened without one.
+        let archive = self.archive(for: "testInfoZIPUnicodePathWithLegacyEncoding", mode: .update)
+        XCTAssertEqual(archive.map { $0.path }, ["目录/图片.txt", "通知.txt"])
+        let reader = try Archive(url: archive.url, accessMode: .read, pathEncoding: .isoLatin1)
+        let entry = try XCTUnwrap(reader["Í¨Öª.txt"])
+        XCTAssertEqual(entry, archive["通知.txt"])
+        try archive.remove(entry)
+        XCTAssertEqual(archive.map { $0.path }, ["目录/图片.txt"])
+        XCTAssert(archive.checkIntegrity())
+        let updatedArchive = try Archive(url: archive.url, accessMode: .read, pathEncoding: nil)
+        XCTAssertEqual(updatedArchive.map { $0.path }, ["目录/图片.txt"])
+    }
 
     func testRemoveEntryPreservesInfoZIPUnicodePath() {
         // Extra fields of entries without ZIP64 extended information are copied when rewriting
