@@ -338,6 +338,9 @@ extension ZIPFoundationTests {
             ("testRemoveEntryNextToDefaultDataDescriptor", testRemoveEntryNextToDefaultDataDescriptor),
             ("testUnzipSymlink", testUnzipSymlink),
             ("testUnzipCompressedSymlink", testUnzipCompressedSymlink),
+            ("testExtractStoredSymlinkWithOversizedLocalHeader", testExtractStoredSymlinkWithOversizedLocalHeader),
+            ("testExtractStoredZIP64Symlink", testExtractStoredZIP64Symlink),
+            ("testExtractStoredSymlinkWithWrongUncompressedSize", testExtractStoredSymlinkWithWrongUncompressedSize),
             ("testExtractCompressedSymlinkWithSmallBufferSize", testExtractCompressedSymlinkWithSmallBufferSize),
             ("testDeprecatedContainmentCheck", testDeprecatedContainmentCheck)
         ]
