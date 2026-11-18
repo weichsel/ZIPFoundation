@@ -44,6 +44,18 @@ extension ZIPFoundationTests {
                             throws: Archive.ArchiveError.missingEndOfCentralDirectoryRecord)
     }
 
+    func testRemoveEntryBeforeStoredSymlinkWithWrongSize() throws {
+        // The stored symlink "link" states an uncompressed size of 4 bytes, but stores a 13 byte destination.
+        let archive = self.archive(for: #function, mode: .update)
+        try archive.remove(XCTUnwrap(archive["first"]))
+        let reopenedArchive = try Archive(url: archive.url, accessMode: .read)
+        XCTAssertEqual(reopenedArchive.map { $0.path }, ["link", "file"])
+        XCTAssert(reopenedArchive.checkIntegrity())
+        var linkData = Data()
+        _ = try reopenedArchive.extract(XCTUnwrap(reopenedArchive["link"])) { linkData.append($0) }
+        XCTAssertEqual(linkData, Data("a-long-target".utf8))
+    }
+
     func testDirectoryCreationHelperMethods() {
         let processInfo = ProcessInfo.processInfo
         var nestedURL = ZIPFoundationTests.tempZipDirectoryURL
