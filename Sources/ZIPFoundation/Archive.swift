@@ -242,8 +242,8 @@ public final class Archive: Sequence {
             var zip64DataDescriptor: ZIP64DataDescriptor?
             if centralDirStruct.usesDataDescriptor {
                 let additionalSize = UInt64(localFileHeader.fileNameLength) + UInt64(localFileHeader.extraFieldLength)
-                // The descriptor follows the stored data (`Entry.storedDataSize`), regardless of compression method.
-                let dataSize = centralDirStruct.effectiveCompressedSize
+                // The descriptor follows the file data, regardless of compression method.
+                let dataSize = centralDirStruct.fileDataSize
                 let dataPosition = offset + UInt64(LocalFileHeader.size) + additionalSize
                 // `dataSize` can't be trusted. An overflowing position is unreadable and yields no descriptor.
                 let (position, didOverflow) = dataPosition.addingReportingOverflow(dataSize)

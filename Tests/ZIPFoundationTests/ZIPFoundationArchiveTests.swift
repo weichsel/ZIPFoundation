@@ -91,6 +91,39 @@ extension ZIPFoundationTests {
         XCTAssertEqual(data, Data(String(repeating: "compressible ", count: 8).utf8))
     }
 
+    func testExtractStoredFileWithWrongUncompressedSize() throws {
+        // The central directory of the stored entry "data" states an uncompressed size of 5 bytes,
+        // but its file data is 3 bytes long.
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["data"])
+        XCTAssertEqual(entry.uncompressedSize, 5)
+        let progress = archive.makeProgressForReading(entry)
+        var data = Data()
+        let checksum = try archive.extract(entry, progress: progress) { data.append($0) }
+        XCTAssertEqual(data, Data("abc".utf8))
+        XCTAssertEqual(checksum, entry.checksum)
+        XCTAssertEqual(progress.totalUnitCount, 3)
+        XCTAssertEqual(progress.completedUnitCount, 3)
+    }
+
+    func testReadEntryWithWrongDataDescriptorSizes() throws {
+        // The data descriptor of the deflated entry "data" states a compressed size of 4 bytes
+        // and an uncompressed size of 8 bytes. The central directory states the actual sizes.
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["data"])
+        XCTAssertEqual(entry.dataDescriptor?.compressedSize, 4)
+        XCTAssertEqual(entry.dataDescriptor?.uncompressedSize, 8)
+        let content = Data(String(repeating: "compressible ", count: 8).utf8)
+        XCTAssertEqual(entry.compressedSize, entry.centralDirectoryStructure.effectiveCompressedSize)
+        XCTAssertEqual(entry.uncompressedSize, UInt64(content.count))
+        let progress = archive.makeProgressForReading(entry)
+        var data = Data()
+        _ = try archive.extract(entry, progress: progress) { data.append($0) }
+        XCTAssertEqual(data, content)
+        XCTAssertEqual(progress.totalUnitCount, Int64(content.count))
+        XCTAssertEqual(progress.completedUnitCount, progress.totalUnitCount)
+    }
+
     func testDirectoryCreationHelperMethods() {
         let processInfo = ProcessInfo.processInfo
         var nestedURL = ZIPFoundationTests.tempZipDirectoryURL

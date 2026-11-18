@@ -180,29 +180,22 @@ public struct Entry: Equatable {
         self.localFileHeader.compressionMethod != CompressionMethod.none.rawValue
     }
     /// The size of the receiver's compressed data.
+    ///
+    /// It is the size that the central directory states. A data descriptor or local file header that
+    /// states another size is ignored.
     public var compressedSize: UInt64 {
-        if centralDirectoryStructure.isZIP64 {
-            // A ZIP64 entry can have a data descriptor with 4 byte sizes.
-            if let dataDescriptor = self.dataDescriptor { return UInt64(dataDescriptor.compressedSize) }
-            return zip64DataDescriptor?.compressedSize ?? centralDirectoryStructure.effectiveCompressedSize
-        }
-        return UInt64(dataDescriptor?.compressedSize ?? centralDirectoryStructure.compressedSize)
+        return self.centralDirectoryStructure.effectiveCompressedSize
     }
     /// The size of the receiver's uncompressed data.
-    public var uncompressedSize: UInt64 {
-        if centralDirectoryStructure.isZIP64 {
-            // A ZIP64 entry can have a data descriptor with 4 byte sizes.
-            if let dataDescriptor = self.dataDescriptor { return UInt64(dataDescriptor.uncompressedSize) }
-            return zip64DataDescriptor?.uncompressedSize ?? centralDirectoryStructure.effectiveUncompressedSize
-        }
-        return UInt64(dataDescriptor?.uncompressedSize ?? centralDirectoryStructure.uncompressedSize)
-    }
-    /// The size of the data that is stored between the local file header and the optional data descriptor.
     ///
-    /// It is the compressed size of the central directory header, so that reading, locating the data descriptor
-    /// and copying an entry agree, even if the local file header or the data descriptor state another size.
-    var storedDataSize: UInt64 {
-        return self.centralDirectoryStructure.effectiveCompressedSize
+    /// It is the size that the central directory states. A data descriptor or local file header that
+    /// states another size is ignored.
+    public var uncompressedSize: UInt64 {
+        return self.centralDirectoryStructure.effectiveUncompressedSize
+    }
+    /// The size of the file data between the local file header and the optional data descriptor.
+    var fileDataSize: UInt64 {
+        return self.centralDirectoryStructure.fileDataSize
     }
     /// The combined size of the local header, the data and the optional data descriptor.
     var localSize: UInt64 {
@@ -210,7 +203,7 @@ public struct Entry: Equatable {
         var extraDataLength = Int(localFileHeader.fileNameLength)
         extraDataLength += Int(localFileHeader.extraFieldLength)
         var size = UInt64(LocalFileHeader.size + extraDataLength)
-        let dataSize = self.storedDataSize
+        let dataSize = self.fileDataSize
         // `dataSize` can't be trusted. Saturate, so that callers can reject sizes that exceed `Int64.max`.
         guard dataSize <= Int64.max else { return .max }
         size += dataSize
@@ -375,6 +368,13 @@ extension Entry.CentralDirectoryStructure {
             return uncompressedSize
         }
         return UInt64(uncompressedSize)
+    }
+    /// The size of the file data between the local file header and the optional data descriptor.
+    ///
+    /// It is the compressed size of the central directory, so that reading, locating the data descriptor
+    /// and copying an entry agree, even if the local file header or the data descriptor state another size.
+    var fileDataSize: UInt64 {
+        return self.effectiveCompressedSize
     }
     var effectiveRelativeOffsetOfLocalHeader: UInt64 {
         if self.isZIP64, self.relativeOffsetOfLocalHeader == .max,

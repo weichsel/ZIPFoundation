@@ -32,11 +32,9 @@ extension Archive {
     /// - Returns: The number of the work units.
     public func totalUnitCountForReading(_ entry: Entry) -> Int64 {
         switch entry.type {
-        case .symlink where entry.isCompressed == false:
-            // Stored symlinks are read by their stored data size.
-            return Int64(clamping: entry.storedDataSize)
         case .file, .symlink:
-            return Int64(clamping: entry.uncompressedSize)
+            // Uncompressed entries are read by the size of their file data.
+            return Int64(clamping: entry.isCompressed ? entry.uncompressedSize : entry.fileDataSize)
         case .directory:
             return defaultDirectoryUnitCount
         }
