@@ -175,11 +175,11 @@ extension ZIPFoundationTests {
         let linkURL = linkArchiveURL.deletingLastPathComponent()
         let linkTarget = linkURL.path
         let linkArchive = try XCTUnwrap(try? Archive(url: linkArchiveURL, accessMode: .create))
-        try? linkArchive.addEntry(with: "link", type: .symlink, uncompressedSize: Int64(4),
+        try linkArchive.addEntry(with: "link", type: .symlink, uncompressedSize: Int64(linkTarget.utf8.count),
                                   provider: { (_, _) -> Data in
             return Data(linkTarget.utf8)
         })
-        try? fileManager.unzipItem(at: linkArchiveURL, to: destinationURL, symlinksValidWithin: URL.rootFS)
+        try fileManager.unzipItem(at: linkArchiveURL, to: destinationURL, symlinksValidWithin: URL.rootFS)
         XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("link")))
 
         // Link destinations that can't be resolved reliably are only valid,

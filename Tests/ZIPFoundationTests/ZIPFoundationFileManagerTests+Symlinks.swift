@@ -260,10 +260,10 @@ extension ZIPFoundationTests {
         // A stored link with inconsistent sizes is rejected before extraction starts.
         let stored = try XCTUnwrap(longArchive["link"])
         let inconsistent = try XCTUnwrap(self.entry(stored, withUncompressedSize: 8))
-        let progress = Progress(totalUnitCount: 0)
-        XCTAssertSwiftError(try longArchive.extract(inconsistent, to: linkURL, progress: progress),
-                            throws: Archive.ArchiveError.invalidEntryPath)
-        XCTAssertEqual(progress.totalUnitCount, 0)
+        XCTAssertSwiftError(try longArchive.extract(inconsistent) { _ in XCTFail("Unexpected link data") },
+                            throws: Archive.ArchiveError.invalidEntrySize)
+        XCTAssertSwiftError(try longArchive.extract(inconsistent, to: linkURL),
+                            throws: Archive.ArchiveError.invalidEntrySize)
         XCTAssertFalse(fileManager.itemExists(at: linkURL))
         // The compressed symlink of the test archive states a small size, but expands to a long destination.
         let compressedArchive = self.archive(for: #function, mode: .update)
@@ -273,6 +273,19 @@ extension ZIPFoundationTests {
         XCTAssertSwiftError(try compressedArchive.extract(smallEntry, to: linkURL),
                             throws: Archive.ArchiveError.invalidEntryPath)
         XCTAssertFalse(fileManager.itemExists(at: linkURL))
+    }
+
+    func testExtractStoredZIP64Symlink() throws {
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["link"])
+        XCTAssertEqual(entry.localFileHeader.compressedSize, UInt32.max)
+        var data = Data()
+        let checksum = try archive.extract(entry) { data.append($0) }
+        XCTAssertEqual(data, Data("target".utf8))
+        XCTAssertEqual(checksum, entry.checksum)
+        let link = self.createDirectory(for: #function).appendingPathComponent("link")
+        _ = try archive.extract(entry, to: link)
+        XCTAssertEqual(try FileManager().destinationOfSymbolicLink(atPath: link.path), "target")
     }
 
     func testDeprecatedContainmentCheck() {
