@@ -94,6 +94,11 @@ extension ZIPFoundationTests {
         try self.addEntry(with: "link", type: .symlink, content: "dir", to: archive)
         try self.addEntry(with: "nested/sub/link", type: .symlink, content: "../../dir", to: archive)
         try self.addEntry(with: "dangling", type: .symlink, content: "missing/file.txt", to: archive)
+        try self.addEntry(with: "~documents/", type: .directory, to: archive)
+        for (link, target) in [("bare", "~documents"), ("dotted", "./~documents")] {
+            try self.addEntry(with: link, type: .symlink, content: target, to: archive)
+            try self.addEntry(with: link + "/file-" + link, type: .file, content: link, to: archive)
+        }
         try self.addEntry(with: "dir/deep/", type: .directory, to: archive)
         try self.addEntry(with: "deep", type: .symlink, content: "dir/deep", to: archive)
         // Lexically, this destination is outside of the destination directory.
@@ -106,6 +111,10 @@ extension ZIPFoundationTests {
         XCTAssert(fileManager.itemExists(at: directoryURL.appendingPathComponent("file.txt")))
         XCTAssert(fileManager.itemExists(at: directoryURL.appendingPathComponent("other.txt")))
         XCTAssert(fileManager.itemExists(at: directoryURL.appendingPathComponent("third.txt")))
+        for link in ["bare", "dotted"] {
+            let fileURL = destinationURL.appendingPathComponent("~documents/file-" + link)
+            XCTAssertEqual(try Data(contentsOf: fileURL), Data(link.utf8))
+        }
         let danglingURL = destinationURL.appendingPathComponent("dangling")
         XCTAssertEqual(try? fileManager.destinationOfSymbolicLink(atPath: danglingURL.path), "missing/file.txt")
     }

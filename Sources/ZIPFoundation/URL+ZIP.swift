@@ -124,7 +124,8 @@ extension URL {
         var symlinkCount = 0
         // The number of components at the end of `resolved` that don't exist.
         var missingComponentCount = 0
-        var resolved = (path as NSString).isAbsolutePath ? [] : baseComponents
+        // POSIX symlink targets are absolute only if they start with a slash. A tilde is a literal character.
+        var resolved = path.unicodeScalars.first == "/" ? [] : baseComponents
         var pending = Array(components(of: path).reversed())
         while let component = pending.popLast() {
             if component == ".." {
@@ -158,7 +159,7 @@ extension URL {
                   let destination = try? fileManager.destinationOfSymbolicLink(atPath: candidatePath)
             else { return nil }
 
-            if (destination as NSString).isAbsolutePath { resolved.removeAll() }
+            if destination.unicodeScalars.first == "/" { resolved.removeAll() }
             pending.append(contentsOf: components(of: destination).reversed())
         }
         return resolved
