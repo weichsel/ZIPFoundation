@@ -15,6 +15,7 @@
  - Fixed crash when adding entries to archives with an invalid central directory
  - Fixed data loss and invalid offsets when removing entries
  - Fixed sizes of ZIP64 entries with 4 byte data descriptors
+ - Changed `Entry.compressedSize` and `Entry.uncompressedSize` to return the sizes of the central directory
  - Fixed reading of ZIP64 archives with a low "version needed to extract"
  - Fixed detection of directory entries with a trailing path delimiter
  - Fixed memory growth and slow opening of archives with many entries

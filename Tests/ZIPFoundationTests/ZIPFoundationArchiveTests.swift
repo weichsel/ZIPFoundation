@@ -75,7 +75,7 @@ extension ZIPFoundationTests {
         XCTAssertEqual(fileData, Data("abc".utf8))
     }
 
-    func testRemoveEntryBeforeEntryWithWrongDataDescriptorSize() throws {
+    func testRemoveEntryBeforeWrongDataDescriptorSize() throws {
         // The data descriptor of the deflated entry "data" states a compressed size of 4 bytes.
         // The central directory states the actual size.
         let archive = self.archive(for: #function, mode: .update)
@@ -122,6 +122,20 @@ extension ZIPFoundationTests {
         XCTAssertEqual(data, content)
         XCTAssertEqual(progress.totalUnitCount, Int64(content.count))
         XCTAssertEqual(progress.completedUnitCount, progress.totalUnitCount)
+    }
+
+    func testUnzipEntryWithWrongDataDescriptor() throws {
+        // The data descriptor of the deflated entry "data" states wrong sizes and a wrong checksum.
+        // The central directory states the actual values.
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["data"])
+        let content = Data(String(repeating: "compressible ", count: 8).utf8)
+        XCTAssertEqual(entry.dataDescriptor?.compressedSize, 4)
+        XCTAssertNotEqual(entry.dataDescriptor?.crc32, content.crc32(checksum: 0))
+        XCTAssertEqual(entry.checksum, content.crc32(checksum: 0))
+        let destinationURL = self.createDirectory(for: #function)
+        try FileManager().unzipItem(at: archive.url, to: destinationURL)
+        XCTAssertEqual(try Data(contentsOf: destinationURL.appendingPathComponent("data")), content)
     }
 
     func testDirectoryCreationHelperMethods() {

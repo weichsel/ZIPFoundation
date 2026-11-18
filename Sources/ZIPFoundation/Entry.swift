@@ -140,10 +140,18 @@ public struct Entry: Equatable {
     ///
     /// - Note: Always returns `0` for entries of type `EntryType.directory`.
     public var checksum: CRC32 {
-        if self.centralDirectoryStructure.usesDataDescriptor {
-            return self.zip64DataDescriptor?.crc32 ?? self.dataDescriptor?.crc32 ?? 0
+        // Some writers only store the checksum in the data descriptor. A descriptor whose sizes differ from
+        // the central directory was not read from its actual position or is wrong, so its checksum is ignored.
+        let centralDirectoryStructure = self.centralDirectoryStructure
+        if centralDirectoryStructure.usesDataDescriptor {
+            if let descriptor = self.zip64DataDescriptor, descriptor.matchesSizes(of: centralDirectoryStructure) {
+                return descriptor.crc32
+            }
+            if let descriptor = self.dataDescriptor, descriptor.matchesSizes(of: centralDirectoryStructure) {
+                return descriptor.crc32
+            }
         }
-        return self.centralDirectoryStructure.crc32
+        return centralDirectoryStructure.crc32
     }
     /// The `EntryType` of the receiver.
     public var type: EntryType {
