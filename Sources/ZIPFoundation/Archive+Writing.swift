@@ -123,7 +123,7 @@ extension Archive {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
         // The destination of a symlink is provided at once. Its actual size is recorded, so that the sizes
         // of the entry match the stored data even if `uncompressedSize` is wrong.
-        let linkData = type == .symlink ? try provider(0, Int(uncompressedSize)) : nil
+        let linkData = type == .symlink ? try Self.readLinkDestination(size: uncompressedSize, from: provider) : nil
         let uncompressedSize = linkData.map { Int64($0.count) } ?? uncompressedSize
         // Directories and symlinks cannot be compressed
         let compressionMethod = type == .file ? compressionMethod : .none
@@ -280,6 +280,11 @@ extension Archive {
 // MARK: - Private
 
 private extension Archive {
+
+    static func readLinkDestination(size: Int64, from provider: Provider) throws -> Data {
+        guard size >= 0, let count = Int(exactly: size) else { throw ArchiveError.invalidEntrySize }
+        return try provider(0, count)
+    }
 
     /// Reads the central directory of the receiver.
     ///
