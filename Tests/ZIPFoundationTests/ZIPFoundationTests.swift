@@ -272,6 +272,7 @@ extension ZIPFoundationTests {
             ("testInfoZIPUnicodePathWithLegacyEncoding", testInfoZIPUnicodePathWithLegacyEncoding),
             ("testInfoZIPUnicodePathWithInvalidFields", testInfoZIPUnicodePathWithInvalidFields),
             ("testInfoZIPUnicodePathPrecedence", testInfoZIPUnicodePathPrecedence),
+            ("testInfoZIPUnicodePathWithASCIIHeader", testInfoZIPUnicodePathWithASCIIHeader),
             ("testInfoZIPUnicodePathWithPathEncoding", testInfoZIPUnicodePathWithPathEncoding),
             ("testInfoZIPUnicodePathEntryType", testInfoZIPUnicodePathEntryType),
             ("testRemoveEntryPreservesInfoZIPUnicodePath", testRemoveEntryPreservesInfoZIPUnicodePath),

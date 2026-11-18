@@ -128,9 +128,10 @@ public struct Entry: Equatable {
     }
     /// The `path` of the receiver within a ZIP `Archive`.
     ///
-    /// - Note: A valid Info-ZIP Unicode Path extra field in the central directory header takes precedence
+    /// - Note: An explicit archive path encoding takes precedence. Otherwise, a valid Info-ZIP Unicode Path extra field in the central directory header takes precedence
     ///         over the file name of entries that are not flagged as UTF-8 encoded.
     public var path: String {
+        if let encoding = self.pathEncoding { return self.path(using: encoding) }
         return self.centralDirectoryStructure.infoZIPUnicodePath ?? self.headerPath
     }
     /// The file name of the central directory header, decoded as UTF-8 or code page 437.
@@ -234,6 +235,7 @@ public struct Entry: Equatable {
         dataOffset += UInt64(self.localFileHeader.extraFieldLength)
         return dataOffset
     }
+    private let pathEncoding: String.Encoding?
     let centralDirectoryStructure: CentralDirectoryStructure
     let localFileHeader: LocalFileHeader
     let dataDescriptor: DefaultDataDescriptor?
@@ -249,11 +251,12 @@ public struct Entry: Equatable {
     init?(centralDirectoryStructure: CentralDirectoryStructure,
           localFileHeader: LocalFileHeader,
           dataDescriptor: DefaultDataDescriptor? = nil,
-          zip64DataDescriptor: ZIP64DataDescriptor? = nil) {
+          zip64DataDescriptor: ZIP64DataDescriptor? = nil, pathEncoding: String.Encoding? = nil) {
         // We currently don't support encrypted archives
         guard !centralDirectoryStructure.isEncrypted else { return nil }
         self.centralDirectoryStructure = centralDirectoryStructure
         self.localFileHeader = localFileHeader
+        self.pathEncoding = pathEncoding
         self.dataDescriptor = dataDescriptor
         self.zip64DataDescriptor = zip64DataDescriptor
     }

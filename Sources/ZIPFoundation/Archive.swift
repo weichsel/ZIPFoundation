@@ -274,7 +274,8 @@ public final class Archive: Sequence {
                 index += 1
             }
             return Entry(centralDirectoryStructure: centralDirStruct, localFileHeader: localFileHeader,
-                         dataDescriptor: dataDescriptor, zip64DataDescriptor: zip64DataDescriptor)
+                         dataDescriptor: dataDescriptor, zip64DataDescriptor: zip64DataDescriptor,
+                         pathEncoding: self.pathEncoding)
         }
     }
 
@@ -287,9 +288,6 @@ public final class Archive: Sequence {
     /// - Parameter path: A relative file path identifying the corresponding `Entry`.
     /// - Returns: An `Entry` with the given `path`. Otherwise, `nil`.
     public subscript(path: String) -> Entry? {
-        if let encoding = self.pathEncoding {
-            return self.first { $0.path(using: encoding) == path }
-        }
         return self.first { $0.path == path }
     }
 }

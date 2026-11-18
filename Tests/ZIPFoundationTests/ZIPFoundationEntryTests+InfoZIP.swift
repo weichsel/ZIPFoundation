@@ -181,6 +181,22 @@ extension ZIPFoundationTests {
         }
     }
 
+    func testInfoZIPUnicodePathWithASCIIHeader() throws {
+        let archive = self.archive(for: #function, mode: .read)
+        let directory = self.createDirectory(for: #function)
+        let unicodeEntry = try XCTUnwrap(archive["résumé.txt"])
+        for encoding: String.Encoding? in [nil, .isoLatin1] {
+            let reader = try Archive(url: archive.url, accessMode: .read, pathEncoding: encoding)
+            let entry = try XCTUnwrap(reader.makeIterator().next())
+            XCTAssertEqual(entry.path, encoding == nil ? "résumé.txt" : "resume.txt")
+            XCTAssertEqual(entry == unicodeEntry, encoding == nil)
+            XCTAssertEqual(reader[entry.path], entry)
+            let destination = directory.appendingPathComponent(encoding == nil ? "unicode" : "legacy")
+            try FileManager().unzipItem(at: archive.url, to: destination, pathEncoding: encoding)
+            XCTAssertEqual(try Data(contentsOf: destination.appendingPathComponent(entry.path)), Data("resume".utf8))
+        }
+    }
+
     func testInfoZIPUnicodePathWithPathEncoding() {
         // An explicit path encoding always decodes the header file names.
         let fixture = "testInfoZIPUnicodePathWithLegacyEncoding"
@@ -188,7 +204,8 @@ extension ZIPFoundationTests {
         XCTAssertEqual(archive.map { $0.path(using: .isoLatin1) }, ["Ä¿Â¼/Í¼Æ¬.txt", "Í¨Öª.txt"])
         XCTAssertNil(archive["通知.txt"])
         XCTAssertEqual(archive["Í¨Öª.txt"]?.path(using: .isoLatin1), "Í¨Öª.txt")
-        XCTAssertEqual(archive["Í¨Öª.txt"]?.path, "通知.txt")
+        XCTAssertEqual(archive["Í¨Öª.txt"]?.path, "Í¨Öª.txt")
+        XCTAssertEqual(archive.compactMap { archive[$0.path] }, Array(archive))
         let fileManager = FileManager()
         let destinationURL = self.createDirectory(for: #function)
         XCTAssertNoThrow(try fileManager.unzipItem(at: archive.url, to: destinationURL, pathEncoding: .isoLatin1))
