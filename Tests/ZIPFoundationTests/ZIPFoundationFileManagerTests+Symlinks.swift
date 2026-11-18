@@ -300,7 +300,8 @@ extension ZIPFoundationTests {
         // Some writers stored a wrong uncompressed size for symlinks. The compressed size is used instead.
         let archive = self.archive(for: #function, mode: .create)
         try self.addEntry(with: "link", type: .symlink, content: "target", to: archive)
-        let entry = try XCTUnwrap(self.entry(XCTUnwrap(archive["link"]), withUncompressedSize: 4))
+        let reportedSize = UInt32(maxSymbolicLinkDestinationSize + 1)
+        let entry = try XCTUnwrap(self.entry(XCTUnwrap(archive["link"]), withUncompressedSize: reportedSize))
         let progress = archive.makeProgressForReading(entry)
         var data = Data()
         _ = try archive.extract(entry, bufferSize: 2, progress: progress) { data.append($0) }
