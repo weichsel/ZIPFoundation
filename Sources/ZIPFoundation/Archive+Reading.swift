@@ -103,8 +103,10 @@ extension Archive {
                 throw ArchiveError.invalidCompressionMethod
             }
             switch compressionMethod {
-            case .none: checksum = try self.readUncompressed(entry: entry, bufferSize: bufferSize,
-                                                             skipCRC32: skipCRC32, progress: progress, with: consumer)
+            case .none:
+                let size = entry.centralDirectoryStructure.effectiveUncompressedSize
+                checksum = try readUncompressed(size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
+                                                progress: progress, with: consumer)
             case .deflate: checksum = try self.readCompressed(entry: entry, bufferSize: bufferSize,
                                                               skipCRC32: skipCRC32, progress: progress, with: consumer)
             }
@@ -124,11 +126,7 @@ extension Archive {
 
     func readSymbolicLinkDestination(of entry: Entry, bufferSize: Int, skipCRC32: Bool,
                                      progress: Progress? = nil) throws -> (String, CRC32) {
-        // The sizes of the entry can't be trusted. Collecting the destination stops at the size limit,
-        // so that a small compressed entry can't allocate an arbitrary amount of memory.
-        guard entry.uncompressedSize <= maxSymbolicLinkDestinationSize else { throw ArchiveError.invalidEntryPath }
-
-        // The link destination of compressed symlinks can be delivered in multiple chunks.
+        let bufferSize = Swift.min(bufferSize, maxSymbolicLinkDestinationSize)
         var linkData = Data()
         let checksum = try self.extract(entry, bufferSize: bufferSize, skipCRC32: skipCRC32, progress: progress,
                                         consumer: { (data) in

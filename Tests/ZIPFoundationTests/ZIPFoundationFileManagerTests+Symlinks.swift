@@ -257,13 +257,24 @@ extension ZIPFoundationTests {
         try self.addEntry(with: "link", type: .symlink, content: longDestination, to: longArchive)
         XCTAssertSwiftError(try fileManager.unzipItem(at: longArchive.url, to: destinationURL),
                             throws: Archive.ArchiveError.invalidEntryPath)
-        // A stored link with inconsistent sizes is rejected before extraction starts.
+        // Historical writers could record a different uncompressed size.
         let stored = try XCTUnwrap(longArchive["link"])
         let inconsistent = try XCTUnwrap(self.entry(stored, withUncompressedSize: 8))
-        XCTAssertSwiftError(try longArchive.extract(inconsistent) { _ in XCTFail("Unexpected link data") },
-                            throws: Archive.ArchiveError.invalidEntrySize)
+        var bytes = Data()
+        let progress = Progress(totalUnitCount: 0)
+        let crc = try longArchive.extract(inconsistent, bufferSize: 32, skipCRC32: true, progress: progress) {
+            XCTAssertLessThanOrEqual($0.count, 32)
+            bytes.append($0)
+        }
+        XCTAssertEqual(crc, 0)
+        XCTAssertEqual(bytes, Data(longDestination.utf8))
+        XCTAssertEqual(progress.completedUnitCount, Int64(bytes.count))
+        XCTAssertEqual(progress.totalUnitCount, progress.completedUnitCount)
+        progress.cancel()
+        XCTAssertSwiftError(try longArchive.extract(inconsistent, progress: progress) { _ in XCTFail("Cancelled") },
+                            throws: Archive.ArchiveError.cancelledOperation)
         XCTAssertSwiftError(try longArchive.extract(inconsistent, to: linkURL),
-                            throws: Archive.ArchiveError.invalidEntrySize)
+                            throws: Archive.ArchiveError.invalidEntryPath)
         XCTAssertFalse(fileManager.itemExists(at: linkURL))
         // The compressed symlink of the test archive states a small size, but expands to a long destination.
         let compressedArchive = self.archive(for: #function, mode: .update)
@@ -279,6 +290,13 @@ extension ZIPFoundationTests {
         let archive = self.archive(for: #function, mode: .read)
         let entry = try XCTUnwrap(archive["link"])
         XCTAssertEqual(entry.localFileHeader.compressedSize, UInt32.max)
+        let central = self.archive(for: "storedCentralZIP64", mode: .read)
+        let zip64 = try XCTUnwrap(central["link"])
+        XCTAssertEqual(zip64.centralDirectoryStructure.compressedSize, UInt32.max)
+        XCTAssertEqual(zip64.zip64ExtendedInformation?.compressedSize, 6)
+        var target = Data()
+        _ = try central.extract(zip64) { target.append($0) }
+        XCTAssertEqual(target, Data("target".utf8))
         var data = Data()
         let checksum = try archive.extract(entry) { data.append($0) }
         XCTAssertEqual(data, Data("target".utf8))
@@ -286,6 +304,37 @@ extension ZIPFoundationTests {
         let link = self.createDirectory(for: #function).appendingPathComponent("link")
         _ = try archive.extract(entry, to: link)
         XCTAssertEqual(try FileManager().destinationOfSymbolicLink(atPath: link.path), "target")
+    }
+
+    func testStoredSymlinkCompatibility() throws {
+        let archive = self.archive(for: "storedSymlinkCompatibility", mode: .read)
+        let legacy = try XCTUnwrap(archive["legacy"])
+        XCTAssertEqual(legacy.uncompressedSize, 4)
+        let link = self.createDirectory(for: #function).appendingPathComponent("legacy")
+        _ = try archive.extract(legacy, to: link)
+        XCTAssertEqual(try FileManager().destinationOfSymbolicLink(atPath: link.path), "xxxxxx")
+        for method in ["stored", "deflate"] {
+            for size in [4096, 4097] {
+                let entry = try XCTUnwrap(archive[method + String(size)])
+                var data = Data()
+                _ = try archive.extract(entry, bufferSize: 32) { data.append($0) }
+                XCTAssertEqual(data, Data(repeating: 120, count: size))
+                if size == maxSymbolicLinkDestinationSize {
+                    let result = try archive.readSymbolicLinkDestination(of: entry, bufferSize: 32, skipCRC32: false)
+                    XCTAssertEqual(result.0, String(repeating: "x", count: size))
+                } else {
+                    XCTAssertSwiftError(try archive.extract(entry, to: link.deletingLastPathComponent()
+                        .appendingPathComponent(method)), throws: Archive.ArchiveError.invalidEntryPath)
+                }
+            }
+        }
+        let mismatch = try XCTUnwrap(archive["mismatch"])
+        XCTAssertSwiftError(try archive.extract(mismatch) { _ in XCTFail("Unexpected payload") },
+                            throws: Archive.ArchiveError.invalidCompressionMethod)
+        fseeko(archive.archiveFile, -1, SEEK_END)
+        XCTAssertThrowsError(try archive.readUncompressed(size: 2, bufferSize: 2, skipCRC32: true) { _ in
+            XCTFail("Unexpected short read")
+        }) { XCTAssertEqual($0 as? Data.DataError, .unreadableFile) }
     }
 
     func testDeprecatedContainmentCheck() {

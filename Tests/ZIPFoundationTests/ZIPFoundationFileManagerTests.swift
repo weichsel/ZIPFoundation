@@ -175,10 +175,12 @@ extension ZIPFoundationTests {
         let linkURL = linkArchiveURL.deletingLastPathComponent()
         let linkTarget = linkURL.path
         let linkArchive = try XCTUnwrap(try? Archive(url: linkArchiveURL, accessMode: .create))
-        try linkArchive.addEntry(with: "link", type: .symlink, uncompressedSize: Int64(linkTarget.utf8.count),
+        try linkArchive.addEntry(with: "link", type: .symlink, uncompressedSize: Int64(4),
                                   provider: { (_, _) -> Data in
             return Data(linkTarget.utf8)
         })
+        let reopened = try Archive(url: linkArchiveURL, accessMode: .read, pathEncoding: nil)
+        XCTAssertEqual(reopened["link"]?.uncompressedSize, UInt64(linkTarget.utf8.count))
         try fileManager.unzipItem(at: linkArchiveURL, to: destinationURL, symlinksValidWithin: URL.rootFS)
         XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("link")))
 

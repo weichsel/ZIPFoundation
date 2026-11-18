@@ -20,9 +20,7 @@ enum AdditionalDataError: Error {
 }
 
 class ZIPFoundationTests: XCTestCase {
-    class var testBundle: Bundle {
-        return Bundle(for: self)
-    }
+    class var testBundle: Bundle { return Bundle(for: self) }
 
     static var tempZipDirectoryURL: URL = {
         var tempZipDirectory = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -341,6 +339,7 @@ extension ZIPFoundationTests {
             ("testRemoveEntryNextToDefaultDataDescriptor", testRemoveEntryNextToDefaultDataDescriptor),
             ("testUnzipSymlink", testUnzipSymlink),
             ("testUnzipCompressedSymlink", testUnzipCompressedSymlink),
+            ("testStoredSymlinkCompatibility", testStoredSymlinkCompatibility),
             ("testExtractStoredZIP64Symlink", testExtractStoredZIP64Symlink),
             ("testExtractCompressedSymlinkWithSmallBufferSize", testExtractCompressedSymlinkWithSmallBufferSize),
             ("testDeprecatedContainmentCheck", testDeprecatedContainmentCheck)

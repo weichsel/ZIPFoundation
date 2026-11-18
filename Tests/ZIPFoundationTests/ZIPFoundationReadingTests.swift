@@ -225,7 +225,7 @@ extension ZIPFoundationTests {
             var tempFileURL = URL(fileURLWithPath: NSTemporaryDirectory())
             tempFileURL.appendPathComponent(ProcessInfo.processInfo.globallyUniqueString)
             XCTAssertSwiftError(try archive.extract(entry, to: tempFileURL),
-                                throws: Archive.ArchiveError.invalidEntrySize)
+                                throws: Archive.ArchiveError.invalidEntryPath)
         }
     }
 

@@ -14,13 +14,14 @@ extension Archive {
 
     // MARK: - Reading
 
-    func readUncompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
+    func readUncompressed(size: UInt64, bufferSize: Int, skipCRC32: Bool,
                           progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
-        let size = entry.centralDirectoryStructure.effectiveUncompressedSize
         guard size <= Int64.max else { throw ArchiveError.invalidEntrySize }
         return try Data.consumePart(of: Int64(size), chunkSize: bufferSize, skipCRC32: skipCRC32,
                                     provider: { (_, chunkSize) -> Data in
-                                        return try Data.readChunk(of: chunkSize, from: self.archiveFile)
+                                        let data = try Data.readChunk(of: chunkSize, from: self.archiveFile)
+                                        guard data.count == chunkSize else { throw Data.DataError.unreadableFile }
+                                        return data
                                     }, consumer: { (data) in
                                         if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
                                         try consumer(data)
@@ -46,21 +47,15 @@ extension Archive {
                           progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         var checksum = CRC32(0)
         let localFileHeader = entry.localFileHeader
-        guard let compressionMethod = CompressionMethod(rawValue: localFileHeader.compressionMethod) else {
+        guard localFileHeader.compressionMethod == entry.centralDirectoryStructure.compressionMethod,
+              let compressionMethod = CompressionMethod(rawValue: localFileHeader.compressionMethod) else {
             throw ArchiveError.invalidCompressionMethod
         }
         switch compressionMethod {
         case .none:
-            let directory = entry.centralDirectoryStructure
-            let size = directory.effectiveCompressedSize
-            guard size == directory.effectiveUncompressedSize, size <= maxSymbolicLinkDestinationSize else {
-                throw ArchiveError.invalidEntrySize
-            }
-            let data = try Data.readChunk(of: Int(size), from: self.archiveFile)
-            guard data.count == Int(size) else { throw ArchiveError.invalidEntrySize }
-            checksum = data.crc32(checksum: 0)
-            try consumer(data)
-            progress?.completedUnitCount = self.totalUnitCountForReading(entry)
+            checksum = try readUncompressed(size: entry.centralDirectoryStructure.effectiveCompressedSize,
+                                            bufferSize: bufferSize, skipCRC32: skipCRC32,
+                                            progress: progress, with: consumer)
         case .deflate: checksum = try self.readCompressed(entry: entry, bufferSize: bufferSize,
                                                           skipCRC32: skipCRC32, progress: progress, with: consumer)
         }
