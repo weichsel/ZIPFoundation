@@ -133,13 +133,10 @@ public struct Entry: Equatable {
     ///         It is not used if the archive has an explicit path encoding, which `path` never decodes with.
     ///         `Archive.subscript` and `FileManager.unzipItem` use `path(using:)` with that encoding instead.
     public var path: String {
-        // An explicit path encoding disables the Unicode Path.
         if self.pathEncoding != nil { return self.headerPath }
         return self.centralDirectoryStructure.infoZIPUnicodePath ?? self.headerPath
     }
-    /// The file name of the central directory header, decoded as UTF-8 or code page 437.
-    ///
-    /// An Info-ZIP Unicode Path extra field is not taken into account.
+    /// The file name of the central directory header decoded as UTF-8 or code page 437, without the Unicode Path.
     private var headerPath: String {
         let encoding = self.centralDirectoryStructure.usesUTF8PathEncoding ? String.Encoding.utf8 : .codepage437
         return self.path(using: encoding)
@@ -245,8 +242,10 @@ public struct Entry: Equatable {
     let zip64DataDescriptor: ZIP64DataDescriptor?
 
     public static func == (lhs: Entry, rhs: Entry) -> Bool {
-        // Compare the raw file name so that equality does not depend on the path encoding of the archive.
-        return lhs.centralDirectoryStructure.fileNameData == rhs.centralDirectoryStructure.fileNameData
+        // Compare the paths without an explicit path encoding so that equality does not depend on the archive.
+        let lhsPath = lhs.centralDirectoryStructure.infoZIPUnicodePath ?? lhs.headerPath
+        let rhsPath = rhs.centralDirectoryStructure.infoZIPUnicodePath ?? rhs.headerPath
+        return lhsPath == rhsPath
             && lhs.localFileHeader.crc32 == rhs.localFileHeader.crc32
             && lhs.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader
             == rhs.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader

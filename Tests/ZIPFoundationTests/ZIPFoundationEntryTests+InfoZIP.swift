@@ -196,6 +196,22 @@ extension ZIPFoundationTests {
             try FileManager().unzipItem(at: archive.url, to: destination, pathEncoding: encoding)
             XCTAssertEqual(try Data(contentsOf: destination.appendingPathComponent(entry.path)), Data("resume".utf8))
         }
+        // Replacing the header ID of the Unicode Path fields with an unknown ID keeps the header file name,
+        // the CRC32 and the offset of the entry. Its path without an explicit path encoding changes.
+        let unicodePathField = Data([0x75, 0x70, 0x11, 0x00, 0x01])
+        let unknownField = Data([0x78, 0x78, 0x11, 0x00, 0x01])
+        var strippedData = try Data(contentsOf: archive.url)
+        var replacements = 0
+        while let range = strippedData.range(of: unicodePathField) {
+            strippedData.replaceSubrange(range, with: unknownField)
+            replacements += 1
+        }
+        XCTAssertEqual(replacements, 2)
+        let strippedURL = directory.appendingPathComponent("stripped.zip")
+        try strippedData.write(to: strippedURL)
+        let strippedEntry = try XCTUnwrap(Archive(url: strippedURL, accessMode: .read).makeIterator().next())
+        XCTAssertEqual(strippedEntry.path, "resume.txt")
+        XCTAssertNotEqual(strippedEntry, unicodeEntry)
     }
 
     func testInfoZIPUnicodePathWithPathEncoding() {
