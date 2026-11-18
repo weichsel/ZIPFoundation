@@ -75,8 +75,13 @@ public struct Entry: Equatable {
         // For ZIP64 format archives, the compressed and uncompressed sizes are 8 bytes each.
         let compressedSize: T
         let uncompressedSize: T
+        /// Indicates whether the descriptor starts with the optional signature.
+        let hasSignature: Bool
         static var memoryLengthOfSize: Int { MemoryLayout<T>.size }
+        /// The size of a descriptor with a signature.
         static var size: Int { memoryLengthOfSize * 2 + 8 }
+        /// The size of the receiver in the archive.
+        var encodedSize: Int { self.hasSignature ? Self.size : Self.size - MemoryLayout<UInt32>.size }
     }
 
     typealias DefaultDataDescriptor = DataDescriptor<UInt32>
@@ -140,10 +145,18 @@ public struct Entry: Equatable {
     ///
     /// - Note: Always returns `0` for entries of type `EntryType.directory`.
     public var checksum: CRC32 {
-        if self.centralDirectoryStructure.usesDataDescriptor {
-            return self.zip64DataDescriptor?.crc32 ?? self.dataDescriptor?.crc32 ?? 0
+        // Some writers only store the checksum in the data descriptor. A descriptor whose sizes differ from
+        // the central directory was not read from its actual position or is wrong, so its checksum is ignored.
+        let centralDirectoryStructure = self.centralDirectoryStructure
+        if centralDirectoryStructure.usesDataDescriptor {
+            if let descriptor = self.zip64DataDescriptor, descriptor.matchesSizes(of: centralDirectoryStructure) {
+                return descriptor.crc32
+            }
+            if let descriptor = self.dataDescriptor, descriptor.matchesSizes(of: centralDirectoryStructure) {
+                return descriptor.crc32
+            }
         }
-        return self.centralDirectoryStructure.crc32
+        return centralDirectoryStructure.crc32
     }
     /// The `EntryType` of the receiver.
     public var type: EntryType {
@@ -180,22 +193,22 @@ public struct Entry: Equatable {
         self.localFileHeader.compressionMethod != CompressionMethod.none.rawValue
     }
     /// The size of the receiver's compressed data.
+    ///
+    /// It is the size that the central directory states. A data descriptor or local file header that
+    /// states another size is ignored. Uncompressed entries are read by this size as well.
     public var compressedSize: UInt64 {
-        if centralDirectoryStructure.isZIP64 {
-            // A ZIP64 entry can have a data descriptor with 4 byte sizes.
-            if let dataDescriptor = self.dataDescriptor { return UInt64(dataDescriptor.compressedSize) }
-            return zip64DataDescriptor?.compressedSize ?? centralDirectoryStructure.effectiveCompressedSize
-        }
-        return UInt64(dataDescriptor?.compressedSize ?? centralDirectoryStructure.compressedSize)
+        return self.centralDirectoryStructure.effectiveCompressedSize
     }
     /// The size of the receiver's uncompressed data.
+    ///
+    /// It is the size that the central directory states. A data descriptor or local file header that
+    /// states another size is ignored.
     public var uncompressedSize: UInt64 {
-        if centralDirectoryStructure.isZIP64 {
-            // A ZIP64 entry can have a data descriptor with 4 byte sizes.
-            if let dataDescriptor = self.dataDescriptor { return UInt64(dataDescriptor.uncompressedSize) }
-            return zip64DataDescriptor?.uncompressedSize ?? centralDirectoryStructure.effectiveUncompressedSize
-        }
-        return UInt64(dataDescriptor?.uncompressedSize ?? centralDirectoryStructure.uncompressedSize)
+        return self.centralDirectoryStructure.effectiveUncompressedSize
+    }
+    /// The number of bytes that reading the receiver delivers.
+    var readSize: UInt64 {
+        return self.isCompressed ? self.uncompressedSize : self.compressedSize
     }
     /// The combined size of the local header, the data and the optional data descriptor.
     var localSize: UInt64 {
@@ -203,17 +216,15 @@ public struct Entry: Equatable {
         var extraDataLength = Int(localFileHeader.fileNameLength)
         extraDataLength += Int(localFileHeader.extraFieldLength)
         var size = UInt64(LocalFileHeader.size + extraDataLength)
-        // The stored data of uncompressed entries has the compressed size as well. Their uncompressed size
-        // can differ, e.g. for symlinks with a misreported size.
         let dataSize = self.compressedSize
         // `dataSize` can't be trusted. Saturate, so that callers can reject sizes that exceed `Int64.max`.
         guard dataSize <= Int64.max else { return .max }
         size += dataSize
         // At most one of the descriptors is set. A ZIP64 entry can have a data descriptor with 4 byte sizes.
-        if self.zip64DataDescriptor != nil {
-            size += UInt64(ZIP64DataDescriptor.size)
-        } else if self.dataDescriptor != nil {
-            size += UInt64(DefaultDataDescriptor.size)
+        if let zip64DataDescriptor = self.zip64DataDescriptor {
+            size += UInt64(zip64DataDescriptor.encodedSize)
+        } else if let dataDescriptor = self.dataDescriptor {
+            size += UInt64(dataDescriptor.encodedSize)
         }
         return size
     }

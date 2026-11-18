@@ -16,7 +16,10 @@ extension Archive {
 
     func readUncompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                           progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
-        let size = entry.centralDirectoryStructure.effectiveUncompressedSize
+        // The file data of an uncompressed entry is read in full, even if its uncompressed size differs,
+        // e.g. for symlinks of writers that stored a wrong uncompressed size. Reading doesn't verify
+        // the checksum. Callers compare the returned checksum with `Entry.checksum`.
+        let size = entry.compressedSize
         return try self.readUncompressed(size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
                                          progress: progress, with: consumer)
     }
@@ -36,7 +39,7 @@ extension Archive {
 
     func readCompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                         progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
-        let size = entry.centralDirectoryStructure.effectiveCompressedSize
+        let size = entry.compressedSize
         guard size <= Int64.max else { throw ArchiveError.invalidEntrySize }
         return try Data.decompress(size: Int64(size), bufferSize: bufferSize, skipCRC32: skipCRC32,
                                    provider: { (_, chunkSize) -> Data in
@@ -46,27 +49,6 @@ extension Archive {
                                     try consumer(data)
                                     progress?.completedUnitCount += Int64(data.count)
                                    })
-    }
-
-    func readSymbolicLink(entry: Entry, bufferSize: Int, skipCRC32: Bool,
-                          progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
-        var checksum = CRC32(0)
-        let localFileHeader = entry.localFileHeader
-        guard let compressionMethod = CompressionMethod(rawValue: localFileHeader.compressionMethod) else {
-            throw ArchiveError.invalidCompressionMethod
-        }
-        switch compressionMethod {
-        case .none:
-            // The sizes of the local file header can't be trusted. Reading in chunks bounds the allocation
-            // by the buffer size. Some writers stored a wrong uncompressed size for symlinks,
-            // so the compressed size determines the length of the destination.
-            let size = entry.centralDirectoryStructure.effectiveCompressedSize
-            checksum = try self.readUncompressed(size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
-                                                 progress: progress, with: consumer)
-        case .deflate: checksum = try self.readCompressed(entry: entry, bufferSize: bufferSize,
-                                                          skipCRC32: skipCRC32, progress: progress, with: consumer)
-        }
-        return checksum
     }
 
     // MARK: - Writing

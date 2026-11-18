@@ -242,7 +242,7 @@ public final class Archive: Sequence {
             var zip64DataDescriptor: ZIP64DataDescriptor?
             if centralDirStruct.usesDataDescriptor {
                 let additionalSize = UInt64(localFileHeader.fileNameLength) + UInt64(localFileHeader.extraFieldLength)
-                // The descriptor follows the bytes stored in the archive, regardless of compression method.
+                // The descriptor follows the file data, regardless of compression method.
                 let dataSize = centralDirStruct.effectiveCompressedSize
                 let dataPosition = offset + UInt64(LocalFileHeader.size) + additionalSize
                 // `dataSize` can't be trusted. An overflowing position is unreadable and yields no descriptor.
@@ -253,10 +253,13 @@ public final class Archive: Sequence {
                     // Neither the version nor ZIP64 extended information in the central directory say how
                     // the descriptor was written. An entry that only needs ZIP64 for its offset has a
                     // descriptor with 4 byte sizes. The sizes of the central directory tell them apart.
+                    // If neither matches, the descriptor has 8 byte sizes only if the local file header
+                    // has ZIP64 extended information.
                     if zip64DataDescriptor?.matchesSizes(of: centralDirStruct) != true,
                        let descriptor: DataDescriptor = Data.readStruct(from: self.archiveFile,
                                                                          at: descriptorPosition),
-                       descriptor.matchesSizes(of: centralDirStruct) {
+                       descriptor.matchesSizes(of: centralDirStruct)
+                        || localFileHeader.hasZIP64ExtendedInformation == false {
                         (dataDescriptor, zip64DataDescriptor) = (descriptor, nil)
                     }
                 } else {

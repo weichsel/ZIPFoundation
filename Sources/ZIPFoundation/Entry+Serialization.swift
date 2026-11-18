@@ -155,8 +155,8 @@ extension Entry.DataDescriptor {
         guard data.count == Self.size else { return nil }
         let signature: UInt32 = data.scanValue(start: 0)
         // The DataDescriptor signature is not mandatory so we have to re-arrange the input data if it is missing.
-        var readOffset = 0
-        if signature == self.dataDescriptorSignature { readOffset = 4 }
+        self.hasSignature = signature == self.dataDescriptorSignature
+        var readOffset = self.hasSignature ? 4 : 0
         self.crc32 = data.scanValue(start: readOffset)
         readOffset += MemoryLayout<UInt32>.size
         self.compressedSize = data.scanValue(start: readOffset)

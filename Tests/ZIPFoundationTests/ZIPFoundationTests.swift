@@ -46,9 +46,8 @@ class ZIPFoundationTests: XCTestCase {
             if fileManager.itemExists(at: tempZipDirectoryURL) {
                 try fileManager.removeItem(at: tempZipDirectoryURL)
             }
-            try fileManager.createDirectory(at: tempZipDirectoryURL,
-                                                    withIntermediateDirectories: true,
-                                                    attributes: nil)
+            try fileManager.createDirectory(at: tempZipDirectoryURL, withIntermediateDirectories: true,
+                                            attributes: nil)
         } catch {
             XCTFail("Unexpected error while trying to set up test resources.")
         }
@@ -175,6 +174,11 @@ extension ZIPFoundationTests {
             ("testRemoveEntryBeforeStoredSymlinkWithWrongSize", testRemoveEntryBeforeStoredSymlinkWithWrongSize),
             ("testRemoveEntryBeforeStoredSymlinkWithDataDescriptor",
              testRemoveEntryBeforeStoredSymlinkWithDataDescriptor),
+            ("testRemoveEntryBeforeWrongDataDescriptorSize", testRemoveEntryBeforeWrongDataDescriptorSize),
+            ("testExtractStoredFileWithWrongUncompressedSize", testExtractStoredFileWithWrongUncompressedSize),
+            ("testReadEntryWithWrongDataDescriptorSizes", testReadEntryWithWrongDataDescriptorSizes),
+            ("testUnzipEntryWithWrongDataDescriptor", testUnzipEntryWithWrongDataDescriptor),
+            ("testRemoveEntryBeforeUnsignedDataDescriptor", testRemoveEntryBeforeUnsignedDataDescriptor),
             ("testArchiveInvalidDataErrorConditions", testArchiveInvalidDataErrorConditions),
             ("testArchiveIteratorErrorConditions", testArchiveIteratorErrorConditions),
             ("testArchiveReadErrorConditions", testArchiveReadErrorConditions),
@@ -330,6 +334,8 @@ extension ZIPFoundationTests {
             ("testExtractEntryWithZIP64DataDescriptor", testExtractEntryWithZIP64DataDescriptor),
             ("testIterateZIP64EntryWithDefaultDataDescriptor", testIterateZIP64EntryWithDefaultDataDescriptor),
             ("testRemoveEntryNextToDefaultDataDescriptor", testRemoveEntryNextToDefaultDataDescriptor),
+            ("testRemoveEntryNextToWrongDefaultDataDescriptor", testRemoveEntryNextToWrongDefaultDataDescriptor),
+            ("testRemoveEntryNextToWrongZIP64DataDescriptor", testRemoveEntryNextToWrongZIP64DataDescriptor),
             ("testUnzipSymlink", testUnzipSymlink),
             ("testAddSymlinkWithInvalidSize", testAddSymlinkWithInvalidSize),
             ("testUnzipCompressedSymlink", testUnzipCompressedSymlink),

@@ -75,6 +75,89 @@ extension ZIPFoundationTests {
         XCTAssertEqual(fileData, Data("abc".utf8))
     }
 
+    func testRemoveEntryBeforeWrongDataDescriptorSize() throws {
+        // The data descriptor of the deflated entry "data" states a compressed size of 4 bytes.
+        // The central directory states the actual size.
+        let archive = self.archive(for: #function, mode: .update)
+        let entry = try XCTUnwrap(archive["data"])
+        XCTAssertEqual(entry.dataDescriptor?.compressedSize, 4)
+        XCTAssertNotEqual(entry.centralDirectoryStructure.effectiveCompressedSize, 4)
+        try archive.remove(XCTUnwrap(archive["first"]))
+        let reopenedArchive = try Archive(url: archive.url, accessMode: .read)
+        XCTAssertEqual(reopenedArchive.map { $0.path }, ["data", "file"])
+        XCTAssert(reopenedArchive.checkIntegrity())
+        var data = Data()
+        _ = try reopenedArchive.extract(XCTUnwrap(reopenedArchive["data"])) { data.append($0) }
+        XCTAssertEqual(data, Data(String(repeating: "compressible ", count: 8).utf8))
+    }
+
+    func testExtractStoredFileWithWrongUncompressedSize() throws {
+        // The central directory of the stored entry "data" states an uncompressed size of 5 bytes,
+        // but its file data is 3 bytes long.
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["data"])
+        XCTAssertEqual(entry.uncompressedSize, 5)
+        let progress = archive.makeProgressForReading(entry)
+        var data = Data()
+        let checksum = try archive.extract(entry, progress: progress) { data.append($0) }
+        XCTAssertEqual(data, Data("abc".utf8))
+        XCTAssertEqual(checksum, entry.checksum)
+        XCTAssertEqual(progress.totalUnitCount, 3)
+        XCTAssertEqual(progress.completedUnitCount, 3)
+    }
+
+    func testReadEntryWithWrongDataDescriptorSizes() throws {
+        // The data descriptor of the deflated entry "data" states a compressed size of 4 bytes
+        // and an uncompressed size of 8 bytes. The central directory states the actual sizes.
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["data"])
+        XCTAssertEqual(entry.dataDescriptor?.compressedSize, 4)
+        XCTAssertEqual(entry.dataDescriptor?.uncompressedSize, 8)
+        let content = Data(String(repeating: "compressible ", count: 8).utf8)
+        XCTAssertEqual(entry.compressedSize, entry.centralDirectoryStructure.effectiveCompressedSize)
+        XCTAssertEqual(entry.uncompressedSize, UInt64(content.count))
+        let progress = archive.makeProgressForReading(entry)
+        var data = Data()
+        _ = try archive.extract(entry, progress: progress) { data.append($0) }
+        XCTAssertEqual(data, content)
+        XCTAssertEqual(progress.totalUnitCount, Int64(content.count))
+        XCTAssertEqual(progress.completedUnitCount, progress.totalUnitCount)
+    }
+
+    func testUnzipEntryWithWrongDataDescriptor() throws {
+        // The data descriptor of the deflated entry "data" states wrong sizes and a wrong checksum.
+        // The central directory states the actual values.
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["data"])
+        let content = Data(String(repeating: "compressible ", count: 8).utf8)
+        XCTAssertEqual(entry.dataDescriptor?.compressedSize, 4)
+        XCTAssertNotEqual(entry.dataDescriptor?.crc32, content.crc32(checksum: 0))
+        XCTAssertEqual(entry.checksum, content.crc32(checksum: 0))
+        let destinationURL = self.createDirectory(for: #function)
+        try FileManager().unzipItem(at: archive.url, to: destinationURL)
+        XCTAssertEqual(try Data(contentsOf: destinationURL.appendingPathComponent("data")), content)
+    }
+
+    func testRemoveEntryBeforeUnsignedDataDescriptor() throws {
+        // The data descriptor of the deflated entry "data" has no signature and is 12 bytes long.
+        let archive = self.archive(for: #function, mode: .update)
+        let entry = try XCTUnwrap(archive["data"])
+        XCTAssertEqual(entry.dataDescriptor?.hasSignature, false)
+        XCTAssertEqual(entry.dataDescriptor?.encodedSize, 12)
+        try archive.remove(XCTUnwrap(archive["first"]))
+        let reopenedArchive = try Archive(url: archive.url, accessMode: .read)
+        XCTAssertEqual(reopenedArchive.map { $0.path }, ["data", "file"])
+        XCTAssert(reopenedArchive.checkIntegrity())
+        // The following entry starts right after the descriptor.
+        let dataEntry = try XCTUnwrap(reopenedArchive["data"])
+        let fileEntry = try XCTUnwrap(reopenedArchive["file"])
+        XCTAssertEqual(fileEntry.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader,
+                       dataEntry.dataOffset + dataEntry.compressedSize + 12)
+        var data = Data()
+        _ = try reopenedArchive.extract(dataEntry) { data.append($0) }
+        XCTAssertEqual(data, Data(String(repeating: "compressible ", count: 8).utf8))
+    }
+
     func testDirectoryCreationHelperMethods() {
         let processInfo = ProcessInfo.processInfo
         var nestedURL = ZIPFoundationTests.tempZipDirectoryURL
