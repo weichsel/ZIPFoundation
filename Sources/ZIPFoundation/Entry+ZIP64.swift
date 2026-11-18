@@ -22,8 +22,6 @@ struct ExtraField {
     let headerID: UInt16
     /// The bytes of the field, including its 4 byte header.
     let data: Data
-    /// The bytes of the field that follow its header.
-    var payload: Data { return self.data.dropFirst(Self.headerSize) }
 }
 
 /// The well-formed extra fields at the beginning of the extra field data of a header.
