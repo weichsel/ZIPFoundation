@@ -235,11 +235,15 @@ extension ZIPFoundationTests {
                        parent + ["nested", fileName])
     }
 
-    func testUnzipEntryIntoCanonicallyEquivalentSibling() throws {
+    func testUnzipEntryIntoDirectoryAlias() throws {
+        try self.checkUnzipEntry(into: "cafe\u{0301}", alsoSpelled: "caf\u{00E9}")
+        try self.checkUnzipEntry(into: "destination", alsoSpelled: "Destination")
+    }
+
+    private func checkUnzipEntry(into name: String, alsoSpelled siblingName: String) throws {
         let fileManager = FileManager()
         let directoryURL = self.createDirectory(for: #function)
-        let destinationURL = directoryURL.appendingPathComponent("cafe\u{0301}")
-        let siblingName = "caf\u{00E9}"
+        let destinationURL = directoryURL.appendingPathComponent(name)
         let siblingURL = directoryURL.appendingPathComponent(siblingName)
         XCTAssertFalse(URL.isSymlinkDestination("../" + siblingName, ofSymlinkIn: destinationURL,
                                                 containedIn: destinationURL))

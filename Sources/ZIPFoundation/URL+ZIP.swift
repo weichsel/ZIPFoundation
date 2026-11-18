@@ -164,13 +164,12 @@ extension URL {
         return resolved
     }
 
-    /// Compares exact spellings, allowing canonical equivalents on Darwin if they identify the same directory.
+    /// Compares exact spellings, allowing different spellings on Darwin if they identify the same directory.
     static func pathComponents(_ components: [String], startWith prefix: [String]) -> Bool {
         guard components.count >= prefix.count else { return false }
         for index in prefix.indices {
             if components[index].unicodeScalars.elementsEqual(prefix[index].unicodeScalars) { continue }
 #if canImport(Darwin)
-            guard components[index] == prefix[index] else { return false }
             let candidatePath = "/" + components[...index].joined(separator: "/")
             let directoryPath = "/" + prefix[...index].joined(separator: "/")
             var candidate = stat()
