@@ -250,6 +250,7 @@ extension ZIPFoundationTests {
             ("testContainmentOfAbsolutePaths", testContainmentOfAbsolutePaths),
             ("testUnzipEntryWithParentReference", testUnzipEntryWithParentReference),
             ("testUnzipEntryWithLeadingCombiningMark", testUnzipEntryWithLeadingCombiningMark),
+            ("testUnzipEntryIntoCanonicallyEquivalentSibling", testUnzipEntryIntoCanonicallyEquivalentSibling),
             ("testUnzipEntryWithoutName", testUnzipEntryWithoutName),
             ("testUnzipSymlinkWithInvalidDestination", testUnzipSymlinkWithInvalidDestination),
             ("testZipItem", testZipItem),
