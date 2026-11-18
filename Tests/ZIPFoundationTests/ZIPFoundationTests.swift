@@ -46,9 +46,8 @@ class ZIPFoundationTests: XCTestCase {
             if fileManager.itemExists(at: tempZipDirectoryURL) {
                 try fileManager.removeItem(at: tempZipDirectoryURL)
             }
-            try fileManager.createDirectory(at: tempZipDirectoryURL,
-                                                    withIntermediateDirectories: true,
-                                                    attributes: nil)
+            try fileManager.createDirectory(at: tempZipDirectoryURL, withIntermediateDirectories: true,
+                                            attributes: nil)
         } catch {
             XCTFail("Unexpected error while trying to set up test resources.")
         }
@@ -336,6 +335,7 @@ extension ZIPFoundationTests {
             ("testIterateZIP64EntryWithDefaultDataDescriptor", testIterateZIP64EntryWithDefaultDataDescriptor),
             ("testRemoveEntryNextToDefaultDataDescriptor", testRemoveEntryNextToDefaultDataDescriptor),
             ("testRemoveEntryNextToWrongDefaultDataDescriptor", testRemoveEntryNextToWrongDefaultDataDescriptor),
+            ("testRemoveEntryNextToWrongZIP64DataDescriptor", testRemoveEntryNextToWrongZIP64DataDescriptor),
             ("testUnzipSymlink", testUnzipSymlink),
             ("testAddSymlinkWithInvalidSize", testAddSymlinkWithInvalidSize),
             ("testUnzipCompressedSymlink", testUnzipCompressedSymlink),

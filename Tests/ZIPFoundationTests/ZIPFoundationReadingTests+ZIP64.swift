@@ -143,4 +143,30 @@ extension ZIPFoundationTests {
             XCTAssertEqual(data, content)
         }
     }
+
+    func testRemoveEntryNextToWrongZIP64DataDescriptor() throws {
+        // Entry "a.txt" has ZIP64 extended information in its local file header and a data descriptor
+        // with 8 byte sizes. The descriptor states a wrong compressed size, so neither descriptor layout
+        // matches the central directory.
+        let archive = self.archive(for: #function, mode: .update)
+        let entry = try XCTUnwrap(archive["a.txt"])
+        XCTAssertTrue(entry.centralDirectoryStructure.isZIP64)
+        XCTAssertNil(entry.dataDescriptor)
+        XCTAssertEqual(entry.zip64DataDescriptor?.compressedSize, 4)
+        try archive.remove(XCTUnwrap(archive["pad.txt"]))
+        let reopenedArchive = try Archive(url: archive.url, accessMode: .read)
+        XCTAssertEqual(reopenedArchive.map { $0.path }, ["a.txt", "c.txt"])
+        XCTAssert(reopenedArchive.checkIntegrity())
+        // The following entry starts right after the descriptor.
+        let entryA = try XCTUnwrap(reopenedArchive["a.txt"])
+        let entryC = try XCTUnwrap(reopenedArchive["c.txt"])
+        XCTAssertEqual(entryC.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader,
+                       entryA.dataOffset + entryA.compressedSize + 24)
+        let content = Data(String(repeating: "hello world\n", count: 20).utf8)
+        for path in ["a.txt", "c.txt"] {
+            var data = Data()
+            _ = try reopenedArchive.extract(XCTUnwrap(reopenedArchive[path])) { data.append($0) }
+            XCTAssertEqual(data, content)
+        }
+    }
 }
