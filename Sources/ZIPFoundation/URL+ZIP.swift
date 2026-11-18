@@ -53,12 +53,19 @@ extension URL {
         // Missing components of the appended part are created as regular directories before the receiver
         // is written. A `..` that follows them can therefore be resolved.
         // The path of the root directory already ends with a path delimiter.
-        let directoryPrefix = directoryPath.hasSuffix("/") ? directoryPath : directoryPath + "/"
-        let components = path.hasPrefix(directoryPrefix)
-            ? URL.resolvedPathComponents(ofPath: "./" + path.dropFirst(directoryPath.count),
-                                         relativeTo: directoryComponents, missingComponentsAreDirectories: true)
-            : URL.resolvedPathComponents(ofPath: path)
-        return components?.starts(with: directoryComponents) == true
+        let directoryPrefix = directoryPath.unicodeScalars.last == "/" ? directoryPath : directoryPath + "/"
+        // A slash is a path delimiter even when a following combining mark forms one Character with it.
+        let components: [String]?
+        if path.unicodeScalars.starts(with: directoryPrefix.unicodeScalars) {
+            let suffix = path.unicodeScalars.dropFirst(directoryPrefix.unicodeScalars.count)
+            components = URL.resolvedPathComponents(ofPath: "./" + String(suffix), relativeTo: directoryComponents,
+                                                    missingComponentsAreDirectories: true)
+        } else {
+            components = URL.resolvedPathComponents(ofPath: path)
+        }
+        guard let components = components else { return false }
+
+        return URL.pathComponents(components, startWith: directoryComponents)
     }
 
     /// Checks if the destination of a symlink, that is about to be created in `directoryURL`,
@@ -83,7 +90,7 @@ extension URL {
               let components = URL.resolvedPathComponents(ofPath: destinationPath, relativeTo: directoryComponents)
         else { return false }
 
-        return components.starts(with: parentComponents)
+        return URL.pathComponents(components, startWith: parentComponents)
     }
 
     /// Resolves a path, component by component, in the same way the file system does:
@@ -109,7 +116,7 @@ extension URL {
     static func resolvedPathComponents(ofPath path: String, relativeTo baseComponents: [String] = [],
                                        missingComponentsAreDirectories: Bool = false) -> [String]? {
         func components(of path: String) -> [String] {
-            return path.split(separator: "/").map(String.init).filter { $0 != "." }
+            return path.unicodeScalars.split(separator: "/").map(String.init).filter { $0 != "." }
         }
 
         let fileManager = FileManager()
@@ -133,7 +140,9 @@ extension URL {
             guard missingComponentCount == 0,
                   let isSymbolicLink = URL.isSymbolicLink(atPath: candidatePath, fileManager: fileManager) else {
                 // The missing directory would be created at the location that has been resolved so far.
-                if missingComponentsAreDirectories, resolved.starts(with: baseComponents) == false { return nil }
+                if missingComponentsAreDirectories, URL.pathComponents(resolved, startWith: baseComponents) == false {
+                    return nil
+                }
 
                 missingComponentCount += 1
                 resolved.append(component)
@@ -153,6 +162,28 @@ extension URL {
             pending.append(contentsOf: components(of: destination).reversed())
         }
         return resolved
+    }
+
+    /// Compares exact spellings, allowing canonical equivalents on Darwin if they identify the same directory.
+    static func pathComponents(_ components: [String], startWith prefix: [String]) -> Bool {
+        guard components.count >= prefix.count else { return false }
+        for index in prefix.indices {
+            if components[index].unicodeScalars.elementsEqual(prefix[index].unicodeScalars) { continue }
+#if canImport(Darwin)
+            guard components[index] == prefix[index] else { return false }
+            let candidatePath = "/" + components[...index].joined(separator: "/")
+            let directoryPath = "/" + prefix[...index].joined(separator: "/")
+            var candidate = stat()
+            var directory = stat()
+            // Pass the original spellings to lstat so Foundation cannot normalize them before lookup.
+            guard lstat(candidatePath, &candidate) == 0, lstat(directoryPath, &directory) == 0,
+                  (candidate.st_mode & S_IFMT) == S_IFDIR, (directory.st_mode & S_IFMT) == S_IFDIR,
+                  candidate.st_dev == directory.st_dev, candidate.st_ino == directory.st_ino else { return false }
+#else
+            return false
+#endif
+        }
+        return true
     }
 
     /// Checks if the item at `path` is a symlink, without traversing it.

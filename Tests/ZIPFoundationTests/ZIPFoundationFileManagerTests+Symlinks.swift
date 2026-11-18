@@ -223,6 +223,50 @@ extension ZIPFoundationTests {
         XCTAssert(fileManager.itemExists(at: directoryURL.appendingPathComponent("indirect/target.txt")))
     }
 
+    func testUnzipEntryWithLeadingCombiningMark() throws {
+        let fileName = "\u{0301}notes.txt"
+        let archive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: fileName, type: .file, content: "notes", to: archive)
+        let destinationURL = self.createDirectory(for: #function)
+        try FileManager().unzipItem(at: archive.url, to: destinationURL)
+        XCTAssertEqual(try Data(contentsOf: destinationURL.appendingPathComponent(fileName)), Data("notes".utf8))
+        let parent = try XCTUnwrap(URL.resolvedPathComponents(ofPath: destinationURL.path))
+        XCTAssertEqual(URL.resolvedPathComponents(ofPath: "nested/" + fileName, relativeTo: parent),
+                       parent + ["nested", fileName])
+    }
+
+    func testUnzipEntryIntoCanonicallyEquivalentSibling() throws {
+        let fileManager = FileManager()
+        let directoryURL = self.createDirectory(for: #function)
+        let destinationURL = directoryURL.appendingPathComponent("cafe\u{0301}")
+        let siblingName = "caf\u{00E9}"
+        let siblingURL = directoryURL.appendingPathComponent(siblingName)
+        XCTAssertFalse(URL.isSymlinkDestination("../" + siblingName, ofSymlinkIn: destinationURL,
+                                                containedIn: destinationURL))
+        try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
+        let entryArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "../" + siblingName + "/entry.txt", type: .file, content: "entry", to: entryArchive)
+        let symlinkArchive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "link", type: .symlink, content: "../" + siblingName, to: symlinkArchive)
+#if canImport(Darwin)
+        // Only the destination has been created, so a successful lookup means the names are aliases.
+        var info = stat()
+        if lstat(siblingURL.path, &info) == 0 {
+            XCTAssertNoThrow(try fileManager.unzipItem(at: entryArchive.url, to: destinationURL))
+            XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("entry.txt")))
+            XCTAssertNoThrow(try fileManager.unzipItem(at: symlinkArchive.url, to: destinationURL))
+            return
+        }
+#endif
+        try fileManager.createDirectory(at: siblingURL, withIntermediateDirectories: true, attributes: nil)
+        XCTAssertCocoaError(try fileManager.unzipItem(at: entryArchive.url, to: destinationURL),
+                            throwsErrorWithCode: .fileReadInvalidFileName)
+        XCTAssertFalse(fileManager.itemExists(at: siblingURL.appendingPathComponent("entry.txt")))
+        XCTAssertSwiftError(try fileManager.unzipItem(at: symlinkArchive.url, to: destinationURL),
+                            throws: Archive.ArchiveError.uncontainedSymlink)
+        XCTAssertFalse(fileManager.itemExists(at: destinationURL.appendingPathComponent("link")))
+    }
+
     func testUnzipEntryWithoutName() throws {
         let fileManager = FileManager()
         let destinationURL = self.createDirectory(for: #function).appendingPathComponent("destination")
