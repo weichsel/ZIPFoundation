@@ -248,14 +248,17 @@ extension ZIPFoundationTests {
         try self.addEntry(with: "../" + siblingName + "/entry.txt", type: .file, content: "entry", to: entryArchive)
         let symlinkArchive = self.archive(for: #function, mode: .create)
         try self.addEntry(with: "link", type: .symlink, content: "../" + siblingName, to: symlinkArchive)
+#if canImport(Darwin)
         // Only the destination has been created, so a successful lookup means the names are aliases.
-        if fileManager.fileExists(atPath: siblingURL.path) {
+        var info = stat()
+        if lstat(siblingURL.path, &info) == 0 {
             XCTAssertNoThrow(try fileManager.unzipItem(at: entryArchive.url, to: destinationURL))
             XCTAssert(fileManager.itemExists(at: destinationURL.appendingPathComponent("entry.txt")))
             XCTAssertNoThrow(try fileManager.unzipItem(at: symlinkArchive.url, to: destinationURL))
             return
         }
-        try fileManager.createDirectory(at: siblingURL, withIntermediateDirectories: false, attributes: nil)
+#endif
+        try fileManager.createDirectory(at: siblingURL, withIntermediateDirectories: true, attributes: nil)
         XCTAssertCocoaError(try fileManager.unzipItem(at: entryArchive.url, to: destinationURL),
                             throwsErrorWithCode: .fileReadInvalidFileName)
         XCTAssertFalse(fileManager.itemExists(at: siblingURL.appendingPathComponent("entry.txt")))

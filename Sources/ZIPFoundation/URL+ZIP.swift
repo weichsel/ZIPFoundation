@@ -9,9 +9,6 @@
 //
 
 import Foundation
-#if os(Android)
-import Android
-#endif
 
 extension URL {
 
@@ -167,15 +164,13 @@ extension URL {
         return resolved
     }
 
-    /// Accepts canonically equivalent spellings only if both paths identify the same directory.
+    /// Compares exact spellings, allowing canonical equivalents on Darwin if they identify the same directory.
     static func pathComponents(_ components: [String], startWith prefix: [String]) -> Bool {
         guard components.count >= prefix.count else { return false }
         for index in prefix.indices {
             if components[index].unicodeScalars.elementsEqual(prefix[index].unicodeScalars) { continue }
+#if canImport(Darwin)
             guard components[index] == prefix[index] else { return false }
-#if os(Windows)
-            return false
-#else
             let candidatePath = "/" + components[...index].joined(separator: "/")
             let directoryPath = "/" + prefix[...index].joined(separator: "/")
             var candidate = stat()
@@ -184,6 +179,8 @@ extension URL {
             guard lstat(candidatePath, &candidate) == 0, lstat(directoryPath, &directory) == 0,
                   (candidate.st_mode & S_IFMT) == S_IFDIR, (directory.st_mode & S_IFMT) == S_IFDIR,
                   candidate.st_dev == directory.st_dev, candidate.st_ino == directory.st_ino else { return false }
+#else
+            return false
 #endif
         }
         return true
