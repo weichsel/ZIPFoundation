@@ -138,6 +138,26 @@ extension ZIPFoundationTests {
         XCTAssertEqual(try Data(contentsOf: destinationURL.appendingPathComponent("data")), content)
     }
 
+    func testRemoveEntryBeforeUnsignedDataDescriptor() throws {
+        // The data descriptor of the deflated entry "data" has no signature and is 12 bytes long.
+        let archive = self.archive(for: #function, mode: .update)
+        let entry = try XCTUnwrap(archive["data"])
+        XCTAssertEqual(entry.dataDescriptor?.hasSignature, false)
+        XCTAssertEqual(entry.dataDescriptor?.encodedSize, 12)
+        try archive.remove(XCTUnwrap(archive["first"]))
+        let reopenedArchive = try Archive(url: archive.url, accessMode: .read)
+        XCTAssertEqual(reopenedArchive.map { $0.path }, ["data", "file"])
+        XCTAssert(reopenedArchive.checkIntegrity())
+        // The following entry starts right after the descriptor.
+        let dataEntry = try XCTUnwrap(reopenedArchive["data"])
+        let fileEntry = try XCTUnwrap(reopenedArchive["file"])
+        XCTAssertEqual(fileEntry.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader,
+                       dataEntry.dataOffset + dataEntry.compressedSize + 12)
+        var data = Data()
+        _ = try reopenedArchive.extract(dataEntry) { data.append($0) }
+        XCTAssertEqual(data, Data(String(repeating: "compressible ", count: 8).utf8))
+    }
+
     func testDirectoryCreationHelperMethods() {
         let processInfo = ProcessInfo.processInfo
         var nestedURL = ZIPFoundationTests.tempZipDirectoryURL

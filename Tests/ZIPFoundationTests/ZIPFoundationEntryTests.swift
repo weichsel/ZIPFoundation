@@ -191,6 +191,7 @@ extension ZIPFoundationTests {
                                                             return Data() })
         XCTAssertEqual(dataDescriptor?.uncompressedSize, 10)
         XCTAssertEqual(dataDescriptor?.compressedSize, 10)
+        XCTAssertEqual(dataDescriptor?.encodedSize, 16)
         // The DataDescriptor signature is not mandatory.
         let ddBytesWithoutSignature: [UInt8] = [0x00, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00,
                                                 0x0a, 0x00, 0x00, 0x00, 0x50, 0x4b, 0x07, 0x08]
@@ -199,6 +200,7 @@ extension ZIPFoundationTests {
                                                                             return Data() })
         XCTAssertEqual(dataDescriptorWithoutSignature?.uncompressedSize, 10)
         XCTAssertEqual(dataDescriptorWithoutSignature?.compressedSize, 10)
+        XCTAssertEqual(dataDescriptorWithoutSignature?.encodedSize, 12)
     }
 
     func testEntryIsCompressed() throws {

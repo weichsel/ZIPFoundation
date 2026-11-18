@@ -81,6 +81,11 @@ extension Entry.LocalFileHeader {
         if self.compressedSize == .max { fields.append(.compressedSize) }
         return fields
     }
+    /// Indicates whether the extra field contains ZIP64 extended information, regardless of its fields.
+    var hasZIP64ExtendedInformation: Bool {
+        let zip64FieldID = Archive.ExtraFieldHeaderID.zip64ExtendedInformation.rawValue
+        return ExtraFields(self.extraFieldData).contains { $0.headerID == zip64FieldID }
+    }
 }
 
 extension Entry.CentralDirectoryStructure {

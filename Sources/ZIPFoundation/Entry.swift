@@ -75,8 +75,13 @@ public struct Entry: Equatable {
         // For ZIP64 format archives, the compressed and uncompressed sizes are 8 bytes each.
         let compressedSize: T
         let uncompressedSize: T
+        /// Indicates whether the descriptor starts with the optional signature.
+        let hasSignature: Bool
         static var memoryLengthOfSize: Int { MemoryLayout<T>.size }
+        /// The size of a descriptor with a signature.
         static var size: Int { memoryLengthOfSize * 2 + 8 }
+        /// The size of the receiver in the archive.
+        var encodedSize: Int { self.hasSignature ? Self.size : Self.size - MemoryLayout<UInt32>.size }
     }
 
     typealias DefaultDataDescriptor = DataDescriptor<UInt32>
@@ -216,10 +221,10 @@ public struct Entry: Equatable {
         guard dataSize <= Int64.max else { return .max }
         size += dataSize
         // At most one of the descriptors is set. A ZIP64 entry can have a data descriptor with 4 byte sizes.
-        if self.zip64DataDescriptor != nil {
-            size += UInt64(ZIP64DataDescriptor.size)
-        } else if self.dataDescriptor != nil {
-            size += UInt64(DefaultDataDescriptor.size)
+        if let zip64DataDescriptor = self.zip64DataDescriptor {
+            size += UInt64(zip64DataDescriptor.encodedSize)
+        } else if let dataDescriptor = self.dataDescriptor {
+            size += UInt64(dataDescriptor.encodedSize)
         }
         return size
     }
