@@ -17,6 +17,12 @@ extension Archive {
     func readUncompressed(entry: Entry, bufferSize: Int, skipCRC32: Bool,
                           progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         let size = entry.centralDirectoryStructure.effectiveUncompressedSize
+        return try self.readUncompressed(size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
+                                         progress: progress, with: consumer)
+    }
+
+    func readUncompressed(size: UInt64, bufferSize: Int, skipCRC32: Bool,
+                          progress: Progress? = nil, with consumer: Consumer) throws -> CRC32 {
         guard size <= Int64.max else { throw ArchiveError.invalidEntrySize }
         return try Data.consumePart(of: Int64(size), chunkSize: bufferSize, skipCRC32: skipCRC32,
                                     provider: { (_, chunkSize) -> Data in
@@ -51,12 +57,12 @@ extension Archive {
         }
         switch compressionMethod {
         case .none:
-            let localFileHeader = entry.localFileHeader
-            guard let size = Int(exactly: localFileHeader.compressedSize) else { throw ArchiveError.invalidEntrySize }
-            let data = try Data.readChunk(of: size, from: self.archiveFile)
-            checksum = data.crc32(checksum: 0)
-            try consumer(data)
-            progress?.completedUnitCount = self.totalUnitCountForReading(entry)
+            // The sizes of the local file header can't be trusted. Reading in chunks bounds the allocation
+            // by the buffer size. Some writers stored a wrong uncompressed size for symlinks,
+            // so the compressed size determines the length of the destination.
+            let size = entry.centralDirectoryStructure.effectiveCompressedSize
+            checksum = try self.readUncompressed(size: size, bufferSize: bufferSize, skipCRC32: skipCRC32,
+                                                 progress: progress, with: consumer)
         case .deflate: checksum = try self.readCompressed(entry: entry, bufferSize: bufferSize,
                                                           skipCRC32: skipCRC32, progress: progress, with: consumer)
         }

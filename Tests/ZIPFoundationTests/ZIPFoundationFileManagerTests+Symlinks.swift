@@ -311,6 +311,52 @@ extension ZIPFoundationTests {
         XCTAssertFalse(fileManager.itemExists(at: linkURL))
     }
 
+    func testExtractStoredSymlinkWithOversizedLocalHeader() throws {
+        // The local file header states a size of 4 GiB. The central directory states the actual size.
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["link"])
+        XCTAssertEqual(entry.localFileHeader.compressedSize, UInt32.max)
+        var data = Data()
+        let checksum = try archive.extract(entry, bufferSize: 2) { chunk in
+            XCTAssertLessThanOrEqual(chunk.count, 2)
+            data.append(chunk)
+        }
+        XCTAssertEqual(data, Data("target".utf8))
+        XCTAssertEqual(checksum, entry.checksum)
+        let linkURL = self.createDirectory(for: #function).appendingPathComponent("link")
+        _ = try archive.extract(entry, to: linkURL)
+        XCTAssertEqual(try FileManager().destinationOfSymbolicLink(atPath: linkURL.path), "target")
+    }
+
+    func testExtractStoredZIP64Symlink() throws {
+        // The central directory states the sizes in ZIP64 extended information.
+        let archive = self.archive(for: #function, mode: .read)
+        let entry = try XCTUnwrap(archive["link"])
+        XCTAssertEqual(entry.centralDirectoryStructure.compressedSize, UInt32.max)
+        XCTAssertEqual(entry.zip64ExtendedInformation?.compressedSize, 6)
+        var data = Data()
+        let checksum = try archive.extract(entry) { data.append($0) }
+        XCTAssertEqual(data, Data("target".utf8))
+        XCTAssertEqual(checksum, entry.checksum)
+    }
+
+    func testExtractStoredSymlinkWithWrongUncompressedSize() throws {
+        // Some writers stored a wrong uncompressed size for symlinks. The compressed size is used instead.
+        let archive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "link", type: .symlink, content: "target", to: archive)
+        let reportedSize = UInt32(maxSymbolicLinkDestinationSize + 1)
+        let entry = try XCTUnwrap(self.entry(XCTUnwrap(archive["link"]), withUncompressedSize: reportedSize))
+        let progress = archive.makeProgressForReading(entry)
+        var data = Data()
+        _ = try archive.extract(entry, bufferSize: 2, progress: progress) { data.append($0) }
+        XCTAssertEqual(data, Data("target".utf8))
+        XCTAssertEqual(progress.completedUnitCount, 6)
+        XCTAssertEqual(progress.totalUnitCount, 6)
+        let linkURL = self.createDirectory(for: #function).appendingPathComponent("link")
+        _ = try archive.extract(entry, to: linkURL)
+        XCTAssertEqual(try FileManager().destinationOfSymbolicLink(atPath: linkURL.path), "target")
+    }
+
     func testDeprecatedContainmentCheck() {
         let directoryURL = self.createDirectory(for: #function)
         XCTAssertTrue(directoryURL.appendingPathComponent("file.txt").isContained(in: directoryURL))
