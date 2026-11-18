@@ -121,6 +121,10 @@ extension Archive {
                          compressionMethod: CompressionMethod = .none, bufferSize: Int = defaultWriteChunkSize,
                          progress: Progress? = nil, provider: Provider) throws {
         guard self.accessMode != .read else { throw ArchiveError.unwritableArchive }
+        // The destination of a symlink is provided at once. Its actual size is recorded, so that the sizes
+        // of the entry match the stored data even if `uncompressedSize` is wrong.
+        let linkData = type == .symlink ? try provider(0, Int(uncompressedSize)) : nil
+        let uncompressedSize = linkData.map { Int64($0.count) } ?? uncompressedSize
         // Directories and symlinks cannot be compressed
         let compressionMethod = type == .file ? compressionMethod : .none
         progress?.totalUnitCount = type == .directory ? defaultDirectoryUnitCount : uncompressedSize
@@ -145,7 +149,9 @@ extension Archive {
             // File Data
             let (written, checksum) = try self.writeEntry(uncompressedSize: uncompressedSize, type: type,
                                                           compressionMethod: compressionMethod, bufferSize: bufferSize,
-                                                          progress: progress, provider: provider)
+                                                          progress: progress) { position, size in
+                return try linkData ?? provider(position, size)
+            }
             startOfCD = Int64(ftello(self.archiveFile))
             guard startOfCD >= 0 else { throw ArchiveError.unwritableArchive }
 
