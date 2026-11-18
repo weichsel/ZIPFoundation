@@ -12,6 +12,15 @@ import XCTest
 
 extension ZIPFoundationTests {
 
+    func testAddSymlinkWithInvalidSize() throws {
+        let archive = self.archive(for: #function, mode: .create)
+        XCTAssertSwiftError(try archive.addEntry(with: "link", type: .symlink, uncompressedSize: Int64(-1)) { _, _ in
+            XCTFail("Unexpected provider call for an invalid size")
+            return Data()
+        }, throws: Archive.ArchiveError.invalidEntrySize)
+        XCTAssertNil(archive["link"])
+    }
+
     func testArchiveReadErrorConditions() {
         let nonExistantURL = URL(fileURLWithPath: "/nothing")
         XCTAssertPOSIXError(try Archive(url: nonExistantURL, accessMode: .read), throwsErrorWithCode: .ENOENT)
