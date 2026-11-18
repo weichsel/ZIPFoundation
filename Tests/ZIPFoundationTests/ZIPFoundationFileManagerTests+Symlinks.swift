@@ -223,6 +223,18 @@ extension ZIPFoundationTests {
         XCTAssert(fileManager.itemExists(at: directoryURL.appendingPathComponent("indirect/target.txt")))
     }
 
+    func testUnzipEntryWithLeadingCombiningMark() throws {
+        let fileName = "\u{0301}notes.txt"
+        let archive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: fileName, type: .file, content: "notes", to: archive)
+        let destinationURL = self.createDirectory(for: #function)
+        try FileManager().unzipItem(at: archive.url, to: destinationURL)
+        XCTAssertEqual(try Data(contentsOf: destinationURL.appendingPathComponent(fileName)), Data("notes".utf8))
+        let parent = try XCTUnwrap(URL.resolvedPathComponents(ofPath: destinationURL.path))
+        XCTAssertEqual(URL.resolvedPathComponents(ofPath: "nested/" + fileName, relativeTo: parent),
+                       parent + ["nested", fileName])
+    }
+
     func testUnzipEntryWithoutName() throws {
         let fileManager = FileManager()
         let destinationURL = self.createDirectory(for: #function).appendingPathComponent("destination")
