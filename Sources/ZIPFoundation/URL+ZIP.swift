@@ -9,6 +9,9 @@
 //
 
 import Foundation
+#if os(Android)
+import Android
+#endif
 
 extension URL {
 
@@ -164,18 +167,26 @@ extension URL {
         return resolved
     }
 
-    /// Checks if `components` start with `prefix`, in the same way the file system compares names.
-    ///
-    /// The file systems of Darwin platforms treat canonically equivalent names (e.g. a precomposed `é`
-    /// and an `e` followed by a combining acute accent) as the same item, as does `String` equality.
-    /// The file systems of other platforms compare names byte by byte. There, canonically equivalent
-    /// names can refer to different items, so they must not be treated as equal.
+    /// Accepts canonically equivalent spellings only if both paths identify the same directory.
     static func pathComponents(_ components: [String], startWith prefix: [String]) -> Bool {
-#if os(macOS) || os(iOS) || os(tvOS) || os(visionOS) || os(watchOS)
-        return components.starts(with: prefix)
+        guard components.count >= prefix.count else { return false }
+        for index in prefix.indices {
+            if components[index].unicodeScalars.elementsEqual(prefix[index].unicodeScalars) { continue }
+            guard components[index] == prefix[index] else { return false }
+#if os(Windows)
+            return false
 #else
-        return components.starts(with: prefix) { $0.unicodeScalars.elementsEqual($1.unicodeScalars) }
+            let candidatePath = "/" + components[...index].joined(separator: "/")
+            let directoryPath = "/" + prefix[...index].joined(separator: "/")
+            var candidate = stat()
+            var directory = stat()
+            // Pass the original spellings to lstat so Foundation cannot normalize them before lookup.
+            guard lstat(candidatePath, &candidate) == 0, lstat(directoryPath, &directory) == 0,
+                  (candidate.st_mode & S_IFMT) == S_IFDIR, (directory.st_mode & S_IFMT) == S_IFDIR,
+                  candidate.st_dev == directory.st_dev, candidate.st_ino == directory.st_ino else { return false }
 #endif
+        }
+        return true
     }
 
     /// Checks if the item at `path` is a symlink, without traversing it.
