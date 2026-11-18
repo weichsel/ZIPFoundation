@@ -53,11 +53,16 @@ extension URL {
         // Missing components of the appended part are created as regular directories before the receiver
         // is written. A `..` that follows them can therefore be resolved.
         // The path of the root directory already ends with a path delimiter.
-        let directoryPrefix = directoryPath.hasSuffix("/") ? directoryPath : directoryPath + "/"
-        let components = path.hasPrefix(directoryPrefix)
-            ? URL.resolvedPathComponents(ofPath: "./" + path.dropFirst(directoryPath.count),
-                                         relativeTo: directoryComponents, missingComponentsAreDirectories: true)
-            : URL.resolvedPathComponents(ofPath: path)
+        let directoryPrefix = directoryPath.unicodeScalars.last == "/" ? directoryPath : directoryPath + "/"
+        // A slash is a path delimiter even when a following combining mark forms one Character with it.
+        let components: [String]?
+        if path.unicodeScalars.starts(with: directoryPrefix.unicodeScalars) {
+            let suffix = path.unicodeScalars.dropFirst(directoryPrefix.unicodeScalars.count)
+            components = URL.resolvedPathComponents(ofPath: "./" + String(suffix), relativeTo: directoryComponents,
+                                                    missingComponentsAreDirectories: true)
+        } else {
+            components = URL.resolvedPathComponents(ofPath: path)
+        }
         return components?.starts(with: directoryComponents) == true
     }
 
@@ -109,7 +114,7 @@ extension URL {
     static func resolvedPathComponents(ofPath path: String, relativeTo baseComponents: [String] = [],
                                        missingComponentsAreDirectories: Bool = false) -> [String]? {
         func components(of path: String) -> [String] {
-            return path.split(separator: "/").map(String.init).filter { $0 != "." }
+            return path.unicodeScalars.split(separator: "/").map(String.init).filter { $0 != "." }
         }
 
         let fileManager = FileManager()
