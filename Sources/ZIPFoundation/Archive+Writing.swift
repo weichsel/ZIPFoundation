@@ -198,30 +198,28 @@ extension Archive {
         var centralDirectoryData = Data()
         for currentEntry in self where currentEntry != entry {
             let cds = currentEntry.centralDirectoryStructure
-            do {
-                let entryStart = cds.effectiveRelativeOffsetOfLocalHeader
-                guard entryStart <= Int64.max else { throw ArchiveError.invalidLocalHeaderDataOffset }
-                // The remaining entries are written in the order of the central directory. That order can differ
-                // from the order in which they are stored in the receiver. The new offset of an entry is
-                // therefore the position it is written to and not its old offset minus the removed size.
-                let updatedOffset = Int64(ftello(tempArchive.archiveFile))
-                guard updatedOffset >= 0 else { throw ArchiveError.unwritableArchive }
-                fseeko(self.archiveFile, zip_off_t(entryStart), SEEK_SET)
-                let provider: Provider = { (_, chunkSize) -> Data in
-                    return try Data.readChunk(of: chunkSize, from: self.archiveFile)
-                }
-                let consumer: Consumer = {
-                    if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
-                    _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
-                    progress?.completedUnitCount += Int64($0.count)
-                }
-                guard currentEntry.localSize <= Int64.max else { throw ArchiveError.invalidLocalHeaderSize }
-                _ = try Data.consumePart(of: Int64(currentEntry.localSize), chunkSize: bufferSize,
-                                         provider: provider, consumer: consumer)
-                let updatedCentralDirectory = try updateOffsetInCentralDirectory(centralDirectoryStructure: cds,
-                                                                                 updatedOffset: UInt64(updatedOffset))
-                centralDirectoryData.append(updatedCentralDirectory.data)
+            let entryStart = cds.effectiveRelativeOffsetOfLocalHeader
+            guard entryStart <= Int64.max else { throw ArchiveError.invalidLocalHeaderDataOffset }
+            // The remaining entries are written in the order of the central directory. That order can differ
+            // from the order in which they are stored in the receiver. The new offset of an entry is
+            // therefore the position it is written to and not its old offset minus the removed size.
+            let updatedOffset = Int64(ftello(tempArchive.archiveFile))
+            guard updatedOffset >= 0 else { throw ArchiveError.unwritableArchive }
+            fseeko(self.archiveFile, zip_off_t(entryStart), SEEK_SET)
+            let provider: Provider = { (_, chunkSize) -> Data in
+                return try Data.readChunk(of: chunkSize, from: self.archiveFile)
             }
+            let consumer: Consumer = {
+                if progress?.isCancelled == true { throw ArchiveError.cancelledOperation }
+                _ = try Data.write(chunk: $0, to: tempArchive.archiveFile)
+                progress?.completedUnitCount += Int64($0.count)
+            }
+            guard currentEntry.localSize <= Int64.max else { throw ArchiveError.invalidLocalHeaderSize }
+            _ = try Data.consumePart(of: Int64(currentEntry.localSize), chunkSize: bufferSize,
+                                     provider: provider, consumer: consumer)
+            let updatedCentralDirectory = try updateOffsetInCentralDirectory(centralDirectoryStructure: cds,
+                                                                             updatedOffset: UInt64(updatedOffset))
+            centralDirectoryData.append(updatedCentralDirectory.data)
         }
         let startOfCentralDirectory = Int64(ftello(tempArchive.archiveFile))
         guard startOfCentralDirectory >= 0 else { throw ArchiveError.unwritableArchive }
