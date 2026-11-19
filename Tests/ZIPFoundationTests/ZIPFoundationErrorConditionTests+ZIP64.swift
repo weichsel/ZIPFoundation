@@ -39,9 +39,10 @@ extension ZIPFoundationTests {
 
     func testWriteEOCDWithTooSmallCentralDirectory() {
         let archive = self.archive(for: #function, mode: .create)
+        // The written central directory ends before it starts.
         XCTAssertSwiftError(
             try archive.writeEndOfCentralDirectory(centralDirectoryStructure: makeMockCentralDirectory()!,
-                                                   startOfCentralDirectory: 0,
+                                                   startOfCentralDirectory: 1,
                                                    startOfEndOfCentralDirectory: 0,
                                                    operation: .remove),
             throws: Archive.ArchiveError.invalidCentralDirectorySize)

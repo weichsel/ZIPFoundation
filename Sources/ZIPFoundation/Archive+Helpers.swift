@@ -186,14 +186,15 @@ extension Archive {
                 }
                 return (sizeOfCD + UInt64(cdDataLengthChange), numberOfTotalEntries + UInt64(countChange))
             case .remove:
-                guard sizeOfCD >= -cdDataLengthChange, startOfEndOfCentralDirectory >= startOfCentralDirectory else {
+                // The central directory structures of the remaining entries can change their size when their
+                // ZIP64 extended information is updated. The size of the written central directory has to be used.
+                // The size that the receiver states is therefore not required to be valid.
+                guard startOfEndOfCentralDirectory >= startOfCentralDirectory else {
                     throw ArchiveError.invalidCentralDirectorySize
                 }
                 guard numberOfTotalEntries >= -countChange else {
                     throw ArchiveError.invalidCentralDirectoryEntryCount
                 }
-                // The central directory structures of the remaining entries can change their size when their
-                // ZIP64 extended information is updated. The size of the written central directory has to be used.
                 return (startOfEndOfCentralDirectory - startOfCentralDirectory,
                         numberOfTotalEntries - UInt64(-countChange))
             }
