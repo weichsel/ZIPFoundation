@@ -139,7 +139,9 @@ extension ZIPFoundationTests {
     }
 
     func testRemoveEntryBeforeUnsignedDataDescriptor() throws {
-        // The data descriptor of the deflated entry "data" has no signature and is 12 bytes long.
+        // All entries of the archive end in data descriptors without signatures. The removal has to
+        // copy the remaining entries including their 12 byte descriptors. A wrong descriptor length
+        // also shifts the start of the written central directory.
         let archive = self.archive(for: #function, mode: .update)
         let entry = try XCTUnwrap(archive["data"])
         XCTAssertEqual(entry.dataDescriptor?.hasSignature, false)
@@ -156,6 +158,14 @@ extension ZIPFoundationTests {
         var data = Data()
         _ = try reopenedArchive.extract(dataEntry) { data.append($0) }
         XCTAssertEqual(data, Data(String(repeating: "compressible ", count: 8).utf8))
+        // The last entry ends in a 12 byte descriptor without a signature too.
+        try archive.remove(try XCTUnwrap(archive["data"]))
+        XCTAssertEqual(archive.map { $0.path }, ["file"])
+        XCTAssert(archive.checkIntegrity())
+        let movedFileEntry = try XCTUnwrap(archive["file"])
+        XCTAssertEqual(movedFileEntry.centralDirectoryStructure.effectiveRelativeOffsetOfLocalHeader, 0)
+        XCTAssertEqual(archive.offsetToStartOfCentralDirectory,
+                       movedFileEntry.dataOffset + movedFileEntry.compressedSize + 12)
     }
 
     func testDirectoryCreationHelperMethods() {
