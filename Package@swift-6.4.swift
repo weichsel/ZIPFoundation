@@ -9,13 +9,18 @@ let unixZlibPlatforms: [Platform] = [.linux, .android]
 
 /// Restrict `pkg-config` probes by SwiftPM to `zlibPlatforms`. This excludes macOS, where it is unnecessary, and
 /// generates a warning when compiling for Apple platforms.
+///
+/// The privacy manifest is only needed on Apple platforms. SwiftPM doesn't support platform conditions for
+/// resources, so the manifest is only copied when the package is built on Darwin.
 #if canImport(Darwin)
 let czlib: Target = .systemLibrary(name: "CZLib")
+let resources: [Resource] = [.copy("Resources/PrivacyInfo.xcprivacy")]
 #else
 let czlib: Target = .systemLibrary(
     name: "CZLib",
     pkgConfig: "zlib",
     providers: [.brew(["zlib"]), .apt(["zlib"])])
+let resources: [Resource] = []
 #endif
 
 let package = Package(
@@ -32,9 +37,7 @@ let package = Package(
             dependencies: [
                 .target(name: "CZLib", condition: .when(platforms: zlibPlatforms))
             ],
-            resources: [
-                .copy("Resources/PrivacyInfo.xcprivacy")
-            ],
+            resources: resources,
             cSettings: [
                 .define("_GNU_SOURCE", to: "1", .when(platforms: unixZlibPlatforms))
             ],
