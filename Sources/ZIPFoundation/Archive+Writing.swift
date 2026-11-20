@@ -319,7 +319,6 @@ private extension Archive {
         fseeko(self.archiveFile, zip_off_t(localFileHeaderStart), SEEK_SET)
         _ = try Data.writeLargeChunk(existingCentralDirectory.data, size: existingCentralDirectory.size,
                                      bufferSize: bufferSize, to: archiveFile)
-        _ = try Data.write(chunk: existingCentralDirectory.data, to: self.archiveFile)
         if let zip64EOCD = zip64EndOfCentralDirectory {
             _ = try Data.write(chunk: zip64EOCD.data, to: self.archiveFile)
         }

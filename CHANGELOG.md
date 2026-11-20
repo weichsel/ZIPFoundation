@@ -14,6 +14,7 @@
  - Fixed crashes and endless loops when reading malformed archives
  - Fixed crash when adding entries to archives with an invalid central directory
  - Fixed data loss and invalid offsets when removing entries
+ - Fixed duplicated central directory after cancelling the addition of an entry
  - Fixed sizes of ZIP64 entries with 4 byte data descriptors
  - Fixed reading of ZIP64 archives with a low "version needed to extract"
  - Fixed detection of directory entries with a trailing path delimiter
