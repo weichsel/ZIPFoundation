@@ -119,6 +119,40 @@ extension ZIPFoundationTests {
         XCTAssertSwiftError(try Data.writeLargeChunk(data, size: 1024, bufferSize: 256, to: file),
                             throws: Data.DataError.unwritableFile)
     }
+
+    /// Consumers can keep the data they receive. A chunk must not change when the next chunk is processed.
+    func testConsumersCanKeepProcessedData() throws {
+        let bufferSize = 1024
+        let data = Data.makeRandomData(size: bufferSize * 16)
+        let provider: (Data) -> Provider = { source in
+            return { position, size in
+                let lowerBound = Int(position)
+                let upperBound = Swift.min(source.count, lowerBound + size)
+                return source.subdata(in: lowerBound..<upperBound)
+            }
+        }
+        func process(_ source: Data, with operation: (Provider, Consumer) throws -> CRC32) throws -> Data {
+            var chunks = [Data]()
+            var copies = [Data]()
+            var keptChunksChanged = false
+            _ = try operation(provider(source), { chunk in
+                keptChunksChanged = keptChunksChanged || chunks != copies
+                chunks.append(chunk)
+                copies.append(Data([UInt8](chunk)))
+            })
+            XCTAssertGreaterThan(chunks.count, 1)
+            XCTAssertFalse(keptChunksChanged || chunks != copies, "Kept chunks changed during processing")
+            return copies.reduce(Data(), +)
+        }
+        let compressedData = try process(data) {
+            try Data.compress(size: Int64(data.count), bufferSize: bufferSize, provider: $0, consumer: $1)
+        }
+        let decompressedData = try process(compressedData) {
+            try Data.decompress(size: Int64(compressedData.count), bufferSize: bufferSize,
+                                skipCRC32: false, provider: $0, consumer: $1)
+        }
+        XCTAssertEqual(decompressedData, data)
+    }
 }
 
 extension Data {

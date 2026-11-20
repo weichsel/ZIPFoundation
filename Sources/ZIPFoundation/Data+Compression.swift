@@ -103,7 +103,7 @@ extension Data {
     static func process(operation: compression_stream_operation, size: Int64, bufferSize: Int, skipCRC32: Bool = false,
                         provider: Provider, consumer: Consumer) throws -> CRC32 {
         var crc32 = CRC32(0)
-        let destPointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        var destPointer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
         defer { destPointer.deallocate() }
         let streamPointer = UnsafeMutablePointer<compression_stream>.allocate(capacity: 1)
         defer { streamPointer.deallocate() }
@@ -138,11 +138,9 @@ extension Data {
             }
             switch status {
             case COMPRESSION_STATUS_OK, COMPRESSION_STATUS_END:
-                let outputData = Data(bytesNoCopy: destPointer, count: bufferSize - stream.dst_size, deallocator: .none)
+                let outputData = stream.takeOutput(of: &destPointer, capacity: bufferSize)
                 try consumer(outputData)
                 if operation == COMPRESSION_STREAM_DECODE && !skipCRC32 { crc32 = outputData.crc32(checksum: crc32) }
-                stream.dst_ptr = destPointer
-                stream.dst_size = bufferSize
             default: throw CompressionError.corruptedData
             }
         } while status == COMPRESSION_STATUS_OK
@@ -157,6 +155,23 @@ private extension compression_stream {
 
         self.src_size = sourceData.count
         return sourceData.count
+    }
+
+    /// Returns the output that has been written to `buffer` and lets the receiver continue with an empty buffer.
+    ///
+    /// Consumers can keep the data they receive. Non-empty output therefore takes ownership of `buffer`
+    /// and the receiver continues with a newly allocated buffer of the same capacity.
+    mutating func takeOutput(of buffer: inout UnsafeMutablePointer<UInt8>, capacity: Int) -> Data {
+        let count = capacity - self.dst_size
+        var output = Data()
+        if count > 0 {
+            let deallocator = Data.Deallocator.custom({ pointer, _ in pointer.deallocate() })
+            output = Data(bytesNoCopy: buffer, count: count, deallocator: deallocator)
+            buffer = .allocate(capacity: capacity)
+        }
+        self.dst_ptr = buffer
+        self.dst_size = capacity
+        return output
     }
 }
 

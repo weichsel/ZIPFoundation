@@ -47,6 +47,7 @@ extension ZIPFoundationTests {
              testDecodeThrowsWhenProviderSignalsEOFBeforeStreamEnd),
             ("testDecodeChunksSmallerThanBufferSize", testDecodeChunksSmallerThanBufferSize),
             ("testCreateArchiveAddCompressedEntry", testCreateArchiveAddCompressedEntry),
+            ("testConsumersCanKeepProcessedData", testConsumersCanKeepProcessedData),
             ("testCRC32Calculation", testCRC32Calculation),
             ("testCreateArchiveAddDirectory", testCreateArchiveAddDirectory),
             ("testCreateArchiveAddEntryErrorConditions", testCreateArchiveAddEntryErrorConditions),

@@ -12,6 +12,7 @@
 ### Updated
  - Fixed symlink containment bypass via chained symlinks
  - Fixed crashes and endless loops when reading malformed archives
+ - Fixed use-after-free of data that is passed to consumers during compression and decompression
  - Fixed crash when adding entries to archives with an invalid central directory
  - Fixed data loss and invalid offsets when removing entries
  - Fixed duplicated central directory after cancelling the addition of an entry
