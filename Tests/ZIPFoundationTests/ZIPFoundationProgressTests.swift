@@ -15,6 +15,7 @@ extension ZIPFoundationTests {
 
     func testArchiveAddUncompressedEntryProgress() {
         let archive = self.archive(for: #function, mode: .update)
+        let originalData = try? Data(contentsOf: archive.url)
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         let progress = archive.makeProgressForAddingItem(at: assetURL)
         let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
@@ -42,11 +43,14 @@ extension ZIPFoundationTests {
         zipQueue.sync {
             XCTAssert(progress.fractionCompleted > 0.5)
             XCTAssert(archive.checkIntegrity())
+            // A cancelled operation restores the archive.
+            XCTAssertEqual(try? Data(contentsOf: archive.url), originalData)
         }
     }
 
     func testArchiveAddCompressedEntryProgress() {
         let archive = self.archive(for: #function, mode: .update)
+        let originalData = try? Data(contentsOf: archive.url)
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         let progress = archive.makeProgressForAddingItem(at: assetURL)
         let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
@@ -75,6 +79,8 @@ extension ZIPFoundationTests {
         zipQueue.sync {
             XCTAssert(progress.fractionCompleted > 0.5)
             XCTAssert(archive.checkIntegrity())
+            // A cancelled operation restores the archive.
+            XCTAssertEqual(try? Data(contentsOf: archive.url), originalData)
         }
     }
 
@@ -184,6 +190,7 @@ extension ZIPFoundationTests {
         self.mockIntMaxValues()
         defer { self.resetIntMaxValues() }
         let archive = self.archive(for: #function, mode: .update)
+        let originalData = try? Data(contentsOf: archive.url)
         let assetURL = self.resourceURL(for: #function, pathExtension: "png")
         let progress = archive.makeProgressForAddingItem(at: assetURL)
         let handler: XCTKVOExpectation.Handler = { (_, _) -> Bool in
@@ -212,6 +219,8 @@ extension ZIPFoundationTests {
         zipQueue.sync {
             XCTAssert(progress.fractionCompleted > 0.5)
             XCTAssert(archive.checkIntegrity())
+            // A cancelled operation restores the archive.
+            XCTAssertEqual(try? Data(contentsOf: archive.url), originalData)
         }
     }
 }
