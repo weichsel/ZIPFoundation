@@ -42,6 +42,7 @@
 		OBJ_35 /* ZIPFoundationFileManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_20 /* ZIPFoundationFileManagerTests.swift */; };
 		OBJ_36 /* ZIPFoundationPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_21 /* ZIPFoundationPerformanceTests.swift */; };
 		OBJ_37 /* ZIPFoundationReadingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_22 /* ZIPFoundationReadingTests.swift */; };
+		82C0FFE32F2A000100DA5764 /* ZIPFoundationTests+AllTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82C0FFE22F2A000100DA5764 /* ZIPFoundationTests+AllTests.swift */; };
 		OBJ_38 /* ZIPFoundationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_23 /* ZIPFoundationTests.swift */; };
 		OBJ_39 /* ZIPFoundationWritingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = OBJ_24 /* ZIPFoundationWritingTests.swift */; };
 		OBJ_41 /* ZIPFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = "ZIPFoundation::ZIPFoundation::Product" /* ZIPFoundation.framework */; };
@@ -121,6 +122,7 @@
 		OBJ_20 /* ZIPFoundationFileManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationFileManagerTests.swift; sourceTree = "<group>"; };
 		OBJ_21 /* ZIPFoundationPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationPerformanceTests.swift; sourceTree = "<group>"; };
 		OBJ_22 /* ZIPFoundationReadingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationReadingTests.swift; sourceTree = "<group>"; };
+		82C0FFE22F2A000100DA5764 /* ZIPFoundationTests+AllTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ZIPFoundationTests+AllTests.swift"; sourceTree = "<group>"; };
 		OBJ_23 /* ZIPFoundationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationTests.swift; sourceTree = "<group>"; };
 		OBJ_24 /* ZIPFoundationWritingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZIPFoundationWritingTests.swift; sourceTree = "<group>"; };
 		OBJ_9 /* Archive+Reading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Archive+Reading.swift"; sourceTree = "<group>"; };
@@ -183,6 +185,7 @@
 				OBJ_22 /* ZIPFoundationReadingTests.swift */,
 				5968EBEC26D692360037EA62 /* ZIPFoundationReadingTests+ZIP64.swift */,
 				OBJ_23 /* ZIPFoundationTests.swift */,
+				82C0FFE22F2A000100DA5764 /* ZIPFoundationTests+AllTests.swift */,
 				OBJ_24 /* ZIPFoundationWritingTests.swift */,
 				591C971226B0FF9F00F65F97 /* ZIPFoundationWritingTests+ZIP64.swift */,
 			);
@@ -363,6 +366,7 @@
 				82C0FFE12F2A000100DA5764 /* ZIPFoundationFileManagerTests+Symlinks.swift in Sources */,
 				59248AA226B6EC770078ABDA /* ZIPFoundationErrorConditionTests+ZIP64.swift in Sources */,
 				OBJ_38 /* ZIPFoundationTests.swift in Sources */,
+				82C0FFE32F2A000100DA5764 /* ZIPFoundationTests+AllTests.swift in Sources */,
 				OBJ_39 /* ZIPFoundationWritingTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
