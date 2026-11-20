@@ -207,6 +207,39 @@ extension ZIPFoundationTests {
     // On Darwin platforms, we want the same behavior as the system-provided ZIP utilities.
     // On the Mac, this includes the graphical Archive Utility as well as the `ditto`
     // command line tool.
+    func testUnzipEntryThroughSymlinkToTildeDirectory() throws {
+        // POSIX resolves a symlink destination that starts with a tilde relative to the link's parent.
+        let fileManager = FileManager()
+        let destinationURL = self.createDirectory(for: #function)
+        let tildeURL = destinationURL.appendingPathComponent("~")
+        try fileManager.createDirectory(at: tildeURL, withIntermediateDirectories: false, attributes: nil)
+        try fileManager.createSymbolicLink(atPath: destinationURL.appendingPathComponent("alias").path,
+                                           withDestinationPath: "~")
+        let archive = self.archive(for: #function, mode: .create)
+        try self.addEntry(with: "alias/document.txt", type: .file, content: "document", to: archive)
+        try fileManager.unzipItem(at: archive.url, to: destinationURL)
+        XCTAssertEqual(try Data(contentsOf: tildeURL.appendingPathComponent("document.txt")), Data("document".utf8))
+    }
+
+    func testUnzipSymlinkWithTildeDestination() throws {
+        let fileManager = FileManager()
+        let destinationURL = self.createDirectory(for: #function)
+        let destinations = ["home": "~", "nested": "~/dir", "named": "~name"]
+        let archive = self.archive(for: #function, mode: .create)
+        for (name, destination) in destinations.sorted(by: { $0.key < $1.key }) {
+            try self.addEntry(with: name, type: .symlink, content: destination, to: archive)
+        }
+        try fileManager.unzipItem(at: archive.url, to: destinationURL)
+        for (name, destination) in destinations {
+            let linkPath = destinationURL.appendingPathComponent(name).path
+            XCTAssertEqual(try fileManager.destinationOfSymbolicLink(atPath: linkPath), destination)
+        }
+        let components = try XCTUnwrap(URL.resolvedPathComponents(ofPath: destinationURL.path))
+        XCTAssertEqual(URL.resolvedPathComponents(ofPath: "~/dir", relativeTo: components),
+                       components + ["~", "dir"])
+        XCTAssertEqual(URL.resolvedPathComponents(ofPath: "/\u{0301}dir", relativeTo: components), ["\u{0301}dir"])
+    }
+
     func testConsistentBehaviorWithSystemZIPUtilities() {
 #if os(macOS)
         // We use a macOS framework bundle here because it covers a lot of file system edge cases like
