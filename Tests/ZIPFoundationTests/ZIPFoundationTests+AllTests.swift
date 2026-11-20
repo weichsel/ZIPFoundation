@@ -105,6 +105,8 @@ extension ZIPFoundationTests {
             ("testUnzipItemWithPreferredEncoding", testUnzipItemWithPreferredEncoding),
             ("testUnzipItemErrorConditions", testUnzipItemErrorConditions),
             ("testUnzipUncontainedSymlink", testUnzipUncontainedSymlink),
+            ("testUnzipEntryThroughSymlinkToTildeDirectory", testUnzipEntryThroughSymlinkToTildeDirectory),
+            ("testUnzipSymlinkWithTildeDestination", testUnzipSymlinkWithTildeDestination),
             ("testUnzipChainedSymlinkTraversal", testUnzipChainedSymlinkTraversal),
             ("testUnzipDeferredSymlinkTraversal", testUnzipDeferredSymlinkTraversal),
             ("testUnzipEntryPathTraversalThroughSymlink", testUnzipEntryPathTraversalThroughSymlink),

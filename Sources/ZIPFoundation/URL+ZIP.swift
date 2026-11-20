@@ -124,7 +124,7 @@ extension URL {
         var symlinkCount = 0
         // The number of components at the end of `resolved` that don't exist.
         var missingComponentCount = 0
-        var resolved = (path as NSString).isAbsolutePath ? [] : baseComponents
+        var resolved = URL.isAbsolutePath(path) ? [] : baseComponents
         var pending = Array(components(of: path).reversed())
         while let component = pending.popLast() {
             if component == ".." {
@@ -158,10 +158,24 @@ extension URL {
                   let destination = try? fileManager.destinationOfSymbolicLink(atPath: candidatePath)
             else { return nil }
 
-            if (destination as NSString).isAbsolutePath { resolved.removeAll() }
+            if URL.isAbsolutePath(destination) { resolved.removeAll() }
             pending.append(contentsOf: components(of: destination).reversed())
         }
         return resolved
+    }
+
+    /// Checks if `path` is absolute in the way the file system interprets it.
+    ///
+    /// On POSIX systems, only a leading slash marks an absolute path. `NSString.isAbsolutePath` also
+    /// treats paths that start with a tilde (e.g. `~`, `~/dir` or `~name`) as absolute on Darwin,
+    /// while the file system resolves them relative to the current directory (or the symlink's parent).
+    /// The first byte is compared, so that a combining mark after the slash doesn't affect the check.
+    static func isAbsolutePath(_ path: String) -> Bool {
+#if os(Windows)
+        return (path as NSString).isAbsolutePath
+#else
+        return path.utf8.first == UInt8(ascii: "/")
+#endif
     }
 
     /// Compares exact spellings, allowing different spellings on Darwin if they identify the same directory.

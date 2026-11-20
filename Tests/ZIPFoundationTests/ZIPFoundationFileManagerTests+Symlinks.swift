@@ -383,8 +383,8 @@ extension ZIPFoundationTests {
         return structure.flatMap { Entry(centralDirectoryStructure: $0, localFileHeader: entry.localFileHeader) }
     }
 
-    private func addEntry(with path: String, type: Entry.EntryType, content: String = "",
-                          to archive: Archive) throws {
+    func addEntry(with path: String, type: Entry.EntryType, content: String = "",
+                  to archive: Archive) throws {
         let data = Data(content.utf8)
         try archive.addEntry(with: path, type: type, uncompressedSize: Int64(data.count),
                              provider: { (position, size) -> Data in
