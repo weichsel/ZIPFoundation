@@ -6,7 +6,7 @@
  - Added support for compressed symlinks
  - Added `symlinksValidWithin` parameter to control symlink containment
  - Added support for symlink modification dates on Linux
- - Added initial support for building for Windows
+ - Added initial support for file-backed archives on Windows
  - Added package manifest for Swift 6.4
 
 ### Updated
@@ -20,10 +20,12 @@
  - Fixed reading of ZIP64 archives with a low "version needed to extract"
  - Fixed detection of directory entries with a trailing path delimiter
  - Fixed memory growth and slow opening of archives with many entries
- - Fixed build errors on Android
+ - Fixed build errors on Android for file-backed archives
  - Fixed warnings in package manifest
  - Improved path traversal checks for entries and symlinks during extraction
- - Raised deployment targets of the podspec and Xcode project to the Xcode 27 minimums
+ - Aligned the Swift 6.4 manifest, podspec and Xcode project on iOS 15, macOS 12, tvOS 15, watchOS 9 and visionOS 1
+ - Raised the watchOS minimum from 4 to 5 for Swift Package Manager with Swift 5.9 through 6.3
+ - Enabled in-memory archives in the Xcode framework by building it in Swift 5 language mode
 
 ## [0.9.20](https://github.com/weichsel/ZIPFoundation/releases/tag/0.9.20)
 
