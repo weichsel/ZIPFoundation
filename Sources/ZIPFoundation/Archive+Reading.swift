@@ -16,12 +16,19 @@ import Android
 extension Archive {
     /// Read a ZIP `Entry` from the receiver and write it to `url`.
     ///
+    /// - Important: `url` is used as is. Unlike `FileManager.unzipItem(at:to:)`, this method doesn't check
+    ///              that `url` is located within a destination directory. Entry paths can contain `..` components
+    ///              or start with a path delimiter, and the file system follows symlinks in `url`, including
+    ///              symlinks that were extracted from the archive before. Callers that build `url` from
+    ///              `entry.path` have to validate the resulting location themselves.
+    ///
     /// - Parameters:
     ///   - entry: The ZIP `Entry` to read.
     ///   - url: The destination file URL.
     ///   - bufferSize: The maximum size of the read buffer and the decompression buffer (if needed).
     ///   - skipCRC32: Optional flag to skip calculation of the CRC32 checksum to improve performance.
     ///   - symlinksValidWithin: Any symlink target that resolves outside this URL is rejected for security reasons.
+    ///                          Defaults to the directory that contains the symlink.
     ///                          Pass `.rootFS` to allow symlinks to point anywhere on the filesystem.
     ///   - progress: A progress object that can be used to track or cancel the extract operation.
     /// - Returns: The checksum of the processed content or 0 if the `skipCRC32` flag was set to `true`.
