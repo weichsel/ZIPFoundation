@@ -40,11 +40,15 @@ To learn more about the performance characteristics of the framework, you can re
 
 ## Requirements
 
-- Swift 6.4 or later (Xcode 27), CocoaPods or Carthage: iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 9.0+ / visionOS 1.0+
-- Swift 5.9 to 6.3 with the Swift Package Manager: iOS 12.0+ / macOS 10.13+ / tvOS 12.0+ / watchOS 5.0+ / visionOS 1.0+
-- Or Linux with zlib development package
-- Xcode 11.0
-- Swift 4.0
+The minimum Apple deployment targets depend on how you integrate ZIP Foundation.
+
+| Integration | iOS | macOS | tvOS | watchOS | visionOS |
+| --- | --- | --- | --- | --- | --- |
+| Swift Package Manager with Swift 6.4 or later, CocoaPods, or the Xcode project (including Carthage) | 15.0 | 12.0 | 15.0 | 9.0 | 1.0 |
+| Swift Package Manager with Swift 5.9 through 6.3 | 12.0 | 10.13 | 12.0 | 5.0 | 1.0 |
+| Swift Package Manager with Swift 5.0 through 5.8 | 9.0 | 10.11 | 9.0 | 2.0 | — |
+
+The repository also includes legacy Swift 4.x package manifests. On Linux, install the zlib development package (`zlib1g-dev` on Debian and Ubuntu). File-backed archives can also be built for Android and Windows with zlib.
 
 ## Installation
 
@@ -53,17 +57,18 @@ The Swift Package Manager is a dependency manager integrated with the Swift buil
 To add ZIP Foundation as a dependency, you have to add it to the `dependencies` of your `Package.swift` file and refer to that dependency in your `target`.
 
 ```swift
-// swift-tools-version:5.0
+// swift-tools-version:6.4
 import PackageDescription
 let package = Package(
     name: "<Your Product Name>",
+    platforms: [.iOS(.v15), .macOS(.v12), .tvOS(.v15), .watchOS(.v9), .visionOS(.v1)],
     dependencies: [
-		.package(url: "https://github.com/weichsel/ZIPFoundation.git", .upToNextMajor(from: "0.9.0"))
+        .package(url: "https://github.com/weichsel/ZIPFoundation.git", .upToNextMinor(from: "0.9.21"))
     ],
     targets: [
         .target(
-		name: "<Your Target Name>",
-		dependencies: ["ZIPFoundation"]),
+            name: "<Your Target Name>",
+            dependencies: [.product(name: "ZIPFoundation", package: "ZIPFoundation")])
     ]
 )
 ```
@@ -82,7 +87,7 @@ Installation instructions can be found in the project's [README file](https://gi
 To integrate ZIPFoundation into your Xcode project using Carthage, you have to add it to your `Cartfile`:
 
 ```ogdl
-github "weichsel/ZIPFoundation" ~> 0.9
+github "weichsel/ZIPFoundation" ~> 0.9.21
 ```
 
 After adding ZIPFoundation to the `Cartfile`, you have to fetch the sources by running:
@@ -91,7 +96,7 @@ After adding ZIPFoundation to the `Cartfile`, you have to fetch the sources by r
 carthage update --no-build
 ```
 
-The fetched project has to be integrated into your workspace by dragging `ZIPFoundation.xcodeproj` to Xcode's Project Navigator. (See [official Carhage docs](https://github.com/Carthage/Carthage#adding-frameworks-to-an-application).)
+The fetched project has to be integrated into your workspace by dragging `ZIPFoundation.xcodeproj` to Xcode's Project Navigator. (See [official Carthage docs](https://github.com/Carthage/Carthage#adding-frameworks-to-an-application).)
 
 ### CocoaPods
 
@@ -101,10 +106,10 @@ To integrate ZIP Foundation into your Xcode project using CocoaPods, you have to
 
 ```ruby
 source 'https://github.com/CocoaPods/Specs.git'
-platform :ios, '10.0'
+platform :ios, '15.0'
 use_frameworks!
 target '<Your Target Name>' do
-    pod 'ZIPFoundation', '~> 0.9'
+    pod 'ZIPFoundation', '~> 0.9.21'
 end
 ```
 
@@ -182,8 +187,7 @@ do {
 }
 ```
 
-The `extract` method accepts optional parameters that allow you to control compression and memory consumption.  
-You can find detailed information about that parameters in the method's documentation.
+The `bufferSize` parameter controls how much data `extract` processes at a time. When extracting a single entry to disk, the caller chooses and validates its destination URL. Use `FileManager.unzipItem(at:to:)` to extract an entire archive with destination containment checks.
 
 ### Creating Archives
 To create a new `Archive`, pass in a non-existing file URL and `AccessMode.create`.
@@ -223,7 +227,7 @@ The `fileURL` parameter must contain an absolute file URL that points to a file,
 The `addEntry` method accepts several optional parameters that allow you to control compression, memory consumption and file attributes.  
 You can find detailed information about that parameters in the method's documentation.
 
-To remove an entry, you need a reference to an entry within an archive that you can pass to `removeEntry`:
+To remove an entry, pass it to `Archive.remove(_:)`:
 
 ```swift
 guard let entry = archive["file.txt"] else {
@@ -261,7 +265,7 @@ The closure is called until enough data has been provided to create an entry of 
 so that you can manage the state of your data source.
 
 ### In-Memory Archives
-Besides closure based reading and writing of file based archives, ZIP Foundation also provides capabilities to process in-memory archives. 
+In-memory archives are available on Apple platforms and Linux when compiling in Swift 5 language mode or later.
 This allows creation or extraction of archives that only reside in RAM. One use case for this functionality is dynamic creation of ZIP archives that are later sent to a client - without performing any disk IO.  
 
 To work with in-memory archives the `init(data: Data, accessMode: AccessMode)` initializer must be used.  

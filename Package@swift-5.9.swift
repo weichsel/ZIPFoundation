@@ -1,6 +1,6 @@
 // swift-tools-version:5.9
 
-// NOTE: This manifest applies only to Xcodes 15-26.
+// SwiftPM manifest for Swift 5.9 through 6.3.
 
 import PackageDescription
 
@@ -19,7 +19,7 @@ let resources: [Resource] = [.copy("Resources/PrivacyInfo.xcprivacy")]
 let czlib: Target = .systemLibrary(
     name: "CZLib",
     pkgConfig: "zlib",
-    providers: [.brew(["zlib"]), .apt(["zlib"])])
+    providers: [.brew(["zlib"]), .apt(["zlib1g-dev"])])
 let resources: [Resource] = []
 #endif
 

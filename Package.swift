@@ -1,6 +1,6 @@
 // swift-tools-version:5.0
 
-// NOTE: This manifest applies only to Xcodes 14 and lower.
+// SwiftPM manifest for Swift 5.0 through 5.8.
 
 import PackageDescription
 
@@ -14,7 +14,7 @@ let targets: [Target] = [
     .systemLibrary(
         name: "CZLib",
         pkgConfig: "zlib",
-        providers: [.brew(["zlib"]), .apt(["zlib"])]),
+        providers: [.brew(["zlib"]), .apt(["zlib1g-dev"])]),
     .target(
         name: "ZIPFoundation",
         dependencies: ["CZLib"],
