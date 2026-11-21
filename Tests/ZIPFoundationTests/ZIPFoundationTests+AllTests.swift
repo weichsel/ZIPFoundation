@@ -81,6 +81,7 @@ extension ZIPFoundationTests {
             ("testExtractUncompressedEmptyFile", testExtractUncompressedEmptyFile),
             ("testFileAttributeHelperMethods", testFileAttributeHelperMethods),
             ("testFilePermissionHelperMethods", testFilePermissionHelperMethods),
+            ("testUnzipDirectoryEntryMarkedAsFile", testUnzipDirectoryEntryMarkedAsFile),
             ("testFileSizeHelperMethods", testFileSizeHelperMethods),
             ("testFileTypeHelperMethods", testFileTypeHelperMethods),
             ("testInvalidCompressionMethodErrorConditions", testInvalidCompressionMethodErrorConditions),
