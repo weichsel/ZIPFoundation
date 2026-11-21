@@ -9,6 +9,9 @@
 //
 
 import XCTest
+#if canImport(Android)
+import Android
+#endif
 @testable import ZIPFoundation
 
 extension ZIPFoundationTests {
@@ -107,6 +110,34 @@ extension ZIPFoundationTests {
         XCTAssert(permissions == defaultFilePermissions)
         permissions = FileManager.permissions(for: UInt32(0), osType: .msdos, entryType: .directory)
         XCTAssert(permissions == defaultDirectoryPermissions)
+        // Directories that are marked as regular files get the execute permission wherever reading is permitted.
+        let regularFileType = UInt32(S_IFREG) << 16
+        permissions = FileManager.permissions(for: regularFileType | 0o644 << 16, osType: .unix, entryType: .directory)
+        XCTAssertEqual(permissions, 0o755)
+        permissions = FileManager.permissions(for: regularFileType | 0o600 << 16, osType: .unix, entryType: .directory)
+        XCTAssertEqual(permissions, 0o700)
+        permissions = FileManager.permissions(for: regularFileType | 0o644 << 16, osType: .unix, entryType: .file)
+        XCTAssertEqual(permissions, 0o644)
+        let directoryType = UInt32(S_IFDIR) << 16
+        permissions = FileManager.permissions(for: directoryType | 0o644 << 16, osType: .unix, entryType: .directory)
+        XCTAssertEqual(permissions, 0o644)
+        // Without file type bits, the stored permissions are the ones that were intended for the directory.
+        permissions = FileManager.permissions(for: 0o744 << 16, osType: .unix, entryType: .directory)
+        XCTAssertEqual(permissions, 0o744)
+    }
+
+    func testUnzipDirectoryEntryMarkedAsFile() throws {
+        let fileManager = FileManager()
+        let archive = self.archive(for: #function, mode: .read)
+        let destinationURL = self.createDirectory(for: #function)
+        try fileManager.unzipItem(at: archive.url, to: destinationURL)
+        for (directory, expectedPermissions) in [("directory", 0o755), ("private", 0o700)] {
+            let directoryURL = destinationURL.appendingPathComponent(directory)
+            let attributes = try fileManager.attributesOfItem(atPath: directoryURL.path)
+            XCTAssertEqual(attributes[.type] as? FileAttributeType, .typeDirectory)
+            XCTAssertEqual((attributes[.posixPermissions] as? NSNumber)?.intValue, expectedPermissions)
+            XCTAssert(fileManager.itemExists(at: directoryURL.appendingPathComponent("file.txt")))
+        }
     }
 
     func testFileModificationDateHelperMethods() {

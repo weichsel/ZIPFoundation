@@ -270,14 +270,14 @@ extension FileManager {
 
     class func permissions(for externalFileAttributes: UInt32, osType: Entry.OSType,
                            entryType: Entry.EntryType) -> UInt16 {
-        switch osType {
-        case .unix, .osx:
-            let permissions = mode_t(externalFileAttributes >> 16) & (~S_IFMT)
-            let defaultPermissions = entryType == .directory ? defaultDirectoryPermissions : defaultFilePermissions
-            return permissions == 0 ? defaultPermissions : UInt16(permissions)
-        default:
-            return entryType == .directory ? defaultDirectoryPermissions : defaultFilePermissions
-        }
+        let defaultPermissions = entryType == .directory ? defaultDirectoryPermissions : defaultFilePermissions
+        guard osType == .unix || osType == .osx else { return defaultPermissions }
+
+        let mode = mode_t(externalFileAttributes >> 16)
+        // Directories that are marked as regular files lack the execute permission that is needed to enter them.
+        let isMarkedAsFile = entryType == .directory && mode & S_IFMT == S_IFREG
+        let permissions = (mode & ~S_IFMT) | (isMarkedAsFile ? (mode & 0o444) >> 2 : 0)
+        return permissions == 0 ? defaultPermissions : UInt16(permissions)
     }
 
     class func externalFileAttributesForEntry(of type: Entry.EntryType, permissions: UInt16) -> UInt32 {
